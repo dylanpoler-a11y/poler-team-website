@@ -1973,7 +1973,54 @@ img {
     font-weight: 600;
     color: var(--color-text-muted);
     letter-spacing: 0.03em;
+    white-space: nowrap;
+    flex-shrink: 0;
+    margin-left: 0.5rem;
 }
+
+/* MLS real photo */
+.listing-photo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.6s ease;
+}
+
+.listing-card:hover .listing-photo {
+    transform: scale(1.05);
+}
+
+/* Beds / baths / sqft stats */
+.listing-stats {
+    font-size: 0.68rem;
+    color: var(--color-text-muted);
+    margin-top: 0.2rem;
+    font-weight: 500;
+}
+
+/* Skeleton loading state */
+@keyframes shimmer {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+.listing-skeleton .listing-image {
+    background: linear-gradient(90deg, #e8ecf1 25%, #d1d9e4 50%, #e8ecf1 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+}
+
+.skeleton-line {
+    height: 11px;
+    border-radius: 4px;
+    background: linear-gradient(90deg, #e8ecf1 25%, #d1d9e4 50%, #e8ecf1 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    margin-bottom: 0.4rem;
+}
+
+.skeleton-line.short { width: 55%; }
 
 /* Listings responsive */
 @media (max-width: 1024px) {

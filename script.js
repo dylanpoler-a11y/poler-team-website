@@ -1229,4 +1229,123 @@ document.addEventListener('DOMContentLoaded', () => {
         setLanguage(currentLanguage);
     }
 
+    // ============================================
+    // MLS Integration — Bridge Data Output API
+    // Dataset: miamire | Token: browser-safe
+    // ============================================
+    const MLS = {
+        token: 'fceef76441eaf7579daff17411bffca2',
+        dataset: 'miamire',
+        base: 'https://api.bridgedataoutput.com/api/v2',
+
+        async fetchCity(city, limit) {
+            const url = `${this.base}/${this.dataset}/listings?access_token=${this.token}` +
+                `&limit=${limit}&City=${encodeURIComponent(city)}` +
+                `&StandardStatus=Active&PropertyType=Residential` +
+                `&sortBy=ListPrice&order=desc`;
+            const res = await fetch(url);
+            const data = await res.json();
+            return (data.success && Array.isArray(data.bundle)) ? data.bundle : [];
+        },
+
+        formatPrice(price) {
+            if (!price) return 'Price on Request';
+            return '$' + Number(price).toLocaleString('en-US');
+        },
+
+        getPhoto(listing) {
+            const m = listing.Media;
+            return (m && m.length) ? m[0].MediaURL : null;
+        },
+
+        renderCard(listing, large, delay) {
+            const photo    = this.getPhoto(listing);
+            const price    = this.formatPrice(listing.ListPrice);
+            const address  = listing.UnparsedAddress || listing.City || 'South Florida';
+            const city     = listing.City || '';
+            const beds     = listing.BedroomsTotal;
+            const baths    = listing.BathroomsTotalInteger;
+            const sqft     = listing.LivingArea;
+            const stats    = [
+                beds  ? `${beds} bd`                            : '',
+                baths ? `${baths} ba`                           : '',
+                sqft  ? `${Number(sqft).toLocaleString()} sf`  : ''
+            ].filter(Boolean).join(' · ');
+
+            const imgHtml = photo
+                ? `<img class="listing-photo" src="${photo}" alt="${address}" loading="lazy">`
+                : `<div class="listing-placeholder"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M3 21h18M5 21V7l8-4v18M13 21V3l6 4v14"/></svg></div>`;
+
+            return `
+            <div class="listing-card${large ? ' listing-card-large' : ''} reveal-up" style="--delay:${delay}s">
+                <div class="listing-image">
+                    ${imgHtml}
+                    ${large ? '<div class="listing-badge">Featured</div>' : ''}
+                    <div class="listing-overlay">
+                        <span class="listing-area">${city}</span>
+                    </div>
+                </div>
+                <div class="listing-details">
+                    <div>
+                        <span class="listing-address">${address}</span>
+                        ${stats ? `<div class="listing-stats">${stats}</div>` : ''}
+                    </div>
+                    <span class="listing-price">${price}</span>
+                </div>
+            </div>`;
+        },
+
+        showSkeleton(grid) {
+            grid.innerHTML = [true, false, false, true, false].map(large => `
+                <div class="listing-card${large ? ' listing-card-large' : ''} listing-skeleton">
+                    <div class="listing-image"></div>
+                    <div class="listing-details" style="flex-direction:column;gap:0.4rem;align-items:flex-start">
+                        <div class="skeleton-line" style="width:70%"></div>
+                        <div class="skeleton-line short"></div>
+                    </div>
+                </div>`).join('');
+        },
+
+        async load() {
+            const grid = document.getElementById('listings-grid');
+            if (!grid) return;
+
+            this.showSkeleton(grid);
+
+            try {
+                const [sib, avt, nmb] = await Promise.all([
+                    this.fetchCity('Sunny Isles Beach', 2),
+                    this.fetchCity('Aventura', 2),
+                    this.fetchCity('North Miami Beach', 1)
+                ]);
+
+                // Layout: large, small, small, large, small
+                const slots = [
+                    { l: sib[0], large: true,  delay: 0.1  },
+                    { l: avt[0], large: false, delay: 0.2  },
+                    { l: nmb[0], large: false, delay: 0.15 },
+                    { l: sib[1], large: true,  delay: 0.25 },
+                    { l: avt[1], large: false, delay: 0.3  }
+                ].filter(s => s.l);
+
+                if (!slots.length) return;
+
+                grid.innerHTML = slots.map(s => this.renderCard(s.l, s.large, s.delay)).join('');
+
+                // Wire up reveal animations for the new cards
+                const obs = new IntersectionObserver((entries) => {
+                    entries.forEach(e => {
+                        if (e.isIntersecting) { e.target.classList.add('revealed'); obs.unobserve(e.target); }
+                    });
+                }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+                grid.querySelectorAll('.reveal-up').forEach(el => obs.observe(el));
+
+            } catch (err) {
+                console.error('MLS load error:', err);
+            }
+        }
+    };
+
+    MLS.load();
+
 });
