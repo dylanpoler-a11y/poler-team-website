@@ -519,7 +519,7 @@ img {
     z-index: 2;
     text-align: center;
     padding: 3rem 3.5rem 2.5rem;
-    background: rgba(0, 0, 0, 0.35);
+    background: rgba(26, 39, 68, 0.35);
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
     border-radius: 16px;
