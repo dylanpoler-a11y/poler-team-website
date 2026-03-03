@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Property Listings — The Poler Team</title>
+    <meta name="description" content="Search luxury South Florida real estate. Sunny Isles Beach, Aventura, North Miami Beach.">
+    <meta name="robots" content="noindex">
+    <link rel="icon" href="favicon.ico">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="listing.css">
+</head>
+<body>
+
+<!-- ============================================================
+     LEAD CAPTURE OVERLAY (fires after 10s, blocks dismissal)
+     ============================================================ -->
+<div id="lead-overlay" class="lead-overlay" aria-modal="true" role="dialog" aria-labelledby="lead-title">
+    <div class="lead-modal">
+        <div class="lead-modal-brand">
+            <img src="logo-white.png" alt="The Poler Team" class="lead-logo">
+        </div>
+        <div class="lead-modal-body">
+            <h2 class="lead-title" id="lead-title">View Full Property Details</h2>
+            <p class="lead-subtitle">Create your free account to unlock photos, pricing history, neighborhood stats, and schedule a private showing.</p>
+            <div class="lead-timer-wrap">
+                <div class="lead-timer-bar" id="lead-timer-bar"></div>
+            </div>
+            <form id="lead-form" class="lead-form" novalidate>
+                <div class="lead-form-row">
+                    <div class="lead-field">
+                        <input type="text" id="lead-first" placeholder="First Name" required autocomplete="given-name">
+                    </div>
+                    <div class="lead-field">
+                        <input type="text" id="lead-last" placeholder="Last Name" required autocomplete="family-name">
+                    </div>
+                </div>
+                <div class="lead-field">
+                    <input type="email" id="lead-email" placeholder="Email Address" required autocomplete="email">
+                </div>
+                <div class="lead-field">
+                    <input type="tel" id="lead-phone" placeholder="Phone Number" required autocomplete="tel">
+                </div>
+                <p class="lead-error" id="lead-error" style="display:none"></p>
+                <button type="submit" class="lead-submit" id="lead-submit-btn">
+                    <span id="lead-submit-text">Access Property Details</span>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </button>
+                <p class="lead-disclaimer">By continuing you agree to receive property updates from The Poler Team. No spam, ever.</p>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================
+     PAGE WRAPPER (blurs when lead modal fires)
+     ============================================================ -->
+<div id="page-wrap" class="page-wrap">
+
+    <!-- HEADER -->
+    <header class="lp-header">
+        <div class="lp-header-inner">
+            <a href="index.html" class="lp-logo-link">
+                <img src="logo.png" alt="The Poler Team" class="lp-logo">
+            </a>
+            <div class="lp-header-right">
+                <span class="lp-tagline">South Florida Luxury Real Estate</span>
+                <a href="tel:+13059999999" class="lp-call-btn">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 014.68 11.6 19.79 19.79 0 011.61 3a2 2 0 012-2.18h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L7.91 8.09a16 16 0 006 6l.91-.91a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+                    Call Us
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- HERO PROPERTY (populated by JS from ?id= param) -->
+    <section id="hero-property" class="hero-property">
+        <div id="hero-loading" class="hero-loading">
+            <div class="hero-skeleton-img shimmer"></div>
+            <div class="hero-skeleton-info">
+                <div class="skeleton-line shimmer" style="width:35%;height:14px"></div>
+                <div class="skeleton-line shimmer" style="width:60%;height:28px;margin:0.6rem 0"></div>
+                <div class="skeleton-line shimmer" style="width:45%;height:12px"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================
+         PROPERTY LOOKUP (MLS # or address — like Deal Analyzer)
+         ============================================================ -->
+    <section class="lookup-section">
+        <div class="lookup-container">
+            <div class="lookup-header-row">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                <h3 class="lookup-title">Look Up Any Property</h3>
+            </div>
+
+            <!-- MLS # quick search -->
+            <div class="lookup-mls-row">
+                <div class="lookup-mls-wrap">
+                    <svg class="lookup-mls-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                    <input type="text" id="lookup-mls" class="lookup-mls-input" placeholder="Enter MLS # (e.g., A11898011)" autocomplete="off" spellcheck="false">
+                </div>
+                <button id="lookup-mls-btn" class="lookup-autofill-btn">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                    Auto-Fill
+                </button>
+            </div>
+
+            <!-- Advanced address toggle -->
+            <button class="lookup-adv-toggle" id="lookup-adv-toggle" aria-expanded="false">
+                <svg id="lookup-adv-chevron" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                <span id="lookup-adv-label">Show Advanced Address Search</span>
+            </button>
+
+            <!-- Advanced address fields -->
+            <div class="lookup-advanced" id="lookup-advanced">
+                <p class="lookup-adv-hint">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                    Enter exact address fields for precise MLS lookup (no fuzzy matching)
+                </p>
+                <div class="adv-grid">
+                    <div class="adv-field adv-col-3">
+                        <label>Street #<span class="adv-req">*</span></label>
+                        <input type="text" id="adv-street-num" placeholder="e.g., 12944" autocomplete="off">
+                    </div>
+                    <div class="adv-field adv-col-2">
+                        <label>Dir</label>
+                        <select id="adv-dir">
+                            <option value="">None</option>
+                            <option>N</option><option>S</option><option>E</option><option>W</option>
+                            <option>NE</option><option>NW</option><option>SE</option><option>SW</option>
+                        </select>
+                    </div>
+                    <div class="adv-field adv-col-5">
+                        <label>Street Name<span class="adv-req">*</span></label>
+                        <input type="text" id="adv-street-name" placeholder="e.g., Banyan" autocomplete="off">
+                    </div>
+                    <div class="adv-field adv-col-2">
+                        <label>Unit #</label>
+                        <input type="text" id="adv-unit" placeholder="e.g., 101" autocomplete="off">
+                    </div>
+                    <div class="adv-field adv-col-5">
+                        <label>City</label>
+                        <input type="text" id="adv-city" placeholder="North Miami" autocomplete="off">
+                    </div>
+                    <div class="adv-field adv-col-3">
+                        <label>ZIP Code</label>
+                        <input type="text" id="adv-zip" placeholder="33181" autocomplete="off">
+                    </div>
+                    <div class="adv-field adv-col-2 adv-btn-cell">
+                        <button id="lookup-adv-btn" class="lookup-search-btn">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                            Search
+                        </button>
+                    </div>
+                </div>
+                <p class="adv-required-note">* Required fields. City or ZIP is <strong>required</strong> for accurate matching.</p>
+            </div>
+
+            <!-- Lookup result card -->
+            <div id="lookup-result" class="lookup-result" style="display:none"></div>
+        </div>
+    </section>
+
+    <!-- ============================================================
+         SEARCH & BROWSE (InvestorOS Deal Finder style)
+         ============================================================ -->
+    <section class="search-section" id="search-section">
+        <div class="search-layout">
+
+            <!-- SIDEBAR FILTERS -->
+            <aside class="filter-sidebar">
+                <div class="filter-sidebar-head">
+                    <div class="filter-sidebar-title-row">
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
+                        <span class="filter-sidebar-title">Filters</span>
+                    </div>
+                    <button class="filter-mobile-toggle" id="filter-toggle" aria-expanded="false">
+                        <span id="filter-toggle-label">Show Filters</span>
+                        <svg id="filter-toggle-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                    </button>
+                </div>
+
+                <div class="filter-body" id="filter-body">
+
+                    <!-- Location -->
+                    <div class="filter-group">
+                        <label class="filter-label" for="f-location">Location (comma-separated)</label>
+                        <div class="filter-icon-wrap">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                            <input type="text" id="f-location" class="filter-input" placeholder="Miami Beach, Hollywood, Sunny Isles...">
+                        </div>
+                    </div>
+
+                    <!-- Property Type -->
+                    <div class="filter-group">
+                        <label class="filter-label" for="f-type">Property Type</label>
+                        <select id="f-type" class="filter-select">
+                            <option value="all">All Types</option>
+                            <option value="Single Family Residence">Single Family</option>
+                            <option value="Condominium">Condo / CoOp / Villa / Townhouse</option>
+                            <option value="MultiFamily">MultiFamily</option>
+                        </select>
+                    </div>
+
+                    <!-- Price Range -->
+                    <div class="filter-group">
+                        <label class="filter-label">Price Range (000s)</label>
+                        <div class="filter-two-col">
+                            <input type="number" id="f-price-min" class="filter-input" placeholder="e.g., 100 (=$100K)" min="0">
+                            <input type="number" id="f-price-max" class="filter-input" placeholder="e.g., 2500 (=$2.5M)" min="0">
+                        </div>
+                        <p class="filter-error" id="price-error" style="display:none">Min must be less than Max</p>
+                    </div>
+
+                    <!-- Beds / Baths -->
+                    <div class="filter-group">
+                        <div class="filter-two-col">
+                            <div>
+                                <label class="filter-label" for="f-beds">Min Beds</label>
+                                <select id="f-beds" class="filter-select">
+                                    <option value="0">Any</option>
+                                    <option value="1">1+</option>
+                                    <option value="2">2+</option>
+                                    <option value="3">3+</option>
+                                    <option value="4">4+</option>
+                                    <option value="5">5+</option>
+                                    <option value="6">6+</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="filter-label" for="f-baths">Min Baths</label>
+                                <select id="f-baths" class="filter-select">
+                                    <option value="0">Any</option>
+                                    <option value="1">1+</option>
+                                    <option value="2">2+</option>
+                                    <option value="3">3+</option>
+                                    <option value="4">4+</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Advanced toggle -->
+                    <button class="filter-adv-toggle" id="filter-adv-toggle" aria-expanded="true">
+                        <svg id="filter-adv-chevron" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>
+                        Advanced Filters
+                    </button>
+
+                    <div class="filter-advanced" id="filter-advanced">
+
+                        <!-- Listing Status -->
+                        <div class="filter-group">
+                            <label class="filter-label">Listing Status</label>
+                            <div class="filter-checkboxes">
+                                <label class="filter-check-item"><input type="checkbox" name="status" value="Active" checked><span>Active</span></label>
+                                <label class="filter-check-item"><input type="checkbox" name="status" value="Pending"><span>Pending</span></label>
+                                <label class="filter-check-item"><input type="checkbox" name="status" value="ActiveUnderContract"><span>Under Contract</span></label>
+                                <label class="filter-check-item"><input type="checkbox" name="status" value="ComingSoon"><span>Coming Soon</span></label>
+                                <label class="filter-check-item"><input type="checkbox" name="status" value="Closed"><span>Closed</span></label>
+                            </div>
+                        </div>
+
+                        <!-- Square Feet -->
+                        <div class="filter-group">
+                            <label class="filter-label">Square Feet</label>
+                            <div class="filter-two-col">
+                                <input type="number" id="f-sqft-min" class="filter-input" placeholder="Min sqft" min="0">
+                                <input type="number" id="f-sqft-max" class="filter-input" placeholder="Max sqft" min="0">
+                            </div>
+                        </div>
+
+                        <!-- Year Built slider -->
+                        <div class="filter-group">
+                            <label class="filter-label">Year Built &mdash; <span id="year-range-label">Any</span></label>
+                            <div class="year-slider-wrap">
+                                <div class="year-track">
+                                    <div class="year-track-fill" id="year-fill"></div>
+                                </div>
+                                <input type="range" id="year-min" class="year-range" min="1900" max="2026" value="1900" step="1" aria-label="Min year built">
+                                <input type="range" id="year-max" class="year-range" min="1900" max="2026" value="2026" step="1" aria-label="Max year built">
+                            </div>
+                        </div>
+
+                        <!-- Lot Size -->
+                        <div class="filter-group">
+                            <label class="filter-label">Lot Size (sqft)</label>
+                            <div class="filter-two-col">
+                                <input type="number" id="f-lot-min" class="filter-input" placeholder="Min lot sqft" min="0">
+                                <input type="number" id="f-lot-max" class="filter-input" placeholder="Max lot sqft" min="0">
+                            </div>
+                        </div>
+
+                        <!-- County -->
+                        <div class="filter-group">
+                            <label class="filter-label" for="f-county">County</label>
+                            <input type="text" id="f-county" class="filter-input" placeholder="e.g., Miami-Dade...">
+                        </div>
+
+                        <!-- Waterfront -->
+                        <div class="filter-group">
+                            <div class="filter-switch-row">
+                                <label class="filter-label" style="margin:0">Waterfront</label>
+                                <label class="filter-switch" aria-label="Waterfront filter">
+                                    <input type="checkbox" id="f-waterfront">
+                                    <span class="filter-switch-track"></span>
+                                </label>
+                            </div>
+                            <div class="waterfront-subtypes" id="waterfront-subtypes" style="display:none">
+                                <label class="filter-radio-item"><input type="radio" name="wf-type" value="any" checked><span>Any Waterfront</span></label>
+                                <label class="filter-radio-item"><input type="radio" name="wf-type" value="bay"><span>Bayfront</span></label>
+                                <label class="filter-radio-item"><input type="radio" name="wf-type" value="canal"><span>Canalfront</span></label>
+                                <label class="filter-radio-item"><input type="radio" name="wf-type" value="ocean"><span>Ocean / Beachfront</span></label>
+                            </div>
+                        </div>
+
+                    </div><!-- /filter-advanced -->
+
+                    <button class="filter-search-btn" id="search-btn">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                        <span id="search-btn-text">Search Properties</span>
+                    </button>
+
+                </div><!-- /filter-body -->
+            </aside>
+
+            <!-- RESULTS AREA -->
+            <div class="results-area">
+                <div class="results-header">
+                    <p class="results-count" id="results-count">Showing featured South Florida properties</p>
+                </div>
+                <div class="results-grid" id="results-grid">
+                    <!-- Populated by JS -->
+                </div>
+                <div id="load-more-wrap" class="load-more-wrap" style="display:none">
+                    <button class="load-more-btn" id="load-more-btn">Load More Properties</button>
+                </div>
+                <div id="no-results" class="no-results" style="display:none">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                    <p>No properties found matching your filters.</p>
+                    <p class="no-results-hint">Try broadening your search — adjust price range, location, or remove some filters.</p>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="lp-footer">
+        <div class="lp-footer-inner">
+            <img src="logo-white.png" alt="The Poler Team" class="lp-footer-logo">
+            <p class="lp-footer-copy">&copy; 2025 The Poler Team &mdash; Optimar International Realty. All rights reserved.</p>
+            <a href="index.html" class="lp-footer-back">&#8592; Back to Main Site</a>
+        </div>
+    </footer>
+
+</div><!-- /page-wrap -->
+
+<!-- EmailJS SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script src="listing.js"></script>
+</body>
+</html>
