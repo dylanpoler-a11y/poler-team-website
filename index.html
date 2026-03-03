@@ -1,0 +1,1164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Poler Team | South Florida Real Estate Experts</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="icon" type="image/png" sizes="192x192" href="favicon-192.png">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Preloader -->
+    <div id="preloader">
+        <div class="loader">
+            <span class="loader-letter">P</span>
+            <span class="loader-letter">O</span>
+            <span class="loader-letter">L</span>
+            <span class="loader-letter">E</span>
+            <span class="loader-letter">R</span>
+        </div>
+    </div>
+
+    <!-- Custom Cursor -->
+    <div class="cursor-dot"></div>
+    <div class="cursor-ring"></div>
+
+    <!-- Navigation -->
+    <nav id="navbar">
+        <div class="nav-container">
+            <a href="#hero" class="nav-logo">
+                <img src="logo-white.png" alt="The Poler Team" class="logo-img">
+            </a>
+            <ul class="nav-links">
+                <li><a href="#about" data-text="About" data-i18n="nav.about" data-i18n-data-text="nav.about">About</a></li>
+                <li><a href="#team" data-text="Team" data-i18n="nav.team" data-i18n-data-text="nav.team">Team</a></li>
+                <li><a href="#expertise" data-text="Expertise" data-i18n="nav.expertise" data-i18n-data-text="nav.expertise">Expertise</a></li>
+                <li><a href="#areas" data-text="Areas" data-i18n="nav.areas" data-i18n-data-text="nav.areas">Areas</a></li>
+                <li><a href="#investment" data-text="Investment" data-i18n="nav.investment" data-i18n-data-text="nav.investment">Investment</a></li>
+                <li><a href="#contact" data-text="Contact" data-i18n="nav.contact" data-i18n-data-text="nav.contact">Contact</a></li>
+            </ul>
+            <div class="lang-switcher">
+                <button class="lang-btn active" data-lang="en" aria-label="English">🇺🇸</button>
+                <button class="lang-btn" data-lang="es" aria-label="Español">🇪🇸</button>
+                <button class="lang-btn" data-lang="pt" aria-label="Português">🇧🇷</button>
+            </div>
+            <button class="nav-toggle" aria-label="Toggle menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu -->
+    <div class="mobile-menu">
+        <ul class="mobile-links">
+            <li><a href="#about" data-i18n="nav.about">About</a></li>
+            <li><a href="#team" data-i18n="nav.team">Team</a></li>
+            <li><a href="#expertise" data-i18n="nav.expertise">Expertise</a></li>
+            <li><a href="#areas" data-i18n="nav.areas">Areas</a></li>
+            <li><a href="#investment" data-i18n="nav.investment">Investment</a></li>
+            <li><a href="#contact" data-i18n="nav.contact">Contact</a></li>
+        </ul>
+        <div class="lang-switcher lang-switcher-mobile">
+            <button class="lang-btn active" data-lang="en" aria-label="English">🇺🇸</button>
+            <button class="lang-btn" data-lang="es" aria-label="Español">🇪🇸</button>
+            <button class="lang-btn" data-lang="pt" aria-label="Português">🇧🇷</button>
+        </div>
+    </div>
+
+    <!-- Hero Section -->
+    <section id="hero">
+        <div class="hero-video-wrap">
+            <video class="hero-video" autoplay muted loop playsinline>
+                <source src="sunny-isles-drone.mp4" type="video/mp4">
+            </video>
+            <div class="hero-video-overlay"></div>
+        </div>
+        <div class="hero-particles" id="particles"></div>
+        <div class="hero-content">
+            <div class="hero-logo-mark reveal-up" style="--delay: 0.1s">
+                <img src="logo-white.png" alt="The Poler Team" class="hero-logo-img">
+            </div>
+            <h1 class="hero-title reveal-up" style="--delay: 0.3s" data-i18n="hero.title">
+                Miami Real Estate
+            </h1>
+            <p class="hero-subtitle reveal-up" style="--delay: 0.7s" data-i18n="hero.subtitle">
+                20 Years of Excellence. 100+ Closings. Your Trusted Real Estate Partners.
+            </p>
+
+            <!-- Property Search Bar -->
+            <div class="hero-search reveal-up" style="--delay: 1s">
+                <div class="search-tabs">
+                    <button class="search-tab active" data-tab="buy" data-i18n="hero.buy">Buy</button>
+                    <button class="search-tab" data-tab="rent" data-i18n="hero.rent">Rent</button>
+                    <button class="search-tab" data-tab="sell" data-i18n="hero.sell">Sell</button>
+                    <button class="search-tab" data-tab="invest" data-i18n="hero.invest">Invest</button>
+                </div>
+
+                <!-- Standard Search Bar (Buy/Rent/Sell) -->
+                <form class="search-bar search-panel" id="propertySearch" data-panel="standard">
+                    <div class="search-field search-field-main">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                        <input type="text" placeholder="City, neighborhood, or address..." class="search-input" data-i18n-placeholder="hero.searchPlaceholder">
+                    </div>
+                    <div class="search-field search-field-select">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 21h18M5 21V7l8-4v18M13 21V3l6 4v14"/></svg>
+                        <select class="search-select">
+                            <option value="" data-i18n="hero.propertyType">Property Type</option>
+                            <option value="condo" data-i18n="hero.condo">Condo</option>
+                            <option value="house" data-i18n="hero.house">House</option>
+                            <option value="townhouse" data-i18n="hero.townhouse">Townhouse</option>
+                            <option value="commercial" data-i18n="hero.commercial">Commercial</option>
+                            <option value="land" data-i18n="hero.land">Land</option>
+                        </select>
+                    </div>
+                    <div class="search-field search-field-select">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+                        <select class="search-select">
+                            <option value="" data-i18n="hero.priceRange">Price Range</option>
+                            <option value="0-300000">Under $300K</option>
+                            <option value="300000-500000">$300K - $500K</option>
+                            <option value="500000-750000">$500K - $750K</option>
+                            <option value="750000-1000000">$750K - $1M</option>
+                            <option value="1000000-2000000">$1M - $2M</option>
+                            <option value="2000000-5000000">$2M - $5M</option>
+                            <option value="5000000+">$5M+</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="search-btn">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                        <span data-i18n="hero.search">Search</span>
+                    </button>
+                </form>
+
+                <!-- AI Invest Search Bar -->
+                <form class="ai-search-bar search-panel" id="investSearch" data-panel="invest" style="display: none;">
+                    <div class="ai-search-icon">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                            <path d="M12 2C12 2 12.8 6.2 14.3 9.7C15.8 13.2 18 14 22 14C18 14 15.8 14.8 14.3 18.3C12.8 21.8 12 22 12 22C12 22 11.2 21.8 9.7 18.3C8.2 14.8 6 14 2 14C6 14 8.2 13.2 9.7 9.7C11.2 6.2 12 2 12 2Z" fill="url(#geminiGrad)" />
+                            <defs>
+                                <linearGradient id="geminiGrad" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
+                                    <stop offset="0%" stop-color="#4285f4"/>
+                                    <stop offset="50%" stop-color="#9b72cb"/>
+                                    <stop offset="100%" stop-color="#d96570"/>
+                                </linearGradient>
+                            </defs>
+                        </svg>
+                    </div>
+                    <input type="text" class="ai-search-input" id="aiSearchInput" placeholder="">
+                    <div class="ai-search-cursor" id="aiCursor"></div>
+                    <button type="submit" class="ai-search-btn">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                    </button>
+                </form>
+            </div>
+
+        </div>
+        <div class="scroll-indicator">
+            <div class="scroll-line"></div>
+            <span data-i18n="hero.scroll">Scroll</span>
+        </div>
+    </section>
+
+    <!-- Featured Listings Section -->
+    <section id="listings" class="section featured-listings-section">
+        <div class="container">
+            <div class="listings-layout">
+                <div class="listings-sidebar reveal-left">
+                    <div class="section-tag">
+                        <span class="tag-line"></span>
+                        <span data-i18n="listings.tag">Properties</span>
+                    </div>
+                    <h2 class="listings-title">
+                        <span data-i18n="listings.title">Featured</span><br>
+                        <span class="text-gradient" data-i18n="listings.titleGradient">Listings</span>
+                    </h2>
+                    <nav class="listings-nav">
+                        <a href="#" class="listings-nav-item active">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 21h18M5 21V7l8-4v18M13 21V3l6 4v14"/></svg>
+                            <span data-i18n="listings.exclusive">Exclusive Listings</span>
+                        </a>
+                        <a href="#" class="listings-nav-item">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                            <span data-i18n="listings.openHouses">Open Houses</span>
+                        </a>
+                        <a href="#" class="listings-nav-item">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                            <span data-i18n="listings.propertySearch">Property Search</span>
+                        </a>
+                    </nav>
+                </div>
+                <div class="listings-grid">
+                    <div class="listing-card listing-card-large reveal-up" style="--delay: 0.1s">
+                        <div class="listing-image">
+                            <div class="listing-placeholder">
+                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M3 21h18M5 21V7l8-4v18M13 21V3l6 4v14"/><path d="M9 9h1M9 13h1M9 17h1"/></svg>
+                            </div>
+                            <div class="listing-badge" data-i18n="listings.new">New</div>
+                            <div class="listing-overlay">
+                                <span class="listing-area">Sunny Isles Beach</span>
+                            </div>
+                        </div>
+                        <div class="listing-details">
+                            <span class="listing-address" data-i18n="listings.comingSoon">Coming Soon</span>
+                            <span class="listing-price" data-i18n="listings.mlsConnected">MLS Connected</span>
+                        </div>
+                    </div>
+                    <div class="listing-card reveal-up" style="--delay: 0.2s">
+                        <div class="listing-image">
+                            <div class="listing-placeholder">
+                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                            </div>
+                            <div class="listing-overlay">
+                                <span class="listing-area">Aventura</span>
+                            </div>
+                        </div>
+                        <div class="listing-details">
+                            <span class="listing-address" data-i18n="listings.comingSoon">Coming Soon</span>
+                            <span class="listing-price" data-i18n="listings.mlsConnected">MLS Connected</span>
+                        </div>
+                    </div>
+                    <div class="listing-card reveal-up" style="--delay: 0.15s">
+                        <div class="listing-image">
+                            <div class="listing-placeholder">
+                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+                            </div>
+                            <div class="listing-overlay">
+                                <span class="listing-area">North Miami Beach</span>
+                            </div>
+                        </div>
+                        <div class="listing-details">
+                            <span class="listing-address" data-i18n="listings.comingSoon">Coming Soon</span>
+                            <span class="listing-price" data-i18n="listings.mlsConnected">MLS Connected</span>
+                        </div>
+                    </div>
+                    <div class="listing-card listing-card-large reveal-up" style="--delay: 0.25s">
+                        <div class="listing-image">
+                            <div class="listing-placeholder">
+                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                            </div>
+                            <div class="listing-badge" data-i18n="listings.featured">Featured</div>
+                            <div class="listing-overlay">
+                                <span class="listing-area">Sunny Isles Beach</span>
+                            </div>
+                        </div>
+                        <div class="listing-details">
+                            <span class="listing-address" data-i18n="listings.comingSoon">Coming Soon</span>
+                            <span class="listing-price" data-i18n="listings.mlsConnected">MLS Connected</span>
+                        </div>
+                    </div>
+                    <div class="listing-card reveal-up" style="--delay: 0.3s">
+                        <div class="listing-image">
+                            <div class="listing-placeholder">
+                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M3 21h18M5 21V7l8-4v18M13 21V3l6 4v14"/><path d="M9 9h1M9 13h1"/></svg>
+                            </div>
+                            <div class="listing-overlay">
+                                <span class="listing-area">Aventura</span>
+                            </div>
+                        </div>
+                        <div class="listing-details">
+                            <span class="listing-address" data-i18n="listings.comingSoon">Coming Soon</span>
+                            <span class="listing-price" data-i18n="listings.mlsConnected">MLS Connected</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Meet the Team Section -->
+    <section id="team" class="team-section section">
+        <div class="container">
+            <div class="section-header center">
+                <div class="section-tag reveal-up">
+                    <span class="tag-line"></span>
+                    <span data-i18n="team.tag">Meet the Team</span>
+                    <span class="tag-line"></span>
+                </div>
+                <h2 class="section-title reveal-up" style="--delay: 0.1s">
+                    <span data-i18n="team.title">The People Behind</span><br>
+                    <span class="text-gradient" data-i18n="team.titleGradient">Your Success.</span>
+                </h2>
+            </div>
+            <div class="team-grid">
+                <div class="team-card team-card-side reveal-up" style="--delay: 0.1s">
+                    <div class="team-photo">
+                        <img src="team-kevin.jpg" alt="Kevin Poler">
+                    </div>
+                    <div class="team-info">
+                        <h3>Kevin Poler</h3>
+                        <span class="team-role" data-i18n="team.kevin.role">Agent & Investment Analyst</span>
+                        <p data-i18n="team.kevin.bio">10+ years experience specializing in investment analysis, commercial real estate, and leveraging technology to find the best deals.</p>
+                    </div>
+                </div>
+                <div class="team-card team-card-featured reveal-up" style="--delay: 0.2s">
+                    <a href="https://www.homes.com/real-estate-agents/rosa-poler/4gj24ck/" target="_blank" rel="noopener" class="team-photo team-photo-link">
+                        <img src="team-rosa.jpg" alt="Rosa Poler">
+                        <div class="team-photo-badge">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
+                            <span data-i18n="team.rosa.badge">View on Homes.com</span>
+                        </div>
+                    </a>
+                    <div class="team-info">
+                        <h3>Rosa Poler</h3>
+                        <span class="team-role" data-i18n="team.rosa.role">Lead Agent & Founder</span>
+                        <p data-i18n="team.rosa.bio">With 20+ years as a top-producing South Florida agent, Rosa brings unmatched market knowledge and trusted client relationships.</p>
+                        <a href="https://www.homes.com/real-estate-agents/rosa-poler/4gj24ck/" target="_blank" rel="noopener" class="team-link">
+                            <span data-i18n="team.rosa.link">View Full Profile</span>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M17 7H7M17 7v10"/></svg>
+                        </a>
+                    </div>
+                </div>
+                <div class="team-card team-card-side reveal-up" style="--delay: 0.3s">
+                    <div class="team-photo">
+                        <img src="team-dylan.jpg" alt="Dylan Poler">
+                    </div>
+                    <div class="team-info">
+                        <h3>Dylan Poler</h3>
+                        <span class="team-role" data-i18n="team.dylan.role">Agent & Investment Analyst</span>
+                        <p data-i18n="team.dylan.bio">5+ years experience specializing in investment analysis, commercial real estate, and leveraging technology to find the best deals.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Featured Profiles Section -->
+    <section class="section homes-featured-section">
+        <div class="container">
+            <div class="section-header center">
+                <div class="section-tag reveal-up">
+                    <span class="tag-line"></span>
+                    <span data-i18n="profiles.tag">Our Profiles</span>
+                    <span class="tag-line"></span>
+                </div>
+                <h2 class="section-title reveal-up" style="--delay: 0.1s">
+                    <span data-i18n="profiles.title">Featured On</span><br>
+                    <span class="text-gradient" data-i18n="profiles.titleGradient">Top Platforms</span>
+                </h2>
+            </div>
+            <div class="platform-cards">
+                <!-- Homes.com Card -->
+                <div class="platform-card reveal-up" style="--delay: 0.1s">
+                    <div class="platform-header platform-homes">
+                        <div class="platform-logo-badge">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                            <span>Homes.com</span>
+                        </div>
+                        <div class="platform-verified">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
+                            <span data-i18n="profiles.verified">Verified</span>
+                        </div>
+                    </div>
+                    <div class="platform-body">
+                        <div class="platform-agent-row">
+                            <div class="platform-agent-photo">
+                                <img src="team-rosa.jpg" alt="Rosa Poler">
+                            </div>
+                            <div class="platform-agent-info">
+                                <h3 class="platform-agent-name">Rosa Poler</h3>
+                                <span class="platform-agent-role" data-i18n="profiles.agentRole">Licensed Real Estate Agent</span>
+                                <div class="platform-rating">
+                                    <div class="platform-stars">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" stroke-width="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" stroke-width="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" stroke-width="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" stroke-width="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" stroke-width="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                                    </div>
+                                    <span class="platform-review-count" data-i18n="profiles.rating">5.0 Rating</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="platform-stats-row">
+                            <div class="platform-stat">
+                                <span class="platform-stat-number">20+</span>
+                                <span class="platform-stat-label" data-i18n="profiles.yearsExp">Years Exp</span>
+                            </div>
+                            <div class="platform-stat">
+                                <span class="platform-stat-number">100+</span>
+                                <span class="platform-stat-label" data-i18n="profiles.closings">Closings</span>
+                            </div>
+                            <div class="platform-stat">
+                                <span class="platform-stat-number">5★</span>
+                                <span class="platform-stat-label" data-i18n="profiles.reviews">Reviews</span>
+                            </div>
+                        </div>
+                        <div class="platform-areas">
+                            <span class="platform-area-tag">Sunny Isles Beach</span>
+                            <span class="platform-area-tag">Aventura</span>
+                            <span class="platform-area-tag">North Miami Beach</span>
+                        </div>
+                        <a href="https://www.homes.com/real-estate-agents/rosa-poler/4gj24ck/" target="_blank" rel="noopener" class="platform-visit-btn">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg>
+                            <span data-i18n="profiles.viewHomes">View on Homes.com</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Zillow Card -->
+                <div class="platform-card reveal-up" style="--delay: 0.2s">
+                    <div class="platform-header platform-zillow">
+                        <div class="platform-logo-badge">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                            <span>Zillow</span>
+                        </div>
+                        <div class="platform-verified">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
+                            <span data-i18n="profiles.teamProfile">Team Profile</span>
+                        </div>
+                    </div>
+                    <div class="platform-body">
+                        <div class="platform-agent-row">
+                            <div class="platform-agent-photo">
+                                <img src="team-rosa.jpg" alt="The Poler Team">
+                            </div>
+                            <div class="platform-agent-info">
+                                <h3 class="platform-agent-name">The Poler Team</h3>
+                                <span class="platform-agent-role">Optimar International Realty</span>
+                                <div class="platform-rating">
+                                    <div class="platform-stars">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" stroke-width="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" stroke-width="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" stroke-width="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" stroke-width="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" stroke-width="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                                    </div>
+                                    <span class="platform-review-count" data-i18n="profiles.reviewCount">17 Reviews</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="platform-stats-row">
+                            <div class="platform-stat">
+                                <span class="platform-stat-number">72</span>
+                                <span class="platform-stat-label" data-i18n="profiles.totalSales">Total Sales</span>
+                            </div>
+                            <div class="platform-stat">
+                                <span class="platform-stat-number">$851K</span>
+                                <span class="platform-stat-label" data-i18n="profiles.avgPrice">Avg Price</span>
+                            </div>
+                            <div class="platform-stat">
+                                <span class="platform-stat-number">14</span>
+                                <span class="platform-stat-label" data-i18n="profiles.yearsExp2">Years Exp</span>
+                            </div>
+                        </div>
+                        <div class="platform-areas">
+                            <span class="platform-area-tag">Sunny Isles Beach</span>
+                            <span class="platform-area-tag">Aventura</span>
+                            <span class="platform-area-tag">Miami Beach</span>
+                        </div>
+                        <a href="https://www.zillow.com/profile/Thepolerteam" target="_blank" rel="noopener" class="platform-visit-btn platform-visit-zillow">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg>
+                            <span data-i18n="profiles.viewZillow">View on Zillow</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Instagram Feed Section -->
+    <section class="section instagram-section">
+        <div class="container">
+            <div class="instagram-header reveal-up">
+                <div class="social-label">
+                    <span data-i18n="social.label">FOLLOW US ON SOCIAL</span>
+                </div>
+                <p class="instagram-followers" data-i18n="social.followers">4K+ Combined Followers</p>
+                <div class="social-handles">
+                    <a href="https://www.instagram.com/thepolerteam/" target="_blank" rel="noopener" class="social-handle-link">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+                            <circle cx="12" cy="12" r="5"/>
+                            <circle cx="17.5" cy="6.5" r="1.5" fill="currentColor" stroke="none"/>
+                        </svg>
+                        <span>@THEPOLERTEAM</span>
+                    </a>
+                    <span class="social-divider">•</span>
+                    <a href="https://www.facebook.com/thepolerteam" target="_blank" rel="noopener" class="social-handle-link">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"/>
+                        </svg>
+                        <span>THE POLER TEAM</span>
+                    </a>
+                </div>
+                <div class="social-buttons">
+                    <a href="https://www.instagram.com/thepolerteam/" target="_blank" rel="noopener" class="instagram-follow-btn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+                            <circle cx="12" cy="12" r="5"/>
+                            <circle cx="17.5" cy="6.5" r="1.5" fill="currentColor" stroke="none"/>
+                        </svg>
+                        <span data-i18n="social.followUs">Follow Us</span>
+                    </a>
+                    <a href="https://www.facebook.com/thepolerteam" target="_blank" rel="noopener" class="facebook-follow-btn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"/>
+                        </svg>
+                        <span data-i18n="social.getToKnow">Get to Know Us</span>
+                    </a>
+                </div>
+            </div>
+            <div class="instagram-grid reveal-up" style="--delay: 0.1s">
+                <a href="https://www.instagram.com/p/DUod1TijbaR/" target="_blank" rel="noopener" class="instagram-post">
+                    <img src="ig-post-1.jpg" alt="Waterfront luxury in Sunny Isles" loading="lazy">
+                    <div class="instagram-post-overlay">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="white" stroke="none"><rect x="2" y="2" width="20" height="20" rx="5" ry="5" fill="none" stroke="white" stroke-width="2"/><circle cx="12" cy="12" r="5" fill="none" stroke="white" stroke-width="2"/></svg>
+                    </div>
+                </a>
+                <a href="https://www.instagram.com/p/DOdo5mEDWUM/" target="_blank" rel="noopener" class="instagram-post">
+                    <img src="ig-post-2.jpg" alt="South Florida property" loading="lazy">
+                    <div class="instagram-post-overlay">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="white" stroke="none"><rect x="2" y="2" width="20" height="20" rx="5" ry="5" fill="none" stroke="white" stroke-width="2"/><circle cx="12" cy="12" r="5" fill="none" stroke="white" stroke-width="2"/></svg>
+                    </div>
+                </a>
+                <a href="https://www.instagram.com/p/DRZ7J1sgArr/" target="_blank" rel="noopener" class="instagram-post">
+                    <img src="ig-post-3.jpg" alt="The Poler Team" loading="lazy">
+                    <div class="instagram-post-overlay">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="white" stroke="none"><rect x="2" y="2" width="20" height="20" rx="5" ry="5" fill="none" stroke="white" stroke-width="2"/><circle cx="12" cy="12" r="5" fill="none" stroke="white" stroke-width="2"/></svg>
+                    </div>
+                </a>
+                <a href="https://www.instagram.com/p/DIL_dgnMsu7/" target="_blank" rel="noopener" class="instagram-post">
+                    <img src="ig-post-4.jpg" alt="South Florida real estate" loading="lazy">
+                    <div class="instagram-post-overlay">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="white" stroke="none"><rect x="2" y="2" width="20" height="20" rx="5" ry="5" fill="none" stroke="white" stroke-width="2"/><circle cx="12" cy="12" r="5" fill="none" stroke="white" stroke-width="2"/></svg>
+                    </div>
+                </a>
+                <a href="https://www.instagram.com/p/DHvbpowuqkF/" target="_blank" rel="noopener" class="instagram-post">
+                    <img src="ig-post-5.jpg" alt="Luxury property listing" loading="lazy">
+                    <div class="instagram-post-overlay">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="white" stroke="none"><rect x="2" y="2" width="20" height="20" rx="5" ry="5" fill="none" stroke="white" stroke-width="2"/><circle cx="12" cy="12" r="5" fill="none" stroke="white" stroke-width="2"/></svg>
+                    </div>
+                </a>
+                <a href="https://www.instagram.com/p/DHgHt1wMK9z/" target="_blank" rel="noopener" class="instagram-post">
+                    <img src="ig-post-6.jpg" alt="Property showcase" loading="lazy">
+                    <div class="instagram-post-overlay">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="white" stroke="none"><rect x="2" y="2" width="20" height="20" rx="5" ry="5" fill="none" stroke="white" stroke-width="2"/><circle cx="12" cy="12" r="5" fill="none" stroke="white" stroke-width="2"/></svg>
+                    </div>
+                </a>
+                <a href="https://www.instagram.com/p/DHgFH-DsdWl/" target="_blank" rel="noopener" class="instagram-post">
+                    <img src="ig-post-7.jpg" alt="Real estate listing" loading="lazy">
+                    <div class="instagram-post-overlay">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="white" stroke="none"><rect x="2" y="2" width="20" height="20" rx="5" ry="5" fill="none" stroke="white" stroke-width="2"/><circle cx="12" cy="12" r="5" fill="none" stroke="white" stroke-width="2"/></svg>
+                    </div>
+                </a>
+                <a href="https://www.instagram.com/p/DOwUtDqj279/" target="_blank" rel="noopener" class="instagram-post">
+                    <img src="ig-post-8.jpg" alt="South Florida home" loading="lazy">
+                    <div class="instagram-post-overlay">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="white" stroke="none"><rect x="2" y="2" width="20" height="20" rx="5" ry="5" fill="none" stroke="white" stroke-width="2"/><circle cx="12" cy="12" r="5" fill="none" stroke="white" stroke-width="2"/></svg>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Horizontal Scrolling Marquee -->
+    <div class="marquee-section">
+        <div class="marquee">
+            <div class="marquee-content">
+                <span>Sunny Isles Beach</span>
+                <span class="marquee-dot"></span>
+                <span>Aventura</span>
+                <span class="marquee-dot"></span>
+                <span>North Miami Beach</span>
+                <span class="marquee-dot"></span>
+                <span data-i18n="marquee.luxury">Luxury Living</span>
+                <span class="marquee-dot"></span>
+                <span data-i18n="marquee.investment">Investment Properties</span>
+                <span class="marquee-dot"></span>
+                <span data-i18n="marquee.commercial">Commercial Real Estate</span>
+                <span class="marquee-dot"></span>
+                <span>Sunny Isles Beach</span>
+                <span class="marquee-dot"></span>
+                <span>Aventura</span>
+                <span class="marquee-dot"></span>
+                <span>North Miami Beach</span>
+                <span class="marquee-dot"></span>
+                <span data-i18n="marquee.luxury">Luxury Living</span>
+                <span class="marquee-dot"></span>
+                <span data-i18n="marquee.investment">Investment Properties</span>
+                <span class="marquee-dot"></span>
+                <span data-i18n="marquee.commercial">Commercial Real Estate</span>
+                <span class="marquee-dot"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Expertise Section -->
+    <section id="expertise" class="section section-dark">
+        <div class="container">
+            <div class="section-header center">
+                <div class="section-tag reveal-up">
+                    <span class="tag-line"></span>
+                    <span data-i18n="expertise.tag">What We Do</span>
+                    <span class="tag-line"></span>
+                </div>
+                <h2 class="section-title reveal-up" style="--delay: 0.1s">
+                    <span data-i18n="expertise.titlePrefix">Our </span><span class="text-gradient" data-i18n="expertise.titleGradient">Expertise</span>
+                </h2>
+            </div>
+            <div class="expertise-grid">
+                <div class="expertise-card reveal-up" style="--delay: 0.1s">
+                    <div class="card-number">01</div>
+                    <div class="card-icon">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M3 21h18M9 8h1M9 12h1M9 16h1M13 8h1M13 12h1M13 16h1M5 21V5a2 2 0 012-2h10a2 2 0 012 2v16"/></svg>
+                    </div>
+                    <h3 data-i18n="expertise.residential">Residential Sales</h3>
+                    <p data-i18n="expertise.residentialDesc">From luxury oceanfront condos in Sunny Isles to charming family homes in Aventura, we match you with the perfect property. Every transaction is handled with precision and care.</p>
+                    <div class="card-line"></div>
+                </div>
+                <div class="expertise-card reveal-up" style="--delay: 0.2s">
+                    <div class="card-number">02</div>
+                    <div class="card-icon">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M2 20h20M4 20V10l8-6 8 6v10"/><path d="M10 20v-6h4v6"/></svg>
+                    </div>
+                    <h3 data-i18n="expertise.commercialTitle">Commercial Real Estate</h3>
+                    <p data-i18n="expertise.commercialDesc">Deep expertise in South Florida's commercial market. We analyze opportunities, negotiate deals, and ensure your commercial investments deliver maximum value and long-term returns.</p>
+                    <div class="card-line"></div>
+                </div>
+                <div class="expertise-card reveal-up" style="--delay: 0.3s">
+                    <div class="card-number">03</div>
+                    <div class="card-icon">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+                    </div>
+                    <h3 data-i18n="expertise.investmentTitle">Investment Analysis</h3>
+                    <p data-i18n="expertise.investmentDesc">Our proprietary investment tools and 20 years of market data help you make informed decisions. We break down the numbers so you can invest with confidence and clarity.</p>
+                    <div class="card-line"></div>
+                </div>
+                <div class="expertise-card reveal-up" style="--delay: 0.4s">
+                    <div class="card-number">04</div>
+                    <div class="card-icon">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/><path d="M11 8v6M8 11h6"/></svg>
+                    </div>
+                    <h3 data-i18n="expertise.marketTitle">Market Intelligence</h3>
+                    <p data-i18n="expertise.marketDesc">Stay ahead of the curve with our deep understanding of South Florida's real estate trends, pricing dynamics, and neighborhood-level insights that drive smarter decisions.</p>
+                    <div class="card-line"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Areas Section with Parallax -->
+    <section id="areas" class="section">
+        <div class="container">
+            <div class="section-header center">
+                <div class="section-tag reveal-up">
+                    <span class="tag-line"></span>
+                    <span data-i18n="areas.tag">Where We Work</span>
+                    <span class="tag-line"></span>
+                </div>
+                <h2 class="section-title reveal-up" style="--delay: 0.1s">
+                    <span data-i18n="areas.titlePrefix">Our </span><span class="text-gradient" data-i18n="areas.titleGradient">Markets</span>
+                </h2>
+            </div>
+            <div class="areas-showcase">
+                <div class="area-card reveal-up" style="--delay: 0.1s">
+                    <div class="area-image area-sunny-isles">
+                        <div class="area-image-inner"></div>
+                    </div>
+                    <div class="area-content">
+                        <span class="area-tag" data-i18n="areas.oceanfront">Oceanfront Living</span>
+                        <h3>Sunny Isles Beach</h3>
+                        <p data-i18n="areas.sunnyDesc">Known as "Little Moscow," Sunny Isles Beach features stunning high-rise condos along the Atlantic, world-class dining, and a vibrant international community. We know every building, every view, every opportunity.</p>
+                        <div class="area-stats">
+                            <div class="area-stat">
+                                <span class="stat-value">$1.2M+</span>
+                                <span class="stat-label" data-i18n="areas.avgCondo">Avg. Condo Price</span>
+                            </div>
+                            <div class="area-stat">
+                                <span class="stat-value">15+</span>
+                                <span class="stat-label" data-i18n="areas.luxuryTowers">Luxury Towers</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="area-card area-card-reverse reveal-up" style="--delay: 0.2s">
+                    <div class="area-image area-aventura">
+                        <div class="area-image-inner"></div>
+                    </div>
+                    <div class="area-content">
+                        <span class="area-tag" data-i18n="areas.family">Family & Luxury</span>
+                        <h3>Aventura</h3>
+                        <p data-i18n="areas.aventuraDesc">Home to the iconic Aventura Mall and surrounded by waterways, Aventura offers the perfect blend of suburban tranquility and urban sophistication. Exceptional schools, parks, and an unbeatable lifestyle.</p>
+                        <div class="area-stats">
+                            <div class="area-stat">
+                                <span class="stat-value">A+</span>
+                                <span class="stat-label" data-i18n="areas.schoolRating">School Rating</span>
+                            </div>
+                            <div class="area-stat">
+                                <span class="stat-value">Top 10</span>
+                                <span class="stat-label" data-i18n="areas.flCommunities">FL Communities</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="area-card reveal-up" style="--delay: 0.3s">
+                    <div class="area-image area-nmb">
+                        <div class="area-image-inner"></div>
+                    </div>
+                    <div class="area-content">
+                        <span class="area-tag" data-i18n="areas.emerging">Emerging Market</span>
+                        <h3>North Miami Beach</h3>
+                        <p data-i18n="areas.nmbDesc">A rapidly evolving market with incredible investment potential. North Miami Beach combines affordability with proximity to the beach, making it one of South Florida's most exciting areas for buyers and investors alike.</p>
+                        <div class="area-stats">
+                            <div class="area-stat">
+                                <span class="stat-value">25%</span>
+                                <span class="stat-label" data-i18n="areas.valueGrowth">Value Growth</span>
+                            </div>
+                            <div class="area-stat">
+                                <span class="stat-value">Hot</span>
+                                <span class="stat-label" data-i18n="areas.investZone">Investment Zone</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="section">
+        <div class="section-bg-pattern"></div>
+        <div class="container">
+            <div class="about-grid">
+                <div class="about-images">
+                    <div class="about-img-main parallax-item" data-speed="0.05">
+                        <div class="img-placeholder img-skyline">
+                            <div class="img-overlay-text" data-i18n="about.skyline">MIAMI SKYLINE</div>
+                        </div>
+                    </div>
+                    <div class="about-img-float parallax-item" data-speed="-0.08">
+                        <div class="img-placeholder img-luxury">
+                            <div class="img-overlay-text" data-i18n="about.luxury">LUXURY LIVING</div>
+                        </div>
+                    </div>
+                    <div class="experience-badge parallax-item" data-speed="-0.12">
+                        <span class="exp-number">20</span>
+                        <span class="exp-text" data-i18n="about.expText">Years of<br>Excellence</span>
+                    </div>
+                </div>
+                <div class="about-content">
+                    <div class="section-tag reveal-left">
+                        <span class="tag-line"></span>
+                        <span data-i18n="about.tag">Who We Are</span>
+                    </div>
+                    <h2 class="section-title reveal-left" style="--delay: 0.1s">
+                        <span data-i18n="about.title">South Florida Real Estate,</span><br>
+                        <span class="text-gradient" data-i18n="about.titleGradient">Reimagined.</span>
+                    </h2>
+                    <p class="about-text reveal-left" style="--delay: 0.2s" data-i18n="about.text1">
+                        With two decades of experience navigating South Florida's dynamic real estate market, the Poler Team has established itself as the go-to experts for both residential and commercial properties. Our deep knowledge of Sunny Isles, Aventura, and North Miami Beach gives our clients an unmatched advantage.
+                    </p>
+                    <p class="about-text reveal-left" style="--delay: 0.3s" data-i18n="about.text2">
+                        Whether you're searching for your dream waterfront condo, a family home, or a strategic commercial investment, we combine market intelligence with personalized service to deliver results that exceed expectations.
+                    </p>
+                    <div class="about-features reveal-left" style="--delay: 0.4s">
+                        <div class="feature">
+                            <div class="feature-icon">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 21h18M5 21V7l8-4v18M13 21V3l6 4v14"/><path d="M9 9h1M9 13h1M9 17h1"/></svg>
+                            </div>
+                            <div>
+                                <strong data-i18n="about.feature1">Residential Expertise</strong>
+                                <p data-i18n="about.feature1Desc">Luxury condos, waterfront properties & family homes</p>
+                            </div>
+                        </div>
+                        <div class="feature">
+                            <div class="feature-icon">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                            </div>
+                            <div>
+                                <strong data-i18n="about.feature2">Commercial & Investment</strong>
+                                <p data-i18n="about.feature2Desc">Strategic analysis & high-yield opportunities</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Parallax Divider -->
+    <section class="parallax-divider">
+        <div class="parallax-video-wrap">
+            <video class="parallax-video" autoplay muted loop playsinline>
+                <source src="invest-video.mp4" type="video/mp4">
+            </video>
+        </div>
+        <div class="parallax-overlay"></div>
+        <div class="parallax-content">
+            <h2 class="reveal-up" data-i18n="parallax.title">Ready to Invest Smarter?</h2>
+            <p class="reveal-up" style="--delay: 0.2s" data-i18n="parallax.subtitle">Discover our powerful investment SEARCH tool</p>
+        </div>
+    </section>
+
+    <!-- Investment Tool Section -->
+    <section id="investment" class="section section-dark">
+        <div class="container">
+            <div class="investment-grid">
+                <div class="investment-content">
+                    <div class="section-tag reveal-left">
+                        <span class="tag-line"></span>
+                        <span data-i18n="invest.tag">Our Secret Weapon</span>
+                    </div>
+                    <h2 class="section-title reveal-left" style="--delay: 0.1s">
+                        <span data-i18n="invest.title">Analyze Investments</span><br>
+                        <span class="text-gradient" data-i18n="invest.titleGradient">Like a Pro.</span>
+                    </h2>
+                    <p class="reveal-left" style="--delay: 0.2s" data-i18n="invest.desc">
+                        We've built a powerful, proprietary investment analysis tool that gives you the edge. Run the numbers on any property, compare returns, and make data-driven decisions with confidence.
+                    </p>
+                    <ul class="investment-features reveal-left" style="--delay: 0.3s">
+                        <li>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
+                            <span data-i18n="invest.f1">ROI & Cash Flow Analysis</span>
+                        </li>
+                        <li>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
+                            <span data-i18n="invest.f2">Cap Rate Calculations</span>
+                        </li>
+                        <li>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
+                            <span data-i18n="invest.f3">Market Comparison Tools</span>
+                        </li>
+                        <li>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
+                            <span data-i18n="invest.f4">Expense & Revenue Projections</span>
+                        </li>
+                    </ul>
+                    <a href="https://investoros1.com" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-glow reveal-left" style="--delay: 0.4s">
+                        <span data-i18n="invest.cta">Try Our Investment Tool</span>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M17 7H7M17 7v10"/></svg>
+                    </a>
+                </div>
+                <div class="investment-visual reveal-right">
+                    <div class="invest-mockup">
+                        <div class="mockup-header">
+                            <div class="mockup-dots">
+                                <span></span><span></span><span></span>
+                            </div>
+                            <div class="mockup-url">investoros1.com</div>
+                        </div>
+                        <div class="mockup-body">
+                            <div class="mockup-chart">
+                                <div class="chart-bar" style="--height: 40%; --delay: 0.1s"></div>
+                                <div class="chart-bar" style="--height: 65%; --delay: 0.2s"></div>
+                                <div class="chart-bar" style="--height: 45%; --delay: 0.3s"></div>
+                                <div class="chart-bar" style="--height: 80%; --delay: 0.4s"></div>
+                                <div class="chart-bar" style="--height: 55%; --delay: 0.5s"></div>
+                                <div class="chart-bar" style="--height: 90%; --delay: 0.6s"></div>
+                                <div class="chart-bar" style="--height: 70%; --delay: 0.7s"></div>
+                            </div>
+                            <div class="mockup-stats">
+                                <div class="mockup-stat">
+                                    <span class="ms-label" data-i18n="invest.roi">ROI</span>
+                                    <span class="ms-value">12.4%</span>
+                                </div>
+                                <div class="mockup-stat">
+                                    <span class="ms-label" data-i18n="invest.capRate">Cap Rate</span>
+                                    <span class="ms-value">6.8%</span>
+                                </div>
+                                <div class="mockup-stat">
+                                    <span class="ms-label" data-i18n="invest.cashFlow">Cash Flow</span>
+                                    <span class="ms-value">+$2,450</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="floating-card fc-1 parallax-item" data-speed="-0.06">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                        <span data-i18n="invest.liveData">Live Market Data</span>
+                    </div>
+                    <div class="floating-card fc-2 parallax-item" data-speed="0.08">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+                        <span data-i18n="invest.projections">Profit Projections</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section id="stats" class="section">
+        <div class="container">
+            <div class="stats-grid">
+                <div class="stat-card reveal-up" style="--delay: 0.1s">
+                    <div class="stat-icon">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="10"/></svg>
+                    </div>
+                    <div class="stat-number" data-target="20">0</div>
+                    <div class="stat-suffix">+</div>
+                    <div class="stat-label" data-i18n="stats.experience">Years of Experience</div>
+                </div>
+                <div class="stat-card reveal-up" style="--delay: 0.2s">
+                    <div class="stat-icon">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>
+                    </div>
+                    <div class="stat-number" data-target="100">0</div>
+                    <div class="stat-suffix">+</div>
+                    <div class="stat-label" data-i18n="stats.closings">Successful Closings</div>
+                </div>
+                <div class="stat-card reveal-up" style="--delay: 0.3s">
+                    <div class="stat-icon">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+                    </div>
+                    <div class="stat-number" data-target="500">0</div>
+                    <div class="stat-suffix">+</div>
+                    <div class="stat-label" data-i18n="stats.clients">Happy Clients</div>
+                </div>
+                <div class="stat-card reveal-up" style="--delay: 0.4s">
+                    <div class="stat-icon">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                    </div>
+                    <div class="stat-number" data-target="3">0</div>
+                    <div class="stat-suffix"></div>
+                    <div class="stat-label" data-i18n="stats.markets">Expert Market Areas</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonial/Trust Section -->
+    <section class="section section-trust">
+        <div class="container">
+            <div class="trust-content center">
+                <div class="quote-mark">&ldquo;</div>
+                <blockquote class="reveal-up" data-i18n="trust.quote">
+                    The Poler Team didn't just help us find a home &mdash; they found us the perfect investment. Their market knowledge and analysis tools are second to none.
+                </blockquote>
+                <div class="trust-author reveal-up" style="--delay: 0.2s">
+                    <div class="author-line"></div>
+                    <span data-i18n="trust.author">Satisfied Client, Sunny Isles Beach</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="section section-dark">
+        <div class="container">
+            <div class="contact-grid">
+                <div class="contact-info">
+                    <div class="section-tag reveal-left">
+                        <span class="tag-line"></span>
+                        <span data-i18n="contact.tag">Get In Touch</span>
+                    </div>
+                    <h2 class="section-title reveal-left" style="--delay: 0.1s">
+                        <span data-i18n="contact.title">Let's Find Your</span><br>
+                        <span class="text-gradient" data-i18n="contact.titleGradient">Next Property.</span>
+                    </h2>
+                    <p class="reveal-left" style="--delay: 0.2s" data-i18n="contact.desc">
+                        Whether you're buying, selling, or investing, we're here to guide you every step of the way. Reach out today and let's start your real estate journey.
+                    </p>
+                    <div class="contact-details reveal-left" style="--delay: 0.3s">
+                        <div class="contact-item">
+                            <div class="contact-icon">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                            </div>
+                            <div>
+                                <strong data-i18n="contact.location">Location</strong>
+                                <p>Sunny Isles Beach, FL</p>
+                            </div>
+                        </div>
+                        <div class="contact-item">
+                            <div class="contact-icon">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/></svg>
+                            </div>
+                            <div>
+                                <strong data-i18n="contact.phone">Phone</strong>
+                                <p data-i18n="contact.phoneDesc">Call or Text Anytime</p>
+                            </div>
+                        </div>
+                        <div class="contact-item">
+                            <div class="contact-icon">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><path d="M22 6l-10 7L2 6"/></svg>
+                            </div>
+                            <div>
+                                <strong data-i18n="contact.email">Email</strong>
+                                <p>info@polerteam.com</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="contact-form-wrap reveal-right">
+                    <form class="contact-form" id="contactForm">
+                        <div class="form-group">
+                            <input type="text" id="name" required placeholder=" ">
+                            <label for="name" data-i18n="contact.formName">Your Name</label>
+                            <div class="form-line"></div>
+                        </div>
+                        <div class="form-group">
+                            <input type="email" id="email" required placeholder=" ">
+                            <label for="email" data-i18n="contact.formEmail">Email Address</label>
+                            <div class="form-line"></div>
+                        </div>
+                        <div class="form-group">
+                            <input type="tel" id="phone" placeholder=" ">
+                            <label for="phone" data-i18n="contact.formPhone">Phone Number</label>
+                            <div class="form-line"></div>
+                        </div>
+                        <div class="form-group">
+                            <select id="interest" required>
+                                <option value="" disabled selected></option>
+                                <option value="buying" data-i18n="contact.buying">Buying a Property</option>
+                                <option value="selling" data-i18n="contact.selling">Selling a Property</option>
+                                <option value="investing" data-i18n="contact.investing">Investment Analysis</option>
+                                <option value="commercial" data-i18n="contact.commercial">Commercial Real Estate</option>
+                                <option value="other" data-i18n="contact.other">Other</option>
+                            </select>
+                            <label for="interest" data-i18n="contact.formInterest">I'm Interested In</label>
+                            <div class="form-line"></div>
+                        </div>
+                        <div class="form-group">
+                            <textarea id="message" rows="4" required placeholder=" "></textarea>
+                            <label for="message" data-i18n="contact.formMessage">Your Message</label>
+                            <div class="form-line"></div>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-full">
+                            <span data-i18n="contact.submit">Send Message</span>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer id="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <div class="footer-logos">
+                        <img src="footer-logos.png" alt="The Poler Team | Optimar International Realty" class="footer-logos-img">
+                    </div>
+                    <p data-i18n="footer.desc">Your trusted South Florida real estate experts. Two decades of experience, hundreds of happy clients, and a passion for finding the perfect property.</p>
+                </div>
+                <div class="footer-links">
+                    <h4 data-i18n="footer.quickLinks">Quick Links</h4>
+                    <ul>
+                        <li><a href="#about" data-i18n="footer.aboutUs">About Us</a></li>
+                        <li><a href="#expertise" data-i18n="footer.ourExpertise">Our Expertise</a></li>
+                        <li><a href="#areas" data-i18n="footer.marketAreas">Market Areas</a></li>
+                        <li><a href="#investment" data-i18n="footer.investTool">Investment Tool</a></li>
+                        <li><a href="#contact" data-i18n="footer.contact">Contact</a></li>
+                    </ul>
+                </div>
+                <div class="footer-links">
+                    <h4 data-i18n="footer.markets">Markets</h4>
+                    <ul>
+                        <li><a href="#areas">Sunny Isles Beach</a></li>
+                        <li><a href="#areas">Aventura</a></li>
+                        <li><a href="#areas">North Miami Beach</a></li>
+                    </ul>
+                </div>
+                <div class="footer-links">
+                    <h4 data-i18n="footer.tools">Tools</h4>
+                    <ul>
+                        <li><a href="https://investoros1.com" target="_blank" rel="noopener noreferrer" data-i18n="footer.analyzer">Investment Analyzer</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p data-i18n="footer.copyright">&copy; 2025 The Poler Team. All rights reserved.</p>
+                <div class="footer-social">
+                    <a href="#" aria-label="Instagram">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><path d="M17.5 6.5h.01"/></svg>
+                    </a>
+                    <a href="#" aria-label="Facebook">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"/></svg>
+                    </a>
+                    <a href="#" aria-label="LinkedIn">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Chatbot Widget -->
+    <div id="chatbot-widget">
+        <!-- Floating Bubble Button -->
+        <button id="chatbot-bubble" aria-label="Open chat assistant">
+            <svg class="chatbot-icon-chat" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+            </svg>
+            <svg class="chatbot-icon-close" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 6L6 18M6 6l12 12"/>
+            </svg>
+            <span class="chatbot-notification-dot"></span>
+        </button>
+
+        <!-- Chat Window -->
+        <div id="chatbot-window" class="chatbot-window-hidden">
+            <!-- Header -->
+            <div class="chatbot-header">
+                <div class="chatbot-header-info">
+                    <div class="chatbot-avatar">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+                            <polyline points="9 22 9 12 15 12 15 22"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <span class="chatbot-header-title" data-i18n="chatbot.title">Poler Team Assistant</span>
+                        <span class="chatbot-header-status" data-i18n="chatbot.status">Online</span>
+                    </div>
+                </div>
+                <button id="chatbot-close" aria-label="Close chat">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 6L6 18M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Mode Selector -->
+            <div class="chatbot-mode-selector">
+                <button class="chatbot-mode-btn active" data-mode="residential">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+                        <polyline points="9 22 9 12 15 12 15 22"/>
+                    </svg>
+                    <span data-i18n="chatbot.residential">Residential Agent</span>
+                </button>
+                <button class="chatbot-mode-btn" data-mode="investment">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>
+                    </svg>
+                    <span data-i18n="chatbot.investment">Investment Agent</span>
+                </button>
+            </div>
+
+            <!-- Messages Area -->
+            <div id="chatbot-messages" class="chatbot-messages"></div>
+
+            <!-- Typing Indicator -->
+            <div id="chatbot-typing" class="chatbot-typing" style="display: none;">
+                <div class="chatbot-typing-bubble">
+                    <span></span><span></span><span></span>
+                </div>
+            </div>
+
+            <!-- Quick Action Chips -->
+            <div id="chatbot-chips" class="chatbot-chips"></div>
+
+            <!-- Input Area -->
+            <div class="chatbot-input-area">
+                <input type="text" id="chatbot-input" placeholder="Type a message..." autocomplete="off" data-i18n-placeholder="chatbot.placeholder">
+                <button id="chatbot-send" aria-label="Send message">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+# Large video files (too big for GitHub)
+sunny-isles-drone.mp4
+testbg1.mp4
+hero-balcony.mov
+
+# macOS
+.DS_Store
+._*
+.Spotlight-V100
+.Trashes
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
+
+# Temp files
+save-images.html
+receiver.html
