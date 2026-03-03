@@ -14,9 +14,9 @@
 //    {{listing_address}}, {{listing_price}}, {{page_url}}
 // 4. Paste your keys below
 // ============================================================
-const EMAILJS_PUBLIC_KEY  = 'YOUR_PUBLIC_KEY';   // Account → API Keys
-const EMAILJS_SERVICE_ID  = 'YOUR_SERVICE_ID';   // Email Services → Service ID
-const EMAILJS_TEMPLATE_ID = 'YOUR_TEMPLATE_ID';  // Email Templates → Template ID
+const EMAILJS_PUBLIC_KEY  = 'BXbUaPxSOHhgfGn6x';
+const EMAILJS_SERVICE_ID  = 'service_d4ff5bs';
+const EMAILJS_TEMPLATE_ID = 'template_932zy9s';
 
 // ============================================================
 // BRIDGE API CONFIG
