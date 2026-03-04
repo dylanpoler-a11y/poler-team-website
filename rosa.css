@@ -336,8 +336,11 @@ a { color: inherit; text-decoration: none; }
 
 /* Leaflet map div */
 .rp-map-div {
-    width: 100%; height: 100%;
+    width: 100%; height: 420px; /* explicit — Leaflet needs a defined height */
     border-radius: var(--radius);
+    border: 1px solid var(--border);
+    margin-bottom: 1.5rem;
+    box-shadow: var(--shadow-sm);
     z-index: 0;
 }
 
