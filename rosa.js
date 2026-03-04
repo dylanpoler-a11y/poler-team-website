@@ -1,6 +1,6 @@
 /* ============================================================
    rosa.js — Rosa Poler Profile Page
-   Handles: Hero grid, Chart, Neighborhoods, Listings, Tabs
+   Uses Bridge API filtered by ListAgentFullName=Rosa Poler
    ============================================================ */
 
 'use strict';
@@ -8,7 +8,13 @@
 const API_TOKEN = 'fceef76441eaf7579daff17411bffca2';
 const API_BASE  = 'https://api.bridgedataoutput.com/api/v2/miamire';
 
-/* ── Transaction data per period ── */
+/* ── Cache so we only hit the API once per session ── */
+let ROSA_ACTIVE  = null;   // Rosa's active listings
+let ROSA_SOLD    = null;   // Rosa's closed/sold listings
+let ROSA_ALL     = null;   // Both combined
+let mapInstance  = null;
+
+/* ── Transaction data per period (from Homes.com) ── */
 const TX_DATA = {
     1: {
         seller: { deals: 8,  value: '$3,240,000',  avg: '$405,000',   range: '$178K – $735K' },
@@ -24,7 +30,19 @@ const TX_DATA = {
     }
 };
 
-/* ── API helper ── */
+/* ── Neighborhood → city mapping ── */
+const HOOD_MAP = {
+    'hood-sib':   { city: 'Sunny Isles Beach', label: 'Sunny Isles Beach' },
+    'hood-ives':  { city: 'North Miami',        label: 'Ives Estates'      },
+    'hood-hb':    { city: 'Hallandale Beach',   label: 'Hallandale Beach'  },
+    'hood-ocean': { city: 'Miami Beach',        label: 'Oceanfront'        },
+    'hood-ojus':  { city: 'North Miami Beach',  label: 'Ojus'              },
+    'hood-dtm':   { city: 'Miami',              label: 'Downtown Miami'    }
+};
+
+/* ============================================================
+   API HELPERS
+   ============================================================ */
 async function apiFetch(params) {
     const qs = new URLSearchParams({ access_token: API_TOKEN, ...params }).toString();
     const res = await fetch(`${API_BASE}/listings?${qs}`);
@@ -33,40 +51,88 @@ async function apiFetch(params) {
 }
 
 function fmt(price) {
-    return '$' + Number(price || 0).toLocaleString('en-US');
+    if (!price) return 'Price on Request';
+    return '$' + Number(price).toLocaleString('en-US');
 }
 
 /* ============================================================
-   HERO GRID — 3 active + 3 sold from Sunny Isles Beach
+   FETCH ROSA'S LISTINGS
+   Tries: 1) ListAgentFullName exact  2) ListAgentLastName  3) city fallback
+   ============================================================ */
+async function fetchRosa(status, city) {
+    const base = { limit: 50 };
+    if (status) base.StandardStatus = status;
+    if (city)   base.City = city;
+
+    // Attempt 1: full name exact match
+    try {
+        const d = await apiFetch({ ...base, ListAgentFullName: 'Rosa Poler' });
+        if (d.success && d.bundle && d.bundle.length > 0) return d.bundle;
+    } catch (e) { /* fall through */ }
+
+    // Attempt 2: last name
+    try {
+        const d = await apiFetch({ ...base, ListAgentLastName: 'Poler' });
+        if (d.success && d.bundle && d.bundle.length > 0) return d.bundle;
+    } catch (e) { /* fall through */ }
+
+    // Attempt 3: search key cities + client-side filter by name
+    const cities = city ? [city] : ['Sunny Isles Beach', 'Aventura', 'North Miami Beach', 'Miami Beach', 'Hallandale Beach', 'Miami', 'North Miami'];
+    const results = await Promise.all(
+        cities.map(c =>
+            apiFetch({ ...base, City: c, limit: 20 })
+                .then(d => (d.success && d.bundle) ? d.bundle : [])
+                .catch(() => [])
+        )
+    );
+    const all = results.flat();
+    const filtered = all.filter(l =>
+        (l.ListAgentFullName || '').toLowerCase().includes('poler') ||
+        (l.ListAgentLastName  || '').toLowerCase().includes('poler')
+    );
+    return filtered.length > 0 ? filtered : all; // fallback: show the city listings
+}
+
+/* Load active + sold once and cache */
+async function loadAllRosa() {
+    if (ROSA_ALL) return ROSA_ALL;
+    [ROSA_ACTIVE, ROSA_SOLD] = await Promise.all([
+        fetchRosa('Active',  null),
+        fetchRosa('Closed',  null)
+    ]);
+    ROSA_ALL = [...ROSA_ACTIVE, ...ROSA_SOLD];
+    return ROSA_ALL;
+}
+
+/* ============================================================
+   HERO GRID — 3 active + 3 sold from Rosa's listings
    ============================================================ */
 async function initHeroGrid() {
-    try {
-        const [aRes, sRes] = await Promise.all([
-            apiFetch({ City: 'Sunny Isles Beach', StandardStatus: 'Active', limit: 3 }),
-            apiFetch({ City: 'Sunny Isles Beach', StandardStatus: 'Closed', limit: 3 })
-        ]);
-        const actives = (aRes.success && aRes.bundle) ? aRes.bundle : [];
-        const solds   = (sRes.success && sRes.bundle) ? sRes.bundle : [];
-        const all = [...actives.slice(0, 3), ...solds.slice(0, 3)];
+    await loadAllRosa();
+    const active = ROSA_ACTIVE.slice(0, 3);
+    const sold   = ROSA_SOLD.slice(0, 3);
+    const items  = [...active, ...sold].slice(0, 6);
 
-        all.forEach((l, i) => {
-            const cell = document.getElementById('hc' + i);
-            if (!cell) return;
-            const photo = l.Media && l.Media.length ? l.Media[0].MediaURL : null;
-            const price  = fmt(l.ListPrice);
-            const sold   = l.StandardStatus === 'Closed';
-            const lid    = l.ListingId || '';
-            if (photo) {
-                cell.classList.remove('shimmer');
-                cell.innerHTML = `
-                    <img src="${photo}" alt="Property" loading="lazy">
-                    <div class="rp-hero-overlay">${sold ? 'Sold' : 'For Sale'} ${price}</div>`;
-                cell.onclick = () => { window.location.href = 'listing.html?id=' + lid; };
-            }
-        });
-    } catch (e) {
-        console.warn('Hero grid:', e);
-    }
+    items.forEach((l, i) => {
+        const cell = document.getElementById('hc' + i);
+        if (!cell) return;
+        const photo  = l.Media && l.Media.length ? l.Media[0].MediaURL : null;
+        const price  = fmt(l.ListPrice);
+        const isSold = l.StandardStatus === 'Closed';
+        const lid    = l.ListingId || '';
+        if (photo) {
+            cell.classList.remove('shimmer');
+            cell.innerHTML = `
+                <img src="${photo}" alt="Property" loading="lazy">
+                <div class="rp-hero-overlay">${isSold ? 'Sold' : 'For Sale'} ${price}</div>`;
+            cell.onclick = () => { window.location.href = 'listing.html?id=' + lid; };
+        } else {
+            cell.classList.remove('shimmer');
+            cell.style.background = '#1a2744';
+            cell.innerHTML = `<div class="rp-hero-overlay">${isSold ? 'Sold' : 'For Sale'} ${price}</div>`;
+            cell.onclick = () => { window.location.href = 'listing.html?id=' + lid; };
+        }
+    });
 }
 
 /* ============================================================
@@ -100,8 +166,7 @@ function setTxData(period) {
    ============================================================ */
 function initProductionChart() {
     const ctx = document.getElementById('production-chart');
-    if (!ctx) return;
-
+    if (!ctx || typeof Chart === 'undefined') return;
     new Chart(ctx, {
         type: 'line',
         data: {
@@ -121,167 +186,231 @@ function initProductionChart() {
         },
         options: {
             responsive: true,
-            plugins: {
-                legend: { display: false },
-                tooltip: {
-                    callbacks: {
-                        label: ctx => '$' + (ctx.parsed.y / 1000000).toFixed(1) + 'M'
-                    }
-                }
+            plugins: { legend: { display: false },
+                tooltip: { callbacks: { label: c => '$' + (c.parsed.y / 1e6).toFixed(1) + 'M' } }
             },
             scales: {
                 y: {
-                    ticks: {
-                        callback: v => '$' + (v / 1000000).toFixed(0) + 'M',
-                        font: { size: 11 },
-                        color: '#9ca3af'
-                    },
-                    grid: { color: '#f0f2f6' },
-                    border: { display: false }
+                    ticks: { callback: v => '$' + (v/1e6).toFixed(0)+'M', font:{size:11}, color:'#9ca3af' },
+                    grid: { color: '#f0f2f6' }, border: { display:false }
                 },
-                x: {
-                    grid: { display: false },
-                    ticks: { font: { size: 11 }, color: '#9ca3af' }
-                }
+                x: { grid: { display:false }, ticks: { font:{size:11}, color:'#9ca3af' } }
             }
         }
     });
 }
 
 /* ============================================================
-   NEIGHBORHOOD PHOTOS — one listing photo per city
+   NEIGHBORHOODS — photo from API + click → modal
    ============================================================ */
 async function initNeighborhoods() {
-    const hoods = [
-        { id: 'hood-sib',   city: 'Sunny Isles Beach' },
-        { id: 'hood-ives',  city: 'North Miami'        },
-        { id: 'hood-hb',    city: 'Hallandale Beach'   },
-        { id: 'hood-ocean', city: 'Miami Beach'         },
-        { id: 'hood-ojus',  city: 'North Miami Beach'  },
-        { id: 'hood-dtm',   city: 'Miami'               }
-    ];
-
-    for (const h of hoods) {
+    // Load photos
+    for (const [id, info] of Object.entries(HOOD_MAP)) {
         try {
-            const data = await apiFetch({ City: h.city, StandardStatus: 'Active', limit: 1 });
-            const listing = data.success && data.bundle && data.bundle[0];
-            if (listing && listing.Media && listing.Media.length) {
-                const el = document.getElementById(h.id);
+            const d = await apiFetch({ City: info.city, StandardStatus: 'Active', limit: 1 });
+            const l = d.success && d.bundle && d.bundle[0];
+            if (l && l.Media && l.Media.length) {
+                const el = document.getElementById(id);
                 if (el) {
                     el.classList.remove('shimmer');
-                    el.style.backgroundImage  = `url('${listing.Media[0].MediaURL}')`;
-                    el.style.backgroundSize   = 'cover';
+                    el.style.backgroundImage    = `url('${l.Media[0].MediaURL}')`;
+                    el.style.backgroundSize     = 'cover';
                     el.style.backgroundPosition = 'center';
                 }
             }
-        } catch (e) { /* keep shimmer */ }
+        } catch (e) { /* keep placeholder */ }
+    }
+
+    // Click handlers → show modal with Rosa's listings in that city
+    for (const [id, info] of Object.entries(HOOD_MAP)) {
+        const card = document.querySelector(`.rp-hood-card[data-hood="${id}"]`);
+        if (card) {
+            card.addEventListener('click', () => openNeighborhoodModal(info.city, info.label));
+        }
     }
 }
 
 /* ============================================================
-   LISTINGS & DEALS TABS (All / Active / Sold)
+   NEIGHBORHOOD MODAL
    ============================================================ */
-let listingsLoaded = {}; // cache per filter
+async function openNeighborhoodModal(city, label) {
+    const modal     = document.getElementById('hood-modal');
+    const titleEl   = document.getElementById('hood-modal-title');
+    const gridEl    = document.getElementById('hood-modal-grid');
+    const countEl   = document.getElementById('hood-modal-count');
 
-function initListingsTabs() {
-    const tabs = document.querySelectorAll('.rp-listings-tab');
-    tabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-            tabs.forEach(t => t.classList.remove('rp-listings-tab-active'));
-            tab.classList.add('rp-listings-tab-active');
-            loadListings(tab.dataset.filter);
-        });
-    });
-    loadListings('all');
-}
-
-async function loadListings(filter) {
-    const grid = document.getElementById('rosa-listings-grid');
-    if (!grid) return;
-
-    if (listingsLoaded[filter]) { grid.innerHTML = listingsLoaded[filter]; return; }
-
-    grid.innerHTML = skeletons(6, 'rp-listing-card is-skeleton', `
+    titleEl.textContent = label;
+    countEl.textContent = '';
+    gridEl.innerHTML = skeletons(4, 'rp-listing-card is-skeleton', `
         <div class="rp-listing-photo shimmer"></div>
         <div class="rp-listing-info">
             <div class="skel-line" style="width:55%;height:13px"></div>
             <div class="skel-line" style="width:80%;height:9px;margin-top:0.4rem"></div>
         </div>`);
 
-    const status = filter === 'sold' ? 'Closed' : 'Active';
-    const cities = ['Sunny Isles Beach', 'Aventura', 'North Miami Beach'];
+    modal.classList.add('open');
+    document.body.style.overflow = 'hidden';
 
     try {
-        const results = await Promise.all(
-            cities.map(c => apiFetch({ City: c, StandardStatus: status, limit: 2 })
-                .then(d => (d.success && d.bundle) ? d.bundle : [])
-                .catch(() => []))
-        );
-        const listings = results.flat().slice(0, 6);
-        const html = listings.length
+        const [active, sold] = await Promise.all([
+            fetchRosa('Active', city),
+            fetchRosa('Closed', city)
+        ]);
+        const listings = [...active, ...sold];
+        countEl.textContent = `${listings.length} listing${listings.length !== 1 ? 's' : ''}`;
+        gridEl.innerHTML = listings.length
             ? listings.map(renderListingCard).join('')
-            : '<p style="padding:1rem;color:#6b7280;grid-column:1/-1">No listings found.</p>';
-        listingsLoaded[filter] = html;
-        grid.innerHTML = html;
+            : `<p class="rp-empty-msg">No Rosa Poler listings found in ${label}.</p>`;
     } catch (e) {
-        grid.innerHTML = '<p style="padding:1rem;color:#6b7280;grid-column:1/-1">Unable to load listings.</p>';
+        gridEl.innerHTML = `<p class="rp-empty-msg">Unable to load listings.</p>`;
     }
+}
+
+function closeNeighborhoodModal() {
+    const modal = document.getElementById('hood-modal');
+    modal.classList.remove('open');
+    document.body.style.overflow = '';
 }
 
 /* ============================================================
-   ACTIVE LISTINGS WITH DESCRIPTION
+   LEAFLET MAP — Active (navy) + Sold (gray) pins
    ============================================================ */
-async function loadActiveListings() {
-    const grid = document.getElementById('rosa-active-grid');
-    if (!grid) return;
+async function initMap() {
+    if (typeof L === 'undefined') return;
+    await loadAllRosa();
 
-    grid.innerHTML = skeletons(3, 'rp-active-card', `
-        <div class="rp-active-photo shimmer"></div>
-        <div class="rp-active-info">
-            <div class="skel-line" style="width:50%;height:14px"></div>
-            <div class="skel-line" style="width:90%;height:9px;margin-top:0.5rem"></div>
-            <div class="skel-line" style="width:70%;height:9px;margin-top:0.35rem"></div>
-        </div>`);
+    const mapEl = document.getElementById('rosa-map');
+    if (!mapEl) return;
 
-    const cities = ['Sunny Isles Beach', 'Aventura', 'North Miami Beach'];
-    try {
-        const results = await Promise.all(
-            cities.map(c => apiFetch({ City: c, StandardStatus: 'Active', limit: 1 })
-                .then(d => (d.success && d.bundle) ? d.bundle : [])
-                .catch(() => []))
-        );
-        const listings = results.flat().filter(Boolean).slice(0, 3);
-        grid.innerHTML = listings.length
-            ? listings.map(renderActiveCard).join('')
-            : '<p style="color:#6b7280">No active listings found.</p>';
-    } catch (e) {
-        grid.innerHTML = '<p style="color:#6b7280">Unable to load listings.</p>';
+    mapInstance = L.map('rosa-map', { scrollWheelZoom: false })
+        .setView([25.934, -80.123], 11);
+
+    // Clean CartoDB Positron tiles — no API key needed
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
+        subdomains: 'abcd',
+        maxZoom: 19
+    }).addTo(mapInstance);
+
+    const bounds = [];
+
+    // Plot markers
+    ROSA_ALL.forEach(l => {
+        const lat = parseFloat(l.Latitude);
+        const lng = parseFloat(l.Longitude);
+        if (!lat || !lng || Math.abs(lat) < 1) return;
+
+        const isSold = l.StandardStatus === 'Closed';
+        const marker = L.circleMarker([lat, lng], {
+            radius:      9,
+            fillColor:   isSold ? '#9ca3af' : '#1a2744',
+            color:       '#fff',
+            weight:      2,
+            fillOpacity: 0.9
+        }).addTo(mapInstance);
+
+        marker.bindPopup(buildMapPopup(l), { maxWidth: 240, className: 'rp-map-popup' });
+        bounds.push([lat, lng]);
+    });
+
+    if (bounds.length > 0) {
+        mapInstance.fitBounds(bounds, { padding: [40, 40] });
     }
+
+    // Re-render map when the listings tabs filter changes (handled by setActiveMarkers)
 }
 
-/* ── Card renderers ── */
+function buildMapPopup(l) {
+    const photo   = l.Media && l.Media.length ? l.Media[0].MediaURL : null;
+    const price   = fmt(l.ListPrice);
+    const address = l.UnparsedAddress || l.City || '';
+    const desc    = l.PublicRemarks ? l.PublicRemarks.slice(0, 130) + '…' : '';
+    const isSold  = l.StandardStatus === 'Closed';
+    const lid     = l.ListingId || '';
+    const status  = isSold ? 'Sold' : 'Active';
+    const statusCl = isSold ? 'popup-sold' : 'popup-active';
+
+    return `
+    <div class="rp-popup" onclick="window.open('listing.html?id=${lid}','_blank')">
+        ${photo ? `<img src="${photo}" alt="${address}">` : ''}
+        <div class="rp-popup-body">
+            <span class="rp-popup-status ${statusCl}">${status}</span>
+            <div class="rp-popup-price">${price}</div>
+            <div class="rp-popup-addr">${address}</div>
+            ${desc ? `<div class="rp-popup-desc">${desc}</div>` : ''}
+            <div class="rp-popup-link">View Listing &rarr;</div>
+        </div>
+    </div>`;
+}
+
+/* ============================================================
+   LISTINGS & DEALS TABS (All / Active / Sold)
+   ============================================================ */
+async function initListingsTabs() {
+    await loadAllRosa();
+
+    const tabs = document.querySelectorAll('.rp-listings-tab');
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            tabs.forEach(t => t.classList.remove('rp-listings-tab-active'));
+            tab.classList.add('rp-listings-tab-active');
+            renderListingsGrid(tab.dataset.filter);
+        });
+    });
+
+    renderListingsGrid('all'); // default
+}
+
+function renderListingsGrid(filter) {
+    const grid = document.getElementById('rosa-listings-grid');
+    if (!grid) return;
+    const listings = filter === 'active' ? ROSA_ACTIVE
+                   : filter === 'sold'   ? ROSA_SOLD
+                   : ROSA_ALL;
+    grid.innerHTML = listings && listings.length
+        ? listings.map(renderListingCard).join('')
+        : '<p class="rp-empty-msg" style="grid-column:1/-1">No listings found.</p>';
+}
+
+/* ============================================================
+   ROSA'S ACTIVE LISTINGS WITH DESCRIPTION
+   ============================================================ */
+async function loadActiveListings() {
+    await loadAllRosa();
+    const grid = document.getElementById('rosa-active-grid');
+    if (!grid) return;
+    grid.innerHTML = ROSA_ACTIVE && ROSA_ACTIVE.length
+        ? ROSA_ACTIVE.map(renderActiveCard).join('')
+        : '<p class="rp-empty-msg">No active listings found.</p>';
+}
+
+/* ============================================================
+   CARD RENDERERS
+   ============================================================ */
 function renderListingCard(l) {
     const photo   = l.Media && l.Media.length ? l.Media[0].MediaURL : null;
     const price   = fmt(l.ListPrice);
     const address = l.UnparsedAddress || l.City || '';
-    const beds    = l.BedroomsTotal ? l.BedroomsTotal + ' Beds' : '';
-    const baths   = l.BathroomsTotalInteger ? l.BathroomsTotalInteger + ' Baths' : '';
-    const sqft    = l.LivingArea ? Number(l.LivingArea).toLocaleString() + ' Sq Ft' : '';
+    const beds    = l.BedroomsTotal           ? l.BedroomsTotal + ' Beds'           : '';
+    const baths   = l.BathroomsTotalInteger   ? l.BathroomsTotalInteger + ' Baths'  : '';
+    const sqft    = l.LivingArea              ? Number(l.LivingArea).toLocaleString() + ' Sq Ft' : '';
     const meta    = [beds, baths, sqft].filter(Boolean).join(' · ');
     const lid     = l.ListingId || '';
+    const isSold  = l.StandardStatus === 'Closed';
 
     return `
     <div class="rp-listing-card" onclick="window.location.href='listing.html?id=${lid}'">
-        ${photo
-            ? `<img class="rp-listing-photo" src="${photo}" alt="${address}" loading="lazy">`
-            : `<div class="rp-listing-photo rp-no-photo">
-                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M3 21h18M5 21V7l8-4v18M13 21V3l6 4v14"/></svg>
-               </div>`}
+        <div class="rp-listing-img-wrap">
+            ${photo
+                ? `<img class="rp-listing-photo" src="${photo}" alt="${address}" loading="lazy">`
+                : `<div class="rp-listing-photo rp-no-photo"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M3 21h18M5 21V7l8-4v18M13 21V3l6 4v14"/></svg></div>`}
+            <span class="rp-card-status-badge ${isSold ? 'badge-sold' : 'badge-active'}">${isSold ? 'Sold' : 'Active'}</span>
+        </div>
         <div class="rp-listing-info">
             <div class="rp-listing-price">${price}</div>
             ${meta ? `<div class="rp-listing-meta">${meta}</div>` : ''}
             <div class="rp-listing-addr">${address}</div>
-            <div class="rp-listing-agent">Rosa Poler · Optimar International Realty</div>
+            <div class="rp-listing-agent">Rosa Poler &middot; Optimar International Realty</div>
         </div>
     </div>`;
 }
@@ -290,11 +419,11 @@ function renderActiveCard(l) {
     const photo   = l.Media && l.Media.length ? l.Media[0].MediaURL : null;
     const price   = fmt(l.ListPrice);
     const address = l.UnparsedAddress || l.City || '';
-    const beds    = l.BedroomsTotal ? l.BedroomsTotal + ' Beds' : '';
-    const baths   = l.BathroomsTotalInteger ? l.BathroomsTotalInteger + ' Baths' : '';
-    const sqft    = l.LivingArea ? Number(l.LivingArea).toLocaleString() + ' Sq Ft' : '';
+    const beds    = l.BedroomsTotal         ? l.BedroomsTotal + ' Beds'           : '';
+    const baths   = l.BathroomsTotalInteger ? l.BathroomsTotalInteger + ' Baths'  : '';
+    const sqft    = l.LivingArea            ? Number(l.LivingArea).toLocaleString() + ' Sq Ft' : '';
     const meta    = [beds, baths, sqft].filter(Boolean).join(' · ');
-    const desc    = l.PublicRemarks ? l.PublicRemarks.slice(0, 220) + '...' : '';
+    const desc    = l.PublicRemarks ? l.PublicRemarks.slice(0, 220) + '…' : '';
     const lid     = l.ListingId || '';
 
     return `
@@ -303,13 +432,11 @@ function renderActiveCard(l) {
             ? `<img class="rp-active-photo" src="${photo}" alt="${address}" loading="lazy">`
             : `<div class="rp-active-photo rp-no-photo"></div>`}
         <div class="rp-active-info">
-            <div class="rp-active-price">
-                ${price}
-                ${meta ? `<span style="display:block;font-size:0.78rem;font-weight:500;color:#6b7280;margin-top:0.1rem">${meta}</span>` : ''}
-            </div>
+            <div class="rp-active-price">${price}</div>
+            ${meta ? `<div class="rp-active-meta">${meta}</div>` : ''}
             <div class="rp-active-addr">${address}</div>
             ${desc ? `<div class="rp-active-desc">${desc}</div>` : ''}
-            <div class="rp-active-agent">Rosa Poler · Optimar International Realty</div>
+            <div class="rp-active-agent">Rosa Poler &middot; Optimar International Realty</div>
         </div>
     </div>`;
 }
@@ -319,7 +446,38 @@ function skeletons(n, cls, inner) {
 }
 
 /* ============================================================
-   CITY TABS
+   NEIGHBORHOOD PHOTOS (using Rosa's own listing photos)
+   ============================================================ */
+async function fillNeighborhoodPhotos() {
+    await loadAllRosa();
+    for (const [id, info] of Object.entries(HOOD_MAP)) {
+        const el = document.getElementById(id);
+        if (!el) continue;
+        // Try to find one of Rosa's own listings in this city
+        const listing = ROSA_ALL.find(l => l.City === info.city);
+        if (listing && listing.Media && listing.Media.length) {
+            el.classList.remove('shimmer');
+            el.style.backgroundImage    = `url('${listing.Media[0].MediaURL}')`;
+            el.style.backgroundSize     = 'cover';
+            el.style.backgroundPosition = 'center';
+        } else {
+            // Fallback: fetch one listing from the API for that city
+            try {
+                const d = await apiFetch({ City: info.city, StandardStatus: 'Active', limit: 1 });
+                const l = d.success && d.bundle && d.bundle[0];
+                if (l && l.Media && l.Media.length) {
+                    el.classList.remove('shimmer');
+                    el.style.backgroundImage    = `url('${l.Media[0].MediaURL}')`;
+                    el.style.backgroundSize     = 'cover';
+                    el.style.backgroundPosition = 'center';
+                }
+            } catch (e) { /* keep shimmer */ }
+        }
+    }
+}
+
+/* ============================================================
+   CITY TABS (cosmetic)
    ============================================================ */
 function initCityTabs() {
     const tabs = document.querySelectorAll('.rp-city-tab');
@@ -335,33 +493,32 @@ function initCityTabs() {
    CONTACT PANEL — WhatsApp
    ============================================================ */
 function rpSendMessage() {
-    const msgEl  = document.getElementById('rp-panel-msg');
+    const msgEl   = document.getElementById('rp-panel-msg');
     const sendBtn = document.getElementById('rp-panel-send-btn');
     const msg = msgEl ? msgEl.value.trim() : '';
     if (!msg) { msgEl && msgEl.focus(); return; }
-
-    const waUrl = `https://wa.me/19542354046?text=${encodeURIComponent(msg)}`;
-    window.open(waUrl, '_blank');
-
-    sendBtn.textContent = '✓ Message Sent!';
+    window.open(`https://wa.me/19542354046?text=${encodeURIComponent(msg)}`, '_blank');
+    sendBtn.textContent = '✓ Opening WhatsApp...';
     sendBtn.style.background = '#16a34a';
     msgEl.value = '';
-
-    setTimeout(() => {
-        sendBtn.style.background = '';
-        sendBtn.textContent = 'Send a Message';
-    }, 3000);
+    setTimeout(() => { sendBtn.style.background = ''; sendBtn.textContent = 'Send a Message'; }, 3000);
 }
 
 /* ============================================================
    BOOT
    ============================================================ */
-document.addEventListener('DOMContentLoaded', () => {
-    initHeroGrid();
+document.addEventListener('DOMContentLoaded', async () => {
+    // Pre-fetch Rosa's listings so all sections can use the same data
     initTransactionTabs();
     initProductionChart();
-    initNeighborhoods();
-    initListingsTabs();
-    loadActiveListings();
     initCityTabs();
+
+    // These all share the cached loadAllRosa() call
+    await Promise.all([
+        initHeroGrid(),
+        fillNeighborhoodPhotos(),
+        initMap(),
+        initListingsTabs(),
+        loadActiveListings()
+    ]);
 });
