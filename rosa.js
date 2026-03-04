@@ -131,19 +131,29 @@ async function initHeroGrid() {
         const price  = fmt(l.ListPrice);
         const isSold = l.StandardStatus === 'Closed';
         const lid    = l.ListingId || '';
+        cell.classList.remove('shimmer');
         if (photo) {
-            cell.classList.remove('shimmer');
             cell.innerHTML = `
                 <img src="${photo}" alt="Property" loading="lazy">
                 <div class="rp-hero-overlay">${isSold ? 'Sold' : 'For Sale'} ${price}</div>`;
-            cell.onclick = () => { window.location.href = 'listing.html?id=' + lid; };
         } else {
-            cell.classList.remove('shimmer');
             cell.style.background = '#1a2744';
             cell.innerHTML = `<div class="rp-hero-overlay">${isSold ? 'Sold' : 'For Sale'} ${price}</div>`;
-            cell.onclick = () => { window.location.href = 'listing.html?id=' + lid; };
         }
+        cell.onclick = () => { window.location.href = 'listing.html?id=' + lid; };
     });
+
+    // Fill any remaining cells (< 6 listings) with a clean navy placeholder
+    // so they never stay stuck as shimmer/loading state
+    for (let i = items.length; i < 6; i++) {
+        const cell = document.getElementById('hc' + i);
+        if (!cell) continue;
+        cell.classList.remove('shimmer');
+        cell.style.background = '#1a2744';
+        cell.innerHTML = '';
+        cell.onclick = null;
+        cell.style.cursor = 'default';
+    }
 }
 
 /* ============================================================

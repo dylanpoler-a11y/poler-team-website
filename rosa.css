@@ -93,7 +93,7 @@ a { color: inherit; text-decoration: none; }
    ============================================================ */
 .rp-hero {
     display: grid;
-    grid-template-columns: 380px 1fr;
+    grid-template-columns: 340px 1fr;
     height: 560px;
     overflow: hidden;
 }
@@ -119,6 +119,7 @@ a { color: inherit; text-decoration: none; }
     grid-template-rows: repeat(2, 1fr);
     gap: 2px;
     background: var(--border);
+    height: 100%; /* ensures both rows always fill the hero height */
 }
 .rp-hero-cell {
     position: relative; overflow: hidden;
@@ -680,7 +681,7 @@ a { color: inherit; text-decoration: none; }
 @media (max-width: 1024px) {
     .rp-body { grid-template-columns: 1fr; }
     .rp-sticky-panel { position: static; }
-    .rp-hero { grid-template-columns: 300px 1fr; height: 440px; }
+    .rp-hero { grid-template-columns: 280px 1fr; height: 440px; }
     .rp-listings-grid { grid-template-columns: repeat(2, 1fr); }
     .rp-active-grid { grid-template-columns: repeat(2, 1fr); }
     .rp-city-grid { grid-template-columns: repeat(2, 1fr); }
