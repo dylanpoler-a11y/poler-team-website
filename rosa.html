@@ -53,46 +53,46 @@
 </section>
 
 <!-- ============================================================
-     AGENT INFO BAR
-     ============================================================ -->
-<section class="rp-info-bar">
-    <div class="rp-info-bar-inner">
-        <div class="rp-info-name-block">
-            <h1 class="rp-name">Rosa Poler</h1>
-            <p class="rp-location">Sunny Isles Beach, FL</p>
-            <p class="rp-brokerage">Optimar International Realty</p>
-        </div>
-        <img src="optimar-logo.jpg" alt="Optimar International Realty" class="rp-optimar-logo">
-        <div class="rp-stats-row">
-            <div class="rp-stat">
-                <span class="rp-stat-value">48</span>
-                <span class="rp-stat-label">Closed Sales</span>
-            </div>
-            <div class="rp-stat-divider"></div>
-            <div class="rp-stat">
-                <span class="rp-stat-value">$47.9M</span>
-                <span class="rp-stat-label">Total Value</span>
-            </div>
-            <div class="rp-stat-divider"></div>
-            <div class="rp-stat">
-                <span class="rp-stat-value">$105K – $9.2M</span>
-                <span class="rp-stat-label">Price Range</span>
-            </div>
-            <div class="rp-stat-divider"></div>
-            <div class="rp-stat">
-                <span class="rp-stat-value">$997.9K</span>
-                <span class="rp-stat-label">Average Price</span>
-            </div>
-        </div>
-        <p class="rp-stats-note">Prior five years</p>
-    </div>
-</section>
-
-<!-- ============================================================
-     BODY: Main content + Sticky panel
+     BODY: Main content + Sticky panel (panel starts level with name)
      ============================================================ -->
 <div class="rp-body" id="rp-body">
     <main class="rp-main">
+
+        <!-- ── NAME & STATS (aligned with sticky panel) ── -->
+        <div class="rp-info-section">
+            <div class="rp-info-top">
+                <div class="rp-info-name-block">
+                    <h1 class="rp-name">Rosa Poler</h1>
+                    <p class="rp-location">Sunny Isles Beach, FL</p>
+                    <p class="rp-brokerage">Optimar International Realty</p>
+                </div>
+                <img src="optimar-logo.jpg" alt="Optimar International Realty" class="rp-optimar-logo">
+            </div>
+            <div class="rp-stats-row">
+                <div class="rp-stat">
+                    <span class="rp-stat-value">48</span>
+                    <span class="rp-stat-label">Closed Sales</span>
+                </div>
+                <div class="rp-stat-divider"></div>
+                <div class="rp-stat">
+                    <span class="rp-stat-value">$47.9M</span>
+                    <span class="rp-stat-label">Total Value</span>
+                </div>
+                <div class="rp-stat-divider"></div>
+                <div class="rp-stat">
+                    <span class="rp-stat-value">$105K – $9.2M</span>
+                    <span class="rp-stat-label">Price Range</span>
+                </div>
+                <div class="rp-stat-divider"></div>
+                <div class="rp-stat">
+                    <span class="rp-stat-value">$997.9K</span>
+                    <span class="rp-stat-label">Average Price</span>
+                </div>
+            </div>
+            <p class="rp-stats-note">Prior five years</p>
+        </div>
+
+        <hr class="rp-divider">
 
         <!-- ── ABOUT ROSA ── -->
         <section class="rp-section">
@@ -299,14 +299,10 @@
 
     <!-- ── STICKY CONTACT PANEL ── -->
     <aside class="rp-sticky-panel" id="rp-sticky-panel">
-        <div class="rp-panel-top">
-            <img src="team-rosa.jpg" alt="Rosa Poler" class="rp-panel-photo">
-            <div class="rp-panel-name-block">
-                <div class="rp-panel-name-badge">Rosa Poler</div>
-                <img src="optimar-logo.jpg" alt="Optimar" class="rp-panel-optimar">
-            </div>
-        </div>
-        <a href="tel:+19542354046" class="rp-panel-phone">(954) 235-4046</a>
+        <a href="tel:+19542354046" class="rp-panel-phone">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 014.68 11.6 19.79 19.79 0 011.61 3a2 2 0 012-2.18h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L7.91 8.09a16 16 0 006 6l.91-.91a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+            (954) 235-4046
+        </a>
         <textarea class="rp-panel-msg" id="rp-panel-msg" rows="3" placeholder="Rosa, I'd like to learn more about your real estate services."></textarea>
         <button class="rp-panel-send" id="rp-panel-send-btn" onclick="rpSendMessage()">Send a Message</button>
         <button class="rp-panel-connect" onclick="window.location.href='tel:+19542354046'">Connect with Agent</button>

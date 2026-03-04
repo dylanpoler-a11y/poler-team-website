@@ -106,11 +106,22 @@ async function loadAllRosa() {
 
 /* ============================================================
    HERO GRID — 3 active + 3 sold from Rosa's listings
+   Prefer residential (non-land/lot) with real interior photos
    ============================================================ */
 async function initHeroGrid() {
     await loadAllRosa();
-    const active = ROSA_ACTIVE.slice(0, 3);
-    const sold   = ROSA_SOLD.slice(0, 3);
+
+    // Prefer listings that are residential homes (not land/lot with aerial views)
+    function preferResidential(arr) {
+        const filtered = arr.filter(l =>
+            l.Media && l.Media.length > 0 &&
+            !(l.PropertySubType || '').toLowerCase().match(/land|lot/)
+        );
+        return filtered.length >= 3 ? filtered : arr.filter(l => l.Media && l.Media.length > 0);
+    }
+
+    const active = preferResidential(ROSA_ACTIVE).slice(0, 3);
+    const sold   = preferResidential(ROSA_SOLD).slice(0, 3);
     const items  = [...active, ...sold].slice(0, 6);
 
     items.forEach((l, i) => {
