@@ -742,7 +742,15 @@ function initSearch() {
         });
     });
 
-    // Run default search on load (active residential, South Florida)
+    // Pre-fill location from ?city= URL param and auto-run
+    const urlParams = new URLSearchParams(window.location.search);
+    const cityParam = urlParams.get('city');
+    if (cityParam) {
+        const locInput = document.getElementById('f-location');
+        if (locInput) locInput.value = decodeURIComponent(cityParam.replace(/\+/g, ' '));
+    }
+
+    // Run search on load (uses city param if set, otherwise default South Florida)
     runSearch(false);
 }
 

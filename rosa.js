@@ -147,6 +147,10 @@ function initTransactionTabs() {
             setTxData(parseInt(tab.dataset.period));
         });
     });
+    // Show data for whichever tab starts active
+    const activeTab = document.querySelector('.rp-tab.rp-tab-active');
+    if (activeTab) setTxData(parseInt(activeTab.dataset.period));
+    else setTxData(5);
 }
 
 function setTxData(period) {
@@ -473,6 +477,12 @@ async function fillNeighborhoodPhotos() {
                 }
             } catch (e) { /* keep shimmer */ }
         }
+    }
+
+    // Attach click handlers for neighborhood modal
+    for (const [id, info] of Object.entries(HOOD_MAP)) {
+        const card = document.querySelector(`.rp-hood-card[data-hood="${id}"]`);
+        if (card) card.addEventListener('click', () => openNeighborhoodModal(info.city, info.label));
     }
 }
 
