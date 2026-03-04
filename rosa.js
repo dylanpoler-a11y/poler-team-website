@@ -111,11 +111,12 @@ async function loadAllRosa() {
 async function initHeroGrid() {
     await loadAllRosa();
 
-    // Prefer listings that are residential homes (not land/lot with aerial views)
-    // Check BOTH PropertyType and PropertySubType since either can indicate land
+    // Prefer listings that look like residential homes with real interior photos.
+    // Filters: not land/lot by type or subtype, AND has 3+ photos
+    // (aerial/map-only listings typically have only 1-2 photos; good listings have many)
     function preferResidential(arr) {
         const filtered = arr.filter(l =>
-            l.Media && l.Media.length > 0 &&
+            l.Media && l.Media.length >= 3 &&
             !(l.PropertySubType || '').toLowerCase().match(/land|lot/) &&
             !(l.PropertyType    || '').toLowerCase().match(/land|lot/)
         );
