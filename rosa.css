@@ -94,6 +94,7 @@ a { color: inherit; text-decoration: none; }
 .rp-hero {
     display: grid;
     grid-template-columns: 340px 1fr;
+    grid-template-rows: 560px; /* explicit row height so % children resolve correctly */
     height: 560px;
     overflow: hidden;
 }
@@ -119,7 +120,7 @@ a { color: inherit; text-decoration: none; }
     grid-template-rows: repeat(2, 1fr);
     gap: 2px;
     background: var(--border);
-    height: 100%; /* ensures both rows always fill the hero height */
+    height: 560px; /* explicit — matches .rp-hero height so 1fr rows = 280px each */
 }
 .rp-hero-cell {
     position: relative; overflow: hidden;
@@ -681,7 +682,8 @@ a { color: inherit; text-decoration: none; }
 @media (max-width: 1024px) {
     .rp-body { grid-template-columns: 1fr; }
     .rp-sticky-panel { position: static; }
-    .rp-hero { grid-template-columns: 280px 1fr; height: 440px; }
+    .rp-hero { grid-template-columns: 280px 1fr; grid-template-rows: 440px; height: 440px; }
+    .rp-hero-grid { height: 440px; }
     .rp-listings-grid { grid-template-columns: repeat(2, 1fr); }
     .rp-active-grid { grid-template-columns: repeat(2, 1fr); }
     .rp-city-grid { grid-template-columns: repeat(2, 1fr); }
