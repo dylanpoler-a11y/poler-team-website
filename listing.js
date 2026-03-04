@@ -620,23 +620,33 @@ function renderCard(listing) {
     const city    = listing.City || '';
     const stats   = statsStr(listing);
     const lid     = listing.ListingId || '';
+    const agent   = listing.ListAgentFullName || 'Rosa Poler';
+    const status  = listing.StandardStatus || 'Active';
 
     const imgHtml = photo
         ? `<img class="listing-photo" src="${photo}" alt="${address}" loading="lazy">`
         : `<div class="listing-placeholder"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M3 21h18M5 21V7l8-4v18M13 21V3l6 4v14"/></svg></div>`;
 
+    const statusClass = status === 'Active' ? 'status-active' : status === 'Pending' ? 'status-pending' : 'status-other';
+
     return `
     <div class="listing-card" onclick="window.location.href='listing.html?id=${lid}'">
         <div class="listing-image">
             ${imgHtml}
-            <div class="listing-overlay"><span class="listing-area">${city}</span></div>
+            <div class="listing-overlay">
+                <span class="listing-area">${city}</span>
+                <span class="listing-status-badge ${statusClass}">${status}</span>
+            </div>
         </div>
         <div class="listing-details">
-            <div>
-                <div class="listing-address">${address}</div>
-                ${stats ? `<div class="listing-stats">${stats}</div>` : ''}
-            </div>
             <div class="listing-price">${price}</div>
+            <div class="listing-address">${address}</div>
+            ${stats ? `<div class="listing-stats">${stats}</div>` : ''}
+            <div class="listing-agent-row">
+                <img src="team-rosa.jpg" alt="${agent}" class="listing-agent-avatar">
+                <span class="listing-agent-name">${agent}</span>
+                <span class="listing-agent-brokerage">Optimar Int'l</span>
+            </div>
         </div>
     </div>`;
 }
@@ -734,6 +744,52 @@ function initSearch() {
 
     // Run default search on load (active residential, South Florida)
     runSearch(false);
+}
+
+// ============================================================
+// AGENT PANEL — send message via EmailJS
+// ============================================================
+function sendAgentMessage() {
+    const msgEl  = document.getElementById('agent-message');
+    const sendBtn = document.getElementById('agent-send-btn');
+    const msg = msgEl ? msgEl.value.trim() : '';
+
+    if (!msg) { msgEl && msgEl.focus(); return; }
+
+    sendBtn.disabled = true;
+    sendBtn.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation:spin 1s linear infinite"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4"/></svg> Sending...`;
+
+    const templateParams = {
+        first_name:       'Website Visitor',
+        last_name:        '',
+        email:            localStorage.getItem('poler_lead_v1') || 'not captured',
+        phone:            '',
+        listing_address:  heroListing ? (heroListing.UnparsedAddress || heroListing.City || 'Browse page') : 'Browse page',
+        listing_price:    heroListing ? formatPrice(heroListing.ListPrice) : 'N/A',
+        page_url:         window.location.href,
+        message:          msg,
+    };
+
+    (async () => {
+        try {
+            if (typeof emailjs !== 'undefined' && EMAILJS_SERVICE_ID !== 'YOUR_SERVICE_ID') {
+                await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams);
+            }
+        } catch (err) {
+            console.warn('Agent message send failed:', err);
+        }
+
+        // Show confirmation
+        sendBtn.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Message Sent!`;
+        sendBtn.style.background = '#16a34a';
+        msgEl.value = '';
+
+        setTimeout(() => {
+            sendBtn.disabled = false;
+            sendBtn.style.background = '';
+            sendBtn.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> Send Message`;
+        }, 3500);
+    })();
 }
 
 // Inline spin animation for loading indicators

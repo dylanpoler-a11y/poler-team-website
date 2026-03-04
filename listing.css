@@ -662,11 +662,19 @@ a { color: inherit; text-decoration: none; }
     position: absolute; bottom: 0; left: 0; right: 0;
     padding: 0.875rem 1rem;
     background: linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 100%);
+    display: flex; align-items: flex-end; justify-content: space-between;
 }
 .listing-area {
     font-size: 0.68rem; font-weight: 600; letter-spacing: 0.12em;
     text-transform: uppercase; color: rgba(255,255,255,0.9);
 }
+.listing-status-badge {
+    font-size: 0.6rem; font-weight: 800; letter-spacing: 0.08em;
+    text-transform: uppercase; padding: 0.2rem 0.5rem; border-radius: 3px;
+}
+.status-active  { background: rgba(34,197,94,0.9); color: #fff; }
+.status-pending { background: rgba(234,179,8,0.9); color: #fff; }
+.status-other   { background: rgba(0,0,0,0.55); color: rgba(255,255,255,0.85); }
 .listing-details { padding: 0.875rem 1rem 1rem; }
 .listing-price {
     font-size: 1.05rem; font-weight: 800;
@@ -681,11 +689,21 @@ a { color: inherit; text-decoration: none; }
     margin-bottom: 0.5rem; font-weight: 500;
 }
 .listing-agent-row {
-    font-size: 0.72rem; color: var(--text-light);
+    display: flex; align-items: center; gap: 0.5rem;
     border-top: 1px solid var(--border-light);
-    padding-top: 0.5rem; margin-top: 0.25rem;
+    padding-top: 0.6rem; margin-top: 0.35rem;
 }
-.listing-agent-row strong { color: var(--text-muted); font-weight: 600; }
+.listing-agent-avatar {
+    width: 22px; height: 22px; border-radius: 50%;
+    object-fit: cover; flex-shrink: 0; border: 1px solid var(--border);
+}
+.listing-agent-name {
+    font-size: 0.72rem; font-weight: 600; color: var(--text-muted);
+    flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.listing-agent-brokerage {
+    font-size: 0.65rem; color: var(--text-light); white-space: nowrap;
+}
 
 /* Card skeleton */
 .listing-card.is-skeleton .listing-image {
@@ -758,9 +776,17 @@ a { color: inherit; text-decoration: none; }
     font-size: 0.75rem; color: var(--text-muted); margin-top: 0.2rem;
 }
 .agent-panel-logo {
-    height: 22px; margin-top: 0.3rem;
+    height: 22px; margin-top: 0.5rem; opacity: 0.85;
 }
-.agent-panel-body { padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem; }
+.agent-panel-body { padding: 1.25rem; display: flex; flex-direction: column; gap: 0.85rem; }
+.agent-panel-divider {
+    height: 1px; background: var(--border);
+    margin: -0.1rem 0;
+}
+.agent-panel-message-label {
+    font-size: 0.72rem; font-weight: 700;
+    color: var(--text-muted); letter-spacing: 0.05em; text-transform: uppercase;
+}
 .agent-panel-phone {
     font-size: 1rem; font-weight: 700; color: var(--text);
     display: flex; align-items: center; gap: 0.4rem;
