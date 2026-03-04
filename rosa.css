@@ -94,7 +94,7 @@ a { color: inherit; text-decoration: none; }
 .rp-hero {
     display: grid;
     grid-template-columns: 340px 1fr;
-    height: 480px;
+    height: 560px;
     overflow: hidden;
 }
 .rp-hero-photo-wrap {
@@ -329,11 +329,92 @@ a { color: inherit; text-decoration: none; }
 }
 .rp-map-iframe { width: 100%; height: 100%; border: 0; }
 
+/* Leaflet map div */
+.rp-map-div {
+    width: 100%; height: 100%;
+    border-radius: var(--radius);
+    z-index: 0;
+}
+
+/* Override Leaflet popup chrome */
+.rp-map-popup .leaflet-popup-content-wrapper {
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-md);
+    padding: 0;
+    overflow: hidden;
+    border: 1px solid var(--border);
+}
+.rp-map-popup .leaflet-popup-content {
+    margin: 0;
+    width: 220px !important;
+}
+.rp-map-popup .leaflet-popup-tip-container { display: none; }
+.rp-map-popup .leaflet-popup-close-button {
+    color: #fff; background: rgba(0,0,0,0.45);
+    border-radius: 50%; width: 22px; height: 22px;
+    top: 6px; right: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.75rem; line-height: 1;
+    z-index: 10;
+}
+
+/* Map popup card */
+.rp-popup {
+    cursor: pointer;
+}
+.rp-popup img {
+    width: 100%; height: 130px;
+    object-fit: cover; display: block;
+}
+.rp-popup-body {
+    padding: 0.65rem 0.85rem 0.75rem;
+}
+.rp-popup-status {
+    display: inline-block;
+    font-size: 0.67rem; font-weight: 800; letter-spacing: 0.08em;
+    text-transform: uppercase; border-radius: 4px;
+    padding: 0.18rem 0.5rem; margin-bottom: 0.35rem;
+}
+.popup-active { background: #dcfce7; color: #15803d; }
+.popup-sold   { background: #f3f4f6; color: #6b7280; }
+.rp-popup-price {
+    font-size: 0.95rem; font-weight: 800; color: var(--text);
+    margin-bottom: 0.2rem;
+}
+.rp-popup-addr {
+    font-size: 0.75rem; color: var(--text-muted);
+    margin-bottom: 0.3rem; line-height: 1.35;
+}
+.rp-popup-desc {
+    font-size: 0.72rem; color: var(--text-light);
+    line-height: 1.45;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    overflow: hidden; margin-bottom: 0.4rem;
+}
+.rp-popup-link {
+    font-size: 0.75rem; font-weight: 700; color: var(--navy);
+    text-decoration: underline;
+}
+
 /* Listing cards grid (in Deals section) */
 .rp-listings-grid {
     display: grid; grid-template-columns: repeat(3, 1fr);
     gap: 1rem;
 }
+
+/* Image wrapper with status badge overlay */
+.rp-listing-img-wrap {
+    position: relative; overflow: hidden;
+}
+.rp-card-status-badge {
+    position: absolute; top: 8px; left: 8px;
+    font-size: 0.65rem; font-weight: 800; letter-spacing: 0.08em;
+    text-transform: uppercase; border-radius: 4px;
+    padding: 0.18rem 0.5rem; z-index: 2;
+}
+.badge-active { background: #dcfce7; color: #15803d; }
+.badge-sold   { background: rgba(0,0,0,0.55); color: #e5e7eb; }
+
 .rp-listing-card {
     background: var(--bg-card);
     border-radius: var(--radius);
