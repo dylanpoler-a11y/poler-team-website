@@ -620,7 +620,7 @@ function renderCard(listing) {
     const city    = listing.City || '';
     const stats   = statsStr(listing);
     const lid     = listing.ListingId || '';
-    const agent   = listing.ListAgentFullName || 'Rosa Poler';
+    const agent   = 'Rosa Poler';
     const status  = listing.StandardStatus || 'Active';
 
     const imgHtml = photo
@@ -756,40 +756,26 @@ function sendAgentMessage() {
 
     if (!msg) { msgEl && msgEl.focus(); return; }
 
-    sendBtn.disabled = true;
-    sendBtn.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation:spin 1s linear infinite"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4"/></svg> Sending...`;
+    // Build context prefix so Rosa knows which property the lead is about
+    const propertyContext = heroListing
+        ? `[Property: ${heroListing.UnparsedAddress || heroListing.City || 'listing page'} — ${formatPrice(heroListing.ListPrice)}]\n\n`
+        : '[From: listing search page]\n\n';
 
-    const templateParams = {
-        first_name:       'Website Visitor',
-        last_name:        '',
-        email:            localStorage.getItem('poler_lead_v1') || 'not captured',
-        phone:            '',
-        listing_address:  heroListing ? (heroListing.UnparsedAddress || heroListing.City || 'Browse page') : 'Browse page',
-        listing_price:    heroListing ? formatPrice(heroListing.ListPrice) : 'N/A',
-        page_url:         window.location.href,
-        message:          msg,
-    };
+    const fullMessage = propertyContext + msg;
+    const waUrl = `https://wa.me/19542354046?text=${encodeURIComponent(fullMessage)}`;
 
-    (async () => {
-        try {
-            if (typeof emailjs !== 'undefined' && EMAILJS_SERVICE_ID !== 'YOUR_SERVICE_ID') {
-                await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams);
-            }
-        } catch (err) {
-            console.warn('Agent message send failed:', err);
-        }
+    // Open WhatsApp with pre-filled message
+    window.open(waUrl, '_blank');
 
-        // Show confirmation
-        sendBtn.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Message Sent!`;
-        sendBtn.style.background = '#16a34a';
-        msgEl.value = '';
+    // Visual confirmation + clear field
+    sendBtn.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Opening WhatsApp...`;
+    sendBtn.style.background = '#16a34a';
+    msgEl.value = '';
 
-        setTimeout(() => {
-            sendBtn.disabled = false;
-            sendBtn.style.background = '';
-            sendBtn.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> Send Message`;
-        }, 3500);
-    })();
+    setTimeout(() => {
+        sendBtn.style.background = '';
+        sendBtn.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> Send Message`;
+    }, 3000);
 }
 
 // Inline spin animation for loading indicators
