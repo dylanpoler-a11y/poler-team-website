@@ -202,77 +202,300 @@ async function initHeroProperty() {
 }
 
 function renderHero(container, listing) {
-    const photos  = getAllPhotos(listing);
-    const price   = formatPrice(listing.ListPrice);
-    const address = listing.UnparsedAddress || listing.City || 'South Florida';
-    const city    = listing.City || '';
-    const beds    = listing.BedroomsTotal;
-    const baths   = listing.BathroomsTotalInteger;
-    const sqft    = listing.LivingArea;
-    const type    = listing.PropertySubType || listing.PropertyType || '';
-    const agent   = listing.ListAgentFullName || '';
-    const status  = listing.StandardStatus || 'Active';
+    const photos       = getAllPhotos(listing);
+    const price        = formatPrice(listing.ListPrice);
+    const address      = listing.UnparsedAddress || listing.City || 'South Florida';
+    const beds         = listing.BedroomsTotal;
+    const baths        = listing.BathroomsTotalInteger;
+    const sqft         = listing.LivingArea;
+    const lotSqft      = listing.LotSizeSquareFeet;
+    const pricePerSqft = (listing.ListPrice && sqft) ? Math.round(listing.ListPrice / sqft) : null;
+    const type         = listing.PropertySubType || listing.PropertyType || '';
+    const status       = listing.StandardStatus || 'Active';
+    const yearBuilt    = listing.YearBuilt || '';
+    const subdivision  = listing.SubdivisionName || listing.CommunityName || '';
+    const description  = listing.PublicRemarks || '';
+    const agentName    = listing.ListAgentFullName || '';
+    const brokerageName = listing.ListOfficeName || '';
+    const agentLicense = listing.ListAgentStateLicenseNumber || '';
+    const listDate     = listing.ListingContractDate || '';
+    const dom          = listing.DaysOnMarket != null ? listing.DaysOnMarket : (listing.CumulativeDaysOnMarket || '');
+    const garage       = listing.GarageSpaces || listing.ParkingTotal || '';
+    const hasPool      = !!(listing.PoolYN || (listing.PoolFeatures && listing.PoolFeatures.length));
+    const hasWaterfront = !!listing.WaterfrontYN;
+    const cooling      = listing.Cooling ? (Array.isArray(listing.Cooling) ? listing.Cooling.join(', ') : listing.Cooling) : '';
+    const heating      = listing.Heating ? (Array.isArray(listing.Heating) ? listing.Heating.join(', ') : listing.Heating) : '';
+    const views        = listing.View ? (Array.isArray(listing.View) ? listing.View.join(', ') : listing.View) : '';
+    const hoaFee       = listing.AssociationFee ? `$${Number(listing.AssociationFee).toLocaleString()}/mo` : '';
 
-    const photoHtml = photos.length
-        ? `<img class="hero-gallery-img" id="hero-img" src="${photos[0]}" alt="${address}" loading="eager">`
-        : `<div class="listing-placeholder" style="height:100%"><svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M3 21h18M5 21V7l8-4v18M13 21V3l6 4v14"/></svg></div>`;
+    // ---------- Photo grid ----------
+    const mainPhoto   = photos[0] || null;
+    const thumbPhotos = photos.slice(1, 5);
 
-    const galleryNav = photos.length > 1 ? `
-        <button class="gallery-arrow gallery-prev" id="gallery-prev" aria-label="Previous photo">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
-        </button>
-        <button class="gallery-arrow gallery-next" id="gallery-next" aria-label="Next photo">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-        </button>
-        <div class="gallery-counter" id="gallery-counter">1 / ${photos.length}</div>
-    ` : '';
+    const mainPhotoHtml = mainPhoto
+        ? `<img class="lp-photo-main-img" src="${mainPhoto}" alt="${address}" loading="eager">`
+        : `<div class="lp-photo-placeholder"><svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M3 21h18M5 21V7l8-4v18M13 21V3l6 4v14"/></svg></div>`;
 
+    const thumbsHtml = thumbPhotos.map((url, i) => {
+        const isLast = i === thumbPhotos.length - 1 && photos.length > 5;
+        return `
+        <div class="lp-photo-thumb" onclick="lpOpenGallery(${i + 1})">
+            <img class="lp-photo-thumb-img" src="${url}" alt="Photo ${i + 2}" loading="lazy">
+            ${isLast ? `<div class="lp-photo-see-all">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+                See All ${photos.length} Photos
+            </div>` : ''}
+        </div>`;
+    }).join('');
+
+    // ---------- Stats bar ----------
+    const statItems = [
+        beds         ? { v: beds,                                     l: 'Beds' }        : null,
+        baths        ? { v: baths,                                    l: 'Baths' }       : null,
+        sqft         ? { v: Number(sqft).toLocaleString(),            l: 'Sq Ft' }       : null,
+        pricePerSqft ? { v: `$${pricePerSqft.toLocaleString()}`,      l: 'Price / Sq Ft' } : null,
+    ].filter(Boolean);
+
+    const statsHtml = statItems.map((s, i) => `
+        ${i > 0 ? '<div class="lp-info-stat-div"></div>' : ''}
+        <div class="lp-info-stat">
+            <span class="lp-info-stat-value">${s.v}</span>
+            <span class="lp-info-stat-label">${s.l}</span>
+        </div>`).join('');
+
+    // ---------- Highlights ----------
+    const highlights = [
+        beds         ? { icon: '🛏',  label: `${beds} Bedroom${beds > 1 ? 's' : ''}` }        : null,
+        baths        ? { icon: '🚿',  label: `${baths} Bathroom${baths > 1 ? 's' : ''}` }     : null,
+        sqft         ? { icon: '📐',  label: `${Number(sqft).toLocaleString()} Sq Ft` }        : null,
+        garage       ? { icon: '🚗',  label: `${garage}-Car Garage` }                          : null,
+        hasPool      ? { icon: '🏊',  label: 'Pool' }                                          : null,
+        hasWaterfront? { icon: '🌊',  label: 'Waterfront' }                                    : null,
+        yearBuilt    ? { icon: '📅',  label: `Built ${yearBuilt}` }                            : null,
+        hoaFee       ? { icon: '🏢',  label: `HOA ${hoaFee}` }                                 : null,
+        lotSqft      ? { icon: '🌳',  label: `${Number(lotSqft).toLocaleString()} Lot Sq Ft` } : null,
+        type         ? { icon: '🏠',  label: type }                                            : null,
+    ].filter(Boolean);
+
+    const highlightsHtml = highlights.map(h => `
+        <div class="lp-highlight-item">
+            <span class="lp-highlight-icon">${h.icon}</span>
+            <span class="lp-highlight-label">${h.label}</span>
+        </div>`).join('');
+
+    // ---------- Description ----------
+    const descHtml = description ? `
+        <div class="lp-section">
+            <h2 class="lp-section-title">About This Home</h2>
+            <div class="lp-desc-wrap">
+                <p class="lp-desc-text" id="lp-desc-text">${description}</p>
+                ${description.length > 320 ? `<button class="lp-desc-toggle" id="lp-desc-toggle" onclick="lpToggleDesc()">Show More</button>` : ''}
+            </div>
+        </div>` : '';
+
+    // ---------- Listing details ----------
+    const listDateFormatted = listDate
+        ? new Date(listDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+        : '';
+
+    const listingRows = [
+        agentName       ? [agentName, 'Listing Agent']  : null,
+        brokerageName   ? [brokerageName, 'Brokerage']  : null,
+        agentLicense    ? [agentLicense, 'License #']   : null,
+        listDateFormatted ? [listDateFormatted, 'Listed']: null,
+        dom !== ''      ? [`${dom} day${dom !== 1 ? 's' : ''}`, 'Days on Market'] : null,
+        listing.ListingId ? [listing.ListingId, 'MLS #'] : null,
+    ].filter(Boolean);
+
+    const listingDetailsHtml = listingRows.map(([v, l]) => `
+        <div class="lp-listing-detail-row">
+            <span class="lp-listing-detail-label">${l}</span>
+            <span class="lp-listing-detail-value">${v}</span>
+        </div>`).join('');
+
+    // ---------- Home details ----------
+    const homeDetailItems = [
+        type                     ? ['Property Type',      type]                                    : null,
+        yearBuilt                ? ['Year Built',         yearBuilt]                              : null,
+        sqft                     ? ['Living Area',        `${Number(sqft).toLocaleString()} sq ft`] : null,
+        lotSqft                  ? ['Lot Size',           `${Number(lotSqft).toLocaleString()} sq ft`] : null,
+        beds                     ? ['Bedrooms',           beds]                                   : null,
+        baths                    ? ['Bathrooms Total',    baths]                                  : null,
+        listing.BathroomsFull    ? ['Full Baths',         listing.BathroomsFull]                  : null,
+        listing.BathroomsHalf    ? ['Half Baths',         listing.BathroomsHalf]                  : null,
+        garage                   ? ['Garage',             `${garage} Cars`]                       : null,
+        listing.Stories          ? ['Stories',            listing.Stories]                        : null,
+        cooling                  ? ['Cooling',            cooling]                                : null,
+        heating                  ? ['Heating',            heating]                                : null,
+        hasPool                  ? ['Pool',               'Yes']                                  : null,
+        hasWaterfront            ? ['Waterfront',         'Yes']                                  : null,
+        views                    ? ['View',               views]                                  : null,
+        hoaFee                   ? ['HOA Fee',            hoaFee]                                 : null,
+        listing.CountyOrParish   ? ['County',             listing.CountyOrParish]                 : null,
+        listing.PostalCode       ? ['ZIP Code',           listing.PostalCode]                     : null,
+        listing.MLSAreaMajor     ? ['MLS Area',           listing.MLSAreaMajor]                   : null,
+        listing.ListingId        ? ['MLS #',              listing.ListingId]                      : null,
+    ].filter(Boolean);
+
+    const homeDetailsHtml = homeDetailItems.map(([l, v]) => `
+        <div class="lp-home-detail">
+            <span class="lp-home-detail-label">${l}</span>
+            <span class="lp-home-detail-value">${v}</span>
+        </div>`).join('');
+
+    // ---------- Pre-filled agent message ----------
+    const prefilledMsg = `Hi Rosa, I would like to know more about ${address}.`;
+
+    // ---------- Build full HTML ----------
     container.innerHTML = `
-    <div class="hero-property-wrap">
-        <div class="hero-gallery">
-            ${photoHtml}
-            ${galleryNav}
+    <!-- ===== PHOTO GRID ===== -->
+    <div class="lp-photo-grid">
+        <div class="lp-photo-main" onclick="lpOpenGallery(0)">
+            ${mainPhotoHtml}
+            ${photos.length > 0 ? `<button class="lp-photo-count-btn" onclick="event.stopPropagation();lpOpenGallery(0)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+                See All ${photos.length} Photos
+            </button>` : ''}
         </div>
-        <div class="hero-info">
-            <div class="hero-status-badge">
-                <span class="hero-status-dot"></span>
-                ${status}
+        ${thumbPhotos.length ? `<div class="lp-photo-thumbs">${thumbsHtml}</div>` : ''}
+    </div>
+
+    <!-- ===== INFO BAR ===== -->
+    <div class="lp-info-bar">
+        <div class="lp-info-bar-inner">
+            <div class="lp-info-left">
+                <div class="lp-info-status-row">
+                    <span class="lp-info-status-dot"></span>
+                    <span class="lp-info-status-text">${status}</span>
+                </div>
+                <div class="lp-info-price">${price}</div>
+                <div class="lp-info-address">${address}</div>
+                ${subdivision ? `<div class="lp-info-sub">${subdivision}</div>` : ''}
             </div>
-            <div class="hero-price">${price}</div>
-            <div class="hero-address">${address}</div>
-            <div class="hero-stats">
-                ${beds  ? `<div class="hero-stat"><span class="hero-stat-value">${beds}</span><span class="hero-stat-label">Beds</span></div>` : ''}
-                ${baths ? `<div class="hero-stat"><span class="hero-stat-value">${baths}</span><span class="hero-stat-label">Baths</span></div>` : ''}
-                ${sqft  ? `<div class="hero-stat"><span class="hero-stat-value">${Number(sqft).toLocaleString()}</span><span class="hero-stat-label">Sq Ft</span></div>` : ''}
-            </div>
-            ${type  ? `<div class="hero-type-row">${type}</div>` : ''}
-            ${agent ? `<div class="hero-agent">Listed by <strong>${agent}</strong></div>` : ''}
-            <a href="#search-section" class="hero-cta-btn">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-                Browse More Properties
-            </a>
+            <div class="lp-info-stats">${statsHtml}</div>
         </div>
-    </div>`;
+    </div>
 
-    // Photo gallery navigation
-    if (photos.length > 1) {
-        let current = 0;
-        const img      = container.querySelector('#hero-img');
-        const counter  = container.querySelector('#gallery-counter');
+    <!-- ===== DETAIL BODY (2-col) ===== -->
+    <div class="lp-detail-body">
 
-        function goTo(idx) {
-            current = (idx + photos.length) % photos.length;
-            img.classList.add('fade');
-            setTimeout(() => {
-                img.src = photos[current];
-                img.classList.remove('fade');
-                counter.textContent = `${current + 1} / ${photos.length}`;
-            }, 200);
-        }
+        <!-- MAIN COLUMN -->
+        <div class="lp-detail-main">
 
-        container.querySelector('#gallery-prev').addEventListener('click', () => goTo(current - 1));
-        container.querySelector('#gallery-next').addEventListener('click', () => goTo(current + 1));
-    }
+            ${highlights.length ? `
+            <div class="lp-section">
+                <h2 class="lp-section-title">Highlights</h2>
+                <div class="lp-highlights-grid">${highlightsHtml}</div>
+            </div>` : ''}
+
+            ${descHtml}
+
+            ${listingRows.length ? `
+            <div class="lp-section">
+                <h2 class="lp-section-title">Listing Details</h2>
+                <div class="lp-listing-details">${listingDetailsHtml}</div>
+            </div>` : ''}
+
+            ${homeDetailItems.length ? `
+            <div class="lp-section">
+                <h2 class="lp-section-title">Home Details</h2>
+                <div class="lp-home-details-grid">${homeDetailsHtml}</div>
+            </div>` : ''}
+
+        </div>
+
+        <!-- STICKY AGENT SIDEBAR -->
+        <aside class="lp-agent-sidebar">
+            <div class="lp-agent-card" id="lp-agent-card">
+                <div class="lp-agent-top">
+                    <img src="team-rosa.jpg" alt="Rosa Poler" class="lp-agent-photo">
+                    <div class="lp-agent-info">
+                        <div class="lp-agent-name">Rosa Poler</div>
+                        <div class="lp-agent-badge">LISTING AGENT</div>
+                        <img src="optimar-logo.jpg" alt="Optimar International Realty" class="lp-agent-brokerage-logo">
+                    </div>
+                </div>
+                <div class="lp-agent-body">
+                    <p class="lp-agent-connect-label">Only The Poler Team connects you directly to the Listing Agent.</p>
+                    <textarea class="lp-agent-message" id="lp-agent-message" rows="4">${prefilledMsg}</textarea>
+                    <button class="lp-agent-send" id="lp-agent-send-btn" onclick="sendHeroAgentMessage()">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                        Send a Message
+                    </button>
+                    <a href="tel:+19542354046" class="lp-agent-phone">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 014.68 11.6 19.79 19.79 0 011.61 3a2 2 0 012-2.18h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L7.91 8.09a16 16 0 006 6l.91-.91a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+                        (954) 235-4046
+                    </a>
+                </div>
+            </div>
+        </aside>
+
+    </div><!-- /lp-detail-body -->
+
+    <!-- ===== FULLSCREEN GALLERY MODAL ===== -->
+    <div class="lp-gallery-modal" id="lp-gallery-modal">
+        <button class="lp-gallery-close" onclick="lpCloseGallery()" aria-label="Close gallery">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+        <button class="lp-gallery-nav lp-gallery-prev" onclick="lpGalleryNav(-1)" aria-label="Previous photo">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <div class="lp-gallery-img-wrap">
+            <img class="lp-gallery-img" id="lp-gallery-img" src="" alt="">
+        </div>
+        <button class="lp-gallery-nav lp-gallery-next" onclick="lpGalleryNav(1)" aria-label="Next photo">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+        <div class="lp-gallery-counter" id="lp-gallery-counter">1 / ${photos.length}</div>
+    </div>
+    `;
+
+    // ---- Gallery logic ----
+    let lpGalleryIndex = 0;
+    const lpGalleryPhotos = photos;
+
+    window.lpOpenGallery = function(idx) {
+        lpGalleryIndex = idx || 0;
+        const modal   = document.getElementById('lp-gallery-modal');
+        const img     = document.getElementById('lp-gallery-img');
+        const counter = document.getElementById('lp-gallery-counter');
+        img.src = lpGalleryPhotos[lpGalleryIndex];
+        counter.textContent = `${lpGalleryIndex + 1} / ${lpGalleryPhotos.length}`;
+        modal.classList.add('lp-gallery-open');
+        document.body.style.overflow = 'hidden';
+    };
+
+    window.lpCloseGallery = function() {
+        const modal = document.getElementById('lp-gallery-modal');
+        if (modal) modal.classList.remove('lp-gallery-open');
+        document.body.style.overflow = '';
+    };
+
+    window.lpGalleryNav = function(dir) {
+        lpGalleryIndex = (lpGalleryIndex + dir + lpGalleryPhotos.length) % lpGalleryPhotos.length;
+        const img     = document.getElementById('lp-gallery-img');
+        const counter = document.getElementById('lp-gallery-counter');
+        img.src = lpGalleryPhotos[lpGalleryIndex];
+        counter.textContent = `${lpGalleryIndex + 1} / ${lpGalleryPhotos.length}`;
+    };
+
+    // Keyboard navigation for gallery
+    document.addEventListener('keydown', function lpKeyNav(e) {
+        const modal = document.getElementById('lp-gallery-modal');
+        if (!modal || !modal.classList.contains('lp-gallery-open')) return;
+        if (e.key === 'ArrowLeft')  window.lpGalleryNav(-1);
+        if (e.key === 'ArrowRight') window.lpGalleryNav(1);
+        if (e.key === 'Escape')     window.lpCloseGallery();
+    });
+
+    // ---- Description toggle ----
+    window.lpToggleDesc = function() {
+        const text = document.getElementById('lp-desc-text');
+        const btn  = document.getElementById('lp-desc-toggle');
+        if (!text || !btn) return;
+        text.classList.toggle('lp-desc-expanded');
+        btn.textContent = text.classList.contains('lp-desc-expanded') ? 'Show Less' : 'Show More';
+    };
 }
 
 function renderDefaultHero(container) {
@@ -281,6 +504,28 @@ function renderDefaultHero(container) {
         <h1 class="hero-default-title">South Florida Luxury Real Estate</h1>
         <p class="hero-default-sub">Search thousands of active listings in Sunny Isles Beach, Aventura, North Miami Beach, and beyond.</p>
     </div>`;
+}
+
+// Send message from the hero property agent panel (WhatsApp)
+function sendHeroAgentMessage() {
+    const msgEl  = document.getElementById('lp-agent-message');
+    const sendBtn = document.getElementById('lp-agent-send-btn');
+    const msg = msgEl ? msgEl.value.trim() : '';
+    if (!msg) { msgEl && msgEl.focus(); return; }
+
+    const propertyContext = heroListing
+        ? `[Property: ${heroListing.UnparsedAddress || heroListing.City || 'listing page'} — ${formatPrice(heroListing.ListPrice)}]\n\n`
+        : '';
+
+    const waUrl = `https://wa.me/19542354046?text=${encodeURIComponent(propertyContext + msg)}`;
+    window.open(waUrl, '_blank');
+
+    if (sendBtn) {
+        const orig = sendBtn.innerHTML;
+        sendBtn.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Opening WhatsApp...`;
+        sendBtn.style.background = '#16a34a';
+        setTimeout(() => { sendBtn.innerHTML = orig; sendBtn.style.background = ''; }, 3000);
+    }
 }
 
 // ============================================================
