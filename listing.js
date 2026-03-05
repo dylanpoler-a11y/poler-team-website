@@ -14,9 +14,10 @@
 //    {{listing_address}}, {{listing_price}}, {{page_url}}
 // 4. Paste your keys below
 // ============================================================
-const EMAILJS_PUBLIC_KEY  = 'BXbUaPxSOHhgfGn6x';
-const EMAILJS_SERVICE_ID  = 'service_d4ff5bs';
-const EMAILJS_TEMPLATE_ID = 'template_932zy9s';
+const EMAILJS_PUBLIC_KEY       = 'BXbUaPxSOHhgfGn6x';
+const EMAILJS_SERVICE_ID       = 'service_d4ff5bs';
+const EMAILJS_TEMPLATE_ID      = 'template_932zy9s';   // Lead notification → Rosa
+const EMAILJS_WELCOME_TEMPLATE = 'template_welcome1';   // Intro email → new lead (see EmailJS dashboard)
 
 // ============================================================
 // BRIDGE API CONFIG
@@ -140,7 +141,17 @@ function initLeadCapture() {
 
         try {
             if (typeof emailjs !== 'undefined' && EMAILJS_SERVICE_ID !== 'YOUR_SERVICE_ID') {
+                // 1) Notify Rosa of new lead
                 await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams);
+
+                // 2) Send intro/welcome email back to the new lead
+                await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_WELCOME_TEMPLATE, {
+                    user_email:      email,          // EmailJS template "To Email" → {{user_email}}
+                    first_name:      first,
+                    last_name:       last,
+                    listing_address: templateParams.listing_address,
+                    listing_price:   templateParams.listing_price,
+                });
             }
         } catch (err) {
             console.warn('EmailJS send failed:', err);
