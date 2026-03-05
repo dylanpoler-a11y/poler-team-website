@@ -71,10 +71,9 @@ async function apiFetch(params) {
 }
 
 // ============================================================
-// LEAD CAPTURE — 10-second timer then forced modal
+// LEAD CAPTURE — 10-second timer then forced modal, with OTP phone verification
 // ============================================================
 function initLeadCapture() {
-    // Check if already captured this session
     leadCaptured = !!localStorage.getItem('poler_lead_v1');
     if (leadCaptured) return;
 
@@ -87,26 +86,23 @@ function initLeadCapture() {
         emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
     }
 
-    // Start 10-second countdown
+    // 10-second countdown
     const DURATION = 10000;
     const START    = Date.now();
-
     timerInterval = setInterval(() => {
         const elapsed = Date.now() - START;
         const pct = Math.max(0, 1 - elapsed / DURATION);
         bar.style.transform = `scaleX(${pct})`;
-
         if (elapsed >= DURATION) {
             clearInterval(timerInterval);
             showLeadModal(overlay, pageWrap);
         }
     }, 80);
 
-    // Form submission
+    // ── STEP 1: Info form → send OTP ─────────────────────────
     const form      = document.getElementById('lead-form');
     const submitBtn = document.getElementById('lead-submit-btn');
     const submitTxt = document.getElementById('lead-submit-text');
-    const errorEl   = document.getElementById('lead-error');
 
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -116,24 +112,174 @@ function initLeadCapture() {
         const phone = document.getElementById('lead-phone').value.trim();
 
         if (!first || !last || !email || !phone) {
-            showLeadError('Please fill in all fields.');
+            showLeadError('lead-error', 'Please fill in all fields.');
             return;
         }
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-            showLeadError('Please enter a valid email address.');
+            showLeadError('lead-error', 'Please enter a valid email address.');
+            return;
+        }
+        const digitsOnly = phone.replace(/\D/g, '');
+        if (digitsOnly.length < 10) {
+            showLeadError('lead-error', 'Please enter a valid phone number.');
             return;
         }
 
         submitBtn.disabled = true;
-        submitTxt.textContent = 'Saving...';
-        errorEl.style.display = 'none';
+        submitTxt.textContent = 'Sending code…';
+        document.getElementById('lead-error').style.display = 'none';
 
-        // Send lead via EmailJS
+        try {
+            const res  = await fetch('/api/send-otp', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ phone }),
+            });
+            const data = await res.json();
+
+            if (!res.ok) {
+                submitBtn.disabled = false;
+                submitTxt.textContent = 'Send Verification Code';
+                showLeadError('lead-error', data.error || 'Could not send code. Please try again.');
+                return;
+            }
+
+            // Store lead info for step 2
+            leadFormData = { first, last, email, phone, normalizedPhone: data.phone };
+
+            // Show OTP step
+            document.getElementById('lead-step-1').style.display = 'none';
+            const step2 = document.getElementById('lead-step-2');
+            step2.style.display = 'block';
+            const masked = phone.replace(/(\d{3})\d{4}(\d{3,4})$/, '$1****$2');
+            document.getElementById('otp-subtitle').textContent =
+                `We sent a 6-digit code to ${masked}. Enter it below to continue.`;
+
+            initOtpDigits();
+            startResendTimer();
+            document.querySelector('.otp-digit').focus();
+
+        } catch (err) {
+            submitBtn.disabled = false;
+            submitTxt.textContent = 'Send Verification Code';
+            showLeadError('lead-error', 'Network error. Please try again.');
+        }
+    });
+
+    // ── STEP 2: OTP entry → verify ───────────────────────────
+    document.getElementById('otp-verify-btn').addEventListener('click', () => verifyOtp(overlay, pageWrap));
+
+    document.getElementById('otp-back-btn').addEventListener('click', () => {
+        document.getElementById('lead-step-2').style.display = 'none';
+        document.getElementById('lead-step-1').style.display = 'block';
+        submitBtn.disabled = false;
+        submitTxt.textContent = 'Send Verification Code';
+    });
+
+    document.getElementById('otp-resend-btn').addEventListener('click', async () => {
+        if (!leadFormData) return;
+        const btn = document.getElementById('otp-resend-btn');
+        btn.disabled = true;
+        try {
+            await fetch('/api/send-otp', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ phone: leadFormData.phone }),
+            });
+            startResendTimer();
+            // Clear digits
+            document.querySelectorAll('.otp-digit').forEach(d => { d.value = ''; d.classList.remove('filled','error'); });
+            document.querySelector('.otp-digit').focus();
+        } catch (_) {}
+    });
+}
+
+// Stored lead info between step 1 and step 2
+let leadFormData = null;
+
+// Wire up the 6 OTP digit boxes for auto-advance and backspace navigation
+function initOtpDigits() {
+    const digits = Array.from(document.querySelectorAll('.otp-digit'));
+    digits.forEach((input, i) => {
+        input.value = '';
+        input.classList.remove('filled', 'error');
+
+        input.addEventListener('input', (e) => {
+            const val = e.target.value.replace(/\D/g, '');
+            input.value = val.slice(-1); // keep only last digit
+            input.classList.toggle('filled', !!input.value);
+            if (input.value && i < digits.length - 1) digits[i + 1].focus();
+        });
+
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Backspace' && !input.value && i > 0) {
+                digits[i - 1].focus();
+                digits[i - 1].value = '';
+                digits[i - 1].classList.remove('filled');
+            }
+            if (e.key === 'Enter') verifyOtp(
+                document.getElementById('lead-overlay'),
+                document.getElementById('page-wrap')
+            );
+        });
+
+        // Handle paste of full 6-digit code
+        input.addEventListener('paste', (e) => {
+            e.preventDefault();
+            const pasted = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '');
+            digits.forEach((d, idx) => {
+                d.value = pasted[idx] || '';
+                d.classList.toggle('filled', !!d.value);
+            });
+            const lastFilled = Math.min(pasted.length, digits.length) - 1;
+            digits[lastFilled]?.focus();
+        });
+    });
+}
+
+async function verifyOtp(overlay, pageWrap) {
+    const digits   = Array.from(document.querySelectorAll('.otp-digit'));
+    const code     = digits.map(d => d.value).join('');
+    const verifyBtn = document.getElementById('otp-verify-btn');
+    const verifyTxt = document.getElementById('otp-verify-text');
+    const errorEl   = document.getElementById('otp-error');
+
+    if (code.length < 6) {
+        showLeadError('otp-error', 'Please enter all 6 digits.');
+        digits.forEach(d => d.classList.add('error'));
+        setTimeout(() => digits.forEach(d => d.classList.remove('error')), 400);
+        return;
+    }
+
+    verifyBtn.disabled = true;
+    verifyTxt.textContent = 'Verifying…';
+    errorEl.style.display = 'none';
+
+    try {
+        const res  = await fetch('/api/verify-otp', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phone: leadFormData.normalizedPhone, code }),
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+            verifyBtn.disabled = false;
+            verifyTxt.textContent = 'Verify & Continue';
+            showLeadError('otp-error', data.error || 'Incorrect code. Please try again.');
+            digits.forEach(d => d.classList.add('error'));
+            setTimeout(() => digits.forEach(d => d.classList.remove('error')), 400);
+            return;
+        }
+
+        // ✅ Verified — send emails and unlock page
+        verifyTxt.textContent = '✓ Verified!';
+        const { first, last, email, phone } = leadFormData;
         const templateParams = {
             first_name:       first,
             last_name:        last,
-            email:            email,
-            phone:            phone,
+            email,
+            phone,
             listing_address:  heroListing ? (heroListing.UnparsedAddress || heroListing.City || 'N/A') : 'Browse page',
             listing_price:    heroListing ? formatPrice(heroListing.ListPrice) : 'N/A',
             page_url:         window.location.href,
@@ -141,28 +287,47 @@ function initLeadCapture() {
 
         try {
             if (typeof emailjs !== 'undefined' && EMAILJS_SERVICE_ID !== 'YOUR_SERVICE_ID') {
-                // 1) Notify Rosa of new lead
                 await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams);
-
-                // 2) Send intro/welcome email back to the new lead
                 await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_WELCOME_TEMPLATE, {
-                    user_email:      email,          // EmailJS template "To Email" → {{user_email}}
+                    user_email:      email,
                     first_name:      first,
                     last_name:       last,
                     listing_address: templateParams.listing_address,
                     listing_price:   templateParams.listing_price,
                 });
             }
-        } catch (err) {
-            console.warn('EmailJS send failed:', err);
-            // Still unlock page — don't punish user for email issues
+        } catch (emailErr) {
+            console.warn('EmailJS send failed:', emailErr);
         }
 
-        // Mark as captured + unlock page
         localStorage.setItem('poler_lead_v1', email);
         leadCaptured = true;
-        unlockPage(overlay, pageWrap);
-    });
+        setTimeout(() => unlockPage(overlay, pageWrap), 600);
+
+    } catch (err) {
+        verifyBtn.disabled = false;
+        verifyTxt.textContent = 'Verify & Continue';
+        showLeadError('otp-error', 'Network error. Please try again.');
+    }
+}
+
+// 60-second countdown before allowing resend
+function startResendTimer() {
+    const btn      = document.getElementById('otp-resend-btn');
+    const timerEl  = document.getElementById('otp-resend-timer');
+    btn.disabled   = true;
+    let seconds    = 60;
+    timerEl.textContent = `(${seconds}s)`;
+    const iv = setInterval(() => {
+        seconds--;
+        if (seconds <= 0) {
+            clearInterval(iv);
+            timerEl.textContent = '';
+            btn.disabled = false;
+        } else {
+            timerEl.textContent = `(${seconds}s)`;
+        }
+    }, 1000);
 }
 
 function showLeadModal(overlay, pageWrap) {
@@ -178,13 +343,11 @@ function unlockPage(overlay, pageWrap) {
     pageWrap.classList.remove('blurred');
 }
 
-function showLeadError(msg) {
-    const el = document.getElementById('lead-error');
+function showLeadError(elId, msg) {
+    const el = document.getElementById(elId);
+    if (!el) return;
     el.textContent = msg;
     el.style.display = 'block';
-    const btn = document.getElementById('lead-submit-btn');
-    btn.disabled = false;
-    document.getElementById('lead-submit-text').textContent = 'Access Property Details';
 }
 
 // ============================================================
