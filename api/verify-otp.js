@@ -67,7 +67,8 @@ export default async function handler(req) {
 
     if (!twilioRes.ok) {
         const msg = data.message || data.error || `Twilio error ${twilioRes.status}`;
-        return json({ error: msg }, 400);
+        // DEBUG: include the phone sent to Twilio (last 4 digits only) so we can spot mismatches
+        return json({ error: `${msg} [checked: ...${phone.slice(-4)}]` }, 400);
     }
 
     if (data.status !== 'approved') {
