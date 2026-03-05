@@ -65,7 +65,12 @@ export default async function handler(req) {
 
     const data = await twilioRes.json().catch(() => ({}));
 
-    if (!twilioRes.ok || data.status !== 'approved') {
+    if (!twilioRes.ok) {
+        const msg = data.message || data.error || `Twilio error ${twilioRes.status}`;
+        return json({ error: msg }, 400);
+    }
+
+    if (data.status !== 'approved') {
         return json({ error: 'Incorrect code. Please try again.' }, 400);
     }
 
