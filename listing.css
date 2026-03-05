@@ -1094,8 +1094,8 @@ a { color: inherit; text-decoration: none; }
     overflow: hidden;
 }
 .lp-agent-top {
-    display: flex; align-items: center; gap: 1rem;
-    padding: 1.5rem;
+    display: flex; align-items: flex-start; gap: 1rem;
+    padding: 1.5rem 1.5rem 1.75rem;
     border-bottom: 1px solid var(--border);
     background: var(--bg);
 }
