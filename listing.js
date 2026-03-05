@@ -273,9 +273,24 @@ async function verifyOtp(overlay, pageWrap) {
             return;
         }
 
-        // ✅ Verified — send emails and unlock page
+        // ✅ Verified — save to CRM, send emails and unlock page
         verifyTxt.textContent = '✓ Verified!';
         const { first, last, email, phone } = leadFormData;
+
+        // Save lead to Airtable CRM (fire-and-forget — don't block page unlock)
+        fetch(`${OTP_BASE}/api/save-lead`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                first,
+                last,
+                email,
+                phone:          leadFormData.normalizedPhone,
+                listingAddress: heroListing ? (heroListing.UnparsedAddress || heroListing.City || '') : '',
+                listingPrice:   heroListing ? (heroListing.ListPrice || 0) : 0,
+                sourceUrl:      window.location.href,
+            }),
+        }).catch(() => {});
         const templateParams = {
             first_name:       first,
             last_name:        last,
