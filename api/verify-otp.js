@@ -51,7 +51,7 @@ export default async function handler(req) {
     phone = '+' + phone;
 
     // Call Twilio Verify — check the code
-    const twilioUrl = `https://verify.twilio.com/v2/Services/${serviceSid}/VerificationChecks`;
+    const twilioUrl = `https://verify.twilio.com/v2/Services/${serviceSid}/VerificationCheck`;
     const credentials = btoa(`${accountSid}:${authToken}`);
 
     const twilioRes = await fetch(twilioUrl, {
@@ -67,8 +67,7 @@ export default async function handler(req) {
 
     if (!twilioRes.ok) {
         const msg = data.message || data.error || `Twilio error ${twilioRes.status}`;
-        // DEBUG: include the phone sent to Twilio (last 4 digits only) so we can spot mismatches
-        return json({ error: `${msg} [checked: ...${phone.slice(-4)}]` }, 400);
+        return json({ error: 'Incorrect code. Please try again.' }, 400);
     }
 
     if (data.status !== 'approved') {
