@@ -24,33 +24,63 @@
             <img src="logo-white.png" alt="The Poler Team" class="lead-logo">
         </div>
         <div class="lead-modal-body">
-            <h2 class="lead-title" id="lead-title">View Full Property Details</h2>
-            <p class="lead-subtitle">Create your free account to unlock photos, pricing history, neighborhood stats, and schedule a private showing.</p>
-            <div class="lead-timer-wrap">
-                <div class="lead-timer-bar" id="lead-timer-bar"></div>
+
+            <!-- ── Step 1: Info form ── -->
+            <div id="lead-step-1">
+                <h2 class="lead-title" id="lead-title">View Full Property Details</h2>
+                <p class="lead-subtitle">Create your free account to unlock photos, pricing history, neighborhood stats, and schedule a private showing.</p>
+                <div class="lead-timer-wrap">
+                    <div class="lead-timer-bar" id="lead-timer-bar"></div>
+                </div>
+                <form id="lead-form" class="lead-form" novalidate>
+                    <div class="lead-form-row">
+                        <div class="lead-field">
+                            <input type="text" id="lead-first" placeholder="First Name" required autocomplete="given-name">
+                        </div>
+                        <div class="lead-field">
+                            <input type="text" id="lead-last" placeholder="Last Name" required autocomplete="family-name">
+                        </div>
+                    </div>
+                    <div class="lead-field">
+                        <input type="email" id="lead-email" placeholder="Email Address" required autocomplete="email">
+                    </div>
+                    <div class="lead-field">
+                        <input type="tel" id="lead-phone" placeholder="Phone Number" required autocomplete="tel">
+                    </div>
+                    <p class="lead-error" id="lead-error" style="display:none"></p>
+                    <button type="submit" class="lead-submit" id="lead-submit-btn">
+                        <span id="lead-submit-text">Send Verification Code</span>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 014.68 11.6 19.79 19.79 0 011.61 3a2 2 0 012-2.18h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L7.91 8.09a16 16 0 006 6l.91-.91a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+                    </button>
+                    <p class="lead-disclaimer">We'll text a code to verify your number. No spam, ever.</p>
+                </form>
             </div>
-            <form id="lead-form" class="lead-form" novalidate>
-                <div class="lead-form-row">
-                    <div class="lead-field">
-                        <input type="text" id="lead-first" placeholder="First Name" required autocomplete="given-name">
-                    </div>
-                    <div class="lead-field">
-                        <input type="text" id="lead-last" placeholder="Last Name" required autocomplete="family-name">
-                    </div>
+
+            <!-- ── Step 2: OTP verification ── -->
+            <div id="lead-step-2" style="display:none">
+                <h2 class="lead-title">Verify Your Number</h2>
+                <p class="lead-subtitle" id="otp-subtitle">We sent a 6-digit code to your phone. Enter it below to continue.</p>
+                <div class="otp-inputs-wrap" id="otp-inputs-wrap">
+                    <input class="otp-digit" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 1">
+                    <input class="otp-digit" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 2">
+                    <input class="otp-digit" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 3">
+                    <input class="otp-digit" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 4">
+                    <input class="otp-digit" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 5">
+                    <input class="otp-digit" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 6">
                 </div>
-                <div class="lead-field">
-                    <input type="email" id="lead-email" placeholder="Email Address" required autocomplete="email">
-                </div>
-                <div class="lead-field">
-                    <input type="tel" id="lead-phone" placeholder="Phone Number" required autocomplete="tel">
-                </div>
-                <p class="lead-error" id="lead-error" style="display:none"></p>
-                <button type="submit" class="lead-submit" id="lead-submit-btn">
-                    <span id="lead-submit-text">Access Property Details</span>
+                <p class="lead-error" id="otp-error" style="display:none"></p>
+                <button type="button" class="lead-submit" id="otp-verify-btn">
+                    <span id="otp-verify-text">Verify &amp; Continue</span>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                 </button>
-                <p class="lead-disclaimer">By continuing you agree to receive property updates from The Poler Team. No spam, ever.</p>
-            </form>
+                <div class="otp-footer">
+                    <button type="button" class="otp-resend-btn" id="otp-resend-btn" disabled>
+                        Resend code <span id="otp-resend-timer">(60s)</span>
+                    </button>
+                    <button type="button" class="otp-back-btn" id="otp-back-btn">← Change number</button>
+                </div>
+            </div>
+
         </div>
     </div>
 </div>
