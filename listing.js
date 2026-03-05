@@ -1048,6 +1048,339 @@ spinStyle.textContent = '@keyframes spin { from { transform: rotate(0deg); } to 
 document.head.appendChild(spinStyle);
 
 // ============================================================
+// AI CHAT WIDGET
+// ============================================================
+
+(function () {
+    // ── State ──────────────────────────────────────────────
+    const chatState = {
+        open: false,
+        messages: [],          // { role: 'user'|'assistant', content: string }
+        streaming: false,
+        greeted: false,
+    };
+
+    // ── DOM refs (set after DOMContentLoaded) ───────────────
+    let widget, toggleBtn, panel, messagesEl, inputEl, sendBtn, pingDot;
+
+    // ── Build property context string from heroListing ──────
+    function buildPropertyContext() {
+        if (!heroListing) return '';
+        const l = heroListing;
+        const lines = [
+            `Address: ${l.UnparsedAddress || 'N/A'}`,
+            `Price: ${formatPrice(l.ListPrice)}`,
+            `Status: ${l.StandardStatus || l.MlsStatus || 'N/A'}`,
+            `Type: ${l.PropertyType || l.PropertySubType || 'N/A'}`,
+            `Beds: ${l.BedroomsTotal || 'N/A'}`,
+            `Baths: ${l.BathroomsTotalInteger || 'N/A'}`,
+            `Living Area: ${l.LivingArea ? Number(l.LivingArea).toLocaleString() + ' sqft' : 'N/A'}`,
+            l.LotSizeSquareFeet ? `Lot Size: ${Number(l.LotSizeSquareFeet).toLocaleString()} sqft` : '',
+            l.YearBuilt          ? `Year Built: ${l.YearBuilt}` : '',
+            l.SubdivisionName    ? `Subdivision: ${l.SubdivisionName}` : '',
+            l.AssociationFee     ? `HOA Fee: $${Number(l.AssociationFee).toLocaleString()}/mo` : '',
+            l.GarageSpaces       ? `Garage Spaces: ${l.GarageSpaces}` : '',
+            typeof l.PoolPrivateYN !== 'undefined' ? `Private Pool: ${l.PoolPrivateYN ? 'Yes' : 'No'}` : '',
+            l.WaterfrontYN || (l.WaterfrontFeatures && l.WaterfrontFeatures.length)
+                ? `Waterfront: Yes${l.WaterfrontFeatures ? ' — ' + l.WaterfrontFeatures.join(', ') : ''}` : '',
+            l.CoolingYN          ? `Cooling: ${l.Cooling ? l.Cooling.join(', ') : 'Yes'}` : '',
+            l.HeatingYN          ? `Heating: ${l.Heating ? l.Heating.join(', ') : 'Yes'}` : '',
+            l.View               ? `Views: ${l.View.join(', ')}` : '',
+            l.PublicRemarks      ? `Description: ${l.PublicRemarks.substring(0, 600)}` : '',
+            l.ListAgentFullName  ? `Listing Agent: ${l.ListAgentFullName}` : '',
+            l.ListOfficeName     ? `Brokerage: ${l.ListOfficeName}` : '',
+            l.ListingId          ? `MLS #: ${l.ListingId}` : '',
+            `Page URL: ${window.location.href}`,
+        ];
+        return lines.filter(Boolean).join('\n');
+    }
+
+    // ── Format timestamp ─────────────────────────────────────
+    function formatTime() {
+        return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+
+    // ── Simple markdown → HTML (bold, bullets) ───────────────
+    function renderMarkdown(text) {
+        return text
+            // Bold **text**
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            // Italic *text*
+            .replace(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g, '<em>$1</em>')
+            // Bullet lines starting with - or •
+            .replace(/^[\-•]\s+(.+)$/gm, '<li>$1</li>')
+            // Wrap consecutive <li> in <ul>
+            .replace(/(<li>.*?<\/li>(\n|$))+/gs, m => `<ul>${m}</ul>`)
+            // Newlines → paragraphs
+            .split(/\n{2,}/)
+            .map(p => p.trim())
+            .filter(p => p && !p.startsWith('<ul>'))
+            .reduce((acc, p) => {
+                if (p.startsWith('<li>')) return acc + p;
+                return acc + `<p>${p}</p>`;
+            }, '')
+            // Clean up any leftover newlines inside paragraphs
+            .replace(/\n/g, ' ');
+    }
+
+    // ── Append a message bubble ──────────────────────────────
+    function appendMessage(role, text, streaming = false) {
+        const row = document.createElement('div');
+        row.className = `ai-msg-row ${role}`;
+
+        const bubble = document.createElement('div');
+        bubble.className = 'ai-msg-bubble';
+
+        if (role === 'assistant') {
+            bubble.innerHTML = streaming ? '' : renderMarkdown(text);
+        } else {
+            bubble.textContent = text;
+        }
+
+        const time = document.createElement('div');
+        time.className = 'ai-msg-time';
+        time.textContent = formatTime();
+
+        row.appendChild(bubble);
+        row.appendChild(time);
+        messagesEl.appendChild(row);
+        scrollToBottom();
+        return bubble; // Return so streaming can update it
+    }
+
+    // ── Typing indicator ─────────────────────────────────────
+    function showTyping() {
+        const row = document.createElement('div');
+        row.className = 'ai-msg-row assistant';
+        row.id = 'ai-typing-row';
+        const indicator = document.createElement('div');
+        indicator.className = 'ai-typing-indicator';
+        indicator.innerHTML = '<div class="ai-typing-dot"></div><div class="ai-typing-dot"></div><div class="ai-typing-dot"></div>';
+        row.appendChild(indicator);
+        messagesEl.appendChild(row);
+        scrollToBottom();
+    }
+
+    function hideTyping() {
+        const row = document.getElementById('ai-typing-row');
+        if (row) row.remove();
+    }
+
+    // ── Scroll to bottom ─────────────────────────────────────
+    function scrollToBottom() {
+        messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    // ── Quick-reply chips ────────────────────────────────────
+    function addChips(questions) {
+        const chipsEl = document.createElement('div');
+        chipsEl.className = 'ai-chat-chips';
+        questions.forEach(q => {
+            const chip = document.createElement('button');
+            chip.className = 'ai-chat-chip';
+            chip.textContent = q;
+            chip.addEventListener('click', () => {
+                chipsEl.remove();
+                sendMessage(q);
+            });
+            chipsEl.appendChild(chip);
+        });
+        messagesEl.appendChild(chipsEl);
+        scrollToBottom();
+    }
+
+    // ── Send a message ───────────────────────────────────────
+    async function sendMessage(text) {
+        text = (text || inputEl.value).trim();
+        if (!text || chatState.streaming) return;
+
+        inputEl.value = '';
+        inputEl.style.height = 'auto';
+
+        // Add user message to state & DOM
+        chatState.messages.push({ role: 'user', content: text });
+        appendMessage('user', text);
+
+        // Stream AI response
+        await streamResponse();
+    }
+
+    // ── Stream from /api/chat ────────────────────────────────
+    async function streamResponse() {
+        chatState.streaming = true;
+        sendBtn.disabled = true;
+        showTyping();
+
+        try {
+            const res = await fetch('/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    messages: chatState.messages,
+                    propertyContext: buildPropertyContext(),
+                }),
+            });
+
+            if (!res.ok) {
+                hideTyping();
+                appendMessage('assistant', 'Sorry, I ran into an issue. Please try again or contact Rosa directly at (954) 235-4046.');
+                chatState.streaming = false;
+                sendBtn.disabled = false;
+                return;
+            }
+
+            hideTyping();
+
+            // Add empty assistant bubble to stream into
+            const bubble = appendMessage('assistant', '', true);
+            let fullText = '';
+
+            const reader = res.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = '';
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                buffer += decoder.decode(value, { stream: true });
+                const lines = buffer.split('\n');
+                buffer = lines.pop(); // Keep incomplete line in buffer
+
+                for (const line of lines) {
+                    if (!line.startsWith('data: ')) continue;
+                    const data = line.slice(6).trim();
+                    if (data === '[DONE]') continue;
+
+                    try {
+                        const parsed = JSON.parse(data);
+                        // Anthropic streaming event
+                        if (parsed.type === 'content_block_delta' &&
+                            parsed.delta?.type === 'text_delta') {
+                            fullText += parsed.delta.text;
+                            bubble.innerHTML = renderMarkdown(fullText);
+                            scrollToBottom();
+                        }
+                    } catch (_) { /* ignore parse errors */ }
+                }
+            }
+
+            // Save complete response to history
+            chatState.messages.push({ role: 'assistant', content: fullText });
+
+        } catch (err) {
+            hideTyping();
+            appendMessage('assistant', 'Connection issue — please check your internet and try again.');
+            console.error('AI chat error:', err);
+        }
+
+        chatState.streaming = false;
+        sendBtn.disabled = false;
+        inputEl.focus();
+    }
+
+    // ── Open / close panel ───────────────────────────────────
+    function openChat() {
+        chatState.open = true;
+        widget.classList.add('open');
+        panel.classList.add('open');
+        panel.setAttribute('aria-hidden', 'false');
+        toggleBtn.setAttribute('aria-expanded', 'true');
+        pingDot.classList.remove('visible');
+
+        // Show greeting on first open
+        if (!chatState.greeted) {
+            chatState.greeted = true;
+            setTimeout(() => {
+                const greeting = heroListing
+                    ? `Tell me what features you like about this home and I'll help you find others like it! 🏡\n\nI can also answer any real estate questions — financing, neighborhoods, investment potential, market trends — whatever's on your mind.`
+                    : `Hi there! I'm your AI real estate assistant for The Poler Team. 🏡\n\nI can help you find properties, explain the buying process, analyze neighborhoods, or answer any real estate questions. What are you looking for?`;
+
+                appendMessage('assistant', greeting);
+
+                // Quick-reply chips
+                setTimeout(() => {
+                    addChips([
+                        'What makes this a good investment?',
+                        'How does the buying process work?',
+                        'Tell me about this neighborhood',
+                        'What can I afford?',
+                    ]);
+                }, 300);
+            }, 250);
+        }
+
+        inputEl.focus();
+    }
+
+    function closeChat() {
+        chatState.open = false;
+        widget.classList.remove('open');
+        panel.classList.remove('open');
+        panel.setAttribute('aria-hidden', 'true');
+        toggleBtn.setAttribute('aria-expanded', 'false');
+    }
+
+    // ── Auto-grow textarea ───────────────────────────────────
+    function autoGrow(el) {
+        el.style.height = 'auto';
+        el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+    }
+
+    // ── Init ─────────────────────────────────────────────────
+    function initAIChat() {
+        widget     = document.getElementById('ai-chat-widget');
+        toggleBtn  = document.getElementById('ai-chat-toggle');
+        panel      = document.getElementById('ai-chat-panel');
+        messagesEl = document.getElementById('ai-chat-messages');
+        inputEl    = document.getElementById('ai-chat-input');
+        sendBtn    = document.getElementById('ai-chat-send');
+        pingDot    = document.getElementById('ai-chat-ping');
+
+        if (!widget) return;
+
+        // Toggle button
+        toggleBtn.addEventListener('click', () => {
+            chatState.open ? closeChat() : openChat();
+        });
+
+        // Close button
+        document.getElementById('ai-chat-close').addEventListener('click', closeChat);
+
+        // Send on button click
+        sendBtn.addEventListener('click', () => sendMessage());
+
+        // Send on Enter (Shift+Enter = newline)
+        inputEl.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        // Auto-grow textarea
+        inputEl.addEventListener('input', () => autoGrow(inputEl));
+
+        // Close on Escape
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && chatState.open) closeChat();
+        });
+
+        // Notification ping after 8 seconds (draw attention)
+        setTimeout(() => {
+            if (!chatState.open) pingDot.classList.add('visible');
+        }, 8000);
+    }
+
+    // Run after DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initAIChat);
+    } else {
+        initAIChat();
+    }
+})();
+
+// ============================================================
 // BOOT
 // ============================================================
 document.addEventListener('DOMContentLoaded', () => {
