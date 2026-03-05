@@ -1118,10 +1118,11 @@ a { color: inherit; text-decoration: none; }
     width: fit-content;
 }
 .lp-agent-brokerage-logo {
+    display: inline-block;
     height: auto; width: auto;
-    max-height: 38px; max-width: 120px;
+    max-height: 40px; max-width: 130px;
     object-fit: contain;
-    margin-top: 0.3rem;
+    margin-top: 0.4rem;
     opacity: 0.9;
 }
 
