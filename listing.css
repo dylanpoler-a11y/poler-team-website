@@ -1303,17 +1303,14 @@ a { color: inherit; text-decoration: none; }
    AI CHAT WIDGET
    ============================================================ */
 
-/* Widget container — fixed bottom-right */
+/* Widget container — fixed bottom-right, sized to the toggle button only */
 .ai-chat-widget {
     position: fixed;
     bottom: 28px;
     right: 28px;
     z-index: 500;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 12px;
     font-family: var(--font-body);
+    /* No flex here — panel is absolutely positioned above the button */
 }
 
 /* ── Toggle Button ── */
@@ -1380,8 +1377,11 @@ a { color: inherit; text-decoration: none; }
 .ai-chat-widget.open .ai-chat-toggle { padding: 13px 13px; border-radius: 50%; }
 .ai-chat-widget.open .ai-chat-toggle-icon { width: 24px; height: 24px; background: none; }
 
-/* ── Chat Panel ── */
+/* ── Chat Panel — floats above the toggle button ── */
 .ai-chat-panel {
+    position: absolute;
+    bottom: calc(100% + 12px); /* 12px above the toggle button */
+    right: 0;
     width: 380px;
     height: 540px;
     background: #fff;
@@ -1394,7 +1394,7 @@ a { color: inherit; text-decoration: none; }
 
     /* Hidden state */
     opacity: 0;
-    transform: translateY(16px) scale(0.97);
+    transform: translateY(12px) scale(0.97);
     pointer-events: none;
     transition: opacity 0.25s ease, transform 0.25s ease;
 }
@@ -1633,7 +1633,7 @@ a { color: inherit; text-decoration: none; }
 /* Mobile */
 @media (max-width: 480px) {
     .ai-chat-widget { bottom: 16px; right: 16px; }
-    .ai-chat-panel { width: calc(100vw - 32px); height: 75vh; max-height: 560px; }
+    .ai-chat-panel { width: calc(100vw - 32px); height: 75vh; max-height: 560px; right: 0; }
     .ai-chat-toggle-label { display: none; }
     .ai-chat-widget.open .ai-chat-toggle { display: none; }
 }
