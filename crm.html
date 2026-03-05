@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Poler Team CRM</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="crm.css" />
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════════════════════════ LOGIN SCREEN -->
+  <div id="login-screen">
+    <div class="login-card">
+      <img src="/logo-white.png" alt="Poler Team" class="login-logo" />
+      <h1 class="login-title">Poler Team CRM</h1>
+      <p class="login-subtitle">Agent Dashboard</p>
+      <input
+        type="password"
+        id="crm-password-input"
+        class="login-input"
+        placeholder="Enter password"
+        autocomplete="current-password"
+      />
+      <button id="crm-login-btn" class="login-btn">Sign In →</button>
+      <div id="login-error" class="login-error"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════ CRM APP -->
+  <div id="crm-app">
+    <div class="crm-layout">
+
+      <!-- ─────────────────────────────────────────────── SIDEBAR -->
+      <nav id="crm-sidebar">
+        <div class="sidebar-brand">
+          <img src="/logo-white.png" alt="Poler Team" class="sidebar-logo" />
+          <span class="sidebar-title">Poler Team<br />CRM</span>
+        </div>
+        <div class="sidebar-nav">
+          <a class="nav-item active" data-action="dashboard" href="#">
+            <span class="nav-icon">📊</span> Dashboard
+          </a>
+          <a class="nav-item" data-action="refresh" href="#">
+            <span class="nav-icon">👥</span> All Leads
+          </a>
+          <a class="nav-item" data-action="export" href="#">
+            <span class="nav-icon">⬇️</span> Export CSV
+          </a>
+        </div>
+        <div class="sidebar-footer">
+          <a class="nav-item" data-action="logout" href="#">
+            <span class="nav-icon">🚪</span> Logout
+          </a>
+        </div>
+      </nav>
+
+      <!-- ─────────────────────────────────────────────── MAIN CONTENT -->
+      <main id="crm-main">
+
+        <!-- Header -->
+        <div class="crm-header">
+          <h1>Lead Dashboard</h1>
+          <div class="header-right">
+            <span id="last-refreshed"></span>
+            <button id="refresh-btn" class="refresh-btn">↻ Refresh</button>
+          </div>
+        </div>
+
+        <!-- Stats Row -->
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="stat-icon blue">👤</div>
+            <div>
+              <div class="stat-number" id="stat-total">—</div>
+              <div class="stat-label">Total Leads</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon green">🆕</div>
+            <div>
+              <div class="stat-number" id="stat-new">—</div>
+              <div class="stat-label">New This Week</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon red">🔥</div>
+            <div>
+              <div class="stat-number" id="stat-hot">—</div>
+              <div class="stat-label">Hot Leads</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon teal">📅</div>
+            <div>
+              <div class="stat-number" id="stat-appointments">—</div>
+              <div class="stat-label">Appointments Set</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Filters Bar -->
+        <div class="filters-bar">
+          <div class="search-wrap">
+            <span class="search-icon">🔍</span>
+            <input
+              type="text"
+              id="search-input"
+              placeholder="Search by name, email, or phone…"
+            />
+          </div>
+          <select id="status-filter" class="filter-select">
+            <option value="">All Statuses</option>
+            <option value="New">New</option>
+            <option value="Contacted">Contacted</option>
+            <option value="Warm">Warm</option>
+            <option value="Hot">Hot</option>
+            <option value="Appointment Set">Appointment Set</option>
+            <option value="Under Contract">Under Contract</option>
+            <option value="Closed">Closed</option>
+            <option value="Dead">Dead</option>
+          </select>
+          <select id="date-filter" class="filter-select">
+            <option value="">All Time</option>
+            <option value="7">Last 7 Days</option>
+            <option value="30">Last 30 Days</option>
+            <option value="90">Last 90 Days</option>
+          </select>
+          <span id="lead-count"></span>
+        </div>
+
+        <!-- Table Card -->
+        <div class="table-card">
+          <!-- Loading State -->
+          <div id="loading-state">
+            <div class="loading-spinner"></div>
+            <div>Loading leads…</div>
+          </div>
+
+          <!-- Empty State -->
+          <div id="empty-state">No leads found matching your filters.</div>
+
+          <!-- Leads Table -->
+          <table class="leads-table" id="leads-table">
+            <thead>
+              <tr>
+                <th style="width:44px">#</th>
+                <th data-sort="name">Lead <span class="sort-icon">↕</span></th>
+                <th data-sort="phone">Phone <span class="sort-icon">↕</span></th>
+                <th data-sort="email">Email <span class="sort-icon">↕</span></th>
+                <th data-sort="listingAddress">Property <span class="sort-icon">↕</span></th>
+                <th data-sort="status">Status <span class="sort-icon">↕</span></th>
+                <th data-sort="createdAt" class="sorted">Date <span class="sort-icon">↓</span></th>
+              </tr>
+            </thead>
+            <tbody id="leads-tbody"></tbody>
+          </table>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════ PANEL OVERLAY -->
+  <div id="panel-overlay"></div>
+
+  <!-- ═══════════════════════════════════════════════════════ LEAD DETAIL PANEL -->
+  <aside id="lead-panel">
+
+    <!-- Panel Header -->
+    <div class="panel-header">
+      <span style="font-size:0.875rem;font-weight:600;color:#1a2744;">Lead Details</span>
+      <button id="panel-close" class="panel-close" aria-label="Close panel">✕</button>
+    </div>
+
+    <!-- Lead Info -->
+    <div class="panel-lead-info">
+      <div class="panel-avatar">
+        <span id="panel-avatar-text">?</span>
+      </div>
+      <div>
+        <div class="panel-name" id="panel-name">—</div>
+        <div class="panel-date" id="panel-date">—</div>
+      </div>
+    </div>
+
+    <!-- Quick Action Buttons -->
+    <div class="panel-actions">
+      <a id="panel-call" href="#" class="action-btn">
+        📞 Call
+      </a>
+      <a id="panel-email" href="#" class="action-btn">
+        ✉️ Email
+      </a>
+      <a id="panel-whatsapp" href="#" class="action-btn whatsapp" target="_blank" rel="noopener">
+        💬 WhatsApp
+      </a>
+    </div>
+
+    <!-- Property Section -->
+    <div class="panel-section">
+      <div class="panel-section-title">Property</div>
+      <div class="panel-field">
+        <div class="panel-field-label">Address</div>
+        <div class="panel-field-value" id="panel-addr">—</div>
+      </div>
+      <div class="panel-field">
+        <div class="panel-field-label">Price</div>
+        <div class="panel-field-value" id="panel-price">—</div>
+      </div>
+      <div class="panel-field">
+        <div class="panel-field-label">Source</div>
+        <div class="panel-field-value">
+          <a id="panel-source" href="#" target="_blank" rel="noopener">—</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Status & Notes Section -->
+    <div class="panel-section">
+      <div class="panel-section-title">Status</div>
+      <select id="panel-status" class="panel-status-select">
+        <option value="New">New</option>
+        <option value="Contacted">Contacted</option>
+        <option value="Warm">Warm</option>
+        <option value="Hot">Hot</option>
+        <option value="Appointment Set">Appointment Set</option>
+        <option value="Under Contract">Under Contract</option>
+        <option value="Closed">Closed</option>
+        <option value="Dead">Dead</option>
+      </select>
+    </div>
+
+    <div class="panel-section">
+      <div class="panel-section-title">Notes</div>
+      <textarea
+        id="panel-notes"
+        class="panel-notes"
+        placeholder="Add notes about this lead…"
+      ></textarea>
+      <button id="panel-save" class="panel-save-btn">Save Changes</button>
+      <div id="panel-save-status"></div>
+    </div>
+
+  </aside>
+
+  <script src="crm.js" defer></script>
+</body>
+</html>
