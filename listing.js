@@ -24,6 +24,7 @@ const EMAILJS_WELCOME_TEMPLATE = 'template_5t3k1w7';    // Intro email → new l
 // ============================================================
 const API_TOKEN  = 'fceef76441eaf7579daff17411bffca2';
 const API_BASE   = 'https://api.bridgedataoutput.com/api/v2/miamire';
+const OTP_BASE   = 'https://poler-team-website-two.vercel.app'; // Vercel project with Twilio env vars
 const PAGE_SIZE  = 12;
 
 // ============================================================
@@ -130,7 +131,7 @@ function initLeadCapture() {
         document.getElementById('lead-error').style.display = 'none';
 
         try {
-            const res  = await fetch('/api/send-otp', {
+            const res  = await fetch(`${OTP_BASE}/api/send-otp`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ phone }),
@@ -181,7 +182,7 @@ function initLeadCapture() {
         const btn = document.getElementById('otp-resend-btn');
         btn.disabled = true;
         try {
-            await fetch('/api/send-otp', {
+            await fetch(`${OTP_BASE}/api/send-otp`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ phone: leadFormData.phone }),
@@ -256,7 +257,7 @@ async function verifyOtp(overlay, pageWrap) {
     errorEl.style.display = 'none';
 
     try {
-        const res  = await fetch('/api/verify-otp', {
+        const res  = await fetch(`${OTP_BASE}/api/verify-otp`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ phone: leadFormData.normalizedPhone, code }),
