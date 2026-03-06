@@ -33,18 +33,23 @@ export default async function handler(req) {
         return json({ error: 'Twilio credentials not configured' }, 500);
     }
 
-    let phone;
+    let phone, rawPhone;
     try {
         const body = await req.json();
-        phone = (body.phone || '').replace(/\D/g, ''); // digits only
+        rawPhone = (body.phone || '').trim();
+        phone = rawPhone.replace(/\D/g, ''); // digits only
     } catch {
         return json({ error: 'Invalid request body' }, 400);
     }
 
-    // Normalise to E.164 — assume US (+1) if 10 digits
-    if (phone.length === 10) phone = '1' + phone;
-    if (phone.length < 11 || phone.length > 15) {
-        return json({ error: 'Invalid phone number. Please enter a valid US phone number.' }, 400);
+    // Normalise to E.164
+    // If user included "+" they provided a country code — use as-is
+    // Otherwise assume US (+1) for 10-digit numbers
+    const hasCountryCode = rawPhone.startsWith('+');
+    if (!hasCountryCode && phone.length === 10) phone = '1' + phone;
+
+    if (phone.length < 10 || phone.length > 15) {
+        return json({ error: 'Invalid phone number. Include your country code for international numbers (e.g. +55).' }, 400);
     }
     phone = '+' + phone;
 

@@ -107,6 +107,10 @@ a { color: inherit; text-decoration: none; }
 }
 .lead-field input::placeholder { color: var(--text-light); }
 .lead-field input:focus { border-color: var(--orange); background: #fff; }
+.lead-phone-hint {
+    display: block; font-size: 0.7rem; color: var(--text-light);
+    margin-top: 0.25rem; line-height: 1.4;
+}
 .lead-error {
     font-size: 0.78rem; color: #dc2626;
     padding: 0.45rem 0.75rem;
