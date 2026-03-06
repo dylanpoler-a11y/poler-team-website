@@ -28,6 +28,22 @@ const OTP_BASE   = 'https://poler-team-website-two.vercel.app'; // Vercel projec
 const PAGE_SIZE  = 12;
 
 // ============================================================
+// UTM / AD TRACKING
+// ============================================================
+function getUtmParams() {
+    const params = new URLSearchParams(window.location.search);
+    return {
+        utm_source:   params.get('utm_source')   || '',
+        utm_medium:   params.get('utm_medium')    || '',
+        utm_campaign: params.get('utm_campaign')  || '',
+        utm_content:  params.get('utm_content')   || '',
+        utm_term:     params.get('utm_term')      || '',
+        fbclid:       params.get('fbclid')        || '',
+    };
+}
+const utmData = getUtmParams();
+
+// ============================================================
 // STATE
 // ============================================================
 let heroListing    = null;   // Property shown in hero
@@ -279,6 +295,16 @@ async function verifyOtp(overlay, pageWrap) {
         verifyTxt.textContent = '✓ Verified!';
         const { first, last, email, phone } = leadFormData;
 
+        // Fire Meta Pixel Lead event for ad conversion tracking
+        if (typeof fbq === 'function') {
+            fbq('track', 'Lead', {
+                content_name: heroListing ? (heroListing.UnparsedAddress || heroListing.City || '') : 'Browse page',
+                content_category: 'Real Estate',
+                value: heroListing ? (heroListing.ListPrice || 0) : 0,
+                currency: 'USD',
+            });
+        }
+
         // Save lead to Airtable CRM (fire-and-forget — don't block page unlock)
         fetch(`${OTP_BASE}/api/save-lead`, {
             method: 'POST',
@@ -291,6 +317,7 @@ async function verifyOtp(overlay, pageWrap) {
                 listingAddress: heroListing ? (heroListing.UnparsedAddress || heroListing.City || '') : '',
                 listingPrice:   heroListing ? (heroListing.ListPrice || 0) : 0,
                 sourceUrl:      window.location.href,
+                ...utmData,
             }),
         }).catch(() => {});
         const templateParams = {
