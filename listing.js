@@ -110,9 +110,11 @@ function initLeadCapture() {
         const first = document.getElementById('lead-first').value.trim();
         const last  = document.getElementById('lead-last').value.trim();
         const email = document.getElementById('lead-email').value.trim();
-        const phone = document.getElementById('lead-phone').value.trim();
+        const localPhone = document.getElementById('lead-phone').value.trim();
+        const countryCode = document.getElementById('country-code').value.replace(/[^+\d]/g, ''); // strip "CA" suffix etc.
+        const phone = countryCode + localPhone.replace(/\D/g, ''); // e.g. "+5511987654321"
 
-        if (!first || !last || !email || !phone) {
+        if (!first || !last || !email || !localPhone) {
             showLeadError('lead-error', 'Please fill in all fields.');
             return;
         }
@@ -120,8 +122,8 @@ function initLeadCapture() {
             showLeadError('lead-error', 'Please enter a valid email address.');
             return;
         }
-        const digitsOnly = phone.replace(/\D/g, '');
-        if (digitsOnly.length < 10) {
+        const digitsOnly = localPhone.replace(/\D/g, '');
+        if (digitsOnly.length < 7) {
             showLeadError('lead-error', 'Please enter a valid phone number.');
             return;
         }
