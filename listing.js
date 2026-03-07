@@ -57,7 +57,7 @@ let timerInterval  = null;
 // UTILITIES
 // ============================================================
 function formatPrice(price) {
-    if (!price) return 'Price on Request';
+    if (!price) return t('priceOnRequest');
     return '$' + Number(price).toLocaleString('en-US');
 }
 
@@ -74,9 +74,9 @@ function getAllPhotos(listing) {
 
 function statsStr(listing) {
     const parts = [];
-    if (listing.BedroomsTotal)         parts.push(`${listing.BedroomsTotal} bd`);
-    if (listing.BathroomsTotalInteger) parts.push(`${listing.BathroomsTotalInteger} ba`);
-    if (listing.LivingArea)            parts.push(`${Number(listing.LivingArea).toLocaleString()} sf`);
+    if (listing.BedroomsTotal)         parts.push(`${listing.BedroomsTotal} ${t('bd')}`);
+    if (listing.BathroomsTotalInteger) parts.push(`${listing.BathroomsTotalInteger} ${t('ba')}`);
+    if (listing.LivingArea)            parts.push(`${Number(listing.LivingArea).toLocaleString()} ${t('sf')}`);
     return parts.join(' · ');
 }
 
@@ -131,21 +131,21 @@ function initLeadCapture() {
         const phone = countryCode + localPhone.replace(/\D/g, ''); // e.g. "+5511987654321"
 
         if (!first || !last || !email || !localPhone) {
-            showLeadError('lead-error', 'Please fill in all fields.');
+            showLeadError('lead-error', t('errFillAll'));
             return;
         }
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-            showLeadError('lead-error', 'Please enter a valid email address.');
+            showLeadError('lead-error', t('errInvalidEmail'));
             return;
         }
         const digitsOnly = localPhone.replace(/\D/g, '');
         if (digitsOnly.length < 7) {
-            showLeadError('lead-error', 'Please enter a valid phone number.');
+            showLeadError('lead-error', t('errInvalidPhone'));
             return;
         }
 
         submitBtn.disabled = true;
-        submitTxt.textContent = 'Sending code…';
+        submitTxt.textContent = t('sendingCode');
         document.getElementById('lead-error').style.display = 'none';
 
         try {
@@ -158,8 +158,8 @@ function initLeadCapture() {
 
             if (!res.ok) {
                 submitBtn.disabled = false;
-                submitTxt.textContent = 'Send Verification Code';
-                showLeadError('lead-error', data.error || 'Could not send code. Please try again.');
+                submitTxt.textContent = t('sendVerification');
+                showLeadError('lead-error', data.error || t('errSendCode'));
                 return;
             }
 
@@ -172,7 +172,7 @@ function initLeadCapture() {
             step2.style.display = 'block';
             const masked = phone.replace(/(\d{3})\d{4}(\d{3,4})$/, '$1****$2');
             document.getElementById('otp-subtitle').textContent =
-                `We sent a 6-digit code to ${masked}. Enter it below to continue.`;
+                t('otpSubtitle', { phone: masked });
 
             initOtpDigits();
             startResendTimer();
@@ -180,8 +180,8 @@ function initLeadCapture() {
 
         } catch (err) {
             submitBtn.disabled = false;
-            submitTxt.textContent = 'Send Verification Code';
-            showLeadError('lead-error', 'Network error. Please try again.');
+            submitTxt.textContent = t('sendVerification');
+            showLeadError('lead-error', t('errNetwork'));
         }
     });
 
@@ -192,7 +192,7 @@ function initLeadCapture() {
         document.getElementById('lead-step-2').style.display = 'none';
         document.getElementById('lead-step-1').style.display = 'block';
         submitBtn.disabled = false;
-        submitTxt.textContent = 'Send Verification Code';
+        submitTxt.textContent = t('sendVerification');
     });
 
     document.getElementById('otp-resend-btn').addEventListener('click', async () => {
@@ -264,14 +264,14 @@ async function verifyOtp(overlay, pageWrap) {
     const errorEl   = document.getElementById('otp-error');
 
     if (code.length < 6) {
-        showLeadError('otp-error', 'Please enter all 6 digits.');
+        showLeadError('otp-error', t('errOtpDigits'));
         digits.forEach(d => d.classList.add('error'));
         setTimeout(() => digits.forEach(d => d.classList.remove('error')), 400);
         return;
     }
 
     verifyBtn.disabled = true;
-    verifyTxt.textContent = 'Verifying…';
+    verifyTxt.textContent = t('verifying');
     errorEl.style.display = 'none';
 
     try {
@@ -284,8 +284,8 @@ async function verifyOtp(overlay, pageWrap) {
 
         if (!res.ok) {
             verifyBtn.disabled = false;
-            verifyTxt.textContent = 'Verify & Continue';
-            showLeadError('otp-error', data.error || 'Incorrect code. Please try again.');
+            verifyTxt.textContent = t('verifyAndContinue');
+            showLeadError('otp-error', data.error || t('errOtpInvalid'));
             digits.forEach(d => d.classList.add('error'));
             setTimeout(() => digits.forEach(d => d.classList.remove('error')), 400);
             return;
@@ -351,8 +351,8 @@ async function verifyOtp(overlay, pageWrap) {
 
     } catch (err) {
         verifyBtn.disabled = false;
-        verifyTxt.textContent = 'Verify & Continue';
-        showLeadError('otp-error', 'Network error. Please try again.');
+        verifyTxt.textContent = t('verifyAndContinue');
+        showLeadError('otp-error', t('errNetwork'));
     }
 }
 
@@ -462,16 +462,16 @@ function renderHero(container, listing) {
             <img class="lp-photo-thumb-img" src="${url}" alt="Photo ${i + 2}" loading="lazy">
             ${isLast ? `<div class="lp-photo-see-all">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-                See All ${photos.length} Photos
+                ${t('seeAllPhotos', { count: photos.length })}
             </div>` : ''}
         </div>`;
     }).join('');
 
     // ---------- Stats bar ----------
     const statItems = [
-        beds         ? { v: beds,                                     l: 'Beds' }        : null,
-        baths        ? { v: baths,                                    l: 'Baths' }       : null,
-        sqft         ? { v: Number(sqft).toLocaleString(),            l: 'Sq Ft' }       : null,
+        beds         ? { v: beds,                                     l: t('beds') }        : null,
+        baths        ? { v: baths,                                    l: t('baths') }       : null,
+        sqft         ? { v: Number(sqft).toLocaleString(),            l: t('sqft') }       : null,
         pricePerSqft ? { v: `$${pricePerSqft.toLocaleString()}`,      l: 'Price / Sq Ft' } : null,
     ].filter(Boolean);
 
@@ -505,10 +505,10 @@ function renderHero(container, listing) {
     // ---------- Description ----------
     const descHtml = description ? `
         <div class="lp-section">
-            <h2 class="lp-section-title">About This Home</h2>
+            <h2 class="lp-section-title">${t('description')}</h2>
             <div class="lp-desc-wrap">
                 <p class="lp-desc-text" id="lp-desc-text">${description}</p>
-                ${description.length > 320 ? `<button class="lp-desc-toggle" id="lp-desc-toggle" onclick="lpToggleDesc()">Show More</button>` : ''}
+                ${description.length > 320 ? `<button class="lp-desc-toggle" id="lp-desc-toggle" onclick="lpToggleDesc()">${t('showMore')}</button>` : ''}
             </div>
         </div>` : '';
 
@@ -573,7 +573,7 @@ function renderHero(container, listing) {
             ${mainPhotoHtml}
             ${photos.length > 0 ? `<button class="lp-photo-count-btn" onclick="event.stopPropagation();lpOpenGallery(0)">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-                See All ${photos.length} Photos
+                ${t('seeAllPhotos', { count: photos.length })}
             </button>` : ''}
         </div>
         ${thumbPhotos.length ? `<div class="lp-photo-thumbs">${thumbsHtml}</div>` : ''}
@@ -603,7 +603,7 @@ function renderHero(container, listing) {
 
             ${highlights.length ? `
             <div class="lp-section">
-                <h2 class="lp-section-title">Highlights</h2>
+                <h2 class="lp-section-title">${t('keyFacts')}</h2>
                 <div class="lp-highlights-grid">${highlightsHtml}</div>
             </div>` : ''}
 
@@ -611,13 +611,13 @@ function renderHero(container, listing) {
 
             ${listingRows.length ? `
             <div class="lp-section">
-                <h2 class="lp-section-title">Listing Details</h2>
+                <h2 class="lp-section-title">${t('propertyDetails')}</h2>
                 <div class="lp-listing-details">${listingDetailsHtml}</div>
             </div>` : ''}
 
             ${homeDetailItems.length ? `
             <div class="lp-section">
-                <h2 class="lp-section-title">Home Details</h2>
+                <h2 class="lp-section-title">${t('keyFacts')}</h2>
                 <div class="lp-home-details-grid">${homeDetailsHtml}</div>
             </div>` : ''}
 
@@ -635,11 +635,11 @@ function renderHero(container, listing) {
                     </div>
                 </div>
                 <div class="lp-agent-body">
-                    <p class="lp-agent-connect-label">Only The Poler Team connects you directly to the Listing Agent.</p>
+                    <p class="lp-agent-connect-label">${t('scheduleShowing')}</p>
                     <textarea class="lp-agent-message" id="lp-agent-message" rows="4">${prefilledMsg}</textarea>
                     <button class="lp-agent-send" id="lp-agent-send-btn" onclick="sendHeroAgentMessage()">
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-                        Send a Message
+                        ${t('sendMessageBtn')}
                     </button>
                     <a href="tel:+19542354046" class="lp-agent-phone">
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 014.68 11.6 19.79 19.79 0 011.61 3a2 2 0 012-2.18h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L7.91 8.09a16 16 0 006 6l.91-.91a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
@@ -713,16 +713,23 @@ function renderHero(container, listing) {
         const btn  = document.getElementById('lp-desc-toggle');
         if (!text || !btn) return;
         text.classList.toggle('lp-desc-expanded');
-        btn.textContent = text.classList.contains('lp-desc-expanded') ? 'Show Less' : 'Show More';
+        btn.textContent = text.classList.contains('lp-desc-expanded') ? t('showLess') : t('showMore');
     };
 }
 
 function renderDefaultHero(container) {
     container.innerHTML = `
     <div class="hero-default">
-        <h1 class="hero-default-title">South Florida Luxury Real Estate</h1>
-        <p class="hero-default-sub">Search thousands of active listings in Sunny Isles Beach, Aventura, North Miami Beach, and beyond.</p>
+        <h1 class="hero-default-title" data-i18n="tagline">${t('tagline')}</h1>
+        <p class="hero-default-sub" data-i18n="showingFeatured">${t('showingFeatured')}</p>
     </div>`;
+}
+
+// Re-render hero when language changes
+function reRenderHero() {
+    const container = document.getElementById('hero-property');
+    if (!container || !heroListing) return;
+    renderHero(container, heroListing);
 }
 
 // Send message from the hero property agent panel (WhatsApp)
