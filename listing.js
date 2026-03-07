@@ -766,7 +766,7 @@ function initLookup() {
 
     toggle.addEventListener('click', () => {
         const open = panel.classList.toggle('open');
-        label.textContent = open ? 'Hide Advanced Address Search' : 'Show Advanced Address Search';
+        label.textContent = open ? t('hideAdvSearch') : t('showAdvSearch');
         chevron.style.transform = open ? 'rotate(180deg)' : '';
         toggle.setAttribute('aria-expanded', open);
     });
@@ -938,7 +938,7 @@ function initFilterToggle() {
 
     btn.addEventListener('click', () => {
         const open = body.classList.toggle('open');
-        label.textContent = open ? 'Hide Filters' : 'Show Filters';
+        label.textContent = open ? t('hideFilters') : t('showFilters');
         chevron.style.transform = open ? 'rotate(180deg)' : '';
         btn.setAttribute('aria-expanded', open);
     });
@@ -1157,7 +1157,7 @@ async function runSearch(append = false) {
     }
 
     searchBtn.disabled = true;
-    searchTxt.textContent = 'Searching...';
+    searchTxt.textContent = t('search') + '...';
 
     try {
         const listings = await fetchListings({ ...lastQuery }, searchOffset);
@@ -1190,7 +1190,7 @@ async function runSearch(append = false) {
         }
     } finally {
         searchBtn.disabled = false;
-        searchTxt.textContent = 'Search Properties';
+        searchTxt.textContent = t('searchProperties');
     }
 }
 
@@ -1199,10 +1199,10 @@ function initSearch() {
 
     document.getElementById('load-more-btn').addEventListener('click', () => {
         document.getElementById('load-more-btn').disabled = true;
-        document.getElementById('load-more-btn').textContent = 'Loading...';
+        document.getElementById('load-more-btn').textContent = t('search') + '...';
         runSearch(true).finally(() => {
             document.getElementById('load-more-btn').disabled = false;
-            document.getElementById('load-more-btn').textContent = 'Load More Properties';
+            document.getElementById('load-more-btn').textContent = t('loadMore');
         });
     });
 
@@ -1253,7 +1253,7 @@ function sendAgentMessage() {
 
     setTimeout(() => {
         sendBtn.style.background = '';
-        sendBtn.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> Send Message`;
+        sendBtn.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> ${t('sendMessageBtn')}`;
     }, 3000);
 }
 
@@ -1599,6 +1599,10 @@ document.head.appendChild(spinStyle);
 // BOOT
 // ============================================================
 document.addEventListener('DOMContentLoaded', () => {
+    // Apply saved language preference on load
+    applyTranslations();
+    initLanguageSelector();
+
     initLeadCapture();
     initHeroProperty();
     initLookup();
