@@ -45,8 +45,8 @@
 
             <!-- ── Step 1: Info form ── -->
             <div id="lead-step-1">
-                <h2 class="lead-title" id="lead-title">View Full Property Details</h2>
-                <p class="lead-subtitle">Create your free account to unlock photos, pricing history, neighborhood stats, and schedule a private showing.</p>
+                <h2 class="lead-title" id="lead-title" data-i18n="leadTitle">View Full Property Details</h2>
+                <p class="lead-subtitle" data-i18n="leadSubtitle">Create your free account to unlock photos, pricing history, neighborhood stats, and schedule a private showing.</p>
                 <div class="lead-timer-wrap">
                     <div class="lead-timer-bar" id="lead-timer-bar"></div>
                 </div>
@@ -196,10 +196,24 @@
                 <img src="logo.png" alt="The Poler Team" class="lp-logo">
             </a>
             <div class="lp-header-right">
-                <span class="lp-tagline">South Florida Luxury Real Estate</span>
+                <span class="lp-tagline" data-i18n="tagline">South Florida Luxury Real Estate</span>
+
+                <!-- Language Selector -->
+                <div class="lang-selector" id="lang-selector">
+                    <button class="lang-selector-btn" id="lang-selector-btn" aria-label="Select language" aria-expanded="false">
+                        <span id="lang-btn-text">🇺🇸 EN</span>
+                        <svg class="lang-chevron" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                    </button>
+                    <div class="lang-dropdown" id="lang-dropdown">
+                        <button class="lang-option active" data-lang="en">🇺🇸 English</button>
+                        <button class="lang-option" data-lang="es">🇪🇸 Español</button>
+                        <button class="lang-option" data-lang="pt">🇵🇹 Português</button>
+                    </div>
+                </div>
+
                 <a href="tel:+19542354046" class="lp-call-btn">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 014.68 11.6 19.79 19.79 0 011.61 3a2 2 0 012-2.18h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L7.91 8.09a16 16 0 006 6l.91-.91a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
-                    Call Us
+                    <span data-i18n="callUs">Call Us</span>
                 </a>
             </div>
         </div>
