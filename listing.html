@@ -364,7 +364,7 @@
                     <div class="filter-group">
                         <div class="filter-two-col">
                             <div>
-                                <label class="filter-label" for="f-beds">Min Beds</label>
+                                <label class="filter-label" for="f-beds" data-i18n="minBeds">Min Beds</label>
                                 <select id="f-beds" class="filter-select">
                                     <option value="0">Any</option>
                                     <option value="1">1+</option>
@@ -376,7 +376,7 @@
                                 </select>
                             </div>
                             <div>
-                                <label class="filter-label" for="f-baths">Min Baths</label>
+                                <label class="filter-label" for="f-baths" data-i18n="minBaths">Min Baths</label>
                                 <select id="f-baths" class="filter-select">
                                     <option value="0">Any</option>
                                     <option value="1">1+</option>
@@ -391,26 +391,26 @@
                     <!-- Advanced toggle -->
                     <button class="filter-adv-toggle" id="filter-adv-toggle" aria-expanded="true">
                         <svg id="filter-adv-chevron" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>
-                        Advanced Filters
+                        <span data-i18n="advancedFilters">Advanced Filters</span>
                     </button>
 
                     <div class="filter-advanced" id="filter-advanced">
 
                         <!-- Listing Status -->
                         <div class="filter-group">
-                            <label class="filter-label">Listing Status</label>
+                            <label class="filter-label" data-i18n="listingStatus">Listing Status</label>
                             <div class="filter-checkboxes">
-                                <label class="filter-check-item"><input type="checkbox" name="status" value="Active" checked><span>Active</span></label>
-                                <label class="filter-check-item"><input type="checkbox" name="status" value="Pending"><span>Pending</span></label>
-                                <label class="filter-check-item"><input type="checkbox" name="status" value="ActiveUnderContract"><span>Under Contract</span></label>
-                                <label class="filter-check-item"><input type="checkbox" name="status" value="ComingSoon"><span>Coming Soon</span></label>
-                                <label class="filter-check-item"><input type="checkbox" name="status" value="Closed"><span>Closed</span></label>
+                                <label class="filter-check-item"><input type="checkbox" name="status" value="Active" checked><span data-i18n="active">Active</span></label>
+                                <label class="filter-check-item"><input type="checkbox" name="status" value="Pending"><span data-i18n="pending">Pending</span></label>
+                                <label class="filter-check-item"><input type="checkbox" name="status" value="ActiveUnderContract"><span data-i18n="underContract">Under Contract</span></label>
+                                <label class="filter-check-item"><input type="checkbox" name="status" value="ComingSoon"><span data-i18n="comingSoon">Coming Soon</span></label>
+                                <label class="filter-check-item"><input type="checkbox" name="status" value="Closed"><span data-i18n="closed">Closed</span></label>
                             </div>
                         </div>
 
                         <!-- Square Feet -->
                         <div class="filter-group">
-                            <label class="filter-label">Square Feet</label>
+                            <label class="filter-label" data-i18n="squareFeet">Square Feet</label>
                             <div class="filter-two-col">
                                 <input type="number" id="f-sqft-min" class="filter-input" placeholder="Min sqft" min="0">
                                 <input type="number" id="f-sqft-max" class="filter-input" placeholder="Max sqft" min="0">
@@ -431,7 +431,7 @@
 
                         <!-- Lot Size -->
                         <div class="filter-group">
-                            <label class="filter-label">Lot Size (sqft)</label>
+                            <label class="filter-label" data-i18n="lotSize">Lot Size (sqft)</label>
                             <div class="filter-two-col">
                                 <input type="number" id="f-lot-min" class="filter-input" placeholder="Min lot sqft" min="0">
                                 <input type="number" id="f-lot-max" class="filter-input" placeholder="Max lot sqft" min="0">
@@ -440,24 +440,24 @@
 
                         <!-- County -->
                         <div class="filter-group">
-                            <label class="filter-label" for="f-county">County</label>
+                            <label class="filter-label" for="f-county" data-i18n="county">County</label>
                             <input type="text" id="f-county" class="filter-input" placeholder="e.g., Miami-Dade...">
                         </div>
 
                         <!-- Waterfront -->
                         <div class="filter-group">
                             <div class="filter-switch-row">
-                                <label class="filter-label" style="margin:0">Waterfront</label>
+                                <label class="filter-label" style="margin:0" data-i18n="waterfront">Waterfront</label>
                                 <label class="filter-switch" aria-label="Waterfront filter">
                                     <input type="checkbox" id="f-waterfront">
                                     <span class="filter-switch-track"></span>
                                 </label>
                             </div>
                             <div class="waterfront-subtypes" id="waterfront-subtypes" style="display:none">
-                                <label class="filter-radio-item"><input type="radio" name="wf-type" value="any" checked><span>Any Waterfront</span></label>
-                                <label class="filter-radio-item"><input type="radio" name="wf-type" value="bay"><span>Bayfront</span></label>
-                                <label class="filter-radio-item"><input type="radio" name="wf-type" value="canal"><span>Canalfront</span></label>
-                                <label class="filter-radio-item"><input type="radio" name="wf-type" value="ocean"><span>Ocean / Beachfront</span></label>
+                                <label class="filter-radio-item"><input type="radio" name="wf-type" value="any" checked><span data-i18n="anyWaterfront">Any Waterfront</span></label>
+                                <label class="filter-radio-item"><input type="radio" name="wf-type" value="bay"><span data-i18n="bayfront">Bayfront</span></label>
+                                <label class="filter-radio-item"><input type="radio" name="wf-type" value="canal"><span data-i18n="canalfront">Canalfront</span></label>
+                                <label class="filter-radio-item"><input type="radio" name="wf-type" value="ocean"><span data-i18n="oceanBeachfront">Ocean / Beachfront</span></label>
                             </div>
                         </div>
 
@@ -465,7 +465,7 @@
 
                     <button class="filter-search-btn" id="search-btn">
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-                        <span id="search-btn-text">Search Properties</span>
+                        <span id="search-btn-text" data-i18n="searchProperties">Search Properties</span>
                     </button>
 
                 </div><!-- /filter-body -->
@@ -474,18 +474,18 @@
             <!-- RESULTS AREA -->
             <div class="results-area">
                 <div class="results-header">
-                    <p class="results-count" id="results-count">Showing featured South Florida properties</p>
+                    <p class="results-count" id="results-count" data-i18n="showingFeatured">Showing featured South Florida properties</p>
                 </div>
                 <div class="results-grid" id="results-grid">
                     <!-- Populated by JS -->
                 </div>
                 <div id="load-more-wrap" class="load-more-wrap" style="display:none">
-                    <button class="load-more-btn" id="load-more-btn">Load More Properties</button>
+                    <button class="load-more-btn" id="load-more-btn" data-i18n="loadMore">Load More Properties</button>
                 </div>
                 <div id="no-results" class="no-results" style="display:none">
                     <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-                    <p>No properties found matching your filters.</p>
-                    <p class="no-results-hint">Try broadening your search — adjust price range, location, or remove some filters.</p>
+                    <p data-i18n="noResults">No properties found matching your filters.</p>
+                    <p class="no-results-hint" data-i18n="noResultsHint">Try broadening your search — adjust price range, location, or remove some filters.</p>
                 </div>
             </div>
 
@@ -505,15 +505,15 @@
                         (954) 235-4046
                     </a>
                     <div class="agent-panel-divider"></div>
-                    <p class="agent-panel-message-label">Send a Message</p>
-                    <textarea class="agent-panel-message" id="agent-message" rows="4" placeholder="Hi Rosa, I'm interested in a property I saw..."></textarea>
+                    <p class="agent-panel-message-label" data-i18n="sendMessage">Send a Message</p>
+                    <textarea class="agent-panel-message" id="agent-message" rows="4" placeholder="Hi Rosa, I'm interested in a property I saw..." data-i18n="agentMsgPlaceholder"></textarea>
                     <button class="agent-panel-send" id="agent-send-btn" onclick="sendAgentMessage()">
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-                        Send Message
+                        <span data-i18n="sendMessageBtn">Send Message</span>
                     </button>
                     <button class="agent-panel-connect" onclick="window.location.href='index.html#contact'">
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
-                        Contact Agent
+                        <span data-i18n="contactAgent">Contact Agent</span>
                     </button>
                     <img src="optimar-logo.jpg" alt="Optimar International Realty" class="agent-panel-logo">
                 </div>
@@ -526,8 +526,8 @@
     <footer class="lp-footer">
         <div class="lp-footer-inner">
             <img src="logo-white.png" alt="The Poler Team" class="lp-footer-logo">
-            <p class="lp-footer-copy">&copy; 2025 The Poler Team &mdash; Optimar International Realty. All rights reserved.</p>
-            <a href="index.html" class="lp-footer-back">&#8592; Back to Main Site</a>
+            <p class="lp-footer-copy" data-i18n="footerCopy">&copy; 2025 The Poler Team &mdash; Optimar International Realty. All rights reserved.</p>
+            <a href="index.html" class="lp-footer-back" data-i18n="backToMain">&#8592; Back to Main Site</a>
         </div>
     </footer>
 
@@ -544,7 +544,7 @@
         <span class="ai-chat-toggle-icon">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
         </span>
-        <span class="ai-chat-toggle-label">AI Assistant</span>
+        <span class="ai-chat-toggle-label" data-i18n="aiAssistant">AI Assistant</span>
         <span class="ai-chat-ping" id="ai-chat-ping" aria-hidden="true"></span>
     </button>
 
@@ -558,8 +558,8 @@
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
                 </div>
                 <div class="ai-chat-header-info">
-                    <div class="ai-chat-header-name">AI Home Assistant</div>
-                    <div class="ai-chat-header-sub">The Poler Team &middot; South Florida Real Estate</div>
+                    <div class="ai-chat-header-name" data-i18n="aiChatName">AI Home Assistant</div>
+                    <div class="ai-chat-header-sub" data-i18n="aiChatSub">The Poler Team &middot; South Florida Real Estate</div>
                 </div>
             </div>
             <button class="ai-chat-close" id="ai-chat-close" aria-label="Close chat">
@@ -575,7 +575,7 @@
             <textarea
                 id="ai-chat-input"
                 class="ai-chat-input"
-                placeholder="Ask me anything about real estate..."
+                placeholder="Ask me anything about real estate..." data-i18n="aiChatPlaceholder"
                 rows="1"
                 aria-label="Chat message"
                 maxlength="2000"
@@ -590,6 +590,7 @@
 
 <!-- EmailJS SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script src="i18n.js"></script>
 <script src="listing.js"></script>
 </body>
 </html>

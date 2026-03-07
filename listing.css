@@ -256,6 +256,74 @@ a { color: inherit; text-decoration: none; }
 }
 .lp-call-btn:hover { background: var(--orange-dark); }
 
+/* ---- Language Selector ---- */
+.lang-selector {
+    position: relative;
+}
+.lang-selector-btn {
+    display: flex; align-items: center; gap: 0.35rem;
+    padding: 0.4rem 0.7rem;
+    border: 1.5px solid var(--border);
+    border-radius: 6px;
+    background: #fff;
+    font-size: 0.8rem; font-weight: 600;
+    color: var(--text);
+    cursor: pointer;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    white-space: nowrap;
+}
+.lang-selector-btn:hover {
+    border-color: var(--orange);
+    box-shadow: 0 0 0 2px rgba(26,39,68,0.08);
+}
+.lang-chevron {
+    transition: transform 0.2s;
+}
+.lang-dropdown.open + .lang-selector-btn .lang-chevron,
+.lang-selector-btn[aria-expanded="true"] .lang-chevron {
+    transform: rotate(180deg);
+}
+.lang-dropdown {
+    position: absolute; top: calc(100% + 6px); right: 0;
+    background: #fff;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    min-width: 150px;
+    overflow: hidden;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-6px);
+    transition: opacity 0.18s, transform 0.18s, visibility 0.18s;
+    z-index: 200;
+}
+.lang-dropdown.open {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+.lang-option {
+    display: block; width: 100%;
+    padding: 0.6rem 1rem;
+    font-size: 0.82rem; font-weight: 500;
+    color: var(--text);
+    text-align: left;
+    background: none; border: none;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.lang-option:hover {
+    background: var(--bg);
+}
+.lang-option.active {
+    background: var(--orange-light);
+    color: var(--orange);
+    font-weight: 700;
+}
+.lang-option + .lang-option {
+    border-top: 1px solid var(--border-light);
+}
+
 /* ============================================================
    HERO PROPERTY
    ============================================================ */
