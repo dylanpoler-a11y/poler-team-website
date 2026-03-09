@@ -33,11 +33,13 @@ export default async function handler(req) {
         return json({ error: 'Twilio credentials not configured' }, 500);
     }
 
-    let phone, rawPhone;
+    let phone, rawPhone, channel;
     try {
         const body = await req.json();
         rawPhone = (body.phone || '').trim();
         phone = rawPhone.replace(/\D/g, ''); // digits only
+        channel = (body.channel || 'sms').toLowerCase();
+        if (!['sms', 'call'].includes(channel)) channel = 'sms';
     } catch {
         return json({ error: 'Invalid request body' }, 400);
     }
@@ -53,7 +55,7 @@ export default async function handler(req) {
     }
     phone = '+' + phone;
 
-    // Call Twilio Verify — send SMS code
+    // Call Twilio Verify — send code via SMS or voice call
     const twilioUrl = `https://verify.twilio.com/v2/Services/${serviceSid}/Verifications`;
     const credentials = btoa(`${accountSid}:${authToken}`);
 
@@ -63,7 +65,7 @@ export default async function handler(req) {
             'Authorization': `Basic ${credentials}`,
             'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: new URLSearchParams({ To: phone, Channel: 'sms' }),
+        body: new URLSearchParams({ To: phone, Channel: channel }),
     });
 
     if (!twilioRes.ok) {
@@ -72,7 +74,7 @@ export default async function handler(req) {
         return json({ error: msg }, 400);
     }
 
-    return json({ success: true, phone });
+    return json({ success: true, phone, channel });
 }
 
 function json(data, status = 200) {
