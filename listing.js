@@ -103,18 +103,31 @@ function initLeadCapture() {
         emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
     }
 
-    // 10-second countdown
-    const DURATION = 10000;
-    const START    = Date.now();
-    timerInterval = setInterval(() => {
-        const elapsed = Date.now() - START;
-        const pct = Math.max(0, 1 - elapsed / DURATION);
-        bar.style.transform = `scaleX(${pct})`;
-        if (elapsed >= DURATION) {
-            clearInterval(timerInterval);
-            showLeadModal(overlay, pageWrap);
-        }
-    }, 80);
+    // 10-second countdown — persists across page refreshes
+    const DURATION    = 10000;
+    const TIMER_KEY   = 'poler_lead_timer_start';
+    let storedStart   = sessionStorage.getItem(TIMER_KEY);
+    if (!storedStart) {
+        storedStart = Date.now();
+        sessionStorage.setItem(TIMER_KEY, storedStart);
+    }
+    const START = Number(storedStart);
+
+    // If timer already expired (user refreshed after 10s), show modal immediately
+    if (Date.now() - START >= DURATION) {
+        bar.style.transform = 'scaleX(0)';
+        showLeadModal(overlay, pageWrap);
+    } else {
+        timerInterval = setInterval(() => {
+            const elapsed = Date.now() - START;
+            const pct = Math.max(0, 1 - elapsed / DURATION);
+            bar.style.transform = `scaleX(${pct})`;
+            if (elapsed >= DURATION) {
+                clearInterval(timerInterval);
+                showLeadModal(overlay, pageWrap);
+            }
+        }, 80);
+    }
 
     // ── STEP 1: Info form → send OTP ─────────────────────────
     const form      = document.getElementById('lead-form');
