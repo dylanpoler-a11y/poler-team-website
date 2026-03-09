@@ -97,6 +97,31 @@ const I18N = {
         es: '← Cambiar número',
         pt: '← Alterar número',
     },
+    callMeInstead: {
+        en: 'Call me instead',
+        es: 'Llamarme en su lugar',
+        pt: 'Me ligue em vez disso',
+    },
+    callingNow: {
+        en: 'Calling you now…',
+        es: 'Llamándote ahora…',
+        pt: 'Ligando para você agora…',
+    },
+    callSent: {
+        en: '✓ Call sent! Listen for the code.',
+        es: '✓ ¡Llamada enviada! Escuche el código.',
+        pt: '✓ Chamada enviada! Ouça o código.',
+    },
+    otpCallSubtitle: {
+        en: 'You will receive a phone call with your 6-digit code. Enter it below.',
+        es: 'Recibirás una llamada telefónica con tu código de 6 dígitos. Ingrésalo a continuación.',
+        pt: 'Você receberá uma ligação com seu código de 6 dígitos. Digite-o abaixo.',
+    },
+    errCallFailed: {
+        en: 'Could not place call. Please try again.',
+        es: 'No se pudo realizar la llamada. Por favor, inténtelo de nuevo.',
+        pt: 'Não foi possível realizar a chamada. Por favor, tente novamente.',
+    },
 
     // ── Validation errors ───────────────────────────────────
     errFillAll: {

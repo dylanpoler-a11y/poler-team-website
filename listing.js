@@ -224,6 +224,40 @@ function initLeadCapture() {
             document.querySelector('.otp-digit').focus();
         } catch (_) {}
     });
+
+    // ── "Call me instead" — voice fallback ───────────────
+    document.getElementById('otp-call-btn').addEventListener('click', async () => {
+        if (!leadFormData) return;
+        const btn = document.getElementById('otp-call-btn');
+        btn.disabled = true;
+        const origHTML = btn.innerHTML;
+        btn.innerHTML = '<span>' + t('callingNow') + '</span>';
+        try {
+            const res = await fetch(`${OTP_BASE}/api/send-otp`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ phone: leadFormData.phone, channel: 'call' }),
+            });
+            const data = await res.json();
+            if (res.ok) {
+                btn.innerHTML = '<span class="call-sent">' + t('callSent') + '</span>';
+                document.getElementById('otp-subtitle').textContent = t('otpCallSubtitle');
+                // Clear digits for fresh entry
+                document.querySelectorAll('.otp-digit').forEach(d => { d.value = ''; d.classList.remove('filled','error'); });
+                document.querySelector('.otp-digit').focus();
+            } else {
+                btn.innerHTML = origHTML;
+                btn.disabled = false;
+                showLeadError('otp-error', data.error || t('errCallFailed'));
+            }
+        } catch (_) {
+            btn.innerHTML = origHTML;
+            btn.disabled = false;
+            showLeadError('otp-error', t('errNetwork'));
+        }
+        // Re-enable after 30s so they can try again
+        setTimeout(() => { btn.innerHTML = origHTML; btn.disabled = false; }, 30000);
+    });
 }
 
 // Stored lead info between step 1 and step 2
