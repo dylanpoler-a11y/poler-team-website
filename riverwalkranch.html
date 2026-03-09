@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Riverwalk Ranch - Deal Intelligence Summary</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+
+        :root {
+            --navy: #1a2744;
+            --navy-light: #243352;
+            --gold: #C9A84C;
+            --gold-light: #d4b96a;
+            --white: #ffffff;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-500: #6b7280;
+            --gray-700: #374151;
+            --gray-900: #111827;
+            --green: #059669;
+            --green-bg: #ecfdf5;
+            --amber: #d97706;
+            --amber-bg: #fffbeb;
+            --red: #dc2626;
+            --red-bg: #fef2f2;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--gray-50);
+            color: var(--gray-900);
+            line-height: 1.6;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%);
+            color: var(--white);
+            padding: 40px 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -10%;
+            width: 400px;
+            height: 400px;
+            border-radius: 50%;
+            background: rgba(201, 168, 76, 0.06);
+        }
+
+        .header::after {
+            content: '';
+            position: absolute;
+            bottom: -30%;
+            left: -5%;
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            background: rgba(201, 168, 76, 0.04);
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 0 32px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 32px;
+        }
+
+        .brand {
+            font-family: 'Playfair Display', serif;
+            font-size: 14px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--gold);
+            font-weight: 600;
+        }
+
+        .confidential {
+            background: rgba(201, 168, 76, 0.15);
+            border: 1px solid rgba(201, 168, 76, 0.3);
+            color: var(--gold);
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            padding: 6px 16px;
+            border-radius: 4px;
+        }
+
+        .header h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            line-height: 1.2;
+        }
+
+        .header .subtitle {
+            font-size: 18px;
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: 300;
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 32px;
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .header-meta span {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .header-meta strong {
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 500;
+        }
+
+        .content {
+            padding: 40px 0 60px;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .card {
+            background: var(--white);
+            border-radius: 12px;
+            padding: 28px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+            border: 1px solid var(--gray-200);
+        }
+
+        .card-full {
+            grid-column: 1 / -1;
+        }
+
+        .card h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--navy);
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--gold);
+            display: inline-block;
+        }
+
+        .card h3 {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--gray-700);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .stat {
+            padding: 16px;
+            background: var(--gray-50);
+            border-radius: 8px;
+            border-left: 3px solid var(--gold);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--gray-500);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .stat-value {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--navy);
+        }
+
+        .stat-note {
+            font-size: 12px;
+            color: var(--gray-500);
+            margin-top: 2px;
+        }
+
+        .detail-list {
+            list-style: none;
+        }
+
+        .detail-list li {
+            padding: 10px 0;
+            border-bottom: 1px solid var(--gray-100);
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            font-size: 14px;
+        }
+
+        .detail-list li:last-child {
+            border-bottom: none;
+        }
+
+        .detail-list .label {
+            color: var(--gray-500);
+            font-weight: 500;
+            flex-shrink: 0;
+            margin-right: 16px;
+        }
+
+        .detail-list .value {
+            color: var(--gray-900);
+            font-weight: 500;
+            text-align: right;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-green {
+            background: var(--green-bg);
+            color: var(--green);
+        }
+
+        .badge-amber {
+            background: var(--amber-bg);
+            color: var(--amber);
+        }
+
+        .badge-red {
+            background: var(--red-bg);
+            color: var(--red);
+        }
+
+        .facility-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .facility {
+            background: var(--gray-50);
+            border-radius: 8px;
+            padding: 16px;
+            border: 1px solid var(--gray-200);
+        }
+
+        .facility-name {
+            font-weight: 600;
+            color: var(--navy);
+            font-size: 15px;
+            margin-bottom: 4px;
+        }
+
+        .facility-detail {
+            font-size: 13px;
+            color: var(--gray-500);
+            line-height: 1.5;
+        }
+
+        .facility-beds {
+            display: inline-block;
+            background: var(--navy);
+            color: var(--gold);
+            font-size: 12px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin-top: 6px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        table th {
+            background: var(--navy);
+            color: var(--white);
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        table th:first-child {
+            border-radius: 8px 0 0 0;
+        }
+
+        table th:last-child {
+            border-radius: 0 8px 0 0;
+        }
+
+        table td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--gray-100);
+            color: var(--gray-700);
+        }
+
+        table tr:hover td {
+            background: var(--gray-50);
+        }
+
+        table tr:last-child td:first-child {
+            border-radius: 0 0 0 8px;
+        }
+
+        table tr:last-child td:last-child {
+            border-radius: 0 0 8px 0;
+        }
+
+        .timeline {
+            position: relative;
+            padding-left: 28px;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 8px;
+            top: 8px;
+            bottom: 8px;
+            width: 2px;
+            background: var(--gold);
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 24px;
+        }
+
+        .timeline-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -24px;
+            top: 6px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--gold);
+            border: 2px solid var(--white);
+            box-shadow: 0 0 0 2px var(--gold);
+        }
+
+        .timeline-date {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--gold);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .timeline-title {
+            font-weight: 600;
+            color: var(--navy);
+            font-size: 15px;
+            margin-bottom: 4px;
+        }
+
+        .timeline-desc {
+            font-size: 13px;
+            color: var(--gray-500);
+            line-height: 1.6;
+        }
+
+        .callout {
+            background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%);
+            border-radius: 12px;
+            padding: 28px;
+            color: var(--white);
+            margin-bottom: 24px;
+        }
+
+        .callout h2 {
+            font-family: 'Playfair Display', serif;
+            color: var(--gold);
+            border-bottom-color: rgba(201, 168, 76, 0.3);
+        }
+
+        .callout .stat {
+            background: rgba(255, 255, 255, 0.08);
+            border-left-color: var(--gold);
+        }
+
+        .callout .stat-label {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .callout .stat-value {
+            color: var(--white);
+        }
+
+        .callout .stat-note {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .section-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--navy);
+            margin-bottom: 20px;
+            margin-top: 16px;
+        }
+
+        .key-point {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 12px;
+            font-size: 14px;
+        }
+
+        .key-point-icon {
+            flex-shrink: 0;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--gold);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 2px;
+        }
+
+        .key-point-icon svg {
+            width: 12px;
+            height: 12px;
+            fill: var(--white);
+        }
+
+        .footer {
+            background: var(--navy);
+            color: rgba(255, 255, 255, 0.6);
+            padding: 32px 0;
+            font-size: 13px;
+            text-align: center;
+        }
+
+        .footer .brand {
+            margin-bottom: 8px;
+        }
+
+        .note-box {
+            background: var(--amber-bg);
+            border: 1px solid #fde68a;
+            border-radius: 8px;
+            padding: 16px 20px;
+            font-size: 13px;
+            color: var(--amber);
+            margin-top: 16px;
+            line-height: 1.6;
+        }
+
+        .growth-item {
+            background: var(--gray-50);
+            border-radius: 8px;
+            padding: 14px 16px;
+            margin-bottom: 10px;
+            border-left: 3px solid var(--green);
+            font-size: 14px;
+        }
+
+        .growth-item strong {
+            color: var(--navy);
+        }
+
+        @media print {
+            body { background: white; }
+            .header { padding: 24px 0; }
+            .card { break-inside: avoid; box-shadow: none; border: 1px solid #ddd; }
+            .content { padding: 20px 0; }
+        }
+
+        @media (max-width: 768px) {
+            .grid-2, .grid-3, .stat-grid, .facility-grid {
+                grid-template-columns: 1fr;
+            }
+            .header h1 { font-size: 28px; }
+            .header-meta { flex-direction: column; gap: 8px; }
+            .container { padding: 0 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="container">
+            <div class="header-top">
+                <div class="brand">The Poler Team</div>
+                <div class="confidential">Confidential</div>
+            </div>
+            <h1>Riverwalk Ranch</h1>
+            <p class="subtitle">Deal Intelligence Summary - Behavioral Health Platform, Texas</p>
+            <div class="header-meta">
+                <span>Prepared by <strong>Dylan Poler</strong></span>
+                <span>Date <strong>March 2026</strong></span>
+                <span>Status <strong>Active Pipeline</strong></span>
+                <span>Source <strong>6 Recorded Calls (Jun-Dec 2025)</strong></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="content">
+        <div class="container">
+
+            <!-- Key Metrics Callout -->
+            <div class="callout">
+                <h2>Key Metrics at a Glance</h2>
+                <div class="stat-grid" style="margin-top: 20px;">
+                    <div class="stat">
+                        <div class="stat-label">Total Inpatient Beds</div>
+                        <div class="stat-value">95</div>
+                        <div class="stat-note">44 Riverwalk + 51 Austin Pines</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Reported EBITDA</div>
+                        <div class="stat-value">$3.5M</div>
+                        <div class="stat-note">Adjusted up to $5.8M with add-backs</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">In-Network</div>
+                        <div class="stat-value">~98%</div>
+                        <div class="stat-note">Up from 82% after Aug 2024 BCBS transition</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Occupancy</div>
+                        <div class="stat-value">~99%</div>
+                        <div class="stat-note">1 bed open out of 95 as of Dec 2025</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Business Overview + Ownership -->
+            <div class="grid-2">
+                <div class="card">
+                    <h2>Business Overview</h2>
+                    <ul class="detail-list">
+                        <li>
+                            <span class="label">Entity</span>
+                            <span class="value">Riverwalk Ranch (parent platform)</span>
+                        </li>
+                        <li>
+                            <span class="label">Sector</span>
+                            <span class="value">Behavioral Health / SUD</span>
+                        </li>
+                        <li>
+                            <span class="label">Services</span>
+                            <span class="value">Inpatient, Detox, IOP, Sober Living</span>
+                        </li>
+                        <li>
+                            <span class="label">Programs</span>
+                            <span class="value">12-Step + SMART Recovery</span>
+                        </li>
+                        <li>
+                            <span class="label">Geography</span>
+                            <span class="value">Texas (DFW + Austin)</span>
+                        </li>
+                        <li>
+                            <span class="label">Ecosystems</span>
+                            <span class="value">2 regional markets</span>
+                        </li>
+                        <li>
+                            <span class="label">Founded</span>
+                            <span class="value">2018</span>
+                        </li>
+                        <li>
+                            <span class="label">Properties</span>
+                            <span class="value">Owned (24-acre ranch at RWR)</span>
+                        </li>
+                        <li>
+                            <span class="label">Gold Card</span>
+                            <span class="value"><span class="badge badge-green">Riverwalk + Fort Worth</span></span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h2>Ownership & Motivation</h2>
+                    <ul class="detail-list">
+                        <li>
+                            <span class="label">Principals</span>
+                            <span class="value">Raul (operator) + John (partner/lawyer)</span>
+                        </li>
+                        <li>
+                            <span class="label">Relationship</span>
+                            <span class="value">15-year business partnership</span>
+                        </li>
+                        <li>
+                            <span class="label">Angel Investor</span>
+                            <span class="value">Jose Garcia (South FL)</span>
+                        </li>
+                        <li>
+                            <span class="label">Angel Investment</span>
+                            <span class="value">~$3.5-5.5M seed capital</span>
+                        </li>
+                        <li>
+                            <span class="label">Investor Status</span>
+                            <span class="value"><span class="badge badge-red">Wants Full Exit</span></span>
+                        </li>
+                        <li>
+                            <span class="label">Investor Age</span>
+                            <span class="value">70s, sold 3-4x before</span>
+                        </li>
+                        <li>
+                            <span class="label">Seller Posture</span>
+                            <span class="value"><span class="badge badge-amber">Open to All Options</span></span>
+                        </li>
+                        <li>
+                            <span class="label">Banker</span>
+                            <span class="value">None (pulled from prior process)</span>
+                        </li>
+                        <li>
+                            <span class="label">QoE Firm</span>
+                            <span class="value">Kaufman Rossin (Miami)</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Facilities -->
+            <div class="card" style="margin-bottom: 24px;">
+                <h2>Facility Portfolio</h2>
+                <div class="facility-grid">
+                    <div class="facility">
+                        <div class="facility-name">Riverwalk Ranch</div>
+                        <div class="facility-detail">Inpatient residential, 24-acre ranch property<br>Dallas-Fort Worth / Mansfield (Tarrant County)</div>
+                        <span class="facility-beds">44 Beds</span>
+                    </div>
+                    <div class="facility">
+                        <div class="facility-name">Austin Pines Ranch</div>
+                        <div class="facility-detail">Inpatient residential + separate detox building<br>Bastrop / Austin area. Operational since 2023</div>
+                        <span class="facility-beds">51 Beds</span>
+                    </div>
+                    <div class="facility">
+                        <div class="facility-name">Fort Worth Recovery</div>
+                        <div class="facility-detail">Outpatient center serving the DFW inpatient ecosystem<br>Licensed for 288 outpatient slots</div>
+                        <span class="facility-beds">Outpatient / 288 Slots</span>
+                    </div>
+                    <div class="facility">
+                        <div class="facility-name">Austin Treatment Center</div>
+                        <div class="facility-detail">Outpatient center near downtown Austin<br>Serves the Austin inpatient ecosystem</div>
+                        <span class="facility-beds">Outpatient</span>
+                    </div>
+                </div>
+                <div class="note-box">
+                    <strong>Note:</strong> All properties are owned, not leased. Transitional / sober living houses also attached to both ecosystems. Angel investor owns properties in Dallas outright; Raul and John have percentage in Austin property.
+                </div>
+            </div>
+
+            <!-- Financials -->
+            <h2 class="section-title">Financial Profile</h2>
+            <div class="grid-2">
+                <div class="card">
+                    <h2>Earnings & Revenue</h2>
+                    <ul class="detail-list">
+                        <li>
+                            <span class="label">Reported EBITDA</span>
+                            <span class="value" style="font-weight: 700; color: var(--navy);">$3.5M</span>
+                        </li>
+                        <li>
+                            <span class="label">Adjusted EBITDA</span>
+                            <span class="value" style="font-weight: 700; color: var(--navy);">$5.8M</span>
+                        </li>
+                        <li>
+                            <span class="label">In-Network %</span>
+                            <span class="value">~98% (as of Dec 2025)</span>
+                        </li>
+                        <li>
+                            <span class="label">Payer Mix</span>
+                            <span class="value">Primarily commercial in-network</span>
+                        </li>
+                        <li>
+                            <span class="label">BCBS Transition</span>
+                            <span class="value">Aug 2024 (Austin Pines)</span>
+                        </li>
+                        <li>
+                            <span class="label">Marketing</span>
+                            <span class="value">~90% Google Ads / PPC</span>
+                        </li>
+                        <li>
+                            <span class="label">Client Geography</span>
+                            <span class="value">~85-90% Texas / adjacent</span>
+                        </li>
+                        <li>
+                            <span class="label">Turned Away (24mo)</span>
+                            <span class="value">~500 HMO United patients</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h2>QoE & Receivables</h2>
+                    <ul class="detail-list">
+                        <li>
+                            <span class="label">QoE #1</span>
+                            <span class="value">Through Sep 2024</span>
+                        </li>
+                        <li>
+                            <span class="label">QoE #2</span>
+                            <span class="value">Through Q2 2025 (Jun 30)</span>
+                        </li>
+                        <li>
+                            <span class="label">QoE Firm</span>
+                            <span class="value">Kaufman Rossin (Miami)</span>
+                        </li>
+                        <li>
+                            <span class="label">AR Balance</span>
+                            <span class="value" style="font-weight: 700;">$8.2M - $9.4M</span>
+                        </li>
+                        <li>
+                            <span class="label">AR Age</span>
+                            <span class="value">Pulled Jul 5, 2025 (180d outstanding)</span>
+                        </li>
+                        <li>
+                            <span class="label">Key QoR Adjustments</span>
+                            <span class="value">In-network collections, OON shared savings, patient balance</span>
+                        </li>
+                        <li>
+                            <span class="label">Corp Expenses</span>
+                            <span class="value">Fully burdened in P&L</span>
+                        </li>
+                        <li>
+                            <span class="label">2025 P&L</span>
+                            <span class="value"><span class="badge badge-amber">Pending from Kirk Monroe</span></span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Deal Parameters -->
+            <div class="card" style="margin-bottom: 24px;">
+                <h2>Deal Parameters & Valuation</h2>
+                <div class="stat-grid">
+                    <div class="stat">
+                        <div class="stat-label">Seller Benchmark Multiple</div>
+                        <div class="stat-value">8.0x</div>
+                        <div class="stat-note">Established by prior LOIs from PE firms</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Indicative Floor</div>
+                        <div class="stat-value">~$35.7M</div>
+                        <div class="stat-note">~7x on ~$5.1M adjusted EBITDA</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Implied Range at 8x</div>
+                        <div class="stat-value">$28M - $46M</div>
+                        <div class="stat-note">$3.5M reported to $5.8M adjusted</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Deal Structure</div>
+                        <div class="stat-value">All Cash</div>
+                        <div class="stat-note">No required rollover; includes RE</div>
+                    </div>
+                </div>
+                <div class="note-box" style="margin-top: 20px;">
+                    <strong>Note:</strong> Run-rate adjustments require evidence of hitting projected numbers. Updated 2025 P&L expected in January could validate pro-forma adjustments and close the gap between $3.5M reported and $5.8M adjusted. Prior deal process fell apart - sellers believe buyers wanted credit for items nobody would give them, or there were billing issues. AR balance flagged as unusually large.
+                </div>
+            </div>
+
+            <!-- Growth Opportunities -->
+            <div class="card" style="margin-bottom: 24px;">
+                <h2>Growth Opportunities</h2>
+                <div class="growth-item">
+                    <strong>San Antonio Expansion:</strong> Sellers have a planned-out project for San Antonio and other Texas markets, aiming to triple in size and value by adding 3+ new ecosystems.
+                </div>
+                <div class="growth-item">
+                    <strong>Austin Campus Expansion:</strong> Nearby property available for acquisition; potential women's program separated from men's at Austin Pines.
+                </div>
+                <div class="growth-item">
+                    <strong>Bed Capacity Increase:</strong> Some flexibility at existing campuses for additional beds; current constraint is 95 beds at near-full occupancy.
+                </div>
+                <div class="growth-item">
+                    <strong>Outpatient Census Growth:</strong> Outpatient centers growing; Fort Worth Recovery licensed for 288 slots with room to fill as inpatient feeds step-down patients.
+                </div>
+                <div class="growth-item">
+                    <strong>Business Development Team:</strong> Currently no BizDev team; hiring one could unlock union, hospital, and EAP referral channels at scale with more beds.
+                </div>
+                <div class="growth-item">
+                    <strong>Payer Recapture:</strong> ~500 HMO United patients turned away over 24 months - strategic buyer with those contracts could immediately capture volume.
+                </div>
+            </div>
+
+            <!-- Key Contacts -->
+            <div class="card" style="margin-bottom: 24px;">
+                <h2>Key Contacts</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Role</th>
+                            <th>Location</th>
+                            <th>Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Raul</strong></td>
+                            <td>Co-Owner / Operator</td>
+                            <td>Miami, FL</td>
+                            <td>Primary point of contact, Cuban-American, former banker</td>
+                        </tr>
+                        <tr>
+                            <td><strong>John</strong></td>
+                            <td>Co-Owner / Partner</td>
+                            <td>Keller, TX</td>
+                            <td>Lawyer by training, handles legal/data, works with Kaufman Rossin</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Jose Garcia</strong></td>
+                            <td>Angel Investor</td>
+                            <td>South Florida</td>
+                            <td>Medicare managed care operator, 70s, sold 3-4x, wants full exit</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Kirk Monroe</strong></td>
+                            <td>Fractional CFO</td>
+                            <td>Ecuador (remote)</td>
+                            <td>Brother of Jamison Monroe; providing QoE-ready 2025 P&L</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Dylan Poler</strong></td>
+                            <td>Deal Originator</td>
+                            <td>South Florida</td>
+                            <td>Sourced the deal, first outreach to Raul mid-2025</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Timeline -->
+            <div class="card" style="margin-bottom: 24px;">
+                <h2>Deal Timeline</h2>
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <div class="timeline-date">June 26, 2025</div>
+                        <div class="timeline-title">Initial Identification</div>
+                        <div class="timeline-desc">Riverwalk Ranch identified as acquisition target during deal sourcing. Confirmed privately held with local ownership - good fit for acquisition.</div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-date">October 29, 2025</div>
+                        <div class="timeline-title">First Substantive Call (29 min)</div>
+                        <div class="timeline-desc">Introductory call with Raul and John. Raul presented the full platform: 4 facilities, 95 beds, 2 ecosystems. Shared QoE details, EBITDA of $5.8M adjusted, 8x benchmark multiple from prior LOIs. Angel investor wants out. Agreed to share QoE and sign NDA.</div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-date">November 10, 2025</div>
+                        <div class="timeline-title">Follow-Up Check-in (11 min)</div>
+                        <div class="timeline-desc">NDA signed, waiting on Raul to send data. He went radio silent. Direct call placed to push for information and potentially schedule a site visit before Thanksgiving.</div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-date">December 8, 2025 (Pre-call)</div>
+                        <div class="timeline-title">Strategy Session (11 min)</div>
+                        <div class="timeline-desc">AR balance flagged as "kind of crazy," quality revenue adjustments concerning. Strategy to frame offer between $3.5M-$5M EBITDA range. Operator site visit planned for Texas the following week.</div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-date">December 8, 2025</div>
+                        <div class="timeline-title">QoE Deep Dive Call (30 min)</div>
+                        <div class="timeline-desc">Detailed walkthrough of quality of revenue adjustments with John. Discussed in-network transition timeline, AR aging, pro-forma adjustments for census increases and gold card effect. ~$35.7M framed as floor (~7x). Raul confirmed 8x benchmark. Both sides agreed to continue. Operator site visit discussed for following week. Data request for referral sources, geography, and funnel conversion.</div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-date">December 16, 2025</div>
+                        <div class="timeline-title">Internal Planning Call (37 min)</div>
+                        <div class="timeline-desc">Kirk Monroe (fractional CFO) engaged; will provide QoE-ready 2025 P&L and concrete data after NDA signing. Conversations to resume in early January. Site visit planned for Texas in January. Soft IOI/LOI to be prepared after updated financials received.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Risk Factors -->
+            <div class="grid-2">
+                <div class="card">
+                    <h2>Key Risks & Concerns</h2>
+                    <div class="key-point">
+                        <div class="key-point-icon"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg></div>
+                        <div><strong>Large AR Balance:</strong> $8.2-9.4M AR flagged as unusually high. Driven by in-network transition timing, but collectability of older claims is a concern.</div>
+                    </div>
+                    <div class="key-point">
+                        <div class="key-point-icon"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg></div>
+                        <div><strong>EBITDA Gap:</strong> $2.3M spread between reported ($3.5M) and adjusted ($5.8M). Prior deal blew up possibly due to credit disputes on add-backs.</div>
+                    </div>
+                    <div class="key-point">
+                        <div class="key-point-icon"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg></div>
+                        <div><strong>Valuation Expectations:</strong> Seller anchored at 8x from prior LOIs; indicative floor at ~7x. Gap may widen if adjustments aren't validated.</div>
+                    </div>
+                    <div class="key-point">
+                        <div class="key-point-icon"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg></div>
+                        <div><strong>Competitive Process:</strong> Family offices also engaged; sellers managing multiple conversations simultaneously.</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>Strengths & Highlights</h2>
+                    <div class="key-point">
+                        <div class="key-point-icon" style="background: var(--green);"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg></div>
+                        <div><strong>Near-Full Occupancy:</strong> 99% occupancy with only 1 bed open out of 95. Strong demand validation.</div>
+                    </div>
+                    <div class="key-point">
+                        <div class="key-point-icon" style="background: var(--green);"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg></div>
+                        <div><strong>Owned Real Estate:</strong> All properties owned, including 24-acre ranch at Riverwalk. No lease risk.</div>
+                    </div>
+                    <div class="key-point">
+                        <div class="key-point-icon" style="background: var(--green);"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg></div>
+                        <div><strong>Gold Card Status:</strong> Both Riverwalk and Fort Worth Recovery have gold card designation with payers.</div>
+                    </div>
+                    <div class="key-point">
+                        <div class="key-point-icon" style="background: var(--green);"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg></div>
+                        <div><strong>Motivated Seller:</strong> Angel investor in his 70s, actively pushing for exit. Principals are entrepreneurs with no emotional attachment to "the kingdom."</div>
+                    </div>
+                    <div class="key-point">
+                        <div class="key-point-icon" style="background: var(--green);"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg></div>
+                        <div><strong>Expansion-Ready:</strong> Detailed plans for San Antonio + additional markets. Built from cash flow with proven execution.</div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="footer">
+        <div class="container">
+            <div class="brand">The Poler Team</div>
+            <p>info@polerteam.com | Sunny Isles Beach / Aventura, FL</p>
+            <p style="margin-top: 8px; font-size: 11px; color: rgba(255,255,255,0.4);">This document contains confidential business intelligence compiled from recorded meeting transcripts. For authorized recipients only.</p>
+        </div>
+    </div>
+
+</body>
+</html>
