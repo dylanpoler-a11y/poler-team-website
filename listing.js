@@ -400,7 +400,7 @@ function showLeadError(elId, msg) {
 // ============================================================
 async function initHeroProperty() {
     const params   = new URLSearchParams(window.location.search);
-    const listingId = params.get('id');
+    const listingId = params.get('id') || params.get('mls');
     const container = document.getElementById('hero-property');
 
     if (!listingId) {
@@ -873,7 +873,7 @@ function showLookupResult(listing) {
             <div class="lookup-result-price">${price}</div>
             <div class="lookup-result-addr">${address}</div>
             ${stats ? `<div class="lookup-result-stats">${stats}</div>` : ''}
-            <a href="listing.html?id=${lid}" class="lookup-result-view">
+            <a href="listing.html?mls=${lid}" class="lookup-result-view">
                 View Full Listing
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
             </a>
@@ -1101,7 +1101,7 @@ function renderCard(listing) {
     const statusClass = status === 'Active' ? 'status-active' : status === 'Pending' ? 'status-pending' : 'status-other';
 
     return `
-    <div class="listing-card" onclick="window.location.href='listing.html?id=${lid}'">
+    <div class="listing-card" onclick="window.location.href='listing.html?mls=${lid}'">
         <div class="listing-image">
             ${imgHtml}
             <div class="listing-overlay">
