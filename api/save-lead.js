@@ -52,11 +52,17 @@ export default async function handler(req) {
         utm_content    = '',
         utm_term       = '',
         fbclid         = '',
+        language       = 'en',
     } = body;
 
     // Build UTM summary string for CRM (e.g. "facebook / cpc / miami-luxury-q1")
     const utmParts = [utm_source, utm_medium, utm_campaign].filter(Boolean);
     const utmSummary = utmParts.length ? utmParts.join(' / ') : '';
+
+    // Generate a unique token for lead self-service preferences page
+    const tokenArray = new Uint8Array(24);
+    crypto.getRandomValues(tokenArray);
+    const alertToken = Array.from(tokenArray, b => b.toString(16).padStart(2, '0')).join('');
 
     const res = await fetch(`https://api.airtable.com/v0/${baseId}/Leads`, {
         method: 'POST',
@@ -82,6 +88,8 @@ export default async function handler(req) {
                     ...(utm_medium   && { 'UTM Medium': utm_medium }),
                     ...(utm_content  && { 'UTM Content': utm_content }),
                     ...(fbclid       && { 'Facebook Click ID': fbclid }),
+                    'Alert Token':     alertToken,
+                    'Preferred Language': language,
                 },
             }],
         }),
@@ -93,7 +101,7 @@ export default async function handler(req) {
     }
 
     const data = await res.json();
-    return json({ success: true, id: data.records?.[0]?.id });
+    return json({ success: true, id: data.records?.[0]?.id, token: alertToken });
 }
 
 function json(data, status = 200) {

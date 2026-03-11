@@ -51,7 +51,7 @@
         .lang-btn.active { background: var(--gold); color: var(--navy); }
         .lang-btn:hover:not(.active) { color: var(--gold-light); }
 
-        .hero { position: relative; min-height: 100vh; display: flex; flex-direction: column; justify-content: flex-end; padding: 0 3rem 4rem; background: linear-gradient(180deg, rgba(10,22,40,0.25) 0%, rgba(10,22,40,0.55) 40%, rgba(10,22,40,0.95) 100%), url('https://cbbresources.s3.us-east-1.amazonaws.com/DJI_20251005091006_0096_D_c5485d13cc.jpg') center top / cover no-repeat; overflow: hidden; }
+        .hero { position: relative; min-height: 100vh; display: flex; flex-direction: column; justify-content: flex-end; padding: 0 3rem 4rem; background: linear-gradient(180deg, rgba(10,22,40,0.2) 0%, rgba(10,22,40,0.5) 40%, rgba(10,22,40,0.95) 100%), url('https://www.kleerandgarciadiaz.com/megatemplate/uploads/photogallery_images/Imgtrump%20royale%20drone9192022_830311trump%20royale%20drone.jpg') center center / cover no-repeat; overflow: hidden; }
         .hero::before { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: radial-gradient(ellipse at 20% 50%, rgba(201,169,110,0.06) 0%, transparent 60%); pointer-events: none; }
         .hero-badge { display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(201, 169, 110, 0.15); border: 1px solid rgba(201, 169, 110, 0.3); padding: 0.4rem 1rem; border-radius: 50px; font-size: 0.7rem; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--gold); margin-bottom: 1.5rem; width: fit-content; animation: fadeInUp 0.8s ease; }
         .hero-badge .pulse { width: 8px; height: 8px; background: var(--accent-green); border-radius: 50%; animation: pulse 2s infinite; }
@@ -70,6 +70,19 @@
         .stat-value .currency { color: var(--gold); font-size: 1.2rem; }
         .stat-value .unit { font-size: 0.8rem; color: var(--text-secondary); font-family: 'Inter', sans-serif; font-weight: 400; }
         .stat-detail { font-size: 0.72rem; color: var(--text-secondary); margin-top: 0.25rem; }
+
+        /* ===== RENTAL BANNER ===== */
+        .rental-banner { margin: 0 3rem; padding: 2rem; background: linear-gradient(135deg, rgba(96,165,250,0.08) 0%, var(--card-bg) 100%); border: 1px solid rgba(96,165,250,0.2); border-radius: 16px; position: relative; z-index: 1; margin-top: 1.5rem; }
+        .rental-badge-header { display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(96,165,250,0.15); border: 1px solid rgba(96,165,250,0.3); padding: 0.35rem 1rem; border-radius: 50px; font-size: 0.65rem; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--accent-blue); margin-bottom: 1.25rem; }
+        .rental-stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1px; background: rgba(96,165,250,0.1); border-radius: 12px; overflow: hidden; }
+        .rental-stat { background: rgba(10,22,40,0.6); padding: 1.25rem; text-align: center; }
+        .rental-stat:first-child { border-radius: 12px 0 0 12px; }
+        .rental-stat:last-child { border-radius: 0 12px 12px 0; }
+        .rental-stat-label { font-size: 0.6rem; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: rgba(96,165,250,0.7); margin-bottom: 0.4rem; }
+        .rental-stat-value { font-family: 'Playfair Display', serif; font-size: 1.3rem; font-weight: 600; color: var(--white); }
+        .rental-stat-value .currency { color: var(--accent-blue); font-size: 0.9rem; }
+        .rental-stat-value .unit { font-size: 0.7rem; color: var(--text-secondary); font-family: 'Inter', sans-serif; font-weight: 400; }
+        .rental-stat-detail { font-size: 0.68rem; color: var(--text-secondary); margin-top: 0.2rem; }
 
         .section { padding: 5rem 3rem; position: relative; }
         .section-header { margin-bottom: 3rem; }
@@ -211,8 +224,8 @@
         .last-updated { display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 1rem; font-size: 0.72rem; color: var(--text-muted); background: rgba(22, 37, 64, 0.3); }
         .last-updated .live-dot { width: 6px; height: 6px; background: var(--accent-green); border-radius: 50%; animation: pulse 2s infinite; }
 
-        @media (max-width: 1200px) { .stats-bar { grid-template-columns: repeat(3, 1fr); } .highlights-grid { grid-template-columns: repeat(2, 1fr); } .amenities-grid { grid-template-columns: repeat(3, 1fr); } .photo-gallery { grid-template-columns: 1fr 1fr; grid-template-rows: 220px 220px; } .photo-card:first-child { grid-row: auto; } .docs-grid { grid-template-columns: repeat(2, 1fr); } }
-        @media (max-width: 768px) { .section { padding: 3rem 1.5rem; } .hero { padding: 0 1.5rem 3rem; } .hero-address { font-size: 2rem; } .stats-bar { grid-template-columns: 1fr 1fr; } .metrics-grid { grid-template-columns: 1fr 1fr; } .charts-grid { grid-template-columns: 1fr; } .highlights-grid { grid-template-columns: 1fr; } .furniture-grid { grid-template-columns: 1fr; } .analytics-grid { grid-template-columns: 1fr; } .amenities-grid { grid-template-columns: repeat(2, 1fr); } .nav-links { display: none; } .photo-gallery { grid-template-columns: 1fr; grid-template-rows: repeat(5, 180px); } .docs-grid { grid-template-columns: 1fr; } }
+        @media (max-width: 1200px) { .stats-bar { grid-template-columns: repeat(3, 1fr); } .rental-stats { grid-template-columns: repeat(3, 1fr); } .highlights-grid { grid-template-columns: repeat(2, 1fr); } .amenities-grid { grid-template-columns: repeat(3, 1fr); } .photo-gallery { grid-template-columns: 1fr 1fr; grid-template-rows: 220px 220px; } .photo-card:first-child { grid-row: auto; } .docs-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 768px) { .section { padding: 3rem 1.5rem; } .hero { padding: 0 1.5rem 3rem; } .hero-address { font-size: 2rem; } .stats-bar { grid-template-columns: 1fr 1fr; } .rental-banner { margin: 1rem 1.5rem; } .rental-stats { grid-template-columns: 1fr 1fr; } .metrics-grid { grid-template-columns: 1fr 1fr; } .charts-grid { grid-template-columns: 1fr; } .highlights-grid { grid-template-columns: 1fr; } .furniture-grid { grid-template-columns: 1fr; } .analytics-grid { grid-template-columns: 1fr; } .amenities-grid { grid-template-columns: repeat(2, 1fr); } .nav-links { display: none; } .photo-gallery { grid-template-columns: 1fr; grid-template-rows: repeat(5, 180px); } .docs-grid { grid-template-columns: 1fr; } }
         @media print { body { background: white; color: #1a1a1a; } .nav { display: none; } .section { padding: 2rem 1rem; } }
     </style>
 </head>
@@ -236,7 +249,7 @@
             <button class="lang-btn active" id="btnPT" onclick="setLang('pt')">PT</button>
             <button class="lang-btn" id="btnEN" onclick="setLang('en')">EN</button>
         </div>
-        <span class="nav-date" data-i18n="nav_updated">Atualizado: 10 de Março, 2026</span>
+        <span class="nav-date" data-i18n="nav_updated">Atualizado: 11 de Março, 2026</span>
     </div>
 </nav>
 
@@ -272,6 +285,37 @@
         </div>
     </div>
 </section>
+
+<div class="rental-banner fade-in">
+    <div class="rental-badge-header"><span class="pulse" style="background:var(--accent-blue);"></span><span data-i18n="rental_badge">Também Disponível para Aluguel</span></div>
+    <div class="rental-stats">
+        <div class="rental-stat">
+            <div class="rental-stat-label" data-i18n="rental_price_label">Aluguel Mensal</div>
+            <div class="rental-stat-value"><span class="currency">$</span>55,000<span class="unit">/mo</span></div>
+            <div class="rental-stat-detail">MLS# A11978915</div>
+        </div>
+        <div class="rental-stat">
+            <div class="rental-stat-label" data-i18n="rental_psf_label">Preço / SF</div>
+            <div class="rental-stat-value"><span class="currency">$</span>9.60<span class="unit">/SF</span></div>
+            <div class="rental-stat-detail" data-i18n="rental_psf_detail">Área Under A/C</div>
+        </div>
+        <div class="rental-stat">
+            <div class="rental-stat-label" data-i18n="rental_type_label">Tipo de Aluguel</div>
+            <div class="rental-stat-value" data-i18n="rental_type_value">Mobiliado</div>
+            <div class="rental-stat-detail" data-i18n="rental_type_detail">Totalmente Equipado</div>
+        </div>
+        <div class="rental-stat">
+            <div class="rental-stat-label" data-i18n="rental_config_label">Configuração</div>
+            <div class="rental-stat-value">6 <span class="unit" data-i18n="stat_bd">QT</span> / 4.5 <span class="unit" data-i18n="stat_ba">BH</span></div>
+            <div class="rental-stat-detail" data-i18n="rental_config_detail">Cobertura Duplex</div>
+        </div>
+        <div class="rental-stat">
+            <div class="rental-stat-label" data-i18n="rental_status_label">Status</div>
+            <div class="rental-stat-value" data-i18n="rental_status_value">Ativo</div>
+            <div class="rental-stat-detail" data-i18n="rental_status_detail">Listado em 10 de Março</div>
+        </div>
+    </div>
+</div>
 
 <section class="section" style="padding-top: 2rem; padding-bottom: 3rem;">
     <div class="photo-gallery">
@@ -547,26 +591,26 @@
     </div>
     <div class="analytics-grid">
         <div class="analytics-card fade-in">
-            <span class="coming-soon" data-i18n="sync">Sincronizando</span>
-            <div class="analytics-number" style="color:var(--accent-blue);">--</div>
+            <span class="coming-soon" style="background:rgba(52,211,153,0.12);color:var(--accent-green);" data-i18n="an_live">&#9679; Ao Vivo</span>
+            <div class="analytics-number" style="color:var(--accent-blue);" id="homes-views">3,156</div>
             <div class="analytics-label" data-i18n="an_views">Total de Visualizações</div>
-            <div class="analytics-source">Homes.com &bull; Zillow &bull; Realtor.com</div>
+            <div class="analytics-source">Homes.com</div>
         </div>
         <div class="analytics-card fade-in">
             <span class="coming-soon" data-i18n="sync">Sincronizando</span>
             <div class="analytics-number" style="color:var(--gold);">--</div>
             <div class="analytics-label" data-i18n="an_saves">Salvos / Favoritos</div>
-            <div class="analytics-source" data-i18n="an_saves_source">Em todas as plataformas</div>
+            <div class="analytics-source">Homes.com</div>
         </div>
         <div class="analytics-card fade-in">
             <span class="coming-soon" data-i18n="sync">Sincronizando</span>
-            <div class="analytics-number" style="color:var(--accent-green);">--</div>
+            <div class="analytics-number" style="color:var(--accent-green);">0</div>
             <div class="analytics-label" data-i18n="an_inquiries">Consultas de Compradores</div>
             <div class="analytics-source" data-i18n="an_inquiries_source">Leads diretos e ligações</div>
         </div>
     </div>
     <div style="text-align:center;margin-top:2rem;">
-        <p style="font-size:0.8rem;color:var(--text-muted);max-width:500px;margin:0 auto;" data-i18n="analytics_note">Análises online do Homes.com, Zillow e outros portais serão preenchidas à medida que os dados ficarem disponíveis. Sua assinatura premium do Homes.com inclui análises avançadas e tours 3D Matterport.</p>
+        <p style="font-size:0.8rem;color:var(--text-muted);max-width:600px;margin:0 auto;" data-i18n="analytics_note">Visualizações sincronizadas do Homes.com. Salvos e consultas serão atualizados à medida que os dados fiquem disponíveis pelo painel do agente. Sua assinatura premium do Homes.com inclui análises avançadas e tours 3D Matterport.</p>
     </div>
 </section>
 
@@ -627,10 +671,10 @@
                     <td data-i18n="exp_hoa_detail">Inclui água, segurança, áreas comuns</td>
                 </tr>
                 <tr>
-                    <td><span class="expense-category-icon">&#127963;</span><strong data-i18n="exp_taxes">Impostos (Property Tax)</strong><span class="expense-note">Miami-Dade County</span></td>
-                    <td>--</td>
-                    <td>--</td>
-                    <td data-i18n="exp_taxes_detail">A confirmar</td>
+                    <td><span class="expense-category-icon">&#127963;</span><strong data-i18n="exp_taxes">Impostos (Property Tax)</strong><span class="expense-note">Miami-Dade County &mdash; Folio 31-2211-080-0430</span></td>
+                    <td>$6,749</td>
+                    <td>$80,984</td>
+                    <td data-i18n="exp_taxes_detail">Ano fiscal 2025</td>
                 </tr>
                 <tr>
                     <td><span class="expense-category-icon">&#128737;</span><strong data-i18n="exp_insurance">Seguro do Imóvel</strong><span class="expense-note" data-i18n="exp_insurance_note">Apólice ativa</span></td>
@@ -652,8 +696,8 @@
                 </tr>
                 <tr class="total-row">
                     <td data-i18n="exp_total">&#128178; TOTAL ESTIMADO</td>
-                    <td>$4,200+</td>
-                    <td>$50,400+</td>
+                    <td>$10,949+</td>
+                    <td>$131,384+</td>
                     <td data-i18n="exp_total_note">Valores parciais — será atualizado</td>
                 </tr>
             </tbody>
@@ -663,7 +707,7 @@
 
 <div class="last-updated">
     <span class="live-dot"></span>
-    <span data-i18n="last_updated">Painel atualizado em: 10 de Março, 2026 &bull; Dados atualizados a cada visita, oferta ou evento de mercado</span>
+    <span data-i18n="last_updated">Painel atualizado em: 11 de Março, 2026 &bull; Dados atualizados a cada visita, oferta ou evento de mercado</span>
 </div>
 
 <footer class="footer">
@@ -677,7 +721,7 @@
 const T = {
 pt: {
     nav_overview: 'Visão Geral', nav_marketing: 'Marketing', nav_showings: 'Visitas', nav_furniture: 'Mobília', nav_docs: 'Documentos', nav_expenses: 'Despesas',
-    nav_updated: 'Atualizado: 10 de Março, 2026',
+    nav_updated: 'Atualizado: 11 de Março, 2026',
     hero_badge: 'Imóvel Ativo', hero_floor: 'Andar 55', hero_type: 'Cobertura Duplex',
     stat_price: 'Preço de Venda', stat_area: 'Área Interna', stat_area_detail: '+ 1.500 SF de Terraço', stat_layout: 'Configuração', stat_bd: 'QT', stat_ba: 'BH', stat_layout_detail: 'Cobertura Duplex', stat_psf: 'Preço / SF', stat_psf_detail: 'Under A/C', stat_dom: 'Dias no Mercado', stat_dom_detail: 'Listado em 5 de Março, 2026',
     metric_dom: 'Dias no Mercado', metric_just_listed: 'Recém-Listado', metric_views: 'Visualizações Online', metric_awaiting: 'Aguardando Dados', metric_showings: 'Total de Visitas', metric_tracking: 'Monitoramento Ativo', metric_offers: 'Ofertas Recebidas',
@@ -717,9 +761,11 @@ pt: {
     fi3_title: 'Sistema de Adega', fi3_desc: 'Armazenamento climatizado para 200+ garrafas de vinho, sistema de refrigeração profissional.', fi3_tag: 'Climatizado',
     fi4_title: 'Sistema de Casa Inteligente', fi4_desc: 'Automação residencial completa incluindo iluminação, clima, áudio e sistemas de segurança integrados em ambos os andares.', fi4_tag: 'Automação Completa',
     analytics_eyebrow: 'Desempenho Digital', analytics_title: 'Análises Online', analytics_sub: 'Acompanhamento do desempenho do anúncio em todas as principais plataformas imobiliárias.',
-    sync: 'Sincronizando', an_views: 'Total de Visualizações', an_saves: 'Salvos / Favoritos', an_saves_source: 'Em todas as plataformas', an_inquiries: 'Consultas de Compradores', an_inquiries_source: 'Leads diretos e ligações',
-    analytics_note: 'Análises online do Homes.com, Zillow e outros portais serão preenchidas à medida que os dados ficarem disponíveis. Sua assinatura premium do Homes.com inclui análises avançadas e tours 3D Matterport.',
-    last_updated: 'Painel atualizado em: 10 de Março, 2026 &bull; Dados atualizados a cada visita, oferta ou evento de mercado',
+    sync: 'Sincronizando', an_live: '&#9679; Ao Vivo', an_views: 'Total de Visualizações', an_saves: 'Salvos / Favoritos', an_saves_source: 'Homes.com', an_inquiries: 'Consultas de Compradores', an_inquiries_source: 'Leads diretos e ligações',
+    analytics_note: 'Visualizações sincronizadas do Homes.com. Salvos e consultas serão atualizados à medida que os dados fiquem disponíveis pelo painel do agente. Sua assinatura premium do Homes.com inclui análises avançadas e tours 3D Matterport.',
+    // Rental
+    rental_badge: 'Também Disponível para Aluguel', rental_price_label: 'Aluguel Mensal', rental_psf_label: 'Preço / SF', rental_psf_detail: 'Área Under A/C', rental_type_label: 'Tipo de Aluguel', rental_type_value: 'Mobiliado', rental_type_detail: 'Totalmente Equipado', rental_config_label: 'Configuração', rental_config_detail: 'Cobertura Duplex', rental_status_label: 'Status', rental_status_value: 'Ativo', rental_status_detail: 'Listado em 10 de Março',
+    last_updated: 'Painel atualizado em: 11 de Março, 2026 &bull; Dados atualizados a cada visita, oferta ou evento de mercado',
     footer_text: 'Painel Exclusivo do Imóvel &mdash; 18201 Collins Ave, Unit TS1, Sunny Isles Beach, FL 33160',
     footer_confidential: 'Confidencial &mdash; Preparado Exclusivamente para Mario e Rosanne Marchiono pelo Poler Team',
     // Photo gallery
@@ -741,7 +787,7 @@ pt: {
     exp_intro_title: '&#128161; Finalidade Desta Seção', exp_intro_text: 'Esta seção permite acompanhar todos os gastos mensais relacionados ao imóvel enquanto ele está à venda. Isso inclui condomínio (HOA), impostos, seguro, manutenção e outros custos. O objetivo é que você tenha visibilidade total dos custos de manutenção e possa tomar decisões informadas sobre preço e estratégia de venda.',
     exp_th_category: 'Categoria', exp_th_monthly: 'Mensal', exp_th_annual: 'Anual', exp_th_notes: 'Observações',
     exp_hoa: 'Condomínio (HOA)', exp_hoa_note: 'Trump Royale — Unit TS1', exp_hoa_detail: 'Inclui água, segurança, áreas comuns',
-    exp_taxes: 'Impostos (Property Tax)', exp_taxes_detail: 'A confirmar',
+    exp_taxes: 'Impostos (Property Tax)', exp_taxes_detail: 'Ano fiscal 2025',
     exp_insurance: 'Seguro do Imóvel', exp_insurance_note: 'Apólice ativa', exp_insurance_detail: 'A confirmar',
     exp_maintenance: 'Manutenção', exp_maintenance_note: 'Reparos e conservação', exp_maintenance_detail: 'Conforme necessário',
     exp_utilities: 'Utilidades', exp_utilities_note: 'Eletricidade, gás, internet', exp_utilities_detail: 'A confirmar',
@@ -749,7 +795,7 @@ pt: {
 },
 en: {
     nav_overview: 'Overview', nav_marketing: 'Marketing', nav_showings: 'Showings', nav_furniture: 'Furnishings', nav_docs: 'Documents', nav_expenses: 'Expenses',
-    nav_updated: 'Updated: March 10, 2026',
+    nav_updated: 'Updated: March 11, 2026',
     hero_badge: 'Active Listing', hero_floor: 'Floor 55', hero_type: 'Two-Story Penthouse',
     stat_price: 'List Price', stat_area: 'Living Area', stat_area_detail: '+ 1,500 SF Terrace', stat_layout: 'Layout', stat_bd: 'BD', stat_ba: 'BA', stat_layout_detail: 'Two-Story Penthouse', stat_psf: 'Price / SF', stat_psf_detail: 'Under A/C', stat_dom: 'Days on Market', stat_dom_detail: 'Listed March 5, 2026',
     metric_dom: 'Days on Market', metric_just_listed: 'Just Listed', metric_views: 'Online Views', metric_awaiting: 'Awaiting Data', metric_showings: 'Total Showings', metric_tracking: 'Tracking Active', metric_offers: 'Offers Received',
@@ -790,9 +836,11 @@ en: {
     fi3_title: 'Wine Cellar System', fi3_desc: 'Climate-controlled wine storage with capacity for 200+ bottles, professional-grade cooling system.', fi3_tag: 'Climate Controlled',
     fi4_title: 'Smart Home System', fi4_desc: 'Full home automation including lighting, climate, audio, and security systems integrated throughout both floors.', fi4_tag: 'Full Automation',
     analytics_eyebrow: 'Digital Performance', analytics_title: 'Online Analytics', analytics_sub: 'Tracking listing performance across all major real estate platforms.',
-    sync: 'Syncing', an_views: 'Total Listing Views', an_saves: 'Saves / Favorites', an_saves_source: 'Across all platforms', an_inquiries: 'Buyer Inquiries', an_inquiries_source: 'Direct leads & calls',
-    analytics_note: 'Online analytics from Homes.com, Zillow, and other portals will be populated as data becomes available. Your Homes.com premium membership includes enhanced listing analytics and Matterport 3D tours.',
-    last_updated: 'Dashboard last updated: March 10, 2026 &bull; Data refreshes with each showing, offer, or market event',
+    sync: 'Syncing', an_live: '&#9679; Live', an_views: 'Total Listing Views', an_saves: 'Saves / Favorites', an_saves_source: 'Homes.com', an_inquiries: 'Buyer Inquiries', an_inquiries_source: 'Direct leads & calls',
+    analytics_note: 'Views synced from Homes.com. Saves and inquiries will be updated as data becomes available from the agent dashboard. Your Homes.com premium membership includes enhanced listing analytics and Matterport 3D tours.',
+    // Rental
+    rental_badge: 'Also Available for Rent', rental_price_label: 'Monthly Rent', rental_psf_label: 'Price / SF', rental_psf_detail: 'Under A/C Area', rental_type_label: 'Lease Type', rental_type_value: 'Furnished', rental_type_detail: 'Fully Equipped', rental_config_label: 'Layout', rental_config_detail: 'Two-Story Penthouse', rental_status_label: 'Status', rental_status_value: 'Active', rental_status_detail: 'Listed March 10',
+    last_updated: 'Dashboard last updated: March 11, 2026 &bull; Data refreshes with each showing, offer, or market event',
     footer_text: 'Exclusive Listing Dashboard &mdash; 18201 Collins Ave, Unit TS1, Sunny Isles Beach, FL 33160',
     footer_confidential: 'Confidential &mdash; Prepared Exclusively for Mario and Rosanne Marchiono by Poler Team',
     // Photo gallery
@@ -814,7 +862,7 @@ en: {
     exp_intro_title: '&#128161; Purpose of This Section', exp_intro_text: 'This section allows you to track all monthly expenses related to the property while it is listed for sale. This includes HOA fees, property taxes, insurance, maintenance, and other costs. The goal is to give you full visibility into holding costs so you can make informed decisions about pricing and sales strategy.',
     exp_th_category: 'Category', exp_th_monthly: 'Monthly', exp_th_annual: 'Annual', exp_th_notes: 'Notes',
     exp_hoa: 'HOA Fees', exp_hoa_note: 'Trump Royale — Unit TS1', exp_hoa_detail: 'Includes water, security, common areas',
-    exp_taxes: 'Property Tax', exp_taxes_detail: 'To be confirmed',
+    exp_taxes: 'Property Tax', exp_taxes_detail: '2025 Tax Year',
     exp_insurance: 'Property Insurance', exp_insurance_note: 'Active policy', exp_insurance_detail: 'To be confirmed',
     exp_maintenance: 'Maintenance', exp_maintenance_note: 'Repairs & upkeep', exp_maintenance_detail: 'As needed',
     exp_utilities: 'Utilities', exp_utilities_note: 'Electric, gas, internet', exp_utilities_detail: 'To be confirmed',
@@ -923,6 +971,30 @@ function rebuildCharts() {
 }
 
 rebuildCharts();
+
+// ===== HOMES.COM ANALYTICS AUTO-FETCH =====
+// Attempts to fetch latest view count from Homes.com via API
+// Falls back to last known static value if fetch fails
+(async function fetchHomesAnalytics() {
+    const HOMES_URL = 'https://www.homes.com/property/18201-collins-ave-sunny-isles-beach-fl-unit-ts1/9wn9jd5rc223j/';
+    const viewsEl = document.getElementById('homes-views');
+    // Store fallback in data attribute
+    if (viewsEl) viewsEl.setAttribute('data-fallback', viewsEl.textContent);
+
+    try {
+        // Try fetching via Vercel API route (if available)
+        const res = await fetch('/api/homes-stats');
+        if (res.ok) {
+            const data = await res.json();
+            if (data.views && viewsEl) {
+                viewsEl.textContent = Number(data.views).toLocaleString();
+            }
+        }
+    } catch(e) {
+        // API not available — keep the static value
+        console.log('Homes.com auto-sync: using cached value');
+    }
+})();
 
 </script>
 </body>
