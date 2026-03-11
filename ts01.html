@@ -168,6 +168,10 @@
         .chart-card.full-width { grid-column: 1 / -1; }
         .chart-title { font-family: 'Playfair Display', serif; font-size: 1.1rem; margin-bottom: 0.25rem; }
         .chart-subtitle { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 1.5rem; }
+        .chart-toggle { display: flex; align-items: center; gap: 0; background: rgba(255,255,255,0.05); border: 1px solid var(--card-border); border-radius: 50px; padding: 3px; margin-bottom: 1.5rem; width: fit-content; }
+        .chart-toggle-btn { padding: 0.45rem 1.5rem; border-radius: 50px; font-size: 0.72rem; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; transition: all 0.3s; color: var(--text-muted); background: transparent; border: none; cursor: pointer; font-family: 'Inter', sans-serif; }
+        .chart-toggle-btn.active-buy { background: var(--gold); color: var(--navy); }
+        .chart-toggle-btn.active-rent { background: var(--accent-blue); color: var(--navy); }
         .chart-container { position: relative; height: 320px; }
         .chart-note { font-size: 0.7rem; color: var(--text-muted); margin-top: 1rem; font-style: italic; text-align: center; }
 
@@ -436,10 +440,18 @@
     </div>
     <div class="charts-grid">
         <div class="chart-card full-width fade-in">
-            <div class="chart-title" data-i18n="chart_psf_title">Preço por SF — Edifício vs. Ano de Construção</div>
-            <div class="chart-subtitle" data-i18n="chart_psf_sub">Edifícios mais novos tendem a ter $/SF mais alto. Trump Royale (2008) oferece valor excepcional por SF para o tamanho e localização.</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;">
+                <div>
+                    <div class="chart-title" id="chartPsfTitle" data-i18n="chart_psf_title">Preço por SF — Edifício vs. Ano de Construção</div>
+                    <div class="chart-subtitle" id="chartPsfSub" data-i18n="chart_psf_sub">Edifícios mais novos tendem a ter $/SF mais alto. Trump Royale (2008) oferece valor excepcional por SF para o tamanho e localização.</div>
+                </div>
+                <div class="chart-toggle" id="chartModeToggle">
+                    <button class="chart-toggle-btn active-buy" id="btnBuy" onclick="setChartMode('buy')"><span data-i18n="chart_buy">Compra</span></button>
+                    <button class="chart-toggle-btn" id="btnRent" onclick="setChartMode('rent')"><span data-i18n="chart_rent">Aluguel</span></button>
+                </div>
+            </div>
             <div class="chart-container"><canvas id="psfCompChart"></canvas></div>
-            <div class="chart-note" data-i18n="chart_psf_note">&#9432; O ano de construção impacta significativamente o $/SF. A diferença reflete a idade do edifício, não subvalorização.</div>
+            <div class="chart-note" id="chartPsfNote" data-i18n="chart_psf_note">&#9432; O ano de construção impacta significativamente o $/SF. A diferença reflete a idade do edifício, não subvalorização.</div>
         </div>
     </div>
 </section>
@@ -666,8 +678,8 @@
             <tbody>
                 <tr>
                     <td><span class="expense-category-icon">&#127970;</span><strong data-i18n="exp_hoa">Condomínio (HOA)</strong><span class="expense-note" data-i18n="exp_hoa_note">Trump Royale — Unit TS1</span></td>
-                    <td>$4,200</td>
-                    <td>$50,400</td>
+                    <td>$6,938</td>
+                    <td>$83,256</td>
                     <td data-i18n="exp_hoa_detail">Inclui água, segurança, áreas comuns</td>
                 </tr>
                 <tr>
@@ -696,8 +708,8 @@
                 </tr>
                 <tr class="total-row">
                     <td data-i18n="exp_total">&#128178; TOTAL ESTIMADO</td>
-                    <td>$10,949+</td>
-                    <td>$131,384+</td>
+                    <td>$13,687+</td>
+                    <td>$164,240+</td>
                     <td data-i18n="exp_total_note">Valores parciais — será atualizado</td>
                 </tr>
             </tbody>
@@ -775,6 +787,8 @@ pt: {
     chart_psf_title: 'Preço por SF — Edifício vs. Ano de Construção', chart_psf_sub: 'Edifícios mais novos tendem a ter $/SF mais alto. Trump Royale (2008) oferece valor excepcional por SF para o tamanho e localização.',
     chart_psf_note: '&#9432; O ano de construção impacta significativamente o $/SF. A diferença reflete a idade do edifício, não subvalorização.',
     chart_our_listing: 'Nosso Imóvel', chart_bldg_avg: 'Média do Edifício',
+    chart_buy: 'Compra', chart_rent: 'Aluguel',
+    chart_rent_title: 'Aluguel por SF/Mês — Edifício vs. Ano de Construção', chart_rent_sub: 'Comparação do aluguel por pé quadrado entre edifícios de luxo. O TS1 a $9,60/SF está muito acima da média do Trump Royale ($4,90/SF), refletindo o status premium da cobertura.', chart_rent_note: '&#9432; Valores baseados em anúncios ativos de aluguel. Edifícios mais novos tendem a cobrar aluguéis mais altos por SF.',
     // Apollo
     tl_apollo_date: 'Março 2026', tl_apollo_title: 'Prospecção Apollo — Proprietários $5M+', tl_apollo_desc: 'Prospecção direta via Apollo para proprietários de imóveis acima de $5M na região de Sunny Isles Beach e Aventura. Segmentação por patrimônio e histórico de compras imobiliárias de luxo.',
     // Documents
@@ -850,6 +864,8 @@ en: {
     chart_psf_title: 'Price Per SF — Building vs. Year Built', chart_psf_sub: 'Newer buildings tend to command higher $/SF. Trump Royale (2008) offers exceptional value per SF for the size and location.',
     chart_psf_note: '&#9432; Construction year significantly impacts $/SF. The difference reflects building age, not undervaluation.',
     chart_our_listing: 'Our Listing', chart_bldg_avg: 'Building Avg',
+    chart_buy: 'Buy', chart_rent: 'Rent',
+    chart_rent_title: 'Rent Per SF/Month — Building vs. Year Built', chart_rent_sub: 'Rental rate per square foot comparison across luxury buildings. TS1 at $9.60/SF is well above the Trump Royale average ($4.90/SF), reflecting the premium penthouse status.', chart_rent_note: '&#9432; Values based on active rental listings. Newer buildings tend to command higher rents per SF.',
     // Apollo
     tl_apollo_date: 'March 2026', tl_apollo_title: 'Apollo Outreach — $5M+ Property Owners', tl_apollo_desc: 'Direct outreach via Apollo to property owners with $5M+ homes in the Sunny Isles Beach and Aventura area. Segmented by net worth and luxury real estate purchase history.',
     // Documents
@@ -914,21 +930,54 @@ Chart.defaults.borderColor = 'rgba(255,255,255,0.05)';
 Chart.defaults.font.family = "'Inter', sans-serif";
 
 let charts = {};
+let chartMode = 'buy'; // 'buy' or 'rent'
+
+function setChartMode(mode) {
+    chartMode = mode;
+    document.getElementById('btnBuy').className = 'chart-toggle-btn' + (mode === 'buy' ? ' active-buy' : '');
+    document.getElementById('btnRent').className = 'chart-toggle-btn' + (mode === 'rent' ? ' active-rent' : '');
+    rebuildCharts();
+}
 
 function rebuildCharts() {
     Object.values(charts).forEach(c => c.destroy());
     const L = T[currentLang];
 
-    // PSF Comparison Chart with Construction Years
-    const buildings = [
-        { name: 'Trump Royale\n' + L.chart_bldg_avg + '\n(2008)', psf: 851, year: 2008, color: 'rgba(201,169,110,0.4)', border: 'rgba(201,169,110,0.6)' },
-        { name: 'Trump Royale TS1\n' + L.chart_our_listing + '\n(2008)', psf: 1205, year: 2008, color: 'rgba(201,169,110,0.9)', border: 'rgba(201,169,110,1)' },
-        { name: 'Porsche Design\nTower\n(2016)', psf: 1420, year: 2016, color: 'rgba(96,165,250,0.5)', border: 'rgba(96,165,250,0.7)' },
-        { name: 'Mansions at\nAcqualina\n(2015)', psf: 1535, year: 2015, color: 'rgba(96,165,250,0.5)', border: 'rgba(96,165,250,0.7)' },
-        { name: 'Ritz-Carlton\nResidences\n(2020)', psf: 1500, year: 2020, color: 'rgba(96,165,250,0.5)', border: 'rgba(96,165,250,0.7)' },
-        { name: 'Turnberry\nOcean Club\n(2020)', psf: 1890, year: 2020, color: 'rgba(52,211,153,0.5)', border: 'rgba(52,211,153,0.7)' },
-        { name: 'Estates at\nAcqualina\n(2022)', psf: 2265, year: 2022, color: 'rgba(52,211,153,0.5)', border: 'rgba(52,211,153,0.7)' },
+    // PSF data for Buy mode (price per SF for purchase)
+    const buyData = [
+        { name: 'Trump Royale\n' + L.chart_bldg_avg + '\n(2008)', psf: 851, color: 'rgba(201,169,110,0.4)', border: 'rgba(201,169,110,0.6)' },
+        { name: 'Trump Royale TS1\n' + L.chart_our_listing + '\n(2008)', psf: 1205, color: 'rgba(201,169,110,0.9)', border: 'rgba(201,169,110,1)' },
+        { name: 'Porsche Design\nTower\n(2016)', psf: 1420, color: 'rgba(96,165,250,0.5)', border: 'rgba(96,165,250,0.7)' },
+        { name: 'Mansions at\nAcqualina\n(2015)', psf: 1535, color: 'rgba(96,165,250,0.5)', border: 'rgba(96,165,250,0.7)' },
+        { name: 'Ritz-Carlton\nResidences\n(2020)', psf: 1500, color: 'rgba(96,165,250,0.5)', border: 'rgba(96,165,250,0.7)' },
+        { name: 'Turnberry\nOcean Club\n(2020)', psf: 1890, color: 'rgba(52,211,153,0.5)', border: 'rgba(52,211,153,0.7)' },
+        { name: 'Estates at\nAcqualina\n(2022)', psf: 2265, color: 'rgba(52,211,153,0.5)', border: 'rgba(52,211,153,0.7)' },
     ];
+
+    // PSF data for Rent mode (rent per SF per month)
+    const rentData = [
+        { name: 'Trump Royale\n' + L.chart_bldg_avg + '\n(2008)', psf: 4.90, color: 'rgba(96,165,250,0.4)', border: 'rgba(96,165,250,0.6)' },
+        { name: 'Trump Royale TS1\n' + L.chart_our_listing + '\n(2008)', psf: 9.60, color: 'rgba(96,165,250,0.9)', border: 'rgba(96,165,250,1)' },
+        { name: 'Porsche Design\nTower\n(2016)', psf: 8.50, color: 'rgba(167,139,250,0.5)', border: 'rgba(167,139,250,0.7)' },
+        { name: 'Mansions at\nAcqualina\n(2015)', psf: 9.33, color: 'rgba(167,139,250,0.5)', border: 'rgba(167,139,250,0.7)' },
+        { name: 'Ritz-Carlton\nResidences\n(2020)', psf: 12.50, color: 'rgba(167,139,250,0.5)', border: 'rgba(167,139,250,0.7)' },
+        { name: 'Turnberry\nOcean Club\n(2020)', psf: 11.70, color: 'rgba(52,211,153,0.5)', border: 'rgba(52,211,153,0.7)' },
+        { name: 'Estates at\nAcqualina\n(2022)', psf: 15.00, color: 'rgba(52,211,153,0.5)', border: 'rgba(52,211,153,0.7)' },
+    ];
+
+    const buildings = chartMode === 'buy' ? buyData : rentData;
+    const isBuy = chartMode === 'buy';
+    const prefix = isBuy ? '$' : '$';
+    const suffix = isBuy ? '' : '/SF';
+    const minY = isBuy ? 500 : 0;
+
+    // Update chart title and subtitle based on mode
+    const titleEl = document.getElementById('chartPsfTitle');
+    const subEl = document.getElementById('chartPsfSub');
+    const noteEl = document.getElementById('chartPsfNote');
+    if (titleEl) titleEl.textContent = isBuy ? L.chart_psf_title : L.chart_rent_title;
+    if (subEl) subEl.textContent = isBuy ? L.chart_psf_sub : L.chart_rent_sub;
+    if (noteEl) titleEl && (noteEl.innerHTML = isBuy ? L.chart_psf_note : L.chart_rent_note);
 
     charts.psfComp = new Chart(document.getElementById('psfCompChart'), {
         type: 'bar',
@@ -951,13 +1000,13 @@ function rebuildCharts() {
                     anchor: 'end', align: 'top',
                     color: '#e8e4dc',
                     font: { size: 11, weight: '600' },
-                    formatter: v => '$' + v.toLocaleString()
+                    formatter: v => isBuy ? ('$' + v.toLocaleString()) : ('$' + v.toFixed(2) + '/SF')
                 }
             },
             scales: {
                 y: {
-                    beginAtZero: false, min: 500,
-                    ticks: { callback: v => '$' + v.toLocaleString() },
+                    beginAtZero: !isBuy, min: minY,
+                    ticks: { callback: v => isBuy ? ('$' + v.toLocaleString()) : ('$' + v.toFixed(2)) },
                     grid: { color: 'rgba(255,255,255,0.03)' }
                 },
                 x: {
