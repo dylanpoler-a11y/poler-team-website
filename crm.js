@@ -149,6 +149,13 @@ function setupEvents() {
   // Panel save
   document.getElementById('panel-save').addEventListener('click', saveLead);
 
+  // Alert preference controls
+  document.getElementById('panel-alert-active').addEventListener('change', function () {
+    toggleAlertFields(this.checked);
+  });
+  document.getElementById('panel-alert-send-now').addEventListener('click', sendTestAlert);
+  document.getElementById('panel-alert-copy-link').addEventListener('click', copyPreferencesLink);
+
   // Table column sorting
   document.querySelectorAll('.leads-table th[data-sort]').forEach(th => {
     th.addEventListener('click', () => {
