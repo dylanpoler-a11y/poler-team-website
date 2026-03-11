@@ -176,7 +176,7 @@
         .chart-note { font-size: 0.7rem; color: var(--text-muted); margin-top: 1rem; font-style: italic; text-align: center; }
 
         /* ===== DOCUMENTS SECTION ===== */
-        .docs-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
+        .docs-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; }
         .doc-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px; padding: 2rem; display: flex; flex-direction: column; align-items: center; text-align: center; transition: all 0.3s; cursor: pointer; }
         .doc-card:hover { transform: translateY(-2px); border-color: rgba(201, 169, 110, 0.3); }
         .doc-icon { font-size: 2.5rem; margin-bottom: 1rem; }
@@ -562,11 +562,6 @@
         <div class="divider"></div>
     </div>
     <div class="furniture-grid">
-        <div class="furniture-hero-card fade-in">
-            <div class="furniture-value-label" data-i18n="furn_value_label">Valor Total da Mobília & Decoração</div>
-            <div class="furniture-value" id="furnitureValue" data-i18n="furn_value">Avaliação Pendente</div>
-            <div class="furniture-note" data-i18n="furn_note">A avaliação detalhada será adicionada após a conclusão da avaliação da mobília</div>
-        </div>
         <div class="furniture-item-card fade-in">
             <div class="highlight-icon">&#128715;</div>
             <div class="furniture-item-title" data-i18n="fi1_title">Cozinhas Poliform</div>
@@ -601,28 +596,22 @@
         <p class="section-subtitle" data-i18n="analytics_sub">Acompanhamento do desempenho do anúncio em todas as principais plataformas imobiliárias.</p>
         <div class="divider"></div>
     </div>
-    <div class="analytics-grid">
+    <div class="analytics-grid" style="grid-template-columns: repeat(2, 1fr);">
         <div class="analytics-card fade-in">
             <span class="coming-soon" style="background:rgba(52,211,153,0.12);color:var(--accent-green);" data-i18n="an_live">&#9679; Ao Vivo</span>
             <div class="analytics-number" style="color:var(--accent-blue);" id="homes-views">3,156</div>
-            <div class="analytics-label" data-i18n="an_views">Total de Visualizações</div>
-            <div class="analytics-source">Homes.com</div>
+            <div class="analytics-label" data-i18n="an_homes_views">Visualizações no Homes.com</div>
+            <div class="analytics-source">homes.com</div>
         </div>
         <div class="analytics-card fade-in">
-            <span class="coming-soon" data-i18n="sync">Sincronizando</span>
-            <div class="analytics-number" style="color:var(--gold);">--</div>
-            <div class="analytics-label" data-i18n="an_saves">Salvos / Favoritos</div>
-            <div class="analytics-source">Homes.com</div>
-        </div>
-        <div class="analytics-card fade-in">
-            <span class="coming-soon" data-i18n="sync">Sincronizando</span>
-            <div class="analytics-number" style="color:var(--accent-green);">0</div>
-            <div class="analytics-label" data-i18n="an_inquiries">Consultas de Compradores</div>
-            <div class="analytics-source" data-i18n="an_inquiries_source">Leads diretos e ligações</div>
+            <span class="coming-soon" style="background:rgba(52,211,153,0.12);color:var(--accent-green);" data-i18n="an_live">&#9679; Ao Vivo</span>
+            <div class="analytics-number" style="color:var(--gold);" id="zillow-views">19</div>
+            <div class="analytics-label" data-i18n="an_zillow_views">Visualizações no Zillow</div>
+            <div class="analytics-source">zillow.com</div>
         </div>
     </div>
     <div style="text-align:center;margin-top:2rem;">
-        <p style="font-size:0.8rem;color:var(--text-muted);max-width:600px;margin:0 auto;" data-i18n="analytics_note">Visualizações sincronizadas do Homes.com. Salvos e consultas serão atualizados à medida que os dados fiquem disponíveis pelo painel do agente. Sua assinatura premium do Homes.com inclui análises avançadas e tours 3D Matterport.</p>
+        <p style="font-size:0.8rem;color:var(--text-muted);max-width:600px;margin:0 auto;" data-i18n="analytics_note">Visualizações sincronizadas automaticamente do Homes.com e Zillow a cada 4 horas. Sua assinatura premium do Homes.com inclui análises avançadas e tours 3D Matterport.</p>
     </div>
 </section>
 
@@ -646,12 +635,6 @@
             <div class="doc-name" data-i18n="doc2_name">Regulamento do Condomínio</div>
             <div class="doc-desc" data-i18n="doc2_desc">Regras e regulamentos do Trump Royale, incluindo políticas de aluguel, animais de estimação e reformas.</div>
             <div class="doc-badge pending" data-i18n="doc2_badge">&#9711; Em Preparação</div>
-        </div>
-        <div class="doc-card fade-in">
-            <div class="doc-icon">&#128202;</div>
-            <div class="doc-name" data-i18n="doc3_name">Avaliação do Imóvel</div>
-            <div class="doc-desc" data-i18n="doc3_desc">Avaliação profissional do imóvel e mobília incluída. Documentação para compradores qualificados.</div>
-            <div class="doc-badge pending" data-i18n="doc3_badge">&#9711; Pendente</div>
         </div>
     </div>
 </section>
@@ -767,14 +750,14 @@ pt: {
     show_none_title: 'Nenhuma Visita Ainda', show_none_text: 'O imóvel foi listado há 5 dias. As visitas aparecerão aqui conforme forem agendadas, com feedback do comprador e notas do corretor após cada visita.',
     show_total: 'Total de Visitas', show_second: 'Segundas Visitas', show_offers: 'Ofertas', show_rating: 'Avaliação Média',
     furn_eyebrow: 'Mobília Premium', furn_title: 'Valor da Mobília & Decoração Incluída', furn_sub: 'Este imóvel inclui mobília de grife que valoriza significativamente a apresentação e proposta de valor da propriedade.',
-    furn_value_label: 'Valor Total da Mobília & Decoração', furn_value: 'Avaliação Pendente', furn_note: 'A avaliação detalhada será adicionada após a conclusão da avaliação da mobília',
+    furn_value_label: 'Valor Total da Mobília & Decoração', furn_value: 'Incluída', furn_note: 'Mobília premium de grife incluída na venda',
     fi1_title: 'Cozinhas Poliform', fi1_desc: 'Dois sistemas completos de cozinha Poliform com pacotes de eletrodomésticos Wolf-Sub-Zero.', fi1_tag: 'Marca Italiana de Luxo',
     fi2_title: 'Acabamentos Florentinos Sob Medida', fi2_desc: 'Louças e acabamentos de banheiro sob medida, provenientes diretamente de artesãos de Florença, Itália.', fi2_tag: 'Importado Sob Medida',
     fi3_title: 'Sistema de Adega', fi3_desc: 'Armazenamento climatizado para 200+ garrafas de vinho, sistema de refrigeração profissional.', fi3_tag: 'Climatizado',
     fi4_title: 'Sistema de Casa Inteligente', fi4_desc: 'Automação residencial completa incluindo iluminação, clima, áudio e sistemas de segurança integrados em ambos os andares.', fi4_tag: 'Automação Completa',
     analytics_eyebrow: 'Desempenho Digital', analytics_title: 'Análises Online', analytics_sub: 'Acompanhamento do desempenho do anúncio em todas as principais plataformas imobiliárias.',
-    sync: 'Sincronizando', an_live: '&#9679; Ao Vivo', an_views: 'Total de Visualizações', an_saves: 'Salvos / Favoritos', an_saves_source: 'Homes.com', an_inquiries: 'Consultas de Compradores', an_inquiries_source: 'Leads diretos e ligações',
-    analytics_note: 'Visualizações sincronizadas do Homes.com. Salvos e consultas serão atualizados à medida que os dados fiquem disponíveis pelo painel do agente. Sua assinatura premium do Homes.com inclui análises avançadas e tours 3D Matterport.',
+    an_live: '&#9679; Ao Vivo', an_homes_views: 'Visualizações no Homes.com', an_zillow_views: 'Visualizações no Zillow',
+    analytics_note: 'Visualizações sincronizadas automaticamente do Homes.com e Zillow a cada 4 horas. Sua assinatura premium do Homes.com inclui análises avançadas e tours 3D Matterport.',
     // Rental
     rental_badge: 'Também Disponível para Aluguel', rental_price_label: 'Aluguel Mensal', rental_psf_label: 'Preço / SF', rental_psf_detail: 'Área Under A/C', rental_type_label: 'Tipo de Aluguel', rental_type_value: 'Mobiliado', rental_type_detail: 'Totalmente Equipado', rental_config_label: 'Configuração', rental_config_detail: 'Cobertura Duplex', rental_status_label: 'Status', rental_status_value: 'Ativo', rental_status_detail: 'Listado em 10 de Março',
     last_updated: 'Painel atualizado em: 11 de Março, 2026 &bull; Dados atualizados a cada visita, oferta ou evento de mercado',
@@ -795,7 +778,6 @@ pt: {
     docs_eyebrow: 'Documentos', docs_title: 'Documentos do Imóvel', docs_sub: 'Documentação relevante do imóvel, associação e regulamentos do edifício.',
     doc1_name: 'HOA Raider Report', doc1_desc: 'Relatório completo da associação de condomínio incluindo finanças, reservas, litígios pendentes e avaliações especiais.', doc1_badge: '&#10003; Disponível',
     doc2_name: 'Regulamento do Condomínio', doc2_desc: 'Regras e regulamentos do Trump Royale, incluindo políticas de aluguel, animais de estimação e reformas.', doc2_badge: '&#9711; Em Preparação',
-    doc3_name: 'Avaliação do Imóvel', doc3_desc: 'Avaliação profissional do imóvel e mobília incluída. Documentação para compradores qualificados.', doc3_badge: '&#9711; Pendente',
     // Expenses
     exp_eyebrow: 'Controle Financeiro', exp_title: 'Despesas do Imóvel', exp_sub: 'Acompanhamento mensal dos custos de manutenção do imóvel enquanto está no mercado.',
     exp_intro_title: '&#128161; Finalidade Desta Seção', exp_intro_text: 'Esta seção permite acompanhar todos os gastos mensais relacionados ao imóvel enquanto ele está à venda. Isso inclui condomínio (HOA), impostos, seguro, manutenção e outros custos. O objetivo é que você tenha visibilidade total dos custos de manutenção e possa tomar decisões informadas sobre preço e estratégia de venda.',
@@ -844,14 +826,14 @@ en: {
     show_none_title: 'No Showings Yet', show_none_text: 'The listing went live 5 days ago. Showings will appear here as they are scheduled, with buyer feedback and agent notes after each visit.',
     show_total: 'Total Showings', show_second: 'Second Showings', show_offers: 'Offers', show_rating: 'Avg. Feedback Rating',
     furn_eyebrow: 'Premium Furnishings', furn_title: 'Included Furniture & Staging Value', furn_sub: "This listing includes designer furnishings that significantly enhance the property's presentation and value proposition.",
-    furn_value_label: 'Total Furniture & Staging Value', furn_value: 'Appraisal Pending', furn_note: 'Itemized valuation will be added upon completion of the furniture appraisal',
+    furn_value_label: 'Total Furniture & Staging Value', furn_value: 'Included', furn_note: 'Premium designer furnishings included with purchase',
     fi1_title: 'Poliform Kitchens', fi1_desc: 'Two complete state-of-the-art Poliform kitchen systems with Wolf-Sub-Zero appliance packages.', fi1_tag: 'Italian Luxury Brand',
     fi2_title: 'Custom Florentine Vanities', fi2_desc: 'Bespoke bathroom fixtures and vanities sourced directly from artisans in Florence, Italy.', fi2_tag: 'Custom Imported',
     fi3_title: 'Wine Cellar System', fi3_desc: 'Climate-controlled wine storage with capacity for 200+ bottles, professional-grade cooling system.', fi3_tag: 'Climate Controlled',
     fi4_title: 'Smart Home System', fi4_desc: 'Full home automation including lighting, climate, audio, and security systems integrated throughout both floors.', fi4_tag: 'Full Automation',
     analytics_eyebrow: 'Digital Performance', analytics_title: 'Online Analytics', analytics_sub: 'Tracking listing performance across all major real estate platforms.',
-    sync: 'Syncing', an_live: '&#9679; Live', an_views: 'Total Listing Views', an_saves: 'Saves / Favorites', an_saves_source: 'Homes.com', an_inquiries: 'Buyer Inquiries', an_inquiries_source: 'Direct leads & calls',
-    analytics_note: 'Views synced from Homes.com. Saves and inquiries will be updated as data becomes available from the agent dashboard. Your Homes.com premium membership includes enhanced listing analytics and Matterport 3D tours.',
+    an_live: '&#9679; Live', an_homes_views: 'Homes.com Views', an_zillow_views: 'Zillow Views',
+    analytics_note: 'Views auto-synced from Homes.com and Zillow every 4 hours. Your Homes.com premium membership includes enhanced listing analytics and Matterport 3D tours.',
     // Rental
     rental_badge: 'Also Available for Rent', rental_price_label: 'Monthly Rent', rental_psf_label: 'Price / SF', rental_psf_detail: 'Under A/C Area', rental_type_label: 'Lease Type', rental_type_value: 'Furnished', rental_type_detail: 'Fully Equipped', rental_config_label: 'Layout', rental_config_detail: 'Two-Story Penthouse', rental_status_label: 'Status', rental_status_value: 'Active', rental_status_detail: 'Listed March 10',
     last_updated: 'Dashboard last updated: March 11, 2026 &bull; Data refreshes with each showing, offer, or market event',
@@ -872,7 +854,6 @@ en: {
     docs_eyebrow: 'Documents', docs_title: 'Property Documents', docs_sub: 'Relevant property documentation, association reports, and building regulations.',
     doc1_name: 'HOA Raider Report', doc1_desc: 'Complete condo association report including financials, reserves, pending litigation, and special assessments.', doc1_badge: '&#10003; Available',
     doc2_name: 'Condo Rules & Regulations', doc2_desc: 'Trump Royale rules and regulations including rental, pet, and renovation policies.', doc2_badge: '&#9711; In Preparation',
-    doc3_name: 'Property Appraisal', doc3_desc: 'Professional property and furniture appraisal. Documentation for qualified buyers.', doc3_badge: '&#9711; Pending',
     // Expenses
     exp_eyebrow: 'Financial Tracking', exp_title: 'Property Expenses', exp_sub: 'Monthly tracking of property holding costs while on the market.',
     exp_intro_title: '&#128161; Purpose of This Section', exp_intro_text: 'This section allows you to track all monthly expenses related to the property while it is listed for sale. This includes HOA fees, property taxes, insurance, maintenance, and other costs. The goal is to give you full visibility into holding costs so you can make informed decisions about pricing and sales strategy.',
