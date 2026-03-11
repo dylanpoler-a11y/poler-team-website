@@ -75,6 +75,20 @@ export default async function handler(req) {
             status:         r.fields['Status']          || 'New',
             notes:          r.fields['Notes']           || '',
             createdAt:      r.fields['Created At']      || r.createdTime || '',
+            // Alert preferences
+            alertActive:        !!r.fields['Alert Active'],
+            alertPropertyTypes: r.fields['Alert Property Types'] || [],
+            alertCities:        r.fields['Alert Cities'] || '',
+            alertPriceMin:      r.fields['Alert Price Min'] || 0,
+            alertPriceMax:      r.fields['Alert Price Max'] || 0,
+            alertBeds:          r.fields['Alert Beds Min'] || 0,
+            alertBaths:         r.fields['Alert Baths Min'] || 0,
+            alertFrequency:     r.fields['Alert Frequency'] || 'Weekly',
+            alertCount:         r.fields['Alert Count'] || 5,
+            alertLastSent:      r.fields['Alert Last Sent'] || '',
+            alertNextDue:       r.fields['Alert Next Due'] || '',
+            alertToken:         r.fields['Alert Token'] || '',
+            preferredLanguage:  r.fields['Preferred Language'] || 'en',
         })));
 
         if (!data.offset) break;

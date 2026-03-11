@@ -344,6 +344,26 @@ function openPanel(id) {
   statusSelect.value = lead.status || 'New';
   document.getElementById('panel-notes').value = lead.notes || '';
 
+  // Alert preferences
+  document.getElementById('panel-alert-active').checked = !!lead.alertActive;
+  document.getElementById('panel-alert-cities').value = lead.alertCities || '';
+  document.getElementById('panel-alert-price-min').value = lead.alertPriceMin || '';
+  document.getElementById('panel-alert-price-max').value = lead.alertPriceMax || '';
+  document.getElementById('panel-alert-beds').value = lead.alertBeds || '';
+  document.getElementById('panel-alert-baths').value = lead.alertBaths || '';
+  document.getElementById('panel-alert-frequency').value = lead.alertFrequency || 'Weekly';
+  document.getElementById('panel-alert-count').value = lead.alertCount || '5';
+  const types = lead.alertPropertyTypes || [];
+  document.querySelectorAll('#panel-alert-types input').forEach(cb => {
+    cb.checked = types.includes(cb.value);
+  });
+  toggleAlertFields(lead.alertActive);
+
+  // Reset alert status
+  const alertStatus = document.getElementById('panel-alert-status');
+  alertStatus.style.display = 'none';
+  alertStatus.textContent = '';
+
   // Reset save state
   const saveStatus = document.getElementById('panel-save-status');
   const saveBtn    = document.getElementById('panel-save');
@@ -417,8 +437,138 @@ async function saveLead() {
     saveStatus.style.display = 'block';
   }
 
+  // Also save alert preferences in parallel
+  const alertPrefs = getAlertPrefsFromPanel();
+  try {
+    await fetch(`${CRM_API_BASE}/api/update-preferences`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: activeLead.id,
+        password: currentPassword,
+        ...alertPrefs,
+      }),
+    });
+    // Update local cache with alert prefs
+    const lead2 = allLeads.find(l => String(l.id) === String(activeLead.id));
+    if (lead2) {
+      lead2.alertActive = alertPrefs.alertActive;
+      lead2.alertPropertyTypes = alertPrefs.propertyTypes;
+      lead2.alertCities = alertPrefs.cities;
+      lead2.alertPriceMin = alertPrefs.priceMin;
+      lead2.alertPriceMax = alertPrefs.priceMax;
+      lead2.alertBeds = alertPrefs.bedsMin;
+      lead2.alertBaths = alertPrefs.bathsMin;
+      lead2.alertFrequency = alertPrefs.frequency;
+      lead2.alertCount = alertPrefs.count;
+    }
+  } catch (err) {
+    console.warn('Alert preferences save failed:', err);
+  }
+
   btn.disabled    = false;
   btn.textContent = 'Save Changes';
+}
+
+// ── ALERT PREFERENCES HELPERS ──────────────────────────────────────────────
+function toggleAlertFields(active) {
+  const fields = document.getElementById('panel-alert-fields');
+  if (fields) fields.style.display = active ? 'block' : 'none';
+}
+
+function getAlertPrefsFromPanel() {
+  const types = [];
+  document.querySelectorAll('#panel-alert-types input:checked').forEach(cb => types.push(cb.value));
+  return {
+    alertActive:    document.getElementById('panel-alert-active').checked,
+    propertyTypes:  types,
+    cities:         document.getElementById('panel-alert-cities').value.trim(),
+    priceMin:       Number(document.getElementById('panel-alert-price-min').value) || 0,
+    priceMax:       Number(document.getElementById('panel-alert-price-max').value) || 0,
+    bedsMin:        Number(document.getElementById('panel-alert-beds').value) || 0,
+    bathsMin:       Number(document.getElementById('panel-alert-baths').value) || 0,
+    frequency:      document.getElementById('panel-alert-frequency').value,
+    count:          Number(document.getElementById('panel-alert-count').value) || 5,
+  };
+}
+
+async function sendTestAlert() {
+  if (!activeLead) return;
+  const btn = document.getElementById('panel-alert-send-now');
+  const statusEl = document.getElementById('panel-alert-status');
+  btn.disabled = true;
+  btn.textContent = 'Sending…';
+  statusEl.style.display = 'none';
+
+  try {
+    const res = await fetch(`${CRM_API_BASE}/api/send-test-alert`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: activeLead.id, password: currentPassword }),
+    });
+    const data = await res.json();
+    statusEl.style.display = 'block';
+    if (data.success) {
+      statusEl.style.color = '#16a34a';
+      statusEl.textContent = `✓ Test alert sent to ${activeLead.email}`;
+    } else {
+      statusEl.style.color = '#dc2626';
+      statusEl.textContent = '✗ ' + (data.error || 'Failed to send');
+    }
+  } catch (err) {
+    statusEl.style.display = 'block';
+    statusEl.style.color = '#dc2626';
+    statusEl.textContent = '✗ Network error';
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Send Test Alert';
+}
+
+async function copyPreferencesLink() {
+  if (!activeLead) return;
+  const btn = document.getElementById('panel-alert-copy-link');
+  const statusEl = document.getElementById('panel-alert-status');
+
+  let token = activeLead.alertToken;
+  if (!token) {
+    // Generate a new token
+    btn.disabled = true;
+    btn.textContent = 'Generating…';
+    try {
+      const res = await fetch(`${CRM_API_BASE}/api/generate-token`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: activeLead.id, password: currentPassword }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        token = data.token;
+        activeLead.alertToken = token;
+        const lead = allLeads.find(l => String(l.id) === String(activeLead.id));
+        if (lead) lead.alertToken = token;
+      }
+    } catch (err) {
+      statusEl.style.display = 'block';
+      statusEl.style.color = '#dc2626';
+      statusEl.textContent = '✗ Failed to generate link';
+      btn.disabled = false;
+      btn.textContent = 'Copy Link';
+      return;
+    }
+  }
+
+  if (token) {
+    const url = `https://www.homesinsoflorida.com/preferences.html?token=${token}`;
+    await navigator.clipboard.writeText(url);
+    statusEl.style.display = 'block';
+    statusEl.style.color = '#16a34a';
+    statusEl.textContent = '✓ Link copied to clipboard!';
+    setTimeout(() => { statusEl.style.display = 'none'; }, 3000);
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Copy Link';
 }
 
 // ── EXPORT CSV ─────────────────────────────────────────────────────────────

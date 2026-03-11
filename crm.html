@@ -218,6 +218,93 @@
       </div>
     </div>
 
+    <!-- Property Alerts Section -->
+    <div class="panel-section" id="panel-alerts-section">
+      <div class="panel-section-title" style="display:flex;align-items:center;justify-content:space-between;">
+        Property Alerts
+        <label class="alert-toggle-wrap">
+          <input type="checkbox" id="panel-alert-active" />
+          <span class="alert-toggle-slider"></span>
+        </label>
+      </div>
+
+      <div id="panel-alert-fields" style="display:none;">
+        <div class="panel-field">
+          <div class="panel-field-label">Property Types</div>
+          <div class="alert-checkbox-group" id="panel-alert-types">
+            <label><input type="checkbox" value="Single Family"> Single Family</label>
+            <label><input type="checkbox" value="Condo"> Condo</label>
+            <label><input type="checkbox" value="Townhouse"> Townhouse</label>
+            <label><input type="checkbox" value="Multi Family"> Multi Family</label>
+          </div>
+        </div>
+
+        <div class="panel-field">
+          <div class="panel-field-label">Cities</div>
+          <input type="text" id="panel-alert-cities" class="panel-input"
+            placeholder="Miami Beach, Sunny Isles, Aventura…" />
+        </div>
+
+        <div class="panel-field">
+          <div class="panel-field-label">Price Range</div>
+          <div class="alert-range-row">
+            <input type="number" id="panel-alert-price-min" class="panel-input half" placeholder="Min ($)" />
+            <span class="range-sep">—</span>
+            <input type="number" id="panel-alert-price-max" class="panel-input half" placeholder="Max ($)" />
+          </div>
+        </div>
+
+        <div class="panel-field">
+          <div class="panel-field-label">Min Beds / Baths</div>
+          <div class="alert-range-row">
+            <select id="panel-alert-beds" class="panel-input half">
+              <option value="">Any</option>
+              <option value="1">1+</option>
+              <option value="2">2+</option>
+              <option value="3">3+</option>
+              <option value="4">4+</option>
+              <option value="5">5+</option>
+            </select>
+            <span class="range-sep">/</span>
+            <select id="panel-alert-baths" class="panel-input half">
+              <option value="">Any</option>
+              <option value="1">1+</option>
+              <option value="2">2+</option>
+              <option value="3">3+</option>
+              <option value="4">4+</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="panel-field">
+          <div class="panel-field-label">Frequency</div>
+          <select id="panel-alert-frequency" class="panel-input">
+            <option value="Daily">Daily</option>
+            <option value="Every 3 Days">Every 3 Days</option>
+            <option value="Weekly" selected>Weekly</option>
+            <option value="Bi-Weekly">Bi-Weekly</option>
+            <option value="Monthly">Monthly</option>
+          </select>
+        </div>
+
+        <div class="panel-field">
+          <div class="panel-field-label">Properties Per Alert</div>
+          <select id="panel-alert-count" class="panel-input">
+            <option value="3">3</option>
+            <option value="5" selected>5</option>
+            <option value="8">8</option>
+            <option value="10">10</option>
+          </select>
+        </div>
+
+        <div class="alert-action-row">
+          <button id="panel-alert-send-now" class="alert-action-btn" type="button">Send Test Alert</button>
+          <button id="panel-alert-copy-link" class="alert-action-btn secondary" type="button">Copy Link</button>
+        </div>
+        <div id="panel-alert-status" class="panel-alert-status"></div>
+      </div>
+    </div>
+
     <!-- Status & Notes Section -->
     <div class="panel-section">
       <div class="panel-section-title">Status</div>
