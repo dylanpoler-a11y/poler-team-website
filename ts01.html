@@ -51,8 +51,8 @@
         .lang-btn.active { background: var(--gold); color: var(--navy); }
         .lang-btn:hover:not(.active) { color: var(--gold-light); }
 
-        .hero { position: relative; min-height: 100vh; display: flex; flex-direction: column; justify-content: flex-end; padding: 0 3rem 4rem; background: linear-gradient(180deg, rgba(10,22,40,0.3) 0%, rgba(10,22,40,0.6) 40%, rgba(10,22,40,0.95) 100%), linear-gradient(135deg, #0a1628 0%, #1a2d4a 50%, #0a1628 100%); overflow: hidden; }
-        .hero::before { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: radial-gradient(ellipse at 20% 50%, rgba(201,169,110,0.08) 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, rgba(96,165,250,0.05) 0%, transparent 50%); pointer-events: none; }
+        .hero { position: relative; min-height: 100vh; display: flex; flex-direction: column; justify-content: flex-end; padding: 0 3rem 4rem; background: linear-gradient(180deg, rgba(10,22,40,0.25) 0%, rgba(10,22,40,0.55) 40%, rgba(10,22,40,0.95) 100%), url('https://cbbresources.s3.us-east-1.amazonaws.com/DJI_20251005091006_0096_D_c5485d13cc.jpg') center top / cover no-repeat; overflow: hidden; }
+        .hero::before { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: radial-gradient(ellipse at 20% 50%, rgba(201,169,110,0.06) 0%, transparent 60%); pointer-events: none; }
         .hero-badge { display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(201, 169, 110, 0.15); border: 1px solid rgba(201, 169, 110, 0.3); padding: 0.4rem 1rem; border-radius: 50px; font-size: 0.7rem; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--gold); margin-bottom: 1.5rem; width: fit-content; animation: fadeInUp 0.8s ease; }
         .hero-badge .pulse { width: 8px; height: 8px; background: var(--accent-green); border-radius: 50%; animation: pulse 2s infinite; }
         @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(1.3); } }
