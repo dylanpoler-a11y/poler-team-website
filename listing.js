@@ -98,6 +98,9 @@ function initLeadCapture() {
     const bar      = document.getElementById('lead-timer-bar');
     const pageWrap = document.getElementById('page-wrap');
 
+    // Brazil visitors (lang=pt) skip OTP verification
+    const skipOtp = new URLSearchParams(window.location.search).get('lang') === 'pt';
+
     // Init EmailJS
     if (typeof emailjs !== 'undefined' && EMAILJS_PUBLIC_KEY !== 'YOUR_PUBLIC_KEY') {
         emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
@@ -129,10 +132,16 @@ function initLeadCapture() {
         }, 80);
     }
 
-    // ── STEP 1: Info form → send OTP ─────────────────────────
+    // ── STEP 1: Info form → send OTP (or skip for Brazil) ────
     const form      = document.getElementById('lead-form');
     const submitBtn = document.getElementById('lead-submit-btn');
     const submitTxt = document.getElementById('lead-submit-text');
+
+    // For Brazil visitors: update button text (no OTP needed)
+    // The disclaimer is auto-translated by i18n to not mention OTP for Portuguese
+    if (skipOtp) {
+        submitTxt.textContent = t('submitAndContinue');
+    }
 
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -158,8 +167,24 @@ function initLeadCapture() {
         }
 
         submitBtn.disabled = true;
-        submitTxt.textContent = t('sendingCode');
         document.getElementById('lead-error').style.display = 'none';
+
+        // ── Brazil visitors: skip OTP, go straight to lead capture ──
+        if (skipOtp) {
+            submitTxt.textContent = t('submitting');
+            leadFormData = { first, last, email, phone, normalizedPhone: phone };
+            try {
+                await completeLead(overlay, pageWrap);
+            } catch (err) {
+                submitBtn.disabled = false;
+                submitTxt.textContent = t('submitAndContinue');
+                showLeadError('lead-error', t('errNetwork'));
+            }
+            return;
+        }
+
+        // ── Standard flow: send OTP ─────────────────────────────────
+        submitTxt.textContent = t('sendingCode');
 
         try {
             const res  = await fetch(`${OTP_BASE}/api/send-otp`, {
