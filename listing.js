@@ -342,7 +342,8 @@ async function completeLead(overlay, pageWrap) {
         });
     }
 
-    // Save lead to Airtable CRM (fire-and-forget — don't block page unlock)
+    // Save lead to Airtable CRM and capture alert token
+    const langParam = new URLSearchParams(window.location.search).get('lang') || 'en';
     fetch(`${OTP_BASE}/api/save-lead`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -354,8 +355,12 @@ async function completeLead(overlay, pageWrap) {
             listingAddress: heroListing ? (heroListing.UnparsedAddress || heroListing.City || '') : '',
             listingPrice:   heroListing ? (heroListing.ListPrice || 0) : 0,
             sourceUrl:      window.location.href,
+            language:       langParam,
             ...utmData,
         }),
+    }).then(r => r.json()).then(data => {
+        // Store alert token for preference auto-save from AI chat
+        if (data.token) localStorage.setItem('poler_alert_token', data.token);
     }).catch(() => {});
 
     const templateParams = {
@@ -1557,6 +1562,38 @@ document.head.appendChild(spinStyle);
                         }
                     } catch (_) { /* ignore parse errors */ }
                 }
+            }
+
+            // Detect and strip PREFS_JSON marker before saving
+            const prefsMatch = fullText.match(/<!--PREFS_JSON\s*(\{[\s\S]*?\})\s*PREFS_JSON-->/);
+            if (prefsMatch) {
+                // Strip marker from display
+                const cleanText = fullText.replace(/<!--PREFS_JSON[\s\S]*?PREFS_JSON-->/, '').trim();
+                bubble.innerHTML = renderMarkdown(cleanText);
+
+                // Save preferences if we have a token
+                const alertToken = localStorage.getItem('poler_alert_token');
+                if (alertToken) {
+                    try {
+                        const prefs = JSON.parse(prefsMatch[1]);
+                        fetch(`${OTP_BASE}/api/update-preferences`, {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                token: alertToken,
+                                alertActive: true,
+                                ...(prefs.propertyTypes && { propertyTypes: prefs.propertyTypes }),
+                                ...(prefs.cities && { cities: prefs.cities }),
+                                ...(prefs.priceMin && { priceMin: prefs.priceMin }),
+                                ...(prefs.priceMax && { priceMax: prefs.priceMax }),
+                                ...(prefs.bedsMin && { bedsMin: prefs.bedsMin }),
+                                ...(prefs.bathsMin && { bathsMin: prefs.bathsMin }),
+                            }),
+                        }).catch(() => {});
+                    } catch (_) { /* ignore parse errors */ }
+                }
+
+                fullText = cleanText; // Store clean text in history
             }
 
             // Save complete response to history
