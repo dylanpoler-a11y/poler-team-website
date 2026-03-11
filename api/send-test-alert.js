@@ -104,8 +104,12 @@ export default async function handler(req) {
 
 // ── BRIDGE API ────────────────────────────────────────────────────────────────
 
+function toTitleCase(str) {
+    return str.toLowerCase().replace(/(?:^|\s)\S/g, c => c.toUpperCase());
+}
+
 async function fetchBridgeListings(token, lead) {
-    const cities = (lead.cities || '').split(',').map(s => s.trim()).filter(Boolean);
+    const cities = (lead.cities || '').split(',').map(s => s.trim()).filter(Boolean).map(toTitleCase);
     const count = lead.count || 5;
 
     // Map property types to Bridge API PropertySubType values

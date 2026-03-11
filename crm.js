@@ -504,9 +504,37 @@ async function sendTestAlert() {
   const btn = document.getElementById('panel-alert-send-now');
   const statusEl = document.getElementById('panel-alert-status');
   btn.disabled = true;
-  btn.textContent = 'Sending…';
   statusEl.style.display = 'none';
 
+  // Step 1: Save alert preferences first
+  btn.textContent = 'Saving prefs…';
+  const alertPrefs = getAlertPrefsFromPanel();
+  try {
+    const prefsRes = await fetch(`${CRM_API_BASE}/api/update-preferences`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: activeLead.id, password: currentPassword, ...alertPrefs }),
+    });
+    const prefsData = await prefsRes.json();
+    if (!prefsData.success) {
+      statusEl.style.display = 'block';
+      statusEl.style.color = '#dc2626';
+      statusEl.textContent = '✗ ' + (prefsData.error || 'Failed to save preferences');
+      btn.disabled = false;
+      btn.textContent = 'Send Test Alert';
+      return;
+    }
+  } catch (err) {
+    statusEl.style.display = 'block';
+    statusEl.style.color = '#dc2626';
+    statusEl.textContent = '✗ Network error saving preferences';
+    btn.disabled = false;
+    btn.textContent = 'Send Test Alert';
+    return;
+  }
+
+  // Step 2: Send the test alert
+  btn.textContent = 'Sending…';
   try {
     const res = await fetch(`${CRM_API_BASE}/api/send-test-alert`, {
       method: 'POST',
