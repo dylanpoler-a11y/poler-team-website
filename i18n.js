@@ -63,7 +63,17 @@ const I18N = {
     leadDisclaimer: {
         en: "We'll text a code to verify your number. No spam, ever.",
         es: 'Le enviaremos un código por mensaje de texto para verificar su número. Sin spam, nunca.',
-        pt: 'Enviaremos um código por SMS para verificar seu número. Sem spam, nunca.',
+        pt: 'Suas informações estão seguras conosco. Sem spam, nunca.',
+    },
+    submitAndContinue: {
+        en: 'Submit & Continue',
+        es: 'Enviar y Continuar',
+        pt: 'Enviar e Continuar',
+    },
+    submitting: {
+        en: 'Submitting…',
+        es: 'Enviando…',
+        pt: 'Enviando…',
     },
 
     // ── Lead Capture Modal — Step 2 (OTP) ───────────────────

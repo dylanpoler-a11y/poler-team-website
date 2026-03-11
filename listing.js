@@ -303,6 +303,67 @@ function initOtpDigits() {
     });
 }
 
+// ── Shared lead completion — save to CRM, send emails, fire pixel, unlock page
+async function completeLead(overlay, pageWrap) {
+    const { first, last, email, phone } = leadFormData;
+
+    // Fire Meta Pixel Lead event for ad conversion tracking
+    if (typeof fbq === 'function') {
+        fbq('track', 'Lead', {
+            content_name: heroListing ? (heroListing.UnparsedAddress || heroListing.City || '') : 'Browse page',
+            content_category: 'Real Estate',
+            value: heroListing ? (heroListing.ListPrice || 0) : 0,
+            currency: 'USD',
+        });
+    }
+
+    // Save lead to Airtable CRM (fire-and-forget — don't block page unlock)
+    fetch(`${OTP_BASE}/api/save-lead`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            first,
+            last,
+            email,
+            phone:          leadFormData.normalizedPhone,
+            listingAddress: heroListing ? (heroListing.UnparsedAddress || heroListing.City || '') : '',
+            listingPrice:   heroListing ? (heroListing.ListPrice || 0) : 0,
+            sourceUrl:      window.location.href,
+            ...utmData,
+        }),
+    }).catch(() => {});
+
+    const templateParams = {
+        first_name:       first,
+        last_name:        last,
+        email,
+        phone,
+        listing_address:  heroListing ? (heroListing.UnparsedAddress || heroListing.City || 'N/A') : 'Browse page',
+        listing_price:    heroListing ? formatPrice(heroListing.ListPrice) : 'N/A',
+        page_url:         window.location.href,
+        to_email:         'rosapoler@hotmail.com,kevinpolermiami@gmail.com,dylanpoler@gmail.com',
+    };
+
+    try {
+        if (typeof emailjs !== 'undefined' && EMAILJS_SERVICE_ID !== 'YOUR_SERVICE_ID') {
+            await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams);
+            await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_WELCOME_TEMPLATE, {
+                user_email:      email,
+                first_name:      first,
+                last_name:       last,
+                listing_address: templateParams.listing_address,
+                listing_price:   templateParams.listing_price,
+            });
+        }
+    } catch (emailErr) {
+        console.warn('EmailJS send failed:', emailErr);
+    }
+
+    localStorage.setItem('poler_lead_v1', email);
+    leadCaptured = true;
+    setTimeout(() => unlockPage(overlay, pageWrap), 600);
+}
+
 async function verifyOtp(overlay, pageWrap) {
     const digits   = Array.from(document.querySelectorAll('.otp-digit'));
     const code     = digits.map(d => d.value).join('');
@@ -338,64 +399,9 @@ async function verifyOtp(overlay, pageWrap) {
             return;
         }
 
-        // ✅ Verified — save to CRM, send emails and unlock page
+        // ✅ Verified — complete the lead
         verifyTxt.textContent = '✓ Verified!';
-        const { first, last, email, phone } = leadFormData;
-
-        // Fire Meta Pixel Lead event for ad conversion tracking
-        if (typeof fbq === 'function') {
-            fbq('track', 'Lead', {
-                content_name: heroListing ? (heroListing.UnparsedAddress || heroListing.City || '') : 'Browse page',
-                content_category: 'Real Estate',
-                value: heroListing ? (heroListing.ListPrice || 0) : 0,
-                currency: 'USD',
-            });
-        }
-
-        // Save lead to Airtable CRM (fire-and-forget — don't block page unlock)
-        fetch(`${OTP_BASE}/api/save-lead`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                first,
-                last,
-                email,
-                phone:          leadFormData.normalizedPhone,
-                listingAddress: heroListing ? (heroListing.UnparsedAddress || heroListing.City || '') : '',
-                listingPrice:   heroListing ? (heroListing.ListPrice || 0) : 0,
-                sourceUrl:      window.location.href,
-                ...utmData,
-            }),
-        }).catch(() => {});
-        const templateParams = {
-            first_name:       first,
-            last_name:        last,
-            email,
-            phone,
-            listing_address:  heroListing ? (heroListing.UnparsedAddress || heroListing.City || 'N/A') : 'Browse page',
-            listing_price:    heroListing ? formatPrice(heroListing.ListPrice) : 'N/A',
-            page_url:         window.location.href,
-            to_email:         'rosapoler@hotmail.com,kevinpolermiami@gmail.com,dylanpoler@gmail.com',
-        };
-
-        try {
-            if (typeof emailjs !== 'undefined' && EMAILJS_SERVICE_ID !== 'YOUR_SERVICE_ID') {
-                await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams);
-                await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_WELCOME_TEMPLATE, {
-                    user_email:      email,
-                    first_name:      first,
-                    last_name:       last,
-                    listing_address: templateParams.listing_address,
-                    listing_price:   templateParams.listing_price,
-                });
-            }
-        } catch (emailErr) {
-            console.warn('EmailJS send failed:', emailErr);
-        }
-
-        localStorage.setItem('poler_lead_v1', email);
-        leadCaptured = true;
-        setTimeout(() => unlockPage(overlay, pageWrap), 600);
+        await completeLead(overlay, pageWrap);
 
     } catch (err) {
         verifyBtn.disabled = false;
