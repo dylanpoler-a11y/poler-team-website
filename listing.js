@@ -16,7 +16,7 @@
 // ============================================================
 const EMAILJS_PUBLIC_KEY       = 'BXbUaPxSOHhgfGn6x';
 const EMAILJS_SERVICE_ID       = 'service_d4ff5bs';
-const EMAILJS_TEMPLATE_ID      = 'template_932zy9s';   // Lead notification → Rosa, Kevin, Dylan
+const EMAILJS_TEMPLATE_ID      = 'template_9l5f1io';   // Lead notification → Rosa, Kevin, Dylan
 const EMAILJS_WELCOME_TEMPLATE = 'template_5t3k1w7';    // Intro email → new lead
 
 // ============================================================
