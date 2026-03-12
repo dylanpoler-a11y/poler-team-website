@@ -599,13 +599,13 @@
     <div class="analytics-grid" style="grid-template-columns: repeat(2, 1fr);">
         <div class="analytics-card fade-in">
             <span class="coming-soon" style="background:rgba(52,211,153,0.12);color:var(--accent-green);" data-i18n="an_live">&#9679; Ao Vivo</span>
-            <div class="analytics-number" style="color:var(--accent-blue);" id="homes-views">3,156</div>
+            <div class="analytics-number" style="color:var(--accent-blue);" id="homes-views">3,226</div>
             <div class="analytics-label" data-i18n="an_homes_views">Visualizações no Homes.com</div>
             <div class="analytics-source">homes.com</div>
         </div>
         <div class="analytics-card fade-in">
             <span class="coming-soon" style="background:rgba(52,211,153,0.12);color:var(--accent-green);" data-i18n="an_live">&#9679; Ao Vivo</span>
-            <div class="analytics-number" style="color:var(--gold);" id="zillow-views">19</div>
+            <div class="analytics-number" style="color:var(--gold);" id="zillow-views">95</div>
             <div class="analytics-label" data-i18n="an_zillow_views">Visualizações no Zillow</div>
             <div class="analytics-source">zillow.com</div>
         </div>
@@ -685,15 +685,15 @@
                 </tr>
                 <tr>
                     <td><span class="expense-category-icon">&#9889;</span><strong data-i18n="exp_utilities">Utilidades</strong><span class="expense-note" data-i18n="exp_utilities_note">Eletricidade, gás, internet</span></td>
-                    <td>--</td>
-                    <td>--</td>
-                    <td data-i18n="exp_utilities_detail">A confirmar</td>
+                    <td>$600</td>
+                    <td>$7,200</td>
+                    <td data-i18n="exp_utilities_detail">Estimativa mensal</td>
                 </tr>
                 <tr class="total-row">
                     <td data-i18n="exp_total">&#128178; TOTAL ESTIMADO</td>
-                    <td>$19,354+</td>
-                    <td>$232,240+</td>
-                    <td data-i18n="exp_total_note">Utilidades não incluídas</td>
+                    <td>$19,954</td>
+                    <td>$239,440</td>
+                    <td data-i18n="exp_total_note">Custo total estimado de propriedade</td>
                 </tr>
             </tbody>
         </table>
@@ -786,8 +786,8 @@ pt: {
     exp_taxes: 'Impostos (Property Tax)', exp_taxes_detail: 'Ano fiscal 2025',
     exp_insurance: 'Seguro do Imóvel', exp_insurance_note: 'Apólice ativa', exp_insurance_detail: 'Seguro patrimonial completo',
     exp_maintenance: 'Manutenção', exp_maintenance_note: 'Reparos e conservação', exp_maintenance_detail: 'Manutenção anual da unidade',
-    exp_utilities: 'Utilidades', exp_utilities_note: 'Eletricidade, gás, internet', exp_utilities_detail: 'A confirmar',
-    exp_total: '&#128178; TOTAL ESTIMADO', exp_total_note: 'Utilidades não incluídas',
+    exp_utilities: 'Utilidades', exp_utilities_note: 'Eletricidade, gás, internet', exp_utilities_detail: 'Estimativa mensal',
+    exp_total: '&#128178; TOTAL ESTIMADO', exp_total_note: 'Custo total estimado de propriedade',
 },
 en: {
     nav_overview: 'Overview', nav_marketing: 'Marketing', nav_showings: 'Showings', nav_furniture: 'Furnishings', nav_docs: 'Documents', nav_expenses: 'Expenses',
@@ -862,8 +862,8 @@ en: {
     exp_taxes: 'Property Tax', exp_taxes_detail: '2025 Tax Year',
     exp_insurance: 'Property Insurance', exp_insurance_note: 'Active policy', exp_insurance_detail: 'Full property coverage',
     exp_maintenance: 'Maintenance', exp_maintenance_note: 'Repairs & upkeep', exp_maintenance_detail: 'Annual unit maintenance',
-    exp_utilities: 'Utilities', exp_utilities_note: 'Electric, gas, internet', exp_utilities_detail: 'To be confirmed',
-    exp_total: '&#128178; ESTIMATED TOTAL', exp_total_note: 'Utilities not included',
+    exp_utilities: 'Utilities', exp_utilities_note: 'Electric, gas, internet', exp_utilities_detail: 'Monthly estimate',
+    exp_total: '&#128178; ESTIMATED TOTAL', exp_total_note: 'Estimated total cost of ownership',
 }
 };
 
@@ -1002,29 +1002,8 @@ function rebuildCharts() {
 
 rebuildCharts();
 
-// ===== HOMES.COM ANALYTICS AUTO-FETCH =====
-// Attempts to fetch latest view count from Homes.com via API
-// Falls back to last known static value if fetch fails
-(async function fetchHomesAnalytics() {
-    const HOMES_URL = 'https://www.homes.com/property/18201-collins-ave-sunny-isles-beach-fl-unit-ts1/9wn9jd5rc223j/';
-    const viewsEl = document.getElementById('homes-views');
-    // Store fallback in data attribute
-    if (viewsEl) viewsEl.setAttribute('data-fallback', viewsEl.textContent);
-
-    try {
-        // Try fetching via Vercel API route (if available)
-        const res = await fetch('/api/homes-stats');
-        if (res.ok) {
-            const data = await res.json();
-            if (data.views && viewsEl) {
-                viewsEl.textContent = Number(data.views).toLocaleString();
-            }
-        }
-    } catch(e) {
-        // API not available — keep the static value
-        console.log('Homes.com auto-sync: using cached value');
-    }
-})();
+// View counts are updated via scheduled task every 4 hours
+// The task scrapes Homes.com and Zillow, updates the HTML, and redeploys
 
 </script>
 </body>
