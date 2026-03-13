@@ -422,9 +422,6 @@ function showPreferenceStep(overlay, pageWrap) {
     // Submit
     document.getElementById('pref-submit-btn').addEventListener('click', () => savePreferencesAndUnlock(overlay, pageWrap));
 
-    // Skip
-    document.getElementById('pref-skip-btn').addEventListener('click', () => unlockPage(overlay, pageWrap));
-
     // Apply i18n to new elements
     if (typeof applyI18n === 'function') applyI18n();
 }
