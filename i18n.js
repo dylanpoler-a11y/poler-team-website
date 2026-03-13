@@ -170,9 +170,9 @@ const I18N = {
         pt: 'Faixa de preço',
     },
     prefSubmit: {
-        en: 'Start Alerts',
-        es: 'Iniciar Alertas',
-        pt: 'Iniciar Alertas',
+        en: 'Done',
+        es: 'Listo',
+        pt: 'Pronto',
     },
     prefSaving: {
         en: 'Saving...',
