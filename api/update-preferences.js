@@ -85,6 +85,7 @@ export default async function handler(req) {
     if (prefs.frequency !== undefined)         fields['Alert Frequency']      = prefs.frequency;
     if (prefs.count !== undefined)             fields['Alert Count']          = Number(prefs.count) || 5;
     if (prefs.preferredLanguage !== undefined) fields['Preferred Language']   = prefs.preferredLanguage;
+    if (prefs.buyTimeline !== undefined)      fields['Buy Timeline']         = prefs.buyTimeline;
 
     // If activating alerts and no next due date is set, set it to now (send on next cron run)
     if (prefs.alertActive && !prefs.alertNextDue) {

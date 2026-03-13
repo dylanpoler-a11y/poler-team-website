@@ -133,6 +133,58 @@ const I18N = {
         pt: 'Não foi possível realizar a chamada. Por favor, tente novamente.',
     },
 
+    // ── Step 3: Preference Questions ────────────────────────
+    prefStepTitle: {
+        en: 'Personalize Your Home Search',
+        es: 'Personalice Su Búsqueda',
+        pt: 'Personalize Sua Busca',
+    },
+    prefStepSubtitle: {
+        en: "Tell us what you're looking for and we'll send you matching properties daily.",
+        es: 'Cuéntenos qué busca y le enviaremos propiedades diariamente.',
+        pt: 'Nos conte o que procura e enviaremos imóveis diariamente.',
+    },
+    prefTimeline: {
+        en: 'How soon are you planning to buy?',
+        es: '¿Cuándo planea comprar?',
+        pt: 'Quando pretende comprar?',
+    },
+    prefAreas: {
+        en: 'What areas interest you?',
+        es: '¿Qué áreas le interesan?',
+        pt: 'Quais áreas te interessam?',
+    },
+    prefPropTypes: {
+        en: 'What property types?',
+        es: '¿Qué tipos de propiedad?',
+        pt: 'Quais tipos de imóvel?',
+    },
+    prefBedsBaths: {
+        en: 'Minimum beds / baths',
+        es: 'Habitaciones / Baños mínimos',
+        pt: 'Quartos / Banheiros mínimos',
+    },
+    prefPrice: {
+        en: 'Price range',
+        es: 'Rango de precio',
+        pt: 'Faixa de preço',
+    },
+    prefSubmit: {
+        en: 'Start Alerts',
+        es: 'Iniciar Alertas',
+        pt: 'Iniciar Alertas',
+    },
+    prefSaving: {
+        en: 'Saving...',
+        es: 'Guardando...',
+        pt: 'Salvando...',
+    },
+    prefSkip: {
+        en: 'Skip for now',
+        es: 'Saltar por ahora',
+        pt: 'Pular por enquanto',
+    },
+
     // ── Validation errors ───────────────────────────────────
     errFillAll: {
         en: 'Please fill in all fields.',

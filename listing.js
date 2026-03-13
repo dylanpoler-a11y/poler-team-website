@@ -344,24 +344,27 @@ async function completeLead(overlay, pageWrap) {
 
     // Save lead to Airtable CRM and capture alert token
     const langParam = new URLSearchParams(window.location.search).get('lang') || 'en';
-    fetch(`${OTP_BASE}/api/save-lead`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            first,
-            last,
-            email,
-            phone:          leadFormData.normalizedPhone,
-            listingAddress: heroListing ? (heroListing.UnparsedAddress || heroListing.City || '') : '',
-            listingPrice:   heroListing ? (heroListing.ListPrice || 0) : 0,
-            sourceUrl:      window.location.href,
-            language:       langParam,
-            ...utmData,
-        }),
-    }).then(r => r.json()).then(data => {
-        // Store alert token for preference auto-save from AI chat
-        if (data.token) localStorage.setItem('poler_alert_token', data.token);
-    }).catch(() => {});
+    try {
+        const saveRes = await fetch(`${OTP_BASE}/api/save-lead`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                first,
+                last,
+                email,
+                phone:          leadFormData.normalizedPhone,
+                listingAddress: heroListing ? (heroListing.UnparsedAddress || heroListing.City || '') : '',
+                listingPrice:   heroListing ? (heroListing.ListPrice || 0) : 0,
+                sourceUrl:      window.location.href,
+                language:       langParam,
+                ...utmData,
+            }),
+        });
+        const saveData = await saveRes.json();
+        if (saveData.token) localStorage.setItem('poler_alert_token', saveData.token);
+    } catch (err) {
+        console.warn('Save lead error:', err);
+    }
 
     const templateParams = {
         first_name:       first,
@@ -391,7 +394,97 @@ async function completeLead(overlay, pageWrap) {
 
     localStorage.setItem('poler_lead_v1', email);
     leadCaptured = true;
-    setTimeout(() => unlockPage(overlay, pageWrap), 600);
+
+    // Show Step 3 (preference questions) instead of unlocking immediately
+    showPreferenceStep(overlay, pageWrap);
+}
+
+// ── Step 3 — Preference questions before unlocking ──────────
+function showPreferenceStep(overlay, pageWrap) {
+    document.getElementById('lead-step-1').style.display = 'none';
+    document.getElementById('lead-step-2').style.display = 'none';
+    const step3 = document.getElementById('lead-step-3');
+    step3.style.display = 'block';
+
+    // Timeline pills — single-select
+    document.querySelectorAll('#pref-timeline-pills .pref-pill').forEach(pill => {
+        pill.addEventListener('click', () => {
+            document.querySelectorAll('#pref-timeline-pills .pref-pill').forEach(p => p.classList.remove('selected'));
+            pill.classList.add('selected');
+        });
+    });
+
+    // Property type pills — multi-select toggle
+    document.querySelectorAll('#pref-type-pills .pref-pill').forEach(pill => {
+        pill.addEventListener('click', () => pill.classList.toggle('selected'));
+    });
+
+    // Submit
+    document.getElementById('pref-submit-btn').addEventListener('click', () => savePreferencesAndUnlock(overlay, pageWrap));
+
+    // Skip
+    document.getElementById('pref-skip-btn').addEventListener('click', () => unlockPage(overlay, pageWrap));
+
+    // Apply i18n to new elements
+    if (typeof applyI18n === 'function') applyI18n();
+}
+
+async function savePreferencesAndUnlock(overlay, pageWrap) {
+    const submitBtn = document.getElementById('pref-submit-btn');
+    const submitTxt = document.getElementById('pref-submit-text');
+    submitBtn.disabled = true;
+    submitTxt.textContent = t('prefSaving') || 'Saving...';
+
+    const token = localStorage.getItem('poler_alert_token');
+    if (!token) {
+        unlockPage(overlay, pageWrap);
+        return;
+    }
+
+    // Gather values
+    const timelinePill = document.querySelector('#pref-timeline-pills .pref-pill.selected');
+    const buyTimeline = timelinePill ? timelinePill.dataset.value : '';
+
+    const cities = document.getElementById('pref-cities').value.trim();
+
+    const propertyTypes = [];
+    document.querySelectorAll('#pref-type-pills .pref-pill.selected').forEach(p => propertyTypes.push(p.dataset.value));
+
+    const bedsMin  = Number(document.getElementById('pref-beds').value)  || 0;
+    const bathsMin = Number(document.getElementById('pref-baths').value) || 0;
+
+    const priceMin = Number(document.getElementById('pref-price-min').value) || 0;
+    const priceMax = Number(document.getElementById('pref-price-max').value) || 0;
+
+    const langParam = new URLSearchParams(window.location.search).get('lang') || 'en';
+
+    const payload = {
+        token,
+        alertActive: true,
+        propertyTypes,
+        cities,
+        priceMin,
+        priceMax,
+        bedsMin,
+        bathsMin,
+        frequency: 'Daily',
+        count: 5,
+        preferredLanguage: langParam,
+    };
+    if (buyTimeline) payload.buyTimeline = buyTimeline;
+
+    try {
+        await fetch(`${OTP_BASE}/api/update-preferences`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
+    } catch (err) {
+        console.warn('Preferences save error:', err);
+    }
+
+    // Always unlock regardless of save result
+    unlockPage(overlay, pageWrap);
 }
 
 async function verifyOtp(overlay, pageWrap) {
