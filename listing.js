@@ -602,9 +602,6 @@ function renderHero(container, listing) {
         : '';
 
     const listingRows = [
-        agentName       ? [agentName, 'Listing Agent']  : null,
-        brokerageName   ? [brokerageName, 'Brokerage']  : null,
-        agentLicense    ? [agentLicense, 'License #']   : null,
         listDateFormatted ? [listDateFormatted, 'Listed']: null,
         dom !== ''      ? [`${dom} day${dom !== 1 ? 's' : ''}`, 'Days on Market'] : null,
         listing.ListingId ? [listing.ListingId, 'MLS #'] : null,
@@ -1386,8 +1383,6 @@ document.head.appendChild(spinStyle);
             l.HeatingYN          ? `Heating: ${l.Heating ? l.Heating.join(', ') : 'Yes'}` : '',
             l.View               ? `Views: ${l.View.join(', ')}` : '',
             l.PublicRemarks      ? `Description: ${l.PublicRemarks.substring(0, 600)}` : '',
-            l.ListAgentFullName  ? `Listing Agent: ${l.ListAgentFullName}` : '',
-            l.ListOfficeName     ? `Brokerage: ${l.ListOfficeName}` : '',
             l.ListingId          ? `MLS #: ${l.ListingId}` : '',
             `Page URL: ${window.location.href}`,
         ];
