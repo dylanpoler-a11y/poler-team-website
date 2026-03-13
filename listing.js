@@ -429,14 +429,7 @@ function showPreferenceStep(overlay, pageWrap) {
 async function savePreferencesAndUnlock(overlay, pageWrap) {
     const submitBtn = document.getElementById('pref-submit-btn');
     const submitTxt = document.getElementById('pref-submit-text');
-    submitBtn.disabled = true;
-    submitTxt.textContent = t('prefSaving') || 'Saving...';
-
-    const token = localStorage.getItem('poler_alert_token');
-    if (!token) {
-        unlockPage(overlay, pageWrap);
-        return;
-    }
+    const errorEl   = document.getElementById('pref-error');
 
     // Gather values
     const timelinePill = document.querySelector('#pref-timeline-pills .pref-pill.selected');
@@ -447,11 +440,36 @@ async function savePreferencesAndUnlock(overlay, pageWrap) {
     const propertyTypes = [];
     document.querySelectorAll('#pref-type-pills .pref-pill.selected').forEach(p => propertyTypes.push(p.dataset.value));
 
-    const bedsMin  = Number(document.getElementById('pref-beds').value)  || 0;
-    const bathsMin = Number(document.getElementById('pref-baths').value) || 0;
-
     const priceMin = Number(document.getElementById('pref-price-min').value) || 0;
     const priceMax = Number(document.getElementById('pref-price-max').value) || 0;
+
+    // Validate — all fields required
+    const missing = [];
+    if (!buyTimeline)            missing.push(t('prefTimeline') || 'timeline');
+    if (!cities)                 missing.push(t('prefAreas') || 'areas');
+    if (propertyTypes.length === 0) missing.push(t('prefPropTypes') || 'property type');
+    if (!priceMin && !priceMax)  missing.push(t('prefPrice') || 'price range');
+
+    if (missing.length) {
+        errorEl.textContent = t('errFillAll') || 'Please fill in all fields.';
+        errorEl.style.display = 'block';
+        submitBtn.classList.add('shake');
+        setTimeout(() => submitBtn.classList.remove('shake'), 400);
+        return;
+    }
+    errorEl.style.display = 'none';
+
+    submitBtn.disabled = true;
+    submitTxt.textContent = t('prefSaving') || 'Saving...';
+
+    const token = localStorage.getItem('poler_alert_token');
+    if (!token) {
+        unlockPage(overlay, pageWrap);
+        return;
+    }
+
+    const bedsMin  = Number(document.getElementById('pref-beds').value)  || 0;
+    const bathsMin = Number(document.getElementById('pref-baths').value) || 0;
 
     const langParam = new URLSearchParams(window.location.search).get('lang') || 'en';
 

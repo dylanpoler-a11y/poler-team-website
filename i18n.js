@@ -179,11 +179,6 @@ const I18N = {
         es: 'Guardando...',
         pt: 'Salvando...',
     },
-    prefSkip: {
-        en: 'Skip for now',
-        es: 'Saltar por ahora',
-        pt: 'Pular por enquanto',
-    },
 
     // ── Validation errors ───────────────────────────────────
     errFillAll: {
