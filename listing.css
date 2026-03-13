@@ -60,10 +60,12 @@ a { color: inherit; text-decoration: none; }
     border-radius: 16px;
     overflow: hidden;
     width: 100%; max-width: 460px;
+    max-height: 90vh;
     margin: 1.5rem;
     box-shadow: 0 32px 80px rgba(0,0,0,0.22);
     transform: translateY(16px) scale(0.97);
     transition: transform 0.4s cubic-bezier(0.22,1,0.36,1);
+    display: flex; flex-direction: column;
 }
 .lead-overlay.active .lead-modal { transform: translateY(0) scale(1); }
 
@@ -73,7 +75,7 @@ a { color: inherit; text-decoration: none; }
 }
 .lead-logo { height: 36px; }
 
-.lead-modal-body { padding: 1.75rem; }
+.lead-modal-body { padding: 1.75rem; overflow-y: auto; flex: 1; }
 .lead-title {
     font-family: var(--font-heading);
     font-size: 1.4rem; font-weight: 600;
@@ -229,6 +231,79 @@ a { color: inherit; text-decoration: none; }
     transition: color 0.15s;
 }
 .otp-back-btn:hover { color: var(--navy); }
+
+/* ============================================================
+   STEP 3 — PREFERENCE QUESTIONS
+   ============================================================ */
+#lead-step-3 .lead-title { margin-bottom: 0.2rem; }
+#lead-step-3 .lead-subtitle { margin-bottom: 1.1rem; font-size: 0.82rem; }
+#lead-step-3 { max-height: 62vh; overflow-y: auto; padding-right: 4px; }
+
+.pref-field { margin-bottom: 0.85rem; }
+.pref-label {
+    display: block;
+    font-size: 0.75rem; font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    margin-bottom: 0.35rem;
+}
+.pref-pills { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.pref-pill {
+    padding: 0.4rem 0.75rem;
+    font-size: 0.78rem; font-weight: 500;
+    border: 1.5px solid var(--border);
+    border-radius: 20px;
+    background: var(--bg); color: var(--text);
+    cursor: pointer; transition: all 0.15s;
+    font-family: var(--font-body);
+}
+.pref-pill:hover { border-color: var(--navy); }
+.pref-pill.selected {
+    background: var(--navy); color: #fff;
+    border-color: var(--navy);
+}
+.pref-input {
+    width: 100%;
+    padding: 0.55rem 0.75rem;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg); color: var(--text);
+    font-size: 0.82rem;
+    font-family: var(--font-body);
+    outline: none; transition: border-color 0.2s;
+    box-sizing: border-box;
+}
+.pref-input:focus { border-color: var(--navy); background: #fff; }
+.pref-half { width: calc(50% - 0.75rem); }
+.pref-select {
+    flex: 1;
+    padding: 0.55rem 0.75rem;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg); color: var(--text);
+    font-size: 0.82rem;
+    font-family: var(--font-body);
+    outline: none; cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' fill='none' stroke='%239ca3af' stroke-width='2'%3E%3Cpolyline points='2 3 5 7 8 3'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.6rem center;
+    padding-right: 1.6rem;
+}
+.pref-select:focus { border-color: var(--navy); }
+.pref-row { display: flex; align-items: center; gap: 0.5rem; }
+.pref-sep { color: var(--text-light); font-size: 0.85rem; }
+.pref-skip {
+    display: block; width: 100%;
+    text-align: center; margin-top: 0.5rem;
+    background: none; border: none;
+    font-size: 0.76rem; color: var(--text-muted);
+    cursor: pointer; transition: color 0.15s;
+    font-family: var(--font-body);
+    padding: 0.3rem 0;
+}
+.pref-skip:hover { color: var(--navy); text-decoration: underline; }
 
 /* ============================================================
    PAGE WRAP
