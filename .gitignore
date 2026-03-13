@@ -20,3 +20,4 @@ hero-balcony.mov
 save-images.html
 receiver.html
 .vercel
+.env*.local
