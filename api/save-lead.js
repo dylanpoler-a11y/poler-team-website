@@ -9,6 +9,49 @@
 
 export const config = { runtime: 'edge' };
 
+// Detect country from phone number country code
+function detectCountry(phone) {
+    if (!phone) return '';
+    const p = phone.replace(/[\s\-().]/g, '');
+    // Order matters: check longer prefixes first to avoid false matches
+    const codes = [
+        ['+55',  'Brazil'],
+        ['+504', 'Honduras'],
+        ['+502', 'Guatemala'],
+        ['+503', 'El Salvador'],
+        ['+505', 'Nicaragua'],
+        ['+506', 'Costa Rica'],
+        ['+507', 'Panama'],
+        ['+52',  'Mexico'],
+        ['+53',  'Cuba'],
+        ['+57',  'Colombia'],
+        ['+58',  'Venezuela'],
+        ['+54',  'Argentina'],
+        ['+56',  'Chile'],
+        ['+51',  'Peru'],
+        ['+591', 'Bolivia'],
+        ['+593', 'Ecuador'],
+        ['+595', 'Paraguay'],
+        ['+598', 'Uruguay'],
+        ['+1',   'United States'],
+        ['+44',  'United Kingdom'],
+        ['+34',  'Spain'],
+        ['+351', 'Portugal'],
+        ['+33',  'France'],
+        ['+49',  'Germany'],
+        ['+39',  'Italy'],
+        ['+81',  'Japan'],
+        ['+86',  'China'],
+        ['+91',  'India'],
+        ['+61',  'Australia'],
+        ['+972', 'Israel'],
+    ];
+    for (const [prefix, country] of codes) {
+        if (p.startsWith(prefix)) return country;
+    }
+    return '';
+}
+
 export default async function handler(req) {
     if (req.method === 'OPTIONS') {
         return new Response(null, {
@@ -80,8 +123,12 @@ export default async function handler(req) {
         'Preferred Language': language,
     };
 
-    // Optional UTM fields (may not exist in Airtable yet)
+    // Detect country from phone number
+    const country = detectCountry(phone);
+
+    // Optional fields (may not exist in Airtable yet — graceful fallback below)
     const utmFields = {
+        ...(country      && { 'Country': country }),
         ...(utmSummary   && { 'UTM Campaign': utmSummary }),
         ...(utm_source   && { 'UTM Source': utm_source }),
         ...(utm_medium   && { 'UTM Medium': utm_medium }),
