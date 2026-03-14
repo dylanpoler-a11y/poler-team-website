@@ -71,105 +71,153 @@
       <!-- ─────────────────────────────────────────────── MAIN CONTENT -->
       <main id="crm-main">
 
-        <!-- Header -->
-        <div class="crm-header">
-          <h1>Lead Dashboard</h1>
-          <div class="header-right">
-            <span id="last-refreshed"></span>
-            <button id="refresh-btn" class="refresh-btn">↻ Refresh</button>
-          </div>
-        </div>
+        <!-- ═══════ DASHBOARD VIEW ═══════ -->
+        <div id="dashboard-view">
 
-        <!-- Stats Row -->
-        <div class="stats-row">
-          <div class="stat-card">
-            <div class="stat-icon blue">👤</div>
-            <div>
-              <div class="stat-number" id="stat-total">—</div>
-              <div class="stat-label">Total Leads</div>
+          <!-- Header -->
+          <div class="crm-header">
+            <h1>Lead Dashboard</h1>
+            <div class="header-right">
+              <span id="last-refreshed"></span>
+              <button id="refresh-btn" class="refresh-btn">↻ Refresh</button>
             </div>
           </div>
-          <div class="stat-card">
-            <div class="stat-icon green">🆕</div>
-            <div>
-              <div class="stat-number" id="stat-new">—</div>
-              <div class="stat-label">New This Week</div>
+
+          <!-- Stats Row -->
+          <div class="stats-row">
+            <div class="stat-card">
+              <div class="stat-icon blue">👤</div>
+              <div>
+                <div class="stat-number" id="stat-total">—</div>
+                <div class="stat-label">Total Leads</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon green">🆕</div>
+              <div>
+                <div class="stat-number" id="stat-new">—</div>
+                <div class="stat-label">New This Week</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon red">🔥</div>
+              <div>
+                <div class="stat-number" id="stat-hot">—</div>
+                <div class="stat-label">Hot Leads</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon teal">📅</div>
+              <div>
+                <div class="stat-number" id="stat-appointments">—</div>
+                <div class="stat-label">Appointments Set</div>
+              </div>
             </div>
           </div>
-          <div class="stat-card">
-            <div class="stat-icon red">🔥</div>
-            <div>
-              <div class="stat-number" id="stat-hot">—</div>
-              <div class="stat-label">Hot Leads</div>
+
+          <!-- Filters Bar -->
+          <div class="filters-bar">
+            <div class="search-wrap">
+              <span class="search-icon">🔍</span>
+              <input
+                type="text"
+                id="search-input"
+                placeholder="Search by name, email, or phone…"
+              />
+            </div>
+            <select id="status-filter" class="filter-select">
+              <option value="">All Statuses</option>
+              <option value="New">New</option>
+              <option value="Contacted">Contacted</option>
+              <option value="Warm">Warm</option>
+              <option value="Hot">Hot</option>
+              <option value="Appointment Set">Appointment Set</option>
+              <option value="Under Contract">Under Contract</option>
+              <option value="Closed">Closed</option>
+              <option value="Dead">Dead</option>
+            </select>
+            <select id="date-filter" class="filter-select">
+              <option value="">All Time</option>
+              <option value="7">Last 7 Days</option>
+              <option value="30">Last 30 Days</option>
+              <option value="90">Last 90 Days</option>
+            </select>
+            <span id="lead-count"></span>
+          </div>
+
+          <!-- Table Card -->
+          <div class="table-card">
+            <!-- Loading State -->
+            <div id="loading-state">
+              <div class="loading-spinner"></div>
+              <div>Loading leads…</div>
+            </div>
+
+            <!-- Empty State -->
+            <div id="empty-state">No leads found matching your filters.</div>
+
+            <!-- Leads Table -->
+            <table class="leads-table" id="leads-table">
+              <thead>
+                <tr>
+                  <th style="width:44px">#</th>
+                  <th data-sort="name">Lead <span class="sort-icon">↕</span></th>
+                  <th data-sort="phone">Phone <span class="sort-icon">↕</span></th>
+                  <th data-sort="email">Email <span class="sort-icon">↕</span></th>
+                  <th data-sort="listingAddress">Property <span class="sort-icon">↕</span></th>
+                  <th data-sort="country">Country <span class="sort-icon">↕</span></th>
+                  <th data-sort="assignedTo">Agent <span class="sort-icon">↕</span></th>
+                  <th data-sort="status">Status <span class="sort-icon">↕</span></th>
+                  <th>Alerts</th>
+                  <th data-sort="createdAt" class="sorted">Date <span class="sort-icon">↓</span></th>
+                </tr>
+              </thead>
+              <tbody id="leads-tbody"></tbody>
+            </table>
+          </div>
+
+        </div><!-- /dashboard-view -->
+
+        <!-- ═══════ REMINDERS VIEW ═══════ -->
+        <div id="reminders-view" style="display:none;">
+          <div class="crm-header">
+            <h1>Reminders</h1>
+            <div class="header-right">
+              <select id="reminder-status-filter" class="filter-select">
+                <option value="">All</option>
+                <option value="Pending" selected>Pending</option>
+                <option value="Completed">Completed</option>
+                <option value="Cancelled">Cancelled</option>
+              </select>
+              <select id="reminder-agent-filter" class="filter-select">
+                <option value="">All Agents</option>
+              </select>
+              <button id="refresh-reminders-btn" class="refresh-btn">↻ Refresh</button>
             </div>
           </div>
-          <div class="stat-card">
-            <div class="stat-icon teal">📅</div>
-            <div>
-              <div class="stat-number" id="stat-appointments">—</div>
-              <div class="stat-label">Appointments Set</div>
+
+          <div class="table-card">
+            <div id="reminders-loading" style="display:none;">
+              <div class="loading-spinner"></div>
+              <div>Loading reminders…</div>
             </div>
+            <div id="reminders-empty" style="display:none;">No reminders found.</div>
+            <table class="leads-table" id="reminders-table" style="display:none;">
+              <thead>
+                <tr>
+                  <th>Due</th>
+                  <th>Lead</th>
+                  <th>Action</th>
+                  <th>Note</th>
+                  <th>Agent</th>
+                  <th>Status</th>
+                  <th style="width:140px">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="reminders-tbody"></tbody>
+            </table>
           </div>
-        </div>
-
-        <!-- Filters Bar -->
-        <div class="filters-bar">
-          <div class="search-wrap">
-            <span class="search-icon">🔍</span>
-            <input
-              type="text"
-              id="search-input"
-              placeholder="Search by name, email, or phone…"
-            />
-          </div>
-          <select id="status-filter" class="filter-select">
-            <option value="">All Statuses</option>
-            <option value="New">New</option>
-            <option value="Contacted">Contacted</option>
-            <option value="Warm">Warm</option>
-            <option value="Hot">Hot</option>
-            <option value="Appointment Set">Appointment Set</option>
-            <option value="Under Contract">Under Contract</option>
-            <option value="Closed">Closed</option>
-            <option value="Dead">Dead</option>
-          </select>
-          <select id="date-filter" class="filter-select">
-            <option value="">All Time</option>
-            <option value="7">Last 7 Days</option>
-            <option value="30">Last 30 Days</option>
-            <option value="90">Last 90 Days</option>
-          </select>
-          <span id="lead-count"></span>
-        </div>
-
-        <!-- Table Card -->
-        <div class="table-card">
-          <!-- Loading State -->
-          <div id="loading-state">
-            <div class="loading-spinner"></div>
-            <div>Loading leads…</div>
-          </div>
-
-          <!-- Empty State -->
-          <div id="empty-state">No leads found matching your filters.</div>
-
-          <!-- Leads Table -->
-          <table class="leads-table" id="leads-table">
-            <thead>
-              <tr>
-                <th style="width:44px">#</th>
-                <th data-sort="name">Lead <span class="sort-icon">↕</span></th>
-                <th data-sort="phone">Phone <span class="sort-icon">↕</span></th>
-                <th data-sort="email">Email <span class="sort-icon">↕</span></th>
-                <th data-sort="listingAddress">Property <span class="sort-icon">↕</span></th>
-                <th data-sort="country">Country <span class="sort-icon">↕</span></th>
-                <th data-sort="status">Status <span class="sort-icon">↕</span></th>
-                <th data-sort="createdAt" class="sorted">Date <span class="sort-icon">↓</span></th>
-              </tr>
-            </thead>
-            <tbody id="leads-tbody"></tbody>
-          </table>
-        </div>
+        </div><!-- /reminders-view -->
 
       </main>
     </div>
@@ -317,6 +365,12 @@
       </div>
     </div>
 
+    <!-- Assigned To Section -->
+    <div class="panel-section">
+      <div class="panel-section-title">Assigned To</div>
+      <div class="panel-field-value" id="panel-assigned-to">—</div>
+    </div>
+
     <!-- Status & Notes Section -->
     <div class="panel-section">
       <div class="panel-section-title">Status</div>
@@ -341,6 +395,32 @@
       ></textarea>
       <button id="panel-save" class="panel-save-btn">Save Changes</button>
       <div id="panel-save-status"></div>
+    </div>
+
+    <!-- Set Reminder Section -->
+    <div class="panel-section">
+      <div class="panel-section-title">Set Reminder</div>
+      <div class="panel-field">
+        <div class="panel-field-label">Action Type</div>
+        <select id="panel-reminder-action" class="panel-input">
+          <option value="Call">Call</option>
+          <option value="Text">Text</option>
+          <option value="Email">Email</option>
+          <option value="WhatsApp">WhatsApp</option>
+          <option value="Follow Up">Follow Up</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="panel-field">
+        <div class="panel-field-label">Due Date & Time</div>
+        <input type="datetime-local" id="panel-reminder-due" class="panel-input" />
+      </div>
+      <div class="panel-field">
+        <div class="panel-field-label">Note</div>
+        <textarea id="panel-reminder-note" class="panel-input" rows="2" placeholder="Reminder note…" style="resize:vertical;min-height:50px;"></textarea>
+      </div>
+      <button id="panel-reminder-submit" class="alert-action-btn" type="button">Create Reminder</button>
+      <div id="panel-reminder-status" class="panel-alert-status"></div>
     </div>
 
   </aside>
