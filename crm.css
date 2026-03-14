@@ -173,6 +173,14 @@ body {
   opacity: 0.9;
 }
 
+/* Sidebar Agent Identity */
+.sidebar-agent {
+  padding: 0.625rem 1.5rem 0.75rem;
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.55);
+  font-weight: 500;
+}
+
 .sidebar-nav {
   flex: 1;
   padding: 0 0.75rem;
@@ -947,6 +955,118 @@ body {
   margin-top: 0.5rem;
   display: none;
   font-weight: 500;
+}
+
+/* ── REMINDER BADGE ───────────────────────────────────────── */
+.reminder-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #dc2626;
+  color: white;
+  font-size: 0.65rem;
+  font-weight: 700;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 10px;
+  padding: 0 5px;
+  margin-left: auto;
+}
+
+/* ── ALERT SUMMARY ───────────────────────────────────────── */
+.td-alerts {
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.8rem;
+}
+
+.alert-active-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.5rem;
+  background: #f0fdf4;
+  color: #166534;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 170px;
+}
+
+/* ── REMINDERS VIEW ──────────────────────────────────────── */
+#reminders-view .crm-header {
+  flex-wrap: wrap;
+}
+
+.reminder-overdue {
+  background: #fef2f2 !important;
+}
+
+.reminder-overdue td {
+  color: #991b1b !important;
+}
+
+.reminder-status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.reminder-status-badge.pending   { background: #eff6ff; color: #1d4ed8; }
+.reminder-status-badge.overdue   { background: #fef2f2; color: #dc2626; }
+.reminder-status-badge.completed { background: #f0fdf4; color: #166534; }
+.reminder-status-badge.cancelled { background: #f9fafb; color: #9ca3af; }
+
+/* Action type badges */
+.action-type-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.action-type-Call      { background: #eff6ff; color: #1d4ed8; }
+.action-type-Text      { background: #f5f3ff; color: #6d28d9; }
+.action-type-Email     { background: #fff7ed; color: #c2410c; }
+.action-type-WhatsApp  { background: #f0fdf4; color: #166534; }
+.action-type-Follow-Up { background: #fffbeb; color: #92400e; }
+.action-type-Other     { background: #f9fafb; color: #6b7280; }
+
+/* Reminder action buttons */
+.reminder-action-btn {
+  padding: 0.3rem 0.6rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  margin-right: 4px;
+}
+
+.reminder-action-btn:hover {
+  opacity: 0.85;
+}
+
+.reminder-action-btn.done {
+  background: #16a34a;
+  color: white;
+}
+
+.reminder-action-btn.cancel {
+  background: #e5e7eb;
+  color: var(--text);
 }
 
 /* ── OVERLAY ──────────────────────────────────────────────── */

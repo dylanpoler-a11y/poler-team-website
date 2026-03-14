@@ -7,6 +7,12 @@
 const CRM_API_BASE = 'https://poler-team-website-two.vercel.app';
 const STATUSES = ['New','Contacted','Warm','Hot','Appointment Set','Under Contract','Closed','Dead'];
 
+const AGENTS = [
+  { name: 'Kevin', email: 'kevinpolermiami@gmail.com' },
+  { name: 'Dylan', email: 'dylan@poler.org' },
+  { name: 'Rosa',  email: 'rosadasilvapoler@gmail.com' },
+];
+
 // ── STATE ──────────────────────────────────────────────────────────────────
 let allLeads      = [];
 let filteredLeads = [];
@@ -14,29 +20,55 @@ let sortField     = 'createdAt';
 let sortDir       = 'desc';
 let currentPassword = '';
 let activeLead    = null;
+let currentAgent  = null;   // { name, email }
+let currentView   = 'dashboard';
+let allReminders  = [];
+let filteredReminders = [];
 
 // ── DOM READY ──────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   // If already authenticated this session, skip login
-  const savedPass = sessionStorage.getItem('crm_auth');
-  if (savedPass) {
+  const savedPass  = sessionStorage.getItem('crm_auth');
+  const savedEmail = sessionStorage.getItem('crm_agent_email');
+  if (savedPass && savedEmail) {
     currentPassword = savedPass;
+    const agent = AGENTS.find(a => a.email.toLowerCase() === savedEmail.toLowerCase());
+    if (agent) {
+      currentAgent = agent;
+    }
     showDashboard();
     loadLeads();
+    loadReminders();
     return;
   }
 
   // Wire up login form
-  const loginBtn  = document.getElementById('crm-login-btn');
-  const passInput = document.getElementById('crm-password-input');
+  const loginBtn   = document.getElementById('crm-login-btn');
+  const passInput  = document.getElementById('crm-password-input');
+  const emailInput = document.getElementById('crm-email-input');
   const loginError = document.getElementById('login-error');
 
   loginBtn.addEventListener('click', attemptLogin);
   passInput.addEventListener('keydown', e => { if (e.key === 'Enter') attemptLogin(); });
+  emailInput.addEventListener('keydown', e => { if (e.key === 'Enter') passInput.focus(); });
 
   async function attemptLogin() {
-    const pass = passInput.value.trim();
+    const email = (emailInput ? emailInput.value.trim() : '');
+    const pass  = passInput.value.trim();
     if (!pass) return;
+
+    // Validate agent email
+    if (!email) {
+      loginError.textContent = 'Please enter your agent email.';
+      loginError.style.display = 'block';
+      return;
+    }
+    const agent = AGENTS.find(a => a.email.toLowerCase() === email.toLowerCase());
+    if (!agent) {
+      loginError.textContent = 'Email not recognized. Contact your admin.';
+      loginError.style.display = 'block';
+      return;
+    }
 
     loginBtn.disabled = true;
     loginBtn.textContent = 'Signing in…';
@@ -59,10 +91,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const data = await res.json();
       currentPassword = pass;
+      currentAgent = agent;
       sessionStorage.setItem('crm_auth', pass);
+      sessionStorage.setItem('crm_agent_email', agent.email);
       allLeads = data.leads || [];
       showDashboard();
       renderAll();
+      loadReminders();
     } catch (err) {
       console.error('Login error:', err);
       loginError.textContent = 'Connection error. Please try again.';
@@ -78,6 +113,25 @@ function showDashboard() {
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('crm-app').style.display = 'block';
   document.getElementById('loading-state').style.display = 'none';
+
+  // Show agent name in sidebar
+  const agentEl = document.getElementById('sidebar-agent');
+  if (agentEl && currentAgent) {
+    agentEl.textContent = `Logged in as ${currentAgent.name}`;
+  }
+
+  // Populate reminder agent filter
+  const agentFilter = document.getElementById('reminder-agent-filter');
+  if (agentFilter) {
+    agentFilter.innerHTML = '<option value="">All Agents</option>';
+    AGENTS.forEach(a => {
+      const opt = document.createElement('option');
+      opt.value = a.email;
+      opt.textContent = a.name;
+      agentFilter.appendChild(opt);
+    });
+  }
+
   setupEvents();
 }
 
@@ -95,8 +149,8 @@ async function loadLeads() {
     const res = await fetch(`${CRM_API_BASE}/api/get-leads?password=${encodeURIComponent(currentPassword)}`);
 
     if (res.status === 401) {
-      // Session expired — boot back to login
       sessionStorage.removeItem('crm_auth');
+      sessionStorage.removeItem('crm_agent_email');
       location.reload();
       return;
     }
@@ -111,6 +165,241 @@ async function loadLeads() {
 
   loadingState.style.display = 'none';
   renderAll();
+}
+
+// ── LOAD REMINDERS ─────────────────────────────────────────────────────────
+async function loadReminders() {
+  try {
+    const res = await fetch(`${CRM_API_BASE}/api/get-reminders?password=${encodeURIComponent(currentPassword)}`);
+    if (res.ok) {
+      const data = await res.json();
+      allReminders = data.reminders || [];
+      updateReminderBadge();
+      if (currentView === 'reminders') renderReminders();
+    }
+  } catch (err) {
+    console.error('Failed to load reminders:', err);
+  }
+}
+
+function updateReminderBadge() {
+  const badge = document.getElementById('reminder-badge');
+  if (!badge) return;
+  const now = Date.now();
+  const pending = allReminders.filter(r =>
+    r.status === 'Pending' && new Date(r.dueAt).getTime() <= now + 86400000 * 7
+  );
+  if (pending.length > 0) {
+    badge.textContent = pending.length;
+    badge.style.display = 'inline-flex';
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+// ── VIEW SWITCHING ─────────────────────────────────────────────────────────
+function switchView(view) {
+  currentView = view;
+  const dashboardView = document.getElementById('dashboard-view');
+  const remindersView = document.getElementById('reminders-view');
+
+  // Update sidebar active state
+  document.querySelectorAll('.nav-item[data-action]').forEach(el => {
+    el.classList.remove('active');
+    if (el.dataset.action === view || (view === 'dashboard' && el.dataset.action === 'dashboard')) {
+      el.classList.add('active');
+    }
+  });
+
+  if (view === 'reminders') {
+    dashboardView.style.display = 'none';
+    remindersView.style.display = 'block';
+    renderReminders();
+  } else {
+    dashboardView.style.display = 'block';
+    remindersView.style.display = 'none';
+  }
+}
+
+// ── RENDER REMINDERS ───────────────────────────────────────────────────────
+function renderReminders() {
+  const tbody   = document.getElementById('reminders-tbody');
+  const table   = document.getElementById('reminders-table');
+  const empty   = document.getElementById('reminders-empty');
+  const loading = document.getElementById('reminders-loading');
+
+  loading.style.display = 'none';
+
+  // Apply filters
+  const statusFilter = document.getElementById('reminder-status-filter');
+  const agentFilter  = document.getElementById('reminder-agent-filter');
+  const filterStatus = statusFilter ? statusFilter.value : '';
+  const filterAgent  = agentFilter ? agentFilter.value : '';
+
+  filteredReminders = allReminders.filter(r => {
+    if (filterStatus && r.status !== filterStatus) return false;
+    if (filterAgent && r.agentEmail.toLowerCase() !== filterAgent.toLowerCase()) return false;
+    return true;
+  });
+
+  if (filteredReminders.length === 0) {
+    table.style.display = 'none';
+    empty.style.display = 'block';
+    return;
+  }
+
+  empty.style.display = 'none';
+  table.style.display = 'table';
+
+  const now = Date.now();
+
+  tbody.innerHTML = filteredReminders.map(r => {
+    const dueDate = new Date(r.dueAt);
+    const isOverdue = r.status === 'Pending' && dueDate.getTime() < now;
+    const rowClass = isOverdue ? 'reminder-overdue' : '';
+    const actionClass = 'action-type-' + (r.actionType || 'Other').replace(/\s+/g, '-');
+
+    const dueStr = dueDate.getTime() ? formatReminderDate(dueDate) : '—';
+    const statusBadge = r.status === 'Pending'
+      ? (isOverdue ? '<span class="reminder-status-badge overdue">Overdue</span>' : '<span class="reminder-status-badge pending">Pending</span>')
+      : r.status === 'Completed'
+        ? '<span class="reminder-status-badge completed">Done</span>'
+        : '<span class="reminder-status-badge cancelled">Cancelled</span>';
+
+    const actions = r.status === 'Pending'
+      ? `<button class="reminder-action-btn done" onclick="completeReminder('${r.id}')">Done</button>
+         <button class="reminder-action-btn cancel" onclick="cancelReminder('${r.id}')">Cancel</button>`
+      : '';
+
+    return `
+      <tr class="${rowClass}">
+        <td class="td-muted">${escHtml(dueStr)}</td>
+        <td>
+          <div class="lead-name" style="cursor:pointer" onclick="openPanelFromReminder('${escHtml(r.leadRecordId)}')">${escHtml(r.leadName || '—')}</div>
+          <div class="td-muted" style="font-size:0.75rem">${escHtml(r.leadPhone || '')}</div>
+        </td>
+        <td><span class="action-type-badge ${actionClass}">${escHtml(r.actionType || '—')}</span></td>
+        <td class="td-muted" style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escHtml(r.note)}">${escHtml(r.note || '—')}</td>
+        <td class="td-muted">${escHtml(r.agentName || '—')}</td>
+        <td>${statusBadge}</td>
+        <td>${actions}</td>
+      </tr>`;
+  }).join('');
+}
+
+function formatReminderDate(date) {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const tomorrow = new Date(today.getTime() + 86400000);
+  const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
+  const time = date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+
+  if (dateOnly.getTime() === today.getTime()) return `Today ${time}`;
+  if (dateOnly.getTime() === tomorrow.getTime()) return `Tomorrow ${time}`;
+  if (dateOnly < today) {
+    const days = Math.floor((today - dateOnly) / 86400000);
+    return `${days}d overdue`;
+  }
+  return date.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ` ${time}`;
+}
+
+// ── REMINDER ACTIONS ───────────────────────────────────────────────────────
+async function completeReminder(id) {
+  await updateReminderStatus(id, 'Completed');
+}
+
+async function cancelReminder(id) {
+  await updateReminderStatus(id, 'Cancelled');
+}
+
+async function updateReminderStatus(id, status) {
+  try {
+    const res = await fetch(`${CRM_API_BASE}/api/update-reminder`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, status, password: currentPassword }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      const reminder = allReminders.find(r => r.id === id);
+      if (reminder) reminder.status = status;
+      updateReminderBadge();
+      renderReminders();
+    }
+  } catch (err) {
+    console.error('Failed to update reminder:', err);
+  }
+}
+
+function openPanelFromReminder(leadRecordId) {
+  if (!leadRecordId) return;
+  switchView('dashboard');
+  openPanel(leadRecordId);
+}
+
+// ── CREATE REMINDER FROM PANEL ─────────────────────────────────────────────
+async function createReminderFromPanel() {
+  if (!activeLead || !currentAgent) return;
+
+  const btn      = document.getElementById('panel-reminder-submit');
+  const statusEl = document.getElementById('panel-reminder-status');
+  const action   = document.getElementById('panel-reminder-action').value;
+  const dueAt    = document.getElementById('panel-reminder-due').value;
+  const note     = document.getElementById('panel-reminder-note').value;
+
+  if (!dueAt) {
+    statusEl.style.display = 'block';
+    statusEl.style.color = '#dc2626';
+    statusEl.textContent = 'Please select a due date and time.';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Creating…';
+  statusEl.style.display = 'none';
+
+  try {
+    const res = await fetch(`${CRM_API_BASE}/api/create-reminder`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        password:     currentPassword,
+        leadRecordId: activeLead.id,
+        leadName:     activeLead.name || '',
+        leadEmail:    activeLead.email || '',
+        leadPhone:    activeLead.phone || '',
+        agentName:    currentAgent.name,
+        agentEmail:   currentAgent.email,
+        actionType:   action,
+        dueAt:        new Date(dueAt).toISOString(),
+        note,
+      }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      statusEl.style.display = 'block';
+      statusEl.style.color = '#16a34a';
+      statusEl.textContent = 'Reminder created!';
+      // Reset form
+      document.getElementById('panel-reminder-due').value = '';
+      document.getElementById('panel-reminder-note').value = '';
+      // Reload reminders in background
+      loadReminders();
+      setTimeout(() => { statusEl.style.display = 'none'; }, 3000);
+    } else {
+      statusEl.style.display = 'block';
+      statusEl.style.color = '#dc2626';
+      statusEl.textContent = data.error || 'Failed to create reminder.';
+    }
+  } catch (err) {
+    statusEl.style.display = 'block';
+    statusEl.style.color = '#dc2626';
+    statusEl.textContent = 'Network error. Please try again.';
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Create Reminder';
 }
 
 // ── EVENT SETUP ────────────────────────────────────────────────────────────
@@ -130,14 +419,28 @@ function setupEvents() {
       const action = el.dataset.action;
       if (action === 'logout') {
         sessionStorage.removeItem('crm_auth');
+        sessionStorage.removeItem('crm_agent_email');
         location.reload();
       } else if (action === 'export') {
         exportCSV();
-      } else if (action === 'refresh' || action === 'dashboard') {
+      } else if (action === 'reminders') {
+        switchView('reminders');
+      } else if (action === 'refresh') {
+        switchView('dashboard');
         loadLeads();
+      } else if (action === 'dashboard') {
+        switchView('dashboard');
       }
     });
   });
+
+  // Reminder view events
+  const reminderStatusFilter = document.getElementById('reminder-status-filter');
+  const reminderAgentFilter  = document.getElementById('reminder-agent-filter');
+  const refreshRemindersBtn  = document.getElementById('refresh-reminders-btn');
+  if (reminderStatusFilter) reminderStatusFilter.addEventListener('change', renderReminders);
+  if (reminderAgentFilter)  reminderAgentFilter.addEventListener('change', renderReminders);
+  if (refreshRemindersBtn)  refreshRemindersBtn.addEventListener('click', loadReminders);
 
   // Panel close
   document.getElementById('panel-close').addEventListener('click', closePanel);
@@ -148,6 +451,10 @@ function setupEvents() {
 
   // Panel save
   document.getElementById('panel-save').addEventListener('click', saveLead);
+
+  // Panel reminder submit
+  const reminderSubmit = document.getElementById('panel-reminder-submit');
+  if (reminderSubmit) reminderSubmit.addEventListener('click', createReminderFromPanel);
 
   // Alert preference controls
   document.getElementById('panel-alert-active').addEventListener('change', function () {
@@ -168,7 +475,7 @@ function setupEvents() {
       }
       applyFilters();
       // Update header UI
-      document.querySelectorAll('.leads-table th').forEach(t => {
+      document.querySelectorAll('#leads-table th').forEach(t => {
         t.classList.remove('sorted');
         const icon = t.querySelector('.sort-icon');
         if (icon) icon.textContent = '↕';
@@ -203,7 +510,7 @@ function applyFilters() {
   filteredLeads = allLeads.filter(lead => {
     // Search filter
     if (search) {
-      const haystack = [lead.name, lead.email, lead.phone, lead.listingAddress]
+      const haystack = [lead.name, lead.email, lead.phone, lead.listingAddress, lead.assignedTo]
         .filter(Boolean).join(' ').toLowerCase();
       if (!haystack.includes(search)) return false;
     }
@@ -270,6 +577,7 @@ function renderTable() {
       : '—';
     const statusVal   = lead.status || 'New';
     const statusClass = 'status-' + statusVal.replace(/\s+/g, '-');
+    const alertSummary = getAlertSummary(lead);
 
     return `
       <tr data-id="${escHtml(lead.id)}">
@@ -284,7 +592,9 @@ function renderTable() {
         <td class="td-muted">${escHtml(lead.email || '—')}</td>
         <td class="td-property" title="${escHtml(lead.listingAddress || '')}">${property}</td>
         <td class="td-muted">${escHtml(lead.country || '—')}</td>
+        <td class="td-muted">${escHtml(lead.assignedTo || '—')}</td>
         <td><span class="status-badge ${statusClass}">${escHtml(statusVal)}</span></td>
+        <td class="td-alerts">${alertSummary}</td>
         <td class="td-muted">${relativeTime(lead.createdAt)}</td>
       </tr>`;
   }).join('');
@@ -293,6 +603,31 @@ function renderTable() {
   tbody.querySelectorAll('tr[data-id]').forEach(row => {
     row.addEventListener('click', () => openPanel(row.dataset.id));
   });
+}
+
+// ── ALERT SUMMARY ──────────────────────────────────────────────────────────
+function getAlertSummary(lead) {
+  if (!lead.alertActive) return '<span class="td-muted">—</span>';
+
+  const parts = [];
+  if (lead.alertCities) {
+    const cities = lead.alertCities.split(',').map(c => c.trim()).filter(Boolean);
+    if (cities.length > 0) parts.push(cities.slice(0, 2).join(', '));
+  }
+  if (lead.alertPropertyTypes && lead.alertPropertyTypes.length > 0) {
+    parts.push(lead.alertPropertyTypes.slice(0, 2).join(', '));
+  }
+  if (lead.alertPriceMin || lead.alertPriceMax) {
+    const min = lead.alertPriceMin ? '$' + (lead.alertPriceMin / 1000).toFixed(0) + 'k' : '';
+    const max = lead.alertPriceMax ? '$' + (lead.alertPriceMax / 1000).toFixed(0) + 'k' : '';
+    if (min && max) parts.push(`${min}-${max}`);
+    else if (min) parts.push(`${min}+`);
+    else if (max) parts.push(`Up to ${max}`);
+  }
+
+  if (parts.length === 0) return '<span class="alert-active-badge">Active</span>';
+  const summary = parts.join(' · ');
+  return `<span class="alert-active-badge" title="${escHtml(summary)}">✓ ${escHtml(summary.length > 35 ? summary.substring(0, 35) + '…' : summary)}</span>`;
 }
 
 // ── RENDER STATS ───────────────────────────────────────────────────────────
@@ -323,6 +658,10 @@ function openPanel(id) {
   document.getElementById('panel-name').textContent       = lead.name || '—';
   document.getElementById('panel-date').textContent       = 'Registered ' + relativeTime(lead.createdAt);
   document.getElementById('panel-avatar-text').textContent = getInitials(lead.name);
+
+  // Assigned To
+  const assignedEl = document.getElementById('panel-assigned-to');
+  if (assignedEl) assignedEl.textContent = lead.assignedTo || '—';
 
   // Action buttons
   const phoneRaw = (lead.phone || '').replace(/\D/g, '');
@@ -381,6 +720,17 @@ function openPanel(id) {
   saveBtn.disabled         = false;
   saveBtn.textContent      = 'Save Changes';
 
+  // Reset reminder form
+  const reminderStatus = document.getElementById('panel-reminder-status');
+  if (reminderStatus) {
+    reminderStatus.style.display = 'none';
+    reminderStatus.textContent = '';
+  }
+  const reminderDue = document.getElementById('panel-reminder-due');
+  if (reminderDue) reminderDue.value = '';
+  const reminderNote = document.getElementById('panel-reminder-note');
+  if (reminderNote) reminderNote.value = '';
+
   // Open panel
   document.getElementById('lead-panel').classList.add('open');
   document.getElementById('panel-overlay').classList.add('show');
@@ -429,19 +779,19 @@ async function saveLead() {
         activeLead  = lead;
       }
       saveStatus.style.color   = '#16a34a';
-      saveStatus.textContent   = '✓ Saved successfully';
+      saveStatus.textContent   = 'Saved successfully';
       saveStatus.style.display = 'block';
       renderTable();
       renderStats();
     } else {
       saveStatus.style.color   = '#dc2626';
-      saveStatus.textContent   = '✗ ' + (data.error || 'Failed to save. Please try again.');
+      saveStatus.textContent   = (data.error || 'Failed to save. Please try again.');
       saveStatus.style.display = 'block';
     }
   } catch (err) {
     console.error('Save error:', err);
     saveStatus.style.color   = '#dc2626';
-    saveStatus.textContent   = '✗ Network error. Please try again.';
+    saveStatus.textContent   = 'Network error. Please try again.';
     saveStatus.style.display = 'block';
   }
 
@@ -520,7 +870,7 @@ async function sendTestAlert() {
     if (!prefsData.success) {
       statusEl.style.display = 'block';
       statusEl.style.color = '#dc2626';
-      statusEl.textContent = '✗ ' + (prefsData.error || 'Failed to save preferences');
+      statusEl.textContent = (prefsData.error || 'Failed to save preferences');
       btn.disabled = false;
       btn.textContent = 'Send Test Alert';
       return;
@@ -528,7 +878,7 @@ async function sendTestAlert() {
   } catch (err) {
     statusEl.style.display = 'block';
     statusEl.style.color = '#dc2626';
-    statusEl.textContent = '✗ Network error saving preferences';
+    statusEl.textContent = 'Network error saving preferences';
     btn.disabled = false;
     btn.textContent = 'Send Test Alert';
     return;
@@ -546,15 +896,15 @@ async function sendTestAlert() {
     statusEl.style.display = 'block';
     if (data.success) {
       statusEl.style.color = '#16a34a';
-      statusEl.textContent = `✓ Test alert sent to ${activeLead.email}`;
+      statusEl.textContent = `Test alert sent to ${activeLead.email}`;
     } else {
       statusEl.style.color = '#dc2626';
-      statusEl.textContent = '✗ ' + (data.error || 'Failed to send');
+      statusEl.textContent = (data.error || 'Failed to send');
     }
   } catch (err) {
     statusEl.style.display = 'block';
     statusEl.style.color = '#dc2626';
-    statusEl.textContent = '✗ Network error';
+    statusEl.textContent = 'Network error';
   }
 
   btn.disabled = false;
@@ -587,7 +937,7 @@ async function copyPreferencesLink() {
     } catch (err) {
       statusEl.style.display = 'block';
       statusEl.style.color = '#dc2626';
-      statusEl.textContent = '✗ Failed to generate link';
+      statusEl.textContent = 'Failed to generate link';
       btn.disabled = false;
       btn.textContent = 'Copy Link';
       return;
@@ -599,7 +949,7 @@ async function copyPreferencesLink() {
     await navigator.clipboard.writeText(url);
     statusEl.style.display = 'block';
     statusEl.style.color = '#16a34a';
-    statusEl.textContent = '✓ Link copied to clipboard!';
+    statusEl.textContent = 'Link copied to clipboard!';
     setTimeout(() => { statusEl.style.display = 'none'; }, 3000);
   }
 
@@ -611,7 +961,7 @@ async function copyPreferencesLink() {
 function exportCSV() {
   const headers = [
     'Name', 'First Name', 'Last Name', 'Email', 'Phone',
-    'Country', 'Status', 'Listing Address', 'Listing Price',
+    'Country', 'Assigned To', 'Status', 'Listing Address', 'Listing Price',
     'Source URL', 'Notes', 'Registered'
   ];
 
@@ -622,6 +972,7 @@ function exportCSV() {
     l.email,
     l.phone,
     l.country,
+    l.assignedTo,
     l.status,
     l.listingAddress,
     l.listingPrice ? '$' + l.listingPrice : '',
