@@ -374,7 +374,7 @@ async function completeLead(overlay, pageWrap) {
         listing_address:  heroListing ? (heroListing.UnparsedAddress || heroListing.City || 'N/A') : 'Browse page',
         listing_price:    heroListing ? formatPrice(heroListing.ListPrice) : 'N/A',
         page_url:         window.location.href,
-        to_email:         'rosapoler@hotmail.com,kevinpolermiami@gmail.com,dylanpoler@gmail.com,rosadasilvapoler@gmail.com',
+        to_email:         'rosapoler@hotmail.com,kevinpolermiami@gmail.com,dylan@poler.org,rosadasilvapoler@gmail.com',
     };
 
     try {

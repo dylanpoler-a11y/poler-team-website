@@ -126,6 +126,17 @@ export default async function handler(req) {
     // Detect country from phone number
     const country = detectCountry(phone);
 
+    // Auto-assign agent: Brazil → Rosa, others → Kevin/Dylan (deterministic hash split)
+    let assignedTo = '';
+    if (country === 'Brazil' || language === 'pt') {
+        assignedTo = 'Rosa';
+    } else {
+        // Simple hash of email for ~50/50 split between Kevin and Dylan
+        const hash = (email || first || last || phone || '').split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
+        assignedTo = hash % 2 === 0 ? 'Kevin' : 'Dylan';
+    }
+    coreFields['Assigned To'] = assignedTo;
+
     // Optional fields (may not exist in Airtable yet — graceful fallback below)
     const utmFields = {
         ...(country      && { 'Country': country }),
