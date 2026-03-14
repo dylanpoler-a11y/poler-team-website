@@ -18,6 +18,13 @@
       <h1 class="login-title">Poler Team CRM</h1>
       <p class="login-subtitle">Agent Dashboard</p>
       <input
+        type="email"
+        id="crm-email-input"
+        class="login-input"
+        placeholder="Agent email"
+        autocomplete="email"
+      />
+      <input
         type="password"
         id="crm-password-input"
         class="login-input"
@@ -39,12 +46,16 @@
           <img src="/logo-white.png" alt="Poler Team" class="sidebar-logo" />
           <span class="sidebar-title">Poler Team<br />CRM</span>
         </div>
+        <div class="sidebar-agent" id="sidebar-agent"></div>
         <div class="sidebar-nav">
           <a class="nav-item active" data-action="dashboard" href="#">
             <span class="nav-icon">📊</span> Dashboard
           </a>
           <a class="nav-item" data-action="refresh" href="#">
             <span class="nav-icon">👥</span> All Leads
+          </a>
+          <a class="nav-item" data-action="reminders" href="#">
+            <span class="nav-icon">🔔</span> Reminders <span id="reminder-badge" class="reminder-badge" style="display:none;">0</span>
           </a>
           <a class="nav-item" data-action="export" href="#">
             <span class="nav-icon">⬇️</span> Export CSV
