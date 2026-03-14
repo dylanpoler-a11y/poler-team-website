@@ -64,40 +64,58 @@ export default async function handler(req) {
     crypto.getRandomValues(tokenArray);
     const alertToken = Array.from(tokenArray, b => b.toString(16).padStart(2, '0')).join('');
 
-    const res = await fetch(`https://api.airtable.com/v0/${baseId}/Leads`, {
+    // Core fields that always exist in Airtable
+    const coreFields = {
+        'Name':            `${first} ${last}`.trim(),
+        'First Name':      first,
+        'Last Name':       last,
+        'Email':           email,
+        'Phone':           phone,
+        'Source URL':      sourceUrl,
+        'Listing Address': listingAddress,
+        'Listing Price':   Number(listingPrice) || 0,
+        'Status':          'New',
+        'Created At':      new Date().toISOString(),
+        'Alert Token':     alertToken,
+        'Preferred Language': language,
+    };
+
+    // Optional UTM fields (may not exist in Airtable yet)
+    const utmFields = {
+        ...(utmSummary   && { 'UTM Campaign': utmSummary }),
+        ...(utm_source   && { 'UTM Source': utm_source }),
+        ...(utm_medium   && { 'UTM Medium': utm_medium }),
+        ...(utm_content  && { 'UTM Content': utm_content }),
+        ...(fbclid       && { 'Facebook Click ID': fbclid }),
+    };
+
+    const airtableUrl = `https://api.airtable.com/v0/${baseId}/Leads`;
+    const headers = {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type':  'application/json',
+    };
+
+    // Try with UTM fields first; if Airtable rejects unknown fields, retry without
+    let res = await fetch(airtableUrl, {
         method: 'POST',
-        headers: {
-            'Authorization': `Bearer ${apiKey}`,
-            'Content-Type':  'application/json',
-        },
-        body: JSON.stringify({
-            records: [{
-                fields: {
-                    'Name':            `${first} ${last}`.trim(),
-                    'First Name':      first,
-                    'Last Name':       last,
-                    'Email':           email,
-                    'Phone':           phone,
-                    'Source URL':      sourceUrl,
-                    'Listing Address': listingAddress,
-                    'Listing Price':   Number(listingPrice) || 0,
-                    'Status':          'New',
-                    'Created At':      new Date().toISOString(),
-                    ...(utmSummary   && { 'UTM Campaign': utmSummary }),
-                    ...(utm_source   && { 'UTM Source': utm_source }),
-                    ...(utm_medium   && { 'UTM Medium': utm_medium }),
-                    ...(utm_content  && { 'UTM Content': utm_content }),
-                    ...(fbclid       && { 'Facebook Click ID': fbclid }),
-                    'Alert Token':     alertToken,
-                    'Preferred Language': language,
-                },
-            }],
-        }),
+        headers,
+        body: JSON.stringify({ records: [{ fields: { ...coreFields, ...utmFields } }] }),
     });
 
     if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        return json({ error: err.error?.message || 'Failed to save lead' }, 500);
+        if (err.error?.type === 'UNKNOWN_FIELD_NAME') {
+            // UTM fields don't exist in Airtable yet — retry with core fields only
+            res = await fetch(airtableUrl, {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({ records: [{ fields: coreFields }] }),
+            });
+        }
+        if (!res.ok) {
+            const retryErr = await res.json().catch(() => ({}));
+            return json({ error: retryErr.error?.message || 'Failed to save lead' }, 500);
+        }
     }
 
     const data = await res.json();
