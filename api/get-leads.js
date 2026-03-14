@@ -89,6 +89,7 @@ export default async function handler(req) {
             alertNextDue:       r.fields['Alert Next Due'] || '',
             alertToken:         r.fields['Alert Token'] || '',
             preferredLanguage:  r.fields['Preferred Language'] || 'en',
+            country:            r.fields['Country'] || '',
         })));
 
         if (!data.offset) break;

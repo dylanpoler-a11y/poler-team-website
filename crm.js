@@ -283,6 +283,7 @@ function renderTable() {
         <td class="td-muted">${escHtml(lead.phone || '—')}</td>
         <td class="td-muted">${escHtml(lead.email || '—')}</td>
         <td class="td-property" title="${escHtml(lead.listingAddress || '')}">${property}</td>
+        <td class="td-muted">${escHtml(lead.country || '—')}</td>
         <td><span class="status-badge ${statusClass}">${escHtml(statusVal)}</span></td>
         <td class="td-muted">${relativeTime(lead.createdAt)}</td>
       </tr>`;
