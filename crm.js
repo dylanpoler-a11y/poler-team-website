@@ -611,7 +611,7 @@ async function copyPreferencesLink() {
 function exportCSV() {
   const headers = [
     'Name', 'First Name', 'Last Name', 'Email', 'Phone',
-    'Status', 'Listing Address', 'Listing Price',
+    'Country', 'Status', 'Listing Address', 'Listing Price',
     'Source URL', 'Notes', 'Registered'
   ];
 
@@ -621,6 +621,7 @@ function exportCSV() {
     l.lastName,
     l.email,
     l.phone,
+    l.country,
     l.status,
     l.listingAddress,
     l.listingPrice ? '$' + l.listingPrice : '',
