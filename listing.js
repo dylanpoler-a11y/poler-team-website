@@ -1234,8 +1234,6 @@ async function fetchCuratedListings() {
             ranges.map(r => apiFetch({
                 ...r,
                 StandardStatus: 'Active',
-                sortBy: 'ModificationTimestamp',
-                sortOrder: 'desc',
                 limit: 4,
             }))
         );
