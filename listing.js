@@ -892,6 +892,12 @@ function renderHero(container, listing) {
 function renderDefaultHero(container) {
     container.innerHTML = `
     <div class="hero-default">
+        <div class="hero-video-wrap">
+            <video class="hero-bg-video" autoplay muted loop playsinline>
+                <source src="sunny-isles-drone-web.mp4" type="video/mp4">
+            </video>
+            <div class="hero-video-overlay"></div>
+        </div>
         <h1 class="hero-default-title" data-i18n="tagline">${t('tagline')}</h1>
         <p class="hero-default-sub" data-i18n="showingFeatured">${t('showingFeatured')}</p>
     </div>`;

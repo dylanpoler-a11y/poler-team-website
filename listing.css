@@ -510,14 +510,30 @@ a { color: inherit; text-decoration: none; }
     display: flex; flex-direction: column;
     align-items: center; justify-content: center;
     text-align: center; padding: 3rem 2rem;
-    background: linear-gradient(135deg, #f7f8fa, #edf0f5);
+    position: relative; overflow: hidden;
+}
+.hero-video-wrap {
+    position: absolute; inset: 0; z-index: 0;
+}
+.hero-bg-video {
+    width: 100%; height: 100%; object-fit: cover;
+}
+.hero-video-overlay {
+    position: absolute; inset: 0;
+    background: rgba(26, 39, 68, 0.55);
 }
 .hero-default-title {
     font-family: var(--font-heading);
     font-size: clamp(1.8rem, 4vw, 2.6rem);
-    color: var(--text); margin-bottom: 0.75rem; font-weight: 600;
+    color: #fff; margin-bottom: 0.75rem; font-weight: 600;
+    position: relative; z-index: 2;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.4);
 }
-.hero-default-sub { font-size: 1rem; color: var(--text-muted); max-width: 480px; line-height: 1.6; }
+.hero-default-sub {
+    font-size: 1rem; color: rgba(255,255,255,0.9); max-width: 480px; line-height: 1.6;
+    position: relative; z-index: 2;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.3);
+}
 
 /* Shimmer */
 @keyframes shimmer {
