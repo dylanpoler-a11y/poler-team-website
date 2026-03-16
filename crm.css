@@ -1185,3 +1185,44 @@ body {
     flex-wrap: wrap;
   }
 }
+
+/* ── Conversations ───────────────────────────────────────────── */
+.panel-conversations-wrap { display: flex; flex-direction: column; gap: 0.75rem; }
+.panel-empty-text { color: #94a3b8; font-size: 0.85rem; margin: 0; }
+
+.convo-card {
+  background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;
+  padding: 0.75rem; display: flex; flex-direction: column; gap: 0.5rem;
+}
+.convo-header {
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 0.75rem; color: #64748b;
+}
+.convo-count { font-weight: 500; }
+.convo-bubbles { display: flex; flex-direction: column; gap: 0.35rem; }
+.convo-bubble {
+  padding: 0.4rem 0.65rem; border-radius: 10px; font-size: 0.8rem;
+  line-height: 1.4; max-width: 90%; word-break: break-word;
+}
+.convo-bubble-user {
+  background: #1a2744; color: #fff; align-self: flex-end;
+  border-bottom-right-radius: 3px;
+}
+.convo-bubble-ai {
+  background: #e2e8f0; color: #1e293b; align-self: flex-start;
+  border-bottom-left-radius: 3px;
+}
+
+/* ── Activity Log ────────────────────────────────────────────── */
+.panel-activity-wrap { display: flex; flex-direction: column; gap: 0.5rem; }
+
+.activity-item {
+  display: flex; align-items: center; gap: 0.5rem;
+  padding: 0.5rem 0; border-bottom: 1px solid #f1f5f9;
+}
+.activity-item:last-child { border-bottom: none; }
+.activity-icon { font-size: 1rem; flex-shrink: 0; }
+.activity-info { flex: 1; display: flex; flex-direction: column; gap: 0.1rem; }
+.activity-type { font-size: 0.8rem; font-weight: 500; color: #1e293b; }
+.activity-detail { font-size: 0.75rem; color: #64748b; }
+.activity-time { font-size: 0.7rem; color: #94a3b8; white-space: nowrap; }
