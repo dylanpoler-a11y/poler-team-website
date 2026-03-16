@@ -731,6 +731,12 @@ function openPanel(id) {
   const reminderNote = document.getElementById('panel-reminder-note');
   if (reminderNote) reminderNote.value = '';
 
+  // Load conversations and activity
+  if (lead.email) {
+    loadConversations(lead.email);
+    loadActivity(lead.email);
+  }
+
   // Open panel
   document.getElementById('lead-panel').classList.add('open');
   document.getElementById('panel-overlay').classList.add('show');
@@ -1030,4 +1036,93 @@ function escHtml(str) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
+}
+
+// ── LOAD AI CONVERSATIONS ─────────────────────────────────────────────────
+async function loadConversations(email) {
+  const wrap = document.getElementById('panel-conversations');
+  if (!wrap) return;
+  wrap.innerHTML = '<p class="panel-empty-text">Loading conversations...</p>';
+
+  try {
+    const pw = localStorage.getItem('poler_crm_pass');
+    const res = await fetch(`/api/get-conversations?password=${encodeURIComponent(pw)}&email=${encodeURIComponent(email)}`);
+    if (!res.ok) { wrap.innerHTML = '<p class="panel-empty-text">Could not load conversations</p>'; return; }
+    const data = await res.json();
+    const convos = data.conversations || [];
+
+    if (!convos.length) {
+      wrap.innerHTML = '<p class="panel-empty-text">No AI conversations yet</p>';
+      return;
+    }
+
+    wrap.innerHTML = convos.map(c => {
+      const msgs = c.messages || [];
+      const time = c.lastUpdated ? relativeTime(c.lastUpdated) : '';
+      const msgCount = msgs.filter(m => m.role === 'user').length;
+      const bubbles = msgs.slice(-6).map(m => {
+        const cls = m.role === 'user' ? 'convo-bubble-user' : 'convo-bubble-ai';
+        return `<div class="convo-bubble ${cls}">${escHtml(m.content).slice(0, 200)}${m.content.length > 200 ? '…' : ''}</div>`;
+      }).join('');
+      return `
+        <div class="convo-card">
+          <div class="convo-header">
+            <span class="convo-time">${escHtml(time)}</span>
+            <span class="convo-count">${msgCount} message${msgCount !== 1 ? 's' : ''}</span>
+          </div>
+          <div class="convo-bubbles">${bubbles}</div>
+        </div>`;
+    }).join('');
+  } catch (err) {
+    console.error('Load conversations error:', err);
+    wrap.innerHTML = '<p class="panel-empty-text">Error loading conversations</p>';
+  }
+}
+
+// ── LOAD LEAD ACTIVITY ────────────────────────────────────────────────────
+async function loadActivity(email) {
+  const wrap = document.getElementById('panel-activity');
+  if (!wrap) return;
+  wrap.innerHTML = '<p class="panel-empty-text">Loading activity...</p>';
+
+  try {
+    const pw = localStorage.getItem('poler_crm_pass');
+    const res = await fetch(`/api/get-activity?password=${encodeURIComponent(pw)}&email=${encodeURIComponent(email)}`);
+    if (!res.ok) { wrap.innerHTML = '<p class="panel-empty-text">Could not load activity</p>'; return; }
+    const data = await res.json();
+    const activities = data.activities || [];
+
+    if (!activities.length) {
+      wrap.innerHTML = '<p class="panel-empty-text">No activity logged yet</p>';
+      return;
+    }
+
+    wrap.innerHTML = activities.map(a => {
+      const time = a.timestamp ? relativeTime(a.timestamp) : '';
+      const icon = a.activityType === 'Search' ? '🔍' : '📄';
+      let detail = '';
+      if (a.activityType === 'Search' && a.details) {
+        try {
+          const d = typeof a.details === 'string' ? JSON.parse(a.details) : a.details;
+          const parts = [];
+          if (d.params?.City) parts.push(d.params.City);
+          if (d.params?.['ListPrice.gte']) parts.push('$' + Number(d.params['ListPrice.gte']).toLocaleString() + '+');
+          if (d.resultCount != null) parts.push(d.resultCount + ' results');
+          detail = parts.join(' · ');
+        } catch { detail = ''; }
+      }
+      return `
+        <div class="activity-item">
+          <span class="activity-icon">${icon}</span>
+          <div class="activity-info">
+            <span class="activity-type">${escHtml(a.activityType)}</span>
+            ${detail ? `<span class="activity-detail">${escHtml(detail)}</span>` : ''}
+          </div>
+          <span class="activity-time">${escHtml(time)}</span>
+        </div>`;
+    }).join('');
+  } catch (err) {
+    console.error('Load activity error:', err);
+    wrap.innerHTML = '<p class="panel-empty-text">Error loading activity</p>';
+  }
 }

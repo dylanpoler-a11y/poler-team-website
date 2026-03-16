@@ -1418,6 +1418,27 @@ async function runSearch(append = false) {
         countEl.textContent = `Showing ${searchOffset} propert${searchOffset === 1 ? 'y' : 'ies'}`;
         loadMore.style.display = listings.length === PAGE_SIZE ? 'block' : 'none';
 
+        // Log search activity to CRM (non-blocking)
+        if (!append) {
+            try {
+                const leadData = localStorage.getItem('poler_lead_v1');
+                if (leadData) {
+                    const lead = JSON.parse(leadData);
+                    if (lead.email) {
+                        fetch('/api/log-activity', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                email: lead.email,
+                                activityType: 'Search',
+                                details: { params: lastQuery, resultCount: listings.length },
+                            }),
+                        }).catch(() => {});
+                    }
+                }
+            } catch (e) { /* non-critical */ }
+        }
+
     } catch (err) {
         console.error('Search error:', err);
         if (!append) {
@@ -1515,6 +1536,7 @@ document.head.appendChild(spinStyle);
         messages: [],          // { role: 'user'|'assistant', content: string }
         streaming: false,
         greeted: false,
+        sessionId: crypto.randomUUID(),
     };
 
     // ── DOM refs (set after DOMContentLoaded) ───────────────
@@ -1757,6 +1779,9 @@ document.head.appendChild(spinStyle);
             // Save complete response to history
             chatState.messages.push({ role: 'assistant', content: fullText });
 
+            // Save conversation to CRM (non-blocking)
+            saveConversationToCRM();
+
         } catch (err) {
             hideTyping();
             appendMessage('assistant', 'Connection issue — please check your internet and try again.');
@@ -1766,6 +1791,26 @@ document.head.appendChild(spinStyle);
         chatState.streaming = false;
         sendBtn.disabled = false;
         inputEl.focus();
+    }
+
+    // ── Save conversation to CRM (non-blocking) ──────────────
+    function saveConversationToCRM() {
+        try {
+            const leadData = localStorage.getItem('poler_lead_v1');
+            if (!leadData) return;
+            const lead = JSON.parse(leadData);
+            if (!lead.email) return;
+
+            fetch('/api/save-conversation', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    email: lead.email,
+                    messages: chatState.messages,
+                    sessionId: chatState.sessionId,
+                }),
+            }).catch(err => console.error('Save conversation failed:', err));
+        } catch (e) { /* non-critical */ }
     }
 
     // ── Open / close panel ───────────────────────────────────
