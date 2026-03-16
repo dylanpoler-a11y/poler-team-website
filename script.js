@@ -1067,7 +1067,9 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- Language State ---
-    let currentLanguage = localStorage.getItem('poler-lang') || 'en';
+    const urlLang = new URLSearchParams(window.location.search).get('lang');
+    let currentLanguage = (urlLang && ['en', 'es', 'pt'].includes(urlLang)) ? urlLang : localStorage.getItem('poler-lang') || 'en';
+    if (urlLang && ['en', 'es', 'pt'].includes(urlLang)) localStorage.setItem('poler-lang', urlLang);
 
     // --- Set Language Function ---
     function setLanguage(lang) {
