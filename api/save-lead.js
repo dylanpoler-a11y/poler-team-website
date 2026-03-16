@@ -14,7 +14,10 @@ function detectCountry(phone) {
     if (!phone) return '';
     const p = phone.replace(/[\s\-().]/g, '');
     // Order matters: check longer prefixes first to avoid false matches
+    // Puerto Rico area codes (+1787, +1939) must come before +1
     const codes = [
+        ['+1787', 'Puerto Rico'],
+        ['+1939', 'Puerto Rico'],
         ['+55',  'Brazil'],
         ['+504', 'Honduras'],
         ['+502', 'Guatemala'],
@@ -137,9 +140,13 @@ export default async function handler(req) {
     }
     coreFields['Assigned To'] = assignedTo;
 
+    // Country is core data — always save it
+    if (country) {
+        coreFields['Country'] = country;
+    }
+
     // Optional fields (may not exist in Airtable yet — graceful fallback below)
     const utmFields = {
-        ...(country      && { 'Country': country }),
         ...(utmSummary   && { 'UTM Campaign': utmSummary }),
         ...(utm_source   && { 'UTM Source': utm_source }),
         ...(utm_medium   && { 'UTM Medium': utm_medium }),
