@@ -1212,6 +1212,65 @@ function buildSearchParams() {
     return params;
 }
 
+async function fetchCuratedListings() {
+    const grid      = document.getElementById('results-grid');
+    const countEl   = document.getElementById('results-count');
+    const noResults = document.getElementById('no-results');
+    const loadMore  = document.getElementById('load-more-wrap');
+
+    grid.innerHTML = renderSkeletons();
+    noResults.style.display = 'none';
+    loadMore.style.display  = 'none';
+    countEl.textContent = 'Loading featured properties...';
+
+    const ranges = [
+        { 'ListPrice.gte': 500000,  'ListPrice.lte': 1000000 },
+        { 'ListPrice.gte': 1000000, 'ListPrice.lte': 5000000 },
+        { 'ListPrice.gte': 5000000, 'ListPrice.lte': 10000000 },
+    ];
+
+    try {
+        const results = await Promise.allSettled(
+            ranges.map(r => apiFetch({
+                ...r,
+                StandardStatus: 'Active',
+                sortBy: 'ModificationTimestamp',
+                sortOrder: 'desc',
+                limit: 4,
+            }))
+        );
+
+        let all = [];
+        results.forEach(r => {
+            if (r.status === 'fulfilled' && r.value.success && Array.isArray(r.value.bundle)) {
+                all = all.concat(r.value.bundle);
+            }
+        });
+
+        // Fisher-Yates shuffle
+        for (let i = all.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [all[i], all[j]] = [all[j], all[i]];
+        }
+
+        grid.innerHTML = '';
+
+        if (!all.length) {
+            noResults.style.display = 'block';
+            countEl.textContent = 'No featured properties available';
+            return;
+        }
+
+        all.forEach(l => grid.insertAdjacentHTML('beforeend', renderCard(l)));
+        countEl.textContent = `Showing ${all.length} featured propert${all.length === 1 ? 'y' : 'ies'}`;
+    } catch (err) {
+        console.error('Curated listings error:', err);
+        grid.innerHTML = '';
+        noResults.style.display = 'block';
+        countEl.textContent = 'Error loading properties — please try searching';
+    }
+}
+
 async function fetchListings(params, offset = 0) {
     // Handle multi-city: make parallel requests and merge
     const cities = params._cities;
