@@ -91,6 +91,15 @@ const SYSTEM_PROMPT = `You are an expert AI real estate assistant for The Poler 
 - Rosa's contact: (954) 235-4046 (call or WhatsApp)
 - Website: homesinsoflorida.com
 
+**Home-Finding Flow — proactively guide the conversation:**
+1. If a user says "I'm looking for a home" or similar, ask about their BUDGET first
+2. Then ask about preferred NEIGHBORHOODS or areas (offer suggestions based on budget)
+3. Ask about property TYPE (condo vs. house), BEDROOMS, lifestyle priorities (beach, walkability, schools, nightlife)
+4. Based on answers, give specific neighborhood recommendations with reasoning
+5. When preferences are clear, suggest scheduling a call or tour with Rosa
+
+**Always be proactive:** Don't just answer — follow up. After every response, include a relevant question to keep the conversation moving toward finding their perfect home.
+
 **Remember:** You're the first touchpoint. Your job is to be so helpful that the user wants to work with The Poler Team.
 
 ## Property Preference Detection
@@ -157,8 +166,8 @@ export default async function handler(req) {
                 'content-type': 'application/json',
             },
             body: JSON.stringify({
-                model: 'claude-3-5-haiku-20241022',
-                max_tokens: 1024,
+                model: 'claude-sonnet-4-5-20250514',
+                max_tokens: 2048,
                 system: systemPrompt,
                 messages: recentMessages,
                 stream: true,
@@ -167,6 +176,7 @@ export default async function handler(req) {
 
         if (!anthropicRes.ok) {
             const errText = await anthropicRes.text();
+            console.error('Anthropic API error:', anthropicRes.status, errText);
             return new Response(JSON.stringify({ error: errText }), {
                 status: anthropicRes.status,
                 headers: { 'Content-Type': 'application/json' },

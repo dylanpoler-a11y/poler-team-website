@@ -1458,8 +1458,13 @@ function initSearch() {
         if (locInput) locInput.value = decodeURIComponent(cityParam.replace(/\+/g, ' '));
     }
 
-    // Run search on load (uses city param if set, otherwise default South Florida)
-    runSearch(false);
+    // If no specific search params, show curated mix; otherwise run normal search
+    const hasSearchParam = urlParams.get('mls') || urlParams.get('city') || urlParams.get('id');
+    if (hasSearchParam) {
+        runSearch(false);
+    } else {
+        fetchCuratedListings();
+    }
 }
 
 // ============================================================
@@ -1672,8 +1677,10 @@ document.head.appendChild(spinStyle);
             });
 
             if (!res.ok) {
+                const errText = await res.text();
+                console.error('Chat API error:', res.status, errText);
                 hideTyping();
-                appendMessage('assistant', 'Sorry, I ran into an issue. Please try again or contact Rosa directly at (954) 235-4046.');
+                appendMessage('assistant', 'Sorry, I ran into a temporary issue connecting to my AI brain. Please try again in a moment, or contact Rosa directly at (954) 235-4046 — she\'d love to help!');
                 chatState.streaming = false;
                 sendBtn.disabled = false;
                 return;
