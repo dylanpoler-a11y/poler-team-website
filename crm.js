@@ -1045,7 +1045,7 @@ async function loadConversations(email) {
   wrap.innerHTML = '<p class="panel-empty-text">Loading conversations...</p>';
 
   try {
-    const pw = localStorage.getItem('poler_crm_pass');
+    const pw = currentPassword;
     const res = await fetch(`/api/get-conversations?password=${encodeURIComponent(pw)}&email=${encodeURIComponent(email)}`);
     if (!res.ok) { wrap.innerHTML = '<p class="panel-empty-text">Could not load conversations</p>'; return; }
     const data = await res.json();
@@ -1086,7 +1086,7 @@ async function loadActivity(email) {
   wrap.innerHTML = '<p class="panel-empty-text">Loading activity...</p>';
 
   try {
-    const pw = localStorage.getItem('poler_crm_pass');
+    const pw = currentPassword;
     const res = await fetch(`/api/get-activity?password=${encodeURIComponent(pw)}&email=${encodeURIComponent(email)}`);
     if (!res.ok) { wrap.innerHTML = '<p class="panel-empty-text">Could not load activity</p>'; return; }
     const data = await res.json();
