@@ -893,11 +893,11 @@ function initAlertMap(lead) {
     tap: true,
   }).setView([25.9, -80.15], 11);
 
-  // Use CartoDB Positron tiles (faster, lighter than OSM)
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-    attribution: '&copy; <a href="https://carto.com/">CARTO</a>',
-    subdomains: 'abcd',
+  // Use OpenStreetMap tiles via CDN
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
     maxZoom: 19,
+    crossOrigin: true,
   }).addTo(alertMap);
 
   // Force map to recalculate size after panel animation completes
