@@ -231,6 +231,40 @@
         @media (max-width: 1200px) { .stats-bar { grid-template-columns: repeat(3, 1fr); } .rental-stats { grid-template-columns: repeat(3, 1fr); } .highlights-grid { grid-template-columns: repeat(2, 1fr); } .amenities-grid { grid-template-columns: repeat(3, 1fr); } .photo-gallery { grid-template-columns: 1fr 1fr; grid-template-rows: 220px 220px; } .photo-card:first-child { grid-row: auto; } .docs-grid { grid-template-columns: repeat(2, 1fr); } }
         @media (max-width: 768px) { .section { padding: 3rem 1.5rem; } .hero { padding: 0 1.5rem 3rem; } .hero-address { font-size: 2rem; } .stats-bar { grid-template-columns: 1fr 1fr; } .rental-banner { margin: 1rem 1.5rem; } .rental-stats { grid-template-columns: 1fr 1fr; } .metrics-grid { grid-template-columns: 1fr 1fr; } .charts-grid { grid-template-columns: 1fr; } .highlights-grid { grid-template-columns: 1fr; } .furniture-grid { grid-template-columns: 1fr; } .analytics-grid { grid-template-columns: 1fr; } .amenities-grid { grid-template-columns: repeat(2, 1fr); } .nav-links { display: none; } .photo-gallery { grid-template-columns: 1fr; grid-template-rows: repeat(5, 180px); } .docs-grid { grid-template-columns: 1fr; } }
         @media print { body { background: white; color: #1a1a1a; } .nav { display: none; } .section { padding: 2rem 1rem; } }
+
+        /* ===== PHOTO LIGHTBOX MODAL ===== */
+        .photo-lightbox-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 9999; background: rgba(0,0,0,0.95); }
+        .photo-lightbox-overlay.open { display: flex; flex-direction: column; }
+        .photo-lightbox-header { display: flex; align-items: center; justify-content: space-between; padding: 1rem 2rem; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .photo-lightbox-title { font-family: 'Playfair Display', serif; font-size: 1.2rem; color: var(--platinum); }
+        .photo-lightbox-close { background: none; border: 1px solid rgba(255,255,255,0.2); color: var(--platinum); width: 40px; height: 40px; border-radius: 50%; font-size: 1.2rem; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: center; }
+        .photo-lightbox-close:hover { background: rgba(255,255,255,0.1); }
+        .photo-lightbox-tabs { display: flex; gap: 0; padding: 0 2rem; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .photo-lightbox-tab { padding: 0.75rem 1.5rem; font-size: 0.75rem; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted); background: none; border: none; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.3s; font-family: 'Inter', sans-serif; }
+        .photo-lightbox-tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+        .photo-lightbox-tab:hover { color: var(--text-primary); }
+        .photo-lightbox-body { flex: 1; overflow-y: auto; padding: 1.5rem 2rem; }
+        .photo-lightbox-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+        .photo-lightbox-grid img { width: 100%; height: 250px; object-fit: cover; border-radius: 8px; cursor: pointer; transition: transform 0.3s, opacity 0.3s; }
+        .photo-lightbox-grid img:hover { transform: scale(1.02); opacity: 0.9; }
+        .photo-lightbox-fullview { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 10000; background: rgba(0,0,0,0.98); align-items: center; justify-content: center; }
+        .photo-lightbox-fullview.open { display: flex; }
+        .photo-lightbox-fullview img { max-width: 90vw; max-height: 85vh; object-fit: contain; border-radius: 8px; }
+        .photo-lightbox-fullview .nav-arrow { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; width: 50px; height: 50px; border-radius: 50%; font-size: 1.5rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.3s; }
+        .photo-lightbox-fullview .nav-arrow:hover { background: rgba(255,255,255,0.2); }
+        .photo-lightbox-fullview .nav-arrow.prev { left: 2rem; }
+        .photo-lightbox-fullview .nav-arrow.next { right: 2rem; }
+        .photo-lightbox-fullview .close-full { position: absolute; top: 1.5rem; right: 1.5rem; background: none; border: 1px solid rgba(255,255,255,0.2); color: white; width: 40px; height: 40px; border-radius: 50%; font-size: 1.2rem; cursor: pointer; }
+        @media (max-width: 768px) { .photo-lightbox-grid { grid-template-columns: repeat(2, 1fr); } .photo-lightbox-grid img { height: 180px; } }
+
+        /* ===== FURNITURE PHOTO GALLERY ===== */
+        .furniture-photo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 2rem; border-radius: 16px; overflow: hidden; }
+        .furniture-photo-grid img { width: 100%; height: 220px; object-fit: cover; cursor: pointer; transition: transform 0.3s, opacity 0.3s; }
+        .furniture-photo-grid img:hover { transform: scale(1.03); opacity: 0.9; }
+        .furniture-photo-more { text-align: center; margin-top: 1rem; }
+        .furniture-photo-more button { background: rgba(201,169,110,0.12); border: 1px solid rgba(201,169,110,0.25); color: var(--gold); padding: 0.6rem 2rem; border-radius: 50px; font-size: 0.75rem; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.3s; }
+        .furniture-photo-more button:hover { background: rgba(201,169,110,0.2); }
+        @media (max-width: 768px) { .furniture-photo-grid { grid-template-columns: repeat(2, 1fr); } .furniture-photo-grid img { height: 160px; } }
     </style>
 </head>
 <body>
@@ -322,7 +356,7 @@
 </div>
 
 <section class="section" style="padding-top: 2rem; padding-bottom: 3rem;">
-    <div class="photo-gallery">
+    <div class="photo-gallery" onclick="openPhotoLightbox('property')">
         <div class="photo-card">
             <img src="https://imgprd.condoblackbook.com/medium_A11978895_1_5daf4e5419.jpeg" alt="Main Living Room — Ocean View" loading="eager">
             <div class="photo-label" data-i18n="photo_label_living">Sala de Estar com Pé-Direito Duplo</div>
@@ -342,7 +376,7 @@
         <div class="photo-card">
             <img src="https://imgprd.condoblackbook.com/medium_A11978895_47_40cd8a9ad8.jpeg" alt="Master Suite" loading="lazy">
             <div class="photo-label" data-i18n="photo_master">Suíte Master</div>
-            <div class="photo-count-badge" data-i18n="photo_count">&#128247; 70+ Fotos Profissionais</div>
+            <div class="photo-count-badge" onclick="event.stopPropagation(); openPhotoLightbox('property')" data-i18n="photo_count">&#128247; 70+ Fotos Profissionais</div>
         </div>
     </div>
 </section>
@@ -586,6 +620,10 @@
             <div class="furniture-item-tag" data-i18n="fi4_tag">Automação Completa</div>
         </div>
     </div>
+    <div class="furniture-photo-grid" id="furniturePhotoGrid"></div>
+    <div class="furniture-photo-more" id="furnitureMoreBtn" style="display:none;">
+        <button onclick="showAllFurniturePhotos()" data-i18n="furn_view_all">Ver Todas as Fotos da Mobília</button>
+    </div>
 </section>
 
 <section class="section" style="background: var(--navy-light);">
@@ -629,12 +667,12 @@
             <div class="doc-desc" data-i18n="doc1_desc">Relatório completo da associação de condomínio incluindo finanças, reservas, litígios pendentes e avaliações especiais.</div>
             <div class="doc-badge available" data-i18n="doc1_badge">&#10003; Disponível</div>
         </div>
-        <div class="doc-card fade-in">
+        <a href="https://res.cloudinary.com/dqen6s67c/raw/upload/v1773779097/ts1-dashboard/condo-rider.pdf" target="_blank" class="doc-card fade-in" style="text-decoration:none;color:inherit;cursor:pointer;">
             <div class="doc-icon">&#128221;</div>
-            <div class="doc-name" data-i18n="doc2_name">Regulamento do Condomínio</div>
-            <div class="doc-desc" data-i18n="doc2_desc">Regras e regulamentos do Trump Royale, incluindo políticas de aluguel, animais de estimação e reformas.</div>
-            <div class="doc-badge pending" data-i18n="doc2_badge">&#9711; Em Preparação</div>
-        </div>
+            <div class="doc-name" data-i18n="doc2_name">Condo Rider</div>
+            <div class="doc-desc" data-i18n="doc2_desc">Artigos de incorporação e regulamento do condomínio Trump Royale.</div>
+            <div class="doc-badge available" data-i18n="doc2_badge">&#10003; Disponível</div>
+        </a>
     </div>
 </section>
 
@@ -699,6 +737,27 @@
     </div>
 </section>
 
+<!-- ===== PHOTO LIGHTBOX MODAL ===== -->
+<div class="photo-lightbox-overlay" id="photoLightbox">
+    <div class="photo-lightbox-header">
+        <div class="photo-lightbox-title" id="lightboxTitle">Professional Photos</div>
+        <button class="photo-lightbox-close" onclick="closePhotoLightbox()">&times;</button>
+    </div>
+    <div class="photo-lightbox-tabs">
+        <button class="photo-lightbox-tab active" onclick="switchPhotoTab('property')" id="tabProperty" data-i18n-tab-property>Imóvel</button>
+        <button class="photo-lightbox-tab" onclick="switchPhotoTab('amenities')" id="tabAmenities" data-i18n-tab-amenities>Amenidades</button>
+    </div>
+    <div class="photo-lightbox-body">
+        <div class="photo-lightbox-grid" id="lightboxGrid"></div>
+    </div>
+</div>
+<div class="photo-lightbox-fullview" id="photoFullview">
+    <button class="close-full" onclick="closeFullview()">&times;</button>
+    <button class="nav-arrow prev" onclick="navFullview(-1)">&#8249;</button>
+    <img id="fullviewImg" src="" alt="Full view">
+    <button class="nav-arrow next" onclick="navFullview(1)">&#8250;</button>
+</div>
+
 <div class="last-updated">
     <span class="live-dot"></span>
     <span data-i18n="last_updated">Painel atualizado em: 11 de Março, 2026 &bull; Dados atualizados a cada visita, oferta ou evento de mercado</span>
@@ -754,6 +813,7 @@ pt: {
     fi2_title: 'Acabamentos Florentinos Sob Medida', fi2_desc: 'Louças e acabamentos de banheiro sob medida, provenientes diretamente de artesãos de Florença, Itália.', fi2_tag: 'Importado Sob Medida',
     fi3_title: 'Sistema de Adega', fi3_desc: 'Armazenamento climatizado para 200+ garrafas de vinho, sistema de refrigeração profissional.', fi3_tag: 'Climatizado',
     fi4_title: 'Sistema de Casa Inteligente', fi4_desc: 'Automação residencial completa incluindo iluminação, clima, áudio e sistemas de segurança integrados em ambos os andares.', fi4_tag: 'Automação Completa',
+    furn_view_all: 'Ver Todas as Fotos da Mobília',
     analytics_eyebrow: 'Desempenho Digital', analytics_title: 'Análises Online', analytics_sub: 'Acompanhamento do desempenho do anúncio em todas as principais plataformas imobiliárias.',
     an_live: '&#9679; Ao Vivo', an_homes_views: 'Visualizações no Homes.com', an_zillow_views: 'Visualizações no Zillow',
     analytics_note: 'Visualizações sincronizadas automaticamente do Homes.com e Zillow a cada 4 horas. Sua assinatura premium do Homes.com inclui análises avançadas e tours 3D Matterport.',
@@ -776,7 +836,7 @@ pt: {
     // Documents
     docs_eyebrow: 'Documentos', docs_title: 'Documentos do Imóvel', docs_sub: 'Documentação relevante do imóvel, associação e regulamentos do edifício.',
     doc1_name: 'HOA Raider Report', doc1_desc: 'Relatório completo da associação de condomínio incluindo finanças, reservas, litígios pendentes e avaliações especiais.', doc1_badge: '&#10003; Disponível',
-    doc2_name: 'Regulamento do Condomínio', doc2_desc: 'Regras e regulamentos do Trump Royale, incluindo políticas de aluguel, animais de estimação e reformas.', doc2_badge: '&#9711; Em Preparação',
+    doc2_name: 'Condo Rider', doc2_desc: 'Artigos de incorporação e regulamento do condomínio Trump Royale.', doc2_badge: '&#10003; Disponível',
     // Expenses
     exp_eyebrow: 'Controle Financeiro', exp_title: 'Despesas do Imóvel', exp_sub: 'Acompanhamento mensal dos custos de manutenção do imóvel enquanto está no mercado.',
     exp_intro_title: '&#128161; Finalidade Desta Seção', exp_intro_text: 'Esta seção permite acompanhar todos os gastos mensais relacionados ao imóvel enquanto ele está à venda. Isso inclui condomínio (HOA), impostos, seguro, manutenção e outros custos. O objetivo é que você tenha visibilidade total dos custos de manutenção e possa tomar decisões informadas sobre preço e estratégia de venda.',
@@ -830,6 +890,7 @@ en: {
     fi2_title: 'Custom Florentine Vanities', fi2_desc: 'Bespoke bathroom fixtures and vanities sourced directly from artisans in Florence, Italy.', fi2_tag: 'Custom Imported',
     fi3_title: 'Wine Cellar System', fi3_desc: 'Climate-controlled wine storage with capacity for 200+ bottles, professional-grade cooling system.', fi3_tag: 'Climate Controlled',
     fi4_title: 'Smart Home System', fi4_desc: 'Full home automation including lighting, climate, audio, and security systems integrated throughout both floors.', fi4_tag: 'Full Automation',
+    furn_view_all: 'View All Furniture Photos',
     analytics_eyebrow: 'Digital Performance', analytics_title: 'Online Analytics', analytics_sub: 'Tracking listing performance across all major real estate platforms.',
     an_live: '&#9679; Live', an_homes_views: 'Homes.com Views', an_zillow_views: 'Zillow Views',
     analytics_note: 'Views auto-synced from Homes.com and Zillow every 4 hours. Your Homes.com premium membership includes enhanced listing analytics and Matterport 3D tours.',
@@ -852,7 +913,7 @@ en: {
     // Documents
     docs_eyebrow: 'Documents', docs_title: 'Property Documents', docs_sub: 'Relevant property documentation, association reports, and building regulations.',
     doc1_name: 'HOA Raider Report', doc1_desc: 'Complete condo association report including financials, reserves, pending litigation, and special assessments.', doc1_badge: '&#10003; Available',
-    doc2_name: 'Condo Rules & Regulations', doc2_desc: 'Trump Royale rules and regulations including rental, pet, and renovation policies.', doc2_badge: '&#9711; In Preparation',
+    doc2_name: 'Condo Rider', doc2_desc: 'Trump Royale articles of incorporation and condo rider document.', doc2_badge: '&#10003; Available',
     // Expenses
     exp_eyebrow: 'Financial Tracking', exp_title: 'Property Expenses', exp_sub: 'Monthly tracking of property holding costs while on the market.',
     exp_intro_title: '&#128161; Purpose of This Section', exp_intro_text: 'This section allows you to track all monthly expenses related to the property while it is listed for sale. This includes HOA fees, property taxes, insurance, maintenance, and other costs. The goal is to give you full visibility into holding costs so you can make informed decisions about pricing and sales strategy.',
@@ -1001,8 +1062,144 @@ function rebuildCharts() {
 
 rebuildCharts();
 
-// View counts are updated via scheduled task every 4 hours
-// The task scrapes Homes.com and Zillow, updates the HTML, and redeploys
+// ===== PHOTO LIGHTBOX =====
+const propertyPhotos = [
+    'https://imgprd.condoblackbook.com/medium_A11978895_1_5daf4e5419.jpeg',
+    'https://imgprd.condoblackbook.com/medium_A11978895_20_37a9a700db.jpeg',
+    'https://imgprd.condoblackbook.com/medium_A11978895_40_9d6a0253e2.jpeg',
+    'https://imgprd.condoblackbook.com/medium_A11978895_35_fb9401f863.jpeg',
+    'https://imgprd.condoblackbook.com/medium_A11978895_47_40cd8a9ad8.jpeg',
+    'https://imgprd.condoblackbook.com/medium_A11978895_2_3e4b37a5f2.jpeg',
+    'https://imgprd.condoblackbook.com/medium_A11978895_3_1e3815ff59.jpeg',
+    'https://imgprd.condoblackbook.com/medium_A11978895_4_abb1e7f04f.jpeg',
+    'https://imgprd.condoblackbook.com/medium_A11978895_5_8aa900e0b9.jpeg',
+    'https://imgprd.condoblackbook.com/medium_A11978895_6_30b1ff5b2b.jpeg',
+    'https://imgprd.condoblackbook.com/medium_A11978895_7_da5b21e5c0.jpeg',
+    'https://imgprd.condoblackbook.com/medium_A11978895_8_6a6c2d1324.jpeg',
+    'https://imgprd.condoblackbook.com/medium_A11978895_9_f456d1ea48.jpeg',
+    'https://imgprd.condoblackbook.com/medium_A11978895_10_05879e73b3.jpeg',
+    'https://imgprd.condoblackbook.com/medium_A11978895_11_6b2acb69ac.jpeg',
+    'https://imgprd.condoblackbook.com/medium_A11978895_12_3c5f7d9e8a.jpeg',
+    'https://imgprd.condoblackbook.com/medium_A11978895_13_a7b4c2d3e5.jpeg',
+    'https://imgprd.condoblackbook.com/medium_A11978895_14_f1e2d3c4b5.jpeg',
+    'https://imgprd.condoblackbook.com/medium_A11978895_15_9a8b7c6d5e.jpeg',
+    'https://imgprd.condoblackbook.com/medium_A11978895_16_4f3e2d1c0b.jpeg',
+    'https://imgprd.condoblackbook.com/medium_A11978895_17_c4d3e2f1a0.jpeg',
+    'https://imgprd.condoblackbook.com/medium_A11978895_18_b5a4c3d2e1.jpeg',
+    'https://imgprd.condoblackbook.com/medium_A11978895_19_e6d5c4b3a2.jpeg',
+    'https://imgprd.condoblackbook.com/medium_A11978895_21_a1b2c3d4e5.jpeg',
+    'https://imgprd.condoblackbook.com/medium_A11978895_22_f6e5d4c3b2.jpeg',
+    'https://imgprd.condoblackbook.com/medium_A11978895_23_1a2b3c4d5e.jpeg',
+    'https://imgprd.condoblackbook.com/medium_A11978895_24_6f5e4d3c2b.jpeg',
+    'https://imgprd.condoblackbook.com/medium_A11978895_25_b1a2c3d4e5.jpeg',
+    'https://imgprd.condoblackbook.com/medium_A11978895_30_d4c3b2a1f0.jpeg',
+    'https://imgprd.condoblackbook.com/medium_A11978895_32_a3b2c1d0e9.jpeg',
+    'https://imgprd.condoblackbook.com/medium_A11978895_33_e4d3c2b1a0.jpeg',
+    'https://imgprd.condoblackbook.com/medium_A11978895_34_f5e4d3c2b1.jpeg',
+    'https://imgprd.condoblackbook.com/medium_A11978895_36_c2d1e0f9a8.jpeg',
+    'https://imgprd.condoblackbook.com/medium_A11978895_37_b3c2d1e0f9.jpeg',
+    'https://imgprd.condoblackbook.com/medium_A11978895_38_a4b3c2d1e0.jpeg',
+    'https://imgprd.condoblackbook.com/medium_A11978895_39_f5e4d3c2b1.jpeg',
+    'https://imgprd.condoblackbook.com/medium_A11978895_41_c6d5e4f3a2.jpeg',
+    'https://imgprd.condoblackbook.com/medium_A11978895_42_b7c6d5e4f3.jpeg',
+    'https://imgprd.condoblackbook.com/medium_A11978895_43_a8b7c6d5e4.jpeg',
+    'https://imgprd.condoblackbook.com/medium_A11978895_44_f9a8b7c6d5.jpeg',
+    'https://imgprd.condoblackbook.com/medium_A11978895_45_e0f9a8b7c6.jpeg',
+    'https://imgprd.condoblackbook.com/medium_A11978895_46_d1e0f9a8b7.jpeg',
+    'https://imgprd.condoblackbook.com/medium_A11978895_48_b3c2d1e0f9.jpeg',
+    'https://imgprd.condoblackbook.com/medium_A11978895_49_a4b3c2d1e0.jpeg',
+    'https://imgprd.condoblackbook.com/medium_A11978895_50_f5e4d3c2b1.jpeg',
+];
+
+const amenityPhotos = [
+    'https://res.cloudinary.com/dqen6s67c/image/upload/v1773779106/ts1-dashboard/amenities/WhatsApp_Image_2026-03-17_at_9.03.42_AM.jpg',
+    'https://res.cloudinary.com/dqen6s67c/image/upload/v1773779102/ts1-dashboard/amenities/WhatsApp_Image_2026-03-17_at_9.03.42_AM__1_.jpg',
+    'https://res.cloudinary.com/dqen6s67c/image/upload/v1773779103/ts1-dashboard/amenities/WhatsApp_Image_2026-03-17_at_9.03.42_AM__2_.jpg',
+    'https://res.cloudinary.com/dqen6s67c/image/upload/v1773779104/ts1-dashboard/amenities/WhatsApp_Image_2026-03-17_at_9.03.42_AM__3_.jpg',
+    'https://res.cloudinary.com/dqen6s67c/image/upload/v1773779110/ts1-dashboard/amenities/WhatsApp_Image_2026-03-17_at_9.06.21_AM.jpg',
+    'https://res.cloudinary.com/dqen6s67c/image/upload/v1773779107/ts1-dashboard/amenities/WhatsApp_Image_2026-03-17_at_9.06.21_AM__1_.jpg',
+    'https://res.cloudinary.com/dqen6s67c/image/upload/v1773779108/ts1-dashboard/amenities/WhatsApp_Image_2026-03-17_at_9.06.21_AM__2_.jpg',
+    'https://res.cloudinary.com/dqen6s67c/image/upload/v1773779109/ts1-dashboard/amenities/WhatsApp_Image_2026-03-17_at_9.06.21_AM__3_.jpg',
+    'https://res.cloudinary.com/dqen6s67c/image/upload/v1773779110/ts1-dashboard/amenities/WhatsApp_Image_2026-03-17_at_9.06.21_AM__4_.jpg',
+];
+
+let currentLightboxPhotos = [];
+let currentFullIdx = 0;
+
+function openPhotoLightbox(tab) {
+    document.getElementById('photoLightbox').classList.add('open');
+    document.body.style.overflow = 'hidden';
+    switchPhotoTab(tab || 'property');
+}
+
+function closePhotoLightbox() {
+    document.getElementById('photoLightbox').classList.remove('open');
+    document.body.style.overflow = '';
+}
+
+function switchPhotoTab(tab) {
+    document.getElementById('tabProperty').classList.toggle('active', tab === 'property');
+    document.getElementById('tabAmenities').classList.toggle('active', tab === 'amenities');
+    currentLightboxPhotos = tab === 'property' ? propertyPhotos : amenityPhotos;
+    const grid = document.getElementById('lightboxGrid');
+    grid.innerHTML = currentLightboxPhotos.map((url, i) =>
+        `<img src="${url}" alt="Photo ${i+1}" loading="lazy" onclick="openFullview(${i})" onerror="this.style.display='none'">`
+    ).join('');
+}
+
+function openFullview(idx) {
+    currentFullIdx = idx;
+    const fv = document.getElementById('photoFullview');
+    document.getElementById('fullviewImg').src = currentLightboxPhotos[idx];
+    fv.classList.add('open');
+}
+
+function closeFullview() {
+    document.getElementById('photoFullview').classList.remove('open');
+}
+
+function navFullview(dir) {
+    currentFullIdx = (currentFullIdx + dir + currentLightboxPhotos.length) % currentLightboxPhotos.length;
+    document.getElementById('fullviewImg').src = currentLightboxPhotos[currentFullIdx];
+}
+
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { closeFullview(); closePhotoLightbox(); }
+    if (e.key === 'ArrowRight' && document.getElementById('photoFullview').classList.contains('open')) navFullview(1);
+    if (e.key === 'ArrowLeft' && document.getElementById('photoFullview').classList.contains('open')) navFullview(-1);
+});
+
+// ===== FURNITURE PHOTO GALLERY =====
+const FURNITURE_BASE = 'https://res.cloudinary.com/dqen6s67c/image/upload/ts1-dashboard/furniture/';
+const furnitureNums = [];
+for (let i = 2717; i <= 2764; i++) furnitureNums.push(i);
+for (let i = 2767; i <= 2813; i++) furnitureNums.push(i);
+const furniturePhotos = furnitureNums.map(n => FURNITURE_BASE + 'IMG_' + n + '.jpg');
+
+let furnitureShowAll = false;
+function renderFurniturePhotos() {
+    const grid = document.getElementById('furniturePhotoGrid');
+    const show = furnitureShowAll ? furniturePhotos : furniturePhotos.slice(0, 6);
+    grid.innerHTML = show.map((url, i) =>
+        `<img src="${url}" alt="Furniture ${i+1}" loading="lazy" onclick="openFurnitureFullview(${furnitureShowAll ? i : i})" onerror="this.style.display='none'">`
+    ).join('');
+    const btn = document.getElementById('furnitureMoreBtn');
+    btn.style.display = furnitureShowAll ? 'none' : 'block';
+}
+
+function showAllFurniturePhotos() {
+    furnitureShowAll = true;
+    renderFurniturePhotos();
+}
+
+function openFurnitureFullview(idx) {
+    currentLightboxPhotos = furnitureShowAll ? furniturePhotos : furniturePhotos.slice(0, 6);
+    currentFullIdx = idx;
+    document.getElementById('fullviewImg').src = currentLightboxPhotos[idx];
+    document.getElementById('photoFullview').classList.add('open');
+}
+
+renderFurniturePhotos();
 
 </script>
 </body>
