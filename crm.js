@@ -828,6 +828,7 @@ async function saveLead() {
       lead2.alertBaths = alertPrefs.bathsMin;
       lead2.alertFrequency = alertPrefs.frequency;
       lead2.alertCount = alertPrefs.count;
+      lead2.alertPolygon = alertPrefs.alertPolygon || '';
     }
   } catch (err) {
     console.warn('Alert preferences save failed:', err);
