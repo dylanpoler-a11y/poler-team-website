@@ -155,6 +155,41 @@ a { color: inherit; text-decoration: none; }
     text-align: center; line-height: 1.5;
 }
 
+/* Timeline pills in Step 1 */
+.timeline-field { margin-bottom: 0.75rem; }
+.timeline-label {
+    display: block;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 0.5rem;
+}
+.timeline-pills {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+.timeline-pill {
+    padding: 0.45rem 0.9rem;
+    border: 1.5px solid var(--border);
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    background: var(--bg-card);
+    transition: all 0.2s;
+    cursor: pointer;
+}
+.timeline-pill:hover {
+    border-color: var(--orange);
+    color: var(--orange);
+}
+.timeline-pill.selected {
+    background: var(--orange);
+    border-color: var(--orange);
+    color: #fff;
+}
+
 /* OTP digit boxes */
 .otp-inputs-wrap {
     display: flex;
@@ -612,9 +647,7 @@ a { color: inherit; text-decoration: none; }
     border-radius: var(--radius);
     padding: 1.25rem;
     background: var(--bg);
-    display: none;
 }
-.lookup-advanced.open { display: block; }
 .lookup-adv-hint {
     display: flex; align-items: center; gap: 0.4rem;
     font-size: 0.78rem; color: var(--text-muted); margin-bottom: 1rem;

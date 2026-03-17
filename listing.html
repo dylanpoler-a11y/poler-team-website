@@ -141,6 +141,18 @@
                         </select>
                         <input type="tel" id="lead-phone" placeholder="(555) 123-4567" data-i18n="phonePlaceholder" required autocomplete="tel">
                     </div>
+                    <!-- Timeline pills -->
+                    <div class="timeline-field">
+                        <label class="timeline-label">When do you plan to buy?</label>
+                        <div class="timeline-pills" id="timeline-pills">
+                            <button type="button" class="timeline-pill" data-value="0-3 months">0-3 Mo</button>
+                            <button type="button" class="timeline-pill" data-value="3-6 months">3-6 Mo</button>
+                            <button type="button" class="timeline-pill" data-value="6-12 months">6-12 Mo</button>
+                            <button type="button" class="timeline-pill" data-value="12+ months">12+ Mo</button>
+                        </div>
+                        <input type="hidden" id="lead-timeline" value="">
+                    </div>
+
                     <p class="lead-error" id="lead-error" style="display:none"></p>
                     <button type="submit" class="lead-submit" id="lead-submit-btn">
                         <span id="lead-submit-text" data-i18n="sendVerification">Send Verification Code</span>
@@ -179,79 +191,6 @@
                 </div>
             </div>
 
-            <!-- ── STEP 3 — Preference Questions ───────────────── -->
-            <div id="lead-step-3" style="display:none">
-                <h2 class="lead-title" data-i18n="prefStepTitle">Personalize Your Home Search</h2>
-                <p class="lead-subtitle" data-i18n="prefStepSubtitle">Tell us what you're looking for and we'll send you matching properties daily.</p>
-
-                <!-- Q1: Timeline -->
-                <div class="pref-field">
-                    <label class="pref-label" data-i18n="prefTimeline">How soon are you planning to buy?</label>
-                    <div class="pref-pills" id="pref-timeline-pills">
-                        <button type="button" class="pref-pill" data-value="0-3 months">0-3 mo</button>
-                        <button type="button" class="pref-pill" data-value="3-6 months">3-6 mo</button>
-                        <button type="button" class="pref-pill" data-value="6-12 months">6-12 mo</button>
-                        <button type="button" class="pref-pill" data-value="12+ months">12+ mo</button>
-                    </div>
-                </div>
-
-                <!-- Q2: Areas -->
-                <div class="pref-field">
-                    <label class="pref-label" data-i18n="prefAreas">What areas interest you?</label>
-                    <input type="text" id="pref-cities" class="pref-input"
-                           placeholder="Sunny Isles Beach, Hollywood, Miami Beach...">
-                </div>
-
-                <!-- Q3: Property Types -->
-                <div class="pref-field">
-                    <label class="pref-label" data-i18n="prefPropTypes">What property types?</label>
-                    <div class="pref-pills pref-pills-multi" id="pref-type-pills">
-                        <button type="button" class="pref-pill" data-value="Single Family">Single Family</button>
-                        <button type="button" class="pref-pill" data-value="Condo">Condo</button>
-                        <button type="button" class="pref-pill" data-value="Townhouse">Townhouse</button>
-                        <button type="button" class="pref-pill" data-value="Multi Family">Multifamily</button>
-                        <button type="button" class="pref-pill" data-value="Lot">Lot</button>
-                    </div>
-                </div>
-
-                <!-- Q4: Beds / Baths -->
-                <div class="pref-field">
-                    <label class="pref-label" data-i18n="prefBedsBaths">Minimum beds / baths</label>
-                    <div class="pref-row">
-                        <select id="pref-beds" class="pref-select">
-                            <option value="0">Beds: Any</option>
-                            <option value="1">1+ bed</option>
-                            <option value="2">2+ beds</option>
-                            <option value="3">3+ beds</option>
-                            <option value="4">4+ beds</option>
-                            <option value="5">5+ beds</option>
-                        </select>
-                        <span class="pref-sep">/</span>
-                        <select id="pref-baths" class="pref-select">
-                            <option value="0">Baths: Any</option>
-                            <option value="1">1+ bath</option>
-                            <option value="2">2+ baths</option>
-                            <option value="3">3+ baths</option>
-                            <option value="4">4+ baths</option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- Q5: Price Range -->
-                <div class="pref-field">
-                    <label class="pref-label" data-i18n="prefPrice">Price range</label>
-                    <div class="pref-row">
-                        <input type="number" id="pref-price-min" class="pref-input pref-half" placeholder="Min ($)">
-                        <span class="pref-sep">&mdash;</span>
-                        <input type="number" id="pref-price-max" class="pref-input pref-half" placeholder="Max ($)">
-                    </div>
-                </div>
-
-                <button type="button" class="lead-submit" id="pref-submit-btn">
-                    <span id="pref-submit-text" data-i18n="prefSubmit">Done</span>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-                </button>
-            </div>
 
         </div>
     </div>

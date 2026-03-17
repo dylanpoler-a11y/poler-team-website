@@ -132,6 +132,15 @@ function initLeadCapture() {
         }, 80);
     }
 
+    // ── Timeline pills (single-select) ────────────────────────
+    document.querySelectorAll('#timeline-pills .timeline-pill').forEach(pill => {
+        pill.addEventListener('click', () => {
+            document.querySelectorAll('#timeline-pills .timeline-pill').forEach(p => p.classList.remove('selected'));
+            pill.classList.add('selected');
+            document.getElementById('lead-timeline').value = pill.dataset.value;
+        });
+    });
+
     // ── STEP 1: Info form → send OTP (or skip for Brazil) ────
     const form      = document.getElementById('lead-form');
     const submitBtn = document.getElementById('lead-submit-btn');
@@ -345,6 +354,7 @@ async function completeLead(overlay, pageWrap) {
     // Save lead to Airtable CRM and capture alert token
     const langParam = new URLSearchParams(window.location.search).get('lang') || 'en';
     try {
+        const timeline = document.getElementById('lead-timeline')?.value || '';
         const saveRes = await fetch(`${OTP_BASE}/api/save-lead`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -357,6 +367,7 @@ async function completeLead(overlay, pageWrap) {
                 listingPrice:   heroListing ? (heroListing.ListPrice || 0) : 0,
                 sourceUrl:      window.location.href,
                 language:       langParam,
+                timeline,
                 ...utmData,
             }),
         });
@@ -395,93 +406,7 @@ async function completeLead(overlay, pageWrap) {
     localStorage.setItem('poler_lead_v1', email);
     leadCaptured = true;
 
-    // Show Step 3 (preference questions) instead of unlocking immediately
-    showPreferenceStep(overlay, pageWrap);
-}
-
-// ── Step 3 — Preference questions before unlocking ──────────
-function showPreferenceStep(overlay, pageWrap) {
-    document.getElementById('lead-step-1').style.display = 'none';
-    document.getElementById('lead-step-2').style.display = 'none';
-    const step3 = document.getElementById('lead-step-3');
-    step3.style.display = 'block';
-
-    // Timeline pills — single-select
-    document.querySelectorAll('#pref-timeline-pills .pref-pill').forEach(pill => {
-        pill.addEventListener('click', () => {
-            document.querySelectorAll('#pref-timeline-pills .pref-pill').forEach(p => p.classList.remove('selected'));
-            pill.classList.add('selected');
-        });
-    });
-
-    // Property type pills — multi-select toggle
-    document.querySelectorAll('#pref-type-pills .pref-pill').forEach(pill => {
-        pill.addEventListener('click', () => pill.classList.toggle('selected'));
-    });
-
-    // Submit
-    document.getElementById('pref-submit-btn').addEventListener('click', () => savePreferencesAndUnlock(overlay, pageWrap));
-
-    // Apply i18n to new elements
-    if (typeof applyI18n === 'function') applyI18n();
-}
-
-async function savePreferencesAndUnlock(overlay, pageWrap) {
-    const submitBtn = document.getElementById('pref-submit-btn');
-    const submitTxt = document.getElementById('pref-submit-text');
-
-    submitBtn.disabled = true;
-    submitTxt.textContent = t('prefSaving') || 'Saving...';
-
-    // Gather values
-    const timelinePill = document.querySelector('#pref-timeline-pills .pref-pill.selected');
-    const buyTimeline = timelinePill ? timelinePill.dataset.value : '';
-
-    const cities = document.getElementById('pref-cities').value.trim();
-
-    const propertyTypes = [];
-    document.querySelectorAll('#pref-type-pills .pref-pill.selected').forEach(p => propertyTypes.push(p.dataset.value));
-
-    const priceMin = Number(document.getElementById('pref-price-min').value) || 0;
-    const priceMax = Number(document.getElementById('pref-price-max').value) || 0;
-
-    const token = localStorage.getItem('poler_alert_token');
-    if (!token) {
-        unlockPage(overlay, pageWrap);
-        return;
-    }
-
-    const bedsMin  = Number(document.getElementById('pref-beds').value)  || 0;
-    const bathsMin = Number(document.getElementById('pref-baths').value) || 0;
-
-    const langParam = new URLSearchParams(window.location.search).get('lang') || 'en';
-
-    const payload = {
-        token,
-        alertActive: true,
-        propertyTypes,
-        cities,
-        priceMin,
-        priceMax,
-        bedsMin,
-        bathsMin,
-        frequency: 'Daily',
-        count: 5,
-        preferredLanguage: langParam,
-    };
-    if (buyTimeline) payload.buyTimeline = buyTimeline;
-
-    try {
-        await fetch(`${OTP_BASE}/api/update-preferences`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
-        });
-    } catch (err) {
-        console.warn('Preferences save error:', err);
-    }
-
-    // Always unlock regardless of save result
+    // Unlock immediately after OTP verification (no more Step 3)
     unlockPage(overlay, pageWrap);
 }
 
@@ -936,44 +861,6 @@ function sendHeroAgentMessage() {
 // PROPERTY LOOKUP — MLS # or Address (like Deal Analyzer)
 // ============================================================
 function initLookup() {
-    // Advanced address toggle
-    const toggle    = document.getElementById('lookup-adv-toggle');
-    const panel     = document.getElementById('lookup-advanced');
-    const label     = document.getElementById('lookup-adv-label');
-    const chevron   = document.getElementById('lookup-adv-chevron');
-
-    toggle.addEventListener('click', () => {
-        const open = panel.classList.toggle('open');
-        label.textContent = open ? t('hideAdvSearch') : t('showAdvSearch');
-        chevron.style.transform = open ? 'rotate(180deg)' : '';
-        toggle.setAttribute('aria-expanded', open);
-    });
-
-    // MLS # lookup
-    const mlsInput = document.getElementById('lookup-mls');
-    const mlsBtn   = document.getElementById('lookup-mls-btn');
-
-    async function lookupByMls() {
-        const id = mlsInput.value.trim();
-        if (!id) return;
-        mlsBtn.disabled = true;
-        mlsBtn.textContent = 'Looking up...';
-        showLookupLoading();
-        try {
-            const data = await apiFetch({ ListingId: id, limit: 1 });
-            const listing = data.success && data.bundle && data.bundle[0];
-            listing ? showLookupResult(listing) : showLookupError(`No listing found for MLS # ${id}`);
-        } catch (err) {
-            showLookupError('Lookup failed. Please check the MLS # and try again.');
-        } finally {
-            mlsBtn.disabled = false;
-            mlsBtn.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> Auto-Fill`;
-        }
-    }
-
-    mlsBtn.addEventListener('click', lookupByMls);
-    mlsInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); lookupByMls(); } });
-
     // Address lookup
     const advBtn = document.getElementById('lookup-adv-btn');
 
