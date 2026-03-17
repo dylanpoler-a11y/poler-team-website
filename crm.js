@@ -885,11 +885,24 @@ function initAlertMap(lead) {
   if (!container || typeof L === 'undefined') return;
 
   // Initialize map centered on South Florida
-  alertMap = L.map('alert-map', { zoomControl: true }).setView([25.9, -80.15], 11);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; OpenStreetMap',
-    maxZoom: 18,
+  alertMap = L.map('alert-map', {
+    zoomControl: true,
+    scrollWheelZoom: true,
+    doubleClickZoom: true,
+    dragging: true,
+    tap: true,
+  }).setView([25.9, -80.15], 11);
+
+  // Use CartoDB Positron tiles (faster, lighter than OSM)
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; <a href="https://carto.com/">CARTO</a>',
+    subdomains: 'abcd',
+    maxZoom: 19,
   }).addTo(alertMap);
+
+  // Force map to recalculate size after panel animation completes
+  setTimeout(() => { if (alertMap) alertMap.invalidateSize(); }, 350);
+  setTimeout(() => { if (alertMap) alertMap.invalidateSize(); }, 700);
 
   // Drawn items layer
   const drawnItems = new L.FeatureGroup();

@@ -9,6 +9,24 @@
 
 export const config = { runtime: 'edge' };
 
+// ISO 2-letter code → country name (matches listing.html dropdown)
+const ISO_COUNTRY = {
+    US:'United States',AL:'Albania',AG:'Antigua and Barbuda',AR:'Argentina',AW:'Aruba',
+    AT:'Austria',BS:'Bahamas',BB:'Barbados',BE:'Belgium',BZ:'Belize',BO:'Bolivia',
+    BR:'Brazil',BG:'Bulgaria',CA:'Canada',KY:'Cayman Islands',CL:'Chile',CO:'Colombia',
+    CR:'Costa Rica',HR:'Croatia',CU:'Cuba',CW:'Curacao',CY:'Cyprus',CZ:'Czech Republic',
+    DK:'Denmark',DM:'Dominica',DO:'Dominican Republic',EC:'Ecuador',SV:'El Salvador',
+    EE:'Estonia',FI:'Finland',FR:'France',DE:'Germany',GR:'Greece',GD:'Grenada',
+    GT:'Guatemala',GY:'Guyana',HT:'Haiti',HN:'Honduras',HU:'Hungary',IS:'Iceland',
+    IE:'Ireland',IT:'Italy',JM:'Jamaica',LV:'Latvia',LT:'Lithuania',LU:'Luxembourg',
+    MT:'Malta',MX:'Mexico',NL:'Netherlands',NI:'Nicaragua',NO:'Norway',PA:'Panama',
+    PY:'Paraguay',PE:'Peru',PL:'Poland',PT:'Portugal',PR:'Puerto Rico',RO:'Romania',
+    RS:'Serbia',SK:'Slovakia',SI:'Slovenia',ES:'Spain',KN:'Saint Kitts and Nevis',
+    LC:'Saint Lucia',VC:'Saint Vincent',SR:'Suriname',SE:'Sweden',CH:'Switzerland',
+    TT:'Trinidad and Tobago',TR:'Turkey',UA:'Ukraine',UK:'United Kingdom',UY:'Uruguay',
+    VE:'Venezuela',
+};
+
 // Detect country from phone number country code
 function detectCountry(phone) {
     if (!phone) return '';
@@ -100,6 +118,7 @@ export default async function handler(req) {
         fbclid         = '',
         language       = 'en',
         timeline       = '',
+        countryIso     = '',
     } = body;
 
     // Build UTM summary string for CRM (e.g. "facebook / cpc / miami-luxury-q1")
@@ -128,8 +147,8 @@ export default async function handler(req) {
         ...(timeline && { 'Timeline': timeline }),
     };
 
-    // Detect country from phone number
-    const country = detectCountry(phone);
+    // Detect country: prefer ISO code from dropdown, fallback to phone prefix
+    const country = (countryIso && ISO_COUNTRY[countryIso.toUpperCase()]) || detectCountry(phone);
 
     // Auto-assign agent: Brazil → Rosa, others → Kevin/Dylan (deterministic hash split)
     let assignedTo = '';

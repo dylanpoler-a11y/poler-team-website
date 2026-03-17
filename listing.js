@@ -192,8 +192,13 @@ function initLeadCapture() {
         const last  = document.getElementById('lead-last').value.trim();
         const email = document.getElementById('lead-email').value.trim();
         const localPhone = document.getElementById('lead-phone').value.trim();
-        const countryCode = document.getElementById('country-code').value.replace(/[^+\d]/g, ''); // strip "CA" suffix etc.
+        const ccSelect = document.getElementById('country-code');
+        const countryCode = ccSelect.value.replace(/[^+\d]/g, ''); // strip "CA" suffix etc.
         const phone = countryCode + localPhone.replace(/\D/g, ''); // e.g. "+5511987654321"
+        // Extract country name from selected option text, e.g. "🇧🇷 +55 (BR)" → "BR"
+        const ccText = ccSelect.options[ccSelect.selectedIndex]?.text || '';
+        const isoMatch = ccText.match(/\(([A-Z]{2})\)/);
+        const countryIso = isoMatch ? isoMatch[1] : '';
 
         if (!first || !last || !email || !localPhone) {
             showLeadError('lead-error', t('errFillAll'));
@@ -215,7 +220,7 @@ function initLeadCapture() {
         // ── Brazil visitors: skip OTP, go straight to lead capture ──
         if (skipOtp) {
             submitTxt.textContent = t('submitting');
-            leadFormData = { first, last, email, phone, normalizedPhone: phone };
+            leadFormData = { first, last, email, phone, normalizedPhone: phone, countryIso };
             try {
                 await completeLead(overlay, pageWrap);
             } catch (err) {
@@ -245,7 +250,7 @@ function initLeadCapture() {
             }
 
             // Store lead info for step 2
-            leadFormData = { first, last, email, phone, normalizedPhone: data.phone };
+            leadFormData = { first, last, email, phone, normalizedPhone: data.phone, countryIso };
 
             // Show OTP step
             document.getElementById('lead-step-1').style.display = 'none';
@@ -397,6 +402,7 @@ async function completeLead(overlay, pageWrap) {
                 last,
                 email,
                 phone:          leadFormData.normalizedPhone,
+                countryIso:     leadFormData.countryIso || '',
                 listingAddress: heroListing ? (heroListing.UnparsedAddress || heroListing.City || '') : '',
                 listingPrice:   heroListing ? (heroListing.ListPrice || 0) : 0,
                 sourceUrl:      window.location.href,

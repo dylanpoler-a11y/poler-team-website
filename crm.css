@@ -959,11 +959,18 @@ body {
 
 /* ── ALERT MAP ─────────────────────────────────────────────── */
 .alert-map {
-  height: 300px;
+  height: 350px;
+  width: 100%;
   border-radius: 8px;
   border: 1px solid #e5e7eb;
   margin-top: 0.5rem;
   z-index: 0;
+  position: relative;
+}
+/* Keep Leaflet draw toolbar inside the map container */
+.alert-map .leaflet-draw-toolbar,
+.alert-map .leaflet-control {
+  z-index: 1 !important;
 }
 .alert-map-clear-btn {
   display: inline-block;
