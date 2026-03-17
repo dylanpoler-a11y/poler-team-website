@@ -8,6 +8,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="crm.css" />
+  <!-- Leaflet for alert map drawing -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
 </head>
 <body>
 
@@ -357,6 +360,12 @@
           </select>
         </div>
 
+        <div class="panel-field">
+          <div class="panel-field-label">Alert Area (optional — draw on map)</div>
+          <div id="alert-map" class="alert-map"></div>
+          <button id="alert-map-clear" class="alert-map-clear-btn" type="button">Clear Drawing</button>
+        </div>
+
         <div class="alert-action-row">
           <button id="panel-alert-send-now" class="alert-action-btn" type="button">Send Test Alert</button>
           <button id="panel-alert-copy-link" class="alert-action-btn secondary" type="button">Copy Link</button>
@@ -441,6 +450,8 @@
 
   </aside>
 
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
   <script src="crm.js" defer></script>
 </body>
 </html>

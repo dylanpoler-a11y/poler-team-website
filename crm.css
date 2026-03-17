@@ -957,6 +957,31 @@ body {
   font-weight: 500;
 }
 
+/* ── ALERT MAP ─────────────────────────────────────────────── */
+.alert-map {
+  height: 300px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  margin-top: 0.5rem;
+  z-index: 0;
+}
+.alert-map-clear-btn {
+  display: inline-block;
+  margin-top: 0.4rem;
+  padding: 0.3rem 0.8rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #dc2626;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.alert-map-clear-btn:hover {
+  background: #fee2e2;
+}
+
 /* ── REMINDER BADGE ───────────────────────────────────────── */
 .reminder-badge {
   display: inline-flex;

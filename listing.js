@@ -27,6 +27,24 @@ const API_BASE   = 'https://api.bridgedataoutput.com/api/v2/miamire';
 const OTP_BASE   = 'https://poler-team-website-two.vercel.app'; // Vercel project with Twilio env vars
 const PAGE_SIZE  = 12;
 
+// South Florida cities whitelist (Florida City through Fort Lauderdale + surrounding)
+const SOUTH_FL_CITIES = [
+    'Florida City', 'Homestead', 'Cutler Bay', 'Palmetto Bay', 'Pinecrest',
+    'South Miami', 'Coral Gables', 'Coconut Grove', 'Miami', 'Miami Beach',
+    'Surfside', 'Bal Harbour', 'Bay Harbor Islands', 'Indian Creek',
+    'North Bay Village', 'North Miami', 'North Miami Beach',
+    'Sunny Isles Beach', 'Aventura', 'Golden Beach', 'Hallandale Beach',
+    'Hollywood', 'Dania Beach', 'Fort Lauderdale', 'Oakland Park',
+    'Pompano Beach', 'Key Biscayne', 'Doral', 'Hialeah', 'Hialeah Gardens',
+    'Miami Gardens', 'Opa-locka', 'Miami Lakes', 'Miami Springs',
+    'Miramar', 'Pembroke Pines', 'Weston', 'Davie', 'Plantation',
+    'Sunrise', 'Lauderhill', 'Lauderdale Lakes', 'Tamarac',
+    'Coral Springs', 'Margate', 'Coconut Creek', 'Wilton Manors',
+    'Lauderdale-by-the-Sea', 'Lighthouse Point', 'Boca Raton',
+    'Delray Beach', 'Boynton Beach', 'Lake Worth Beach',
+    'West Palm Beach', 'Palm Beach', 'Deerfield Beach',
+];
+
 // ============================================================
 // UTM / AD TRACKING
 // ============================================================
@@ -63,7 +81,23 @@ function formatPrice(price) {
 
 function getPhoto(listing) {
     const m = listing && listing.Media;
-    return (m && m.length) ? m[0].MediaURL : null;
+    if (!m || !m.length) return null;
+
+    const subType = listing.PropertySubType || '';
+    const isHouse = subType.includes('Single Family') || subType.includes('Multi Family');
+    const isCondo = subType.includes('Condominium') || subType.includes('Townhouse');
+
+    if (isHouse) {
+        // Prefer exterior/front photo for houses
+        const ext = m.find(p => p.MediaCategory && /exterior|front/i.test(p.MediaCategory));
+        if (ext && ext.MediaURL) return ext.MediaURL;
+    } else if (isCondo) {
+        // Prefer interior/living room photo for condos
+        const int = m.find(p => p.MediaCategory && /interior|living/i.test(p.MediaCategory));
+        if (int && int.MediaURL) return int.MediaURL;
+    }
+
+    return m[0].MediaURL;
 }
 
 function getAllPhotos(listing) {
@@ -1121,7 +1155,7 @@ async function fetchCuratedListings() {
             ranges.map(r => apiFetch({
                 ...r,
                 StandardStatus: 'Active',
-                limit: 4,
+                limit: 8,
             }))
         );
 
@@ -1131,6 +1165,9 @@ async function fetchCuratedListings() {
                 all = all.concat(r.value.bundle);
             }
         });
+
+        // Filter to South Florida cities only
+        all = all.filter(l => l.City && SOUTH_FL_CITIES.includes(l.City));
 
         // Fisher-Yates shuffle
         for (let i = all.length - 1; i > 0; i--) {

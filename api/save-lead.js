@@ -99,6 +99,7 @@ export default async function handler(req) {
         utm_term       = '',
         fbclid         = '',
         language       = 'en',
+        timeline       = '',
     } = body;
 
     // Build UTM summary string for CRM (e.g. "facebook / cpc / miami-luxury-q1")
@@ -124,6 +125,7 @@ export default async function handler(req) {
         'Created At':      new Date().toISOString(),
         'Alert Token':     alertToken,
         'Preferred Language': language,
+        ...(timeline && { 'Timeline': timeline }),
     };
 
     // Detect country from phone number
