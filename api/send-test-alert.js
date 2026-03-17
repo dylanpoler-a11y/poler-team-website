@@ -112,7 +112,6 @@ async function fetchBridgeListings(token, lead) {
     const cities = (lead.cities || '').split(',').map(s => s.trim()).filter(Boolean).map(toTitleCase);
     const count = lead.count || 5;
 
-    // Map property types to Bridge API PropertySubType values
     const typeMap = {
         'Single Family': 'Single Family Residence',
         'Condo':         'Condominium',
@@ -120,62 +119,56 @@ async function fetchBridgeListings(token, lead) {
         'Multi Family':  'Multi Family',
     };
 
-    const params = new URLSearchParams({
-        access_token:  token,
-        limit:         String(count * 2), // Fetch extra to ensure we have enough after dedup
-        sortBy:        'ModificationTimestamp',
-        order:         'desc',
-        PropertyType:  'Residential',
+    const baseParams = new URLSearchParams({
+        access_token:   token,
+        limit:          String(count * 2),
+        sortBy:         'ModificationTimestamp',
+        order:          'desc',
+        PropertyType:   'Residential',
         StandardStatus: 'Active',
     });
 
-    // Property sub-types
-    if (lead.types.length === 1) {
-        const mapped = typeMap[lead.types[0]] || lead.types[0];
-        params.set('PropertySubType', mapped);
-    }
+    if (lead.priceMin > 0) baseParams.set('ListPrice.gte', String(lead.priceMin));
+    if (lead.priceMax > 0) baseParams.set('ListPrice.lte', String(lead.priceMax));
+    if (lead.bedsMin > 0) baseParams.set('BedroomsTotal.gte', String(lead.bedsMin));
+    if (lead.bathsMin > 0) baseParams.set('BathroomsTotalInteger.gte', String(lead.bathsMin));
 
-    // Price range
-    if (lead.priceMin > 0) params.set('ListPrice.gte', String(lead.priceMin));
-    if (lead.priceMax > 0) params.set('ListPrice.lte', String(lead.priceMax));
+    // Map property types to API values
+    const mappedTypes = (lead.types || []).map(t => typeMap[t] || t).filter(Boolean);
+    const effectiveCities = cities.length > 0 ? cities : [null]; // null = no city filter
 
-    // Beds / baths
-    if (lead.bedsMin > 0) params.set('BedroomsTotal.gte', String(lead.bedsMin));
-    if (lead.bathsMin > 0) params.set('BathroomsTotalInteger.gte', String(lead.bathsMin));
-
-    let allListings = [];
-
-    if (cities.length > 1) {
-        // Multiple cities: parallel requests
-        const requests = cities.map(city => {
-            const cityParams = new URLSearchParams(params);
-            cityParams.set('City', city);
-            return fetch(`https://api.bridgedataoutput.com/api/v2/miamire/listings?${cityParams}`)
-                .then(r => r.ok ? r.json() : { bundle: [] })
-                .then(d => (d.success !== false && Array.isArray(d.bundle)) ? d.bundle : []);
-        });
-        const results = await Promise.all(requests);
-        allListings = results.flat();
-        // Sort by newest first
-        allListings.sort((a, b) => new Date(b.ModificationTimestamp || 0) - new Date(a.ModificationTimestamp || 0));
-    } else {
-        if (cities.length === 1) params.set('City', cities[0]);
-        const res = await fetch(`https://api.bridgedataoutput.com/api/v2/miamire/listings?${params}`);
-        if (res.ok) {
-            const data = await res.json();
-            allListings = (data.success !== false && Array.isArray(data.bundle)) ? data.bundle : [];
+    // Build one request per city × type combination for targeted results
+    const requests = [];
+    for (const city of effectiveCities) {
+        if (mappedTypes.length > 0) {
+            for (const subType of mappedTypes) {
+                const p = new URLSearchParams(baseParams);
+                p.set('PropertySubType', subType);
+                if (city) p.set('City', city);
+                requests.push(
+                    fetch(`https://api.bridgedataoutput.com/api/v2/miamire/listings?${p}`)
+                        .then(r => r.ok ? r.json() : { bundle: [] })
+                        .then(d => (d.success !== false && Array.isArray(d.bundle)) ? d.bundle : [])
+                        .catch(() => [])
+                );
+            }
+        } else {
+            const p = new URLSearchParams(baseParams);
+            if (city) p.set('City', city);
+            requests.push(
+                fetch(`https://api.bridgedataoutput.com/api/v2/miamire/listings?${p}`)
+                    .then(r => r.ok ? r.json() : { bundle: [] })
+                    .then(d => (d.success !== false && Array.isArray(d.bundle)) ? d.bundle : [])
+                    .catch(() => [])
+            );
         }
     }
 
-    // Filter for multiple property types client-side if needed
-    if (lead.types.length > 1) {
-        const mappedTypes = lead.types.map(t => (typeMap[t] || t).toLowerCase());
-        allListings = allListings.filter(l =>
-            mappedTypes.some(mt => (l.PropertySubType || '').toLowerCase().includes(mt))
-        );
-    }
+    const results = await Promise.all(requests);
+    let allListings = results.flat();
+    allListings.sort((a, b) => new Date(b.ModificationTimestamp || 0) - new Date(a.ModificationTimestamp || 0));
 
-    // Return top N unique listings
+    // Deduplicate
     const seen = new Set();
     const unique = [];
     for (const l of allListings) {

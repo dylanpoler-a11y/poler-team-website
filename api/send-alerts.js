@@ -198,7 +198,7 @@ async function fetchBridgeListings(token, lead) {
         'Multi Family':  'Multi Family',
     };
 
-    const params = new URLSearchParams({
+    const baseParams = new URLSearchParams({
         access_token:   token,
         limit:          String(count * 2),
         sortBy:         'ModificationTimestamp',
@@ -207,44 +207,48 @@ async function fetchBridgeListings(token, lead) {
         StandardStatus: 'Active',
     });
 
-    if (lead.types.length === 1) {
-        const mapped = typeMap[lead.types[0]] || lead.types[0];
-        params.set('PropertySubType', mapped);
-    }
-    if (lead.priceMin > 0) params.set('ListPrice.gte', String(lead.priceMin));
-    if (lead.priceMax > 0) params.set('ListPrice.lte', String(lead.priceMax));
-    if (lead.bedsMin > 0) params.set('BedroomsTotal.gte', String(lead.bedsMin));
-    if (lead.bathsMin > 0) params.set('BathroomsTotalInteger.gte', String(lead.bathsMin));
+    if (lead.priceMin > 0) baseParams.set('ListPrice.gte', String(lead.priceMin));
+    if (lead.priceMax > 0) baseParams.set('ListPrice.lte', String(lead.priceMax));
+    if (lead.bedsMin > 0) baseParams.set('BedroomsTotal.gte', String(lead.bedsMin));
+    if (lead.bathsMin > 0) baseParams.set('BathroomsTotalInteger.gte', String(lead.bathsMin));
 
-    let allListings = [];
+    // Map property types to API values
+    const mappedTypes = (lead.types || []).map(t => typeMap[t] || t).filter(Boolean);
+    const effectiveCities = cities.length > 0 ? cities : [null]; // null = no city filter
 
-    if (cities.length > 1) {
-        const requests = cities.map(city => {
-            const cityParams = new URLSearchParams(params);
-            cityParams.set('City', city);
-            return fetch(`https://api.bridgedataoutput.com/api/v2/miamire/listings?${cityParams}`)
-                .then(r => r.ok ? r.json() : { bundle: [] })
-                .then(d => (d.success !== false && Array.isArray(d.bundle)) ? d.bundle : []);
-        });
-        const results = await Promise.all(requests);
-        allListings = results.flat();
-        allListings.sort((a, b) => new Date(b.ModificationTimestamp || 0) - new Date(a.ModificationTimestamp || 0));
-    } else {
-        if (cities.length === 1) params.set('City', cities[0]);
-        const res = await fetch(`https://api.bridgedataoutput.com/api/v2/miamire/listings?${params}`);
-        if (res.ok) {
-            const data = await res.json();
-            allListings = (data.success !== false && Array.isArray(data.bundle)) ? data.bundle : [];
+    // Build one request per city × type combination for targeted results
+    const requests = [];
+    for (const city of effectiveCities) {
+        if (mappedTypes.length > 0) {
+            for (const subType of mappedTypes) {
+                const p = new URLSearchParams(baseParams);
+                p.set('PropertySubType', subType);
+                if (city) p.set('City', city);
+                requests.push(
+                    fetch(`https://api.bridgedataoutput.com/api/v2/miamire/listings?${p}`)
+                        .then(r => r.ok ? r.json() : { bundle: [] })
+                        .then(d => (d.success !== false && Array.isArray(d.bundle)) ? d.bundle : [])
+                        .catch(() => [])
+                );
+            }
+        } else {
+            // No type filter — fetch all residential
+            const p = new URLSearchParams(baseParams);
+            if (city) p.set('City', city);
+            requests.push(
+                fetch(`https://api.bridgedataoutput.com/api/v2/miamire/listings?${p}`)
+                    .then(r => r.ok ? r.json() : { bundle: [] })
+                    .then(d => (d.success !== false && Array.isArray(d.bundle)) ? d.bundle : [])
+                    .catch(() => [])
+            );
         }
     }
 
-    if (lead.types.length > 1) {
-        const mappedTypes = lead.types.map(t => (typeMap[t] || t).toLowerCase());
-        allListings = allListings.filter(l =>
-            mappedTypes.some(mt => (l.PropertySubType || '').toLowerCase().includes(mt))
-        );
-    }
+    const results = await Promise.all(requests);
+    let allListings = results.flat();
+    allListings.sort((a, b) => new Date(b.ModificationTimestamp || 0) - new Date(a.ModificationTimestamp || 0));
 
+    // Deduplicate
     const seen = new Set();
     const unique = [];
     for (const l of allListings) {
