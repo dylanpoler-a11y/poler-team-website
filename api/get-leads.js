@@ -91,6 +91,7 @@ export default async function handler(req) {
             alertPolygon:       r.fields['Alert Polygon'] || '',
             preferredLanguage:  r.fields['Preferred Language'] || 'en',
             country:            r.fields['Country'] || '',
+            timeline:           r.fields['Timeline'] || '',
             assignedTo:         r.fields['Assigned To'] || '',
         })));
 

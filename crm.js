@@ -592,6 +592,7 @@ function renderTable() {
         <td class="td-muted">${escHtml(lead.email || '—')}</td>
         <td class="td-property" title="${escHtml(lead.listingAddress || '')}">${property}</td>
         <td class="td-muted">${escHtml(lead.country || '—')}</td>
+        <td class="td-muted">${escHtml(lead.timeline || '—')}</td>
         <td class="td-muted">${escHtml(lead.assignedTo || '—')}</td>
         <td><span class="status-badge ${statusClass}">${escHtml(statusVal)}</span></td>
         <td class="td-alerts">${alertSummary}</td>
@@ -1087,7 +1088,7 @@ async function copyPreferencesLink() {
 function exportCSV() {
   const headers = [
     'Name', 'First Name', 'Last Name', 'Email', 'Phone',
-    'Country', 'Assigned To', 'Status', 'Listing Address', 'Listing Price',
+    'Country', 'Buy Timeline', 'Assigned To', 'Status', 'Listing Address', 'Listing Price',
     'Source URL', 'Notes', 'Registered'
   ];
 
@@ -1098,6 +1099,7 @@ function exportCSV() {
     l.email,
     l.phone,
     l.country,
+    l.timeline,
     l.assignedTo,
     l.status,
     l.listingAddress,

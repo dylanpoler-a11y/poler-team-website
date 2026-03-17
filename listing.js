@@ -204,6 +204,11 @@ function initLeadCapture() {
             showLeadError('lead-error', t('errFillAll'));
             return;
         }
+        const timeline = document.getElementById('lead-timeline')?.value || '';
+        if (!timeline) {
+            showLeadError('lead-error', t('errSelectTimeline') || 'Please select when you plan to buy');
+            return;
+        }
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
             showLeadError('lead-error', t('errInvalidEmail'));
             return;
