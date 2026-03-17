@@ -1687,7 +1687,7 @@ document.head.appendChild(spinStyle);
         showTyping();
 
         try {
-            const res = await fetch('/api/chat', {
+            const res = await fetch(`${OTP_BASE}/api/chat`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
