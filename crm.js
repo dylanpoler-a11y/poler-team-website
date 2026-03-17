@@ -706,6 +706,9 @@ function openPanel(id) {
   });
   toggleAlertFields(lead.alertActive);
 
+  // Initialize alert map
+  initAlertMap(lead);
+
   // Reset alert status
   const alertStatus = document.getElementById('panel-alert-status');
   alertStatus.style.display = 'none';
@@ -843,7 +846,7 @@ function toggleAlertFields(active) {
 function getAlertPrefsFromPanel() {
   const types = [];
   document.querySelectorAll('#panel-alert-types input:checked').forEach(cb => types.push(cb.value));
-  return {
+  const prefs = {
     alertActive:    document.getElementById('panel-alert-active').checked,
     propertyTypes:  types,
     cities:         document.getElementById('panel-alert-cities').value.trim(),
@@ -854,6 +857,109 @@ function getAlertPrefsFromPanel() {
     frequency:      document.getElementById('panel-alert-frequency').value,
     count:          Number(document.getElementById('panel-alert-count').value) || 5,
   };
+  // Include polygon if drawn on map
+  if (alertMapPolygonGeoJSON) {
+    prefs.alertPolygon = JSON.stringify(alertMapPolygonGeoJSON);
+  } else {
+    prefs.alertPolygon = '';
+  }
+  return prefs;
+}
+
+// ── ALERT MAP (Leaflet + Leaflet.draw) ────────────────────────────────────
+let alertMap = null;
+let alertMapDrawnLayer = null;
+let alertMapPolygonGeoJSON = null;
+
+function initAlertMap(lead) {
+  // Destroy previous map instance
+  if (alertMap) {
+    alertMap.remove();
+    alertMap = null;
+  }
+  alertMapDrawnLayer = null;
+  alertMapPolygonGeoJSON = null;
+
+  const container = document.getElementById('alert-map');
+  if (!container || typeof L === 'undefined') return;
+
+  // Initialize map centered on South Florida
+  alertMap = L.map('alert-map', { zoomControl: true }).setView([25.9, -80.15], 11);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap',
+    maxZoom: 18,
+  }).addTo(alertMap);
+
+  // Drawn items layer
+  const drawnItems = new L.FeatureGroup();
+  alertMap.addLayer(drawnItems);
+
+  // Draw controls (polygon + rectangle)
+  const drawControl = new L.Control.Draw({
+    edit: { featureGroup: drawnItems },
+    draw: {
+      polygon: { shapeOptions: { color: '#1a2744', weight: 2, fillOpacity: 0.15 } },
+      rectangle: { shapeOptions: { color: '#1a2744', weight: 2, fillOpacity: 0.15 } },
+      circle: false,
+      circlemarker: false,
+      marker: false,
+      polyline: false,
+    },
+  });
+  alertMap.addControl(drawControl);
+
+  // On draw created
+  alertMap.on(L.Draw.Event.CREATED, (e) => {
+    // Remove previous drawing
+    drawnItems.clearLayers();
+    drawnItems.addLayer(e.layer);
+    alertMapDrawnLayer = e.layer;
+    alertMapPolygonGeoJSON = e.layer.toGeoJSON().geometry;
+  });
+
+  // On draw edited
+  alertMap.on(L.Draw.Event.EDITED, () => {
+    if (alertMapDrawnLayer) {
+      alertMapPolygonGeoJSON = alertMapDrawnLayer.toGeoJSON().geometry;
+    }
+  });
+
+  // On draw deleted
+  alertMap.on(L.Draw.Event.DELETED, () => {
+    alertMapDrawnLayer = null;
+    alertMapPolygonGeoJSON = null;
+  });
+
+  // Load existing polygon if lead has one
+  if (lead && lead.alertPolygon) {
+    try {
+      const geo = typeof lead.alertPolygon === 'string' ? JSON.parse(lead.alertPolygon) : lead.alertPolygon;
+      if (geo && geo.type === 'Polygon' && geo.coordinates) {
+        const layer = L.geoJSON(geo, {
+          style: { color: '#1a2744', weight: 2, fillOpacity: 0.15 },
+        });
+        layer.eachLayer(l => {
+          drawnItems.addLayer(l);
+          alertMapDrawnLayer = l;
+        });
+        alertMapPolygonGeoJSON = geo;
+        // Fit map to polygon bounds
+        alertMap.fitBounds(layer.getBounds().pad(0.2));
+      }
+    } catch (err) {
+      console.warn('Failed to parse alert polygon:', err);
+    }
+  }
+
+  // Clear button
+  document.getElementById('alert-map-clear').addEventListener('click', () => {
+    drawnItems.clearLayers();
+    alertMapDrawnLayer = null;
+    alertMapPolygonGeoJSON = null;
+  });
+
+  // Fix map sizing after panel animation
+  setTimeout(() => alertMap.invalidateSize(), 350);
 }
 
 async function sendTestAlert() {

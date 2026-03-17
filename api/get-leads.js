@@ -88,6 +88,7 @@ export default async function handler(req) {
             alertLastSent:      r.fields['Alert Last Sent'] || '',
             alertNextDue:       r.fields['Alert Next Due'] || '',
             alertToken:         r.fields['Alert Token'] || '',
+            alertPolygon:       r.fields['Alert Polygon'] || '',
             preferredLanguage:  r.fields['Preferred Language'] || 'en',
             country:            r.fields['Country'] || '',
             assignedTo:         r.fields['Assigned To'] || '',

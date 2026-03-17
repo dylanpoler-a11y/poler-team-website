@@ -92,11 +92,29 @@ export default async function handler(req) {
             frequency: f['Alert Frequency'] || 'Weekly',
             token:     f['Alert Token'] || '',
             language:  f['Preferred Language'] || 'en',
+            polygon:   f['Alert Polygon'] || '',
         };
 
         try {
             // Fetch matching properties
-            const listings = await fetchBridgeListings(bridgeToken, lead);
+            let listings = await fetchBridgeListings(bridgeToken, lead);
+
+            // Apply polygon filter if lead has a drawn area
+            if (lead.polygon && listings.length > 0) {
+                try {
+                    const geo = JSON.parse(lead.polygon);
+                    if (geo && geo.type === 'Polygon' && geo.coordinates) {
+                        const ring = geo.coordinates[0]; // outer ring [[lng,lat], ...]
+                        listings = listings.filter(l => {
+                            const lat = l.Latitude;
+                            const lng = l.Longitude;
+                            return lat && lng && pointInPolygon(lat, lng, ring);
+                        });
+                    }
+                } catch (e) {
+                    // Invalid polygon JSON — skip filtering
+                }
+            }
 
             if (listings.length === 0) {
                 results.skipped++;
@@ -185,6 +203,20 @@ function computeNextDue(fromDateStr, frequency) {
 
 function toTitleCase(str) {
     return str.toLowerCase().replace(/(?:^|\s)\S/g, c => c.toUpperCase());
+}
+
+// Ray-casting point-in-polygon test
+// ring is GeoJSON format: [[lng, lat], [lng, lat], ...]
+function pointInPolygon(lat, lng, ring) {
+    let inside = false;
+    for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+        const xi = ring[i][1], yi = ring[i][0]; // lat, lng
+        const xj = ring[j][1], yj = ring[j][0];
+        if ((yi > lng) !== (yj > lng) && lat < (xj - xi) * (lng - yi) / (yj - yi) + xi) {
+            inside = !inside;
+        }
+    }
+    return inside;
 }
 
 async function fetchBridgeListings(token, lead) {
