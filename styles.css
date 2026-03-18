@@ -91,17 +91,18 @@ body {
 .nav-links {
     display: flex;
     align-items: center;
-    gap: 32px;
+    gap: 24px;
     list-style: none;
 }
 
 .nav-links a {
     color: rgba(255, 255, 255, 0.85);
     text-decoration: none;
-    font-size: 0.875rem;
+    font-size: 0.8rem;
     font-weight: 500;
     transition: var(--transition);
     letter-spacing: 0.3px;
+    white-space: nowrap;
 }
 
 .nav-links a:hover {
@@ -111,7 +112,7 @@ body {
 .nav-cta {
     background: var(--gold) !important;
     color: var(--navy) !important;
-    padding: 10px 24px;
+    padding: 8px 18px;
     border-radius: 6px;
     font-weight: 600 !important;
 }
@@ -123,7 +124,7 @@ body {
 .nav-login {
     border: 1px solid var(--gold) !important;
     color: var(--gold) !important;
-    padding: 10px 24px;
+    padding: 8px 18px;
     border-radius: 6px;
     font-weight: 600 !important;
 }
