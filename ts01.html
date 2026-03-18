@@ -1075,14 +1075,14 @@ function switchPhotoTab(tab) {
     currentLightboxPhotos = tab === 'furniture' ? furniturePhotos : (tab === 'amenities' ? amenityPhotos : propertyPhotos);
     const grid = document.getElementById('lightboxGrid');
     grid.innerHTML = currentLightboxPhotos.map((url, i) =>
-        `<img src="${url}" alt="Photo ${i+1}" loading="lazy" onclick="openFullview(${i})" onerror="this.style.display='none'">`
+        `<img src="${toThumb(url)}" alt="Photo ${i+1}" loading="lazy" onclick="openFullview(${i})" onerror="this.style.display='none'">`
     ).join('');
 }
 
 function openFullview(idx) {
     currentFullIdx = idx;
     const fv = document.getElementById('photoFullview');
-    document.getElementById('fullviewImg').src = currentLightboxPhotos[idx];
+    document.getElementById('fullviewImg').src = toFull(currentLightboxPhotos[idx]);
     fv.classList.add('open');
 }
 
@@ -1092,7 +1092,7 @@ function closeFullview() {
 
 function navFullview(dir) {
     currentFullIdx = (currentFullIdx + dir + currentLightboxPhotos.length) % currentLightboxPhotos.length;
-    document.getElementById('fullviewImg').src = currentLightboxPhotos[currentFullIdx];
+    document.getElementById('fullviewImg').src = toFull(currentLightboxPhotos[currentFullIdx]);
 }
 
 document.addEventListener('keydown', e => {
@@ -1107,6 +1107,13 @@ const furnitureNums = [];
 for (let i = 2717; i <= 2764; i++) furnitureNums.push(i);
 for (let i = 2767; i <= 2813; i++) furnitureNums.push(i);
 const furniturePhotos = furnitureNums.map(n => FURNITURE_BASE + 'IMG_' + n + '.jpg');
+// Cloudinary thumb URLs for grid (400px wide, auto quality)
+function toThumb(url) {
+    return url.replace('/upload/', '/upload/w_400,q_auto,f_auto/');
+}
+function toFull(url) {
+    return url.replace('/upload/', '/upload/w_1600,q_auto,f_auto/');
+}
 
 function openFurnitureLightbox() {
     document.getElementById('photoLightbox').classList.add('open');
