@@ -242,7 +242,8 @@ function buildAlertEmail(lead, listings, siteBase) {
             ? Number(listing.LivingArea).toLocaleString('en-US') + ' sqft'
             : '';
         const mlsId = listing.ListingId || '';
-        const listingUrl = `${siteBase}/listing?id=${mlsId}`;
+        const tokenParam = lead.token ? `&t=${lead.token}` : '';
+        const listingUrl = `${siteBase}/listing?id=${mlsId}${tokenParam}`;
 
         return `
         <tr><td style="padding:0 0 20px;">
