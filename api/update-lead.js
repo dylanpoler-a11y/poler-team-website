@@ -40,7 +40,7 @@ export default async function handler(req) {
         return json({ error: 'Invalid request body' }, 400);
     }
 
-    const { id, status, notes, password } = body;
+    const { id, status, notes, assignedTo, password } = body;
 
     if (!crmPass || password !== crmPass) {
         return json({ error: 'Unauthorized' }, 401);
@@ -51,8 +51,9 @@ export default async function handler(req) {
     }
 
     const fields = {};
-    if (status !== undefined) fields['Status'] = status;
-    if (notes  !== undefined) fields['Notes']  = notes;
+    if (status     !== undefined) fields['Status']      = status;
+    if (notes      !== undefined) fields['Notes']       = notes;
+    if (assignedTo !== undefined) fields['Assigned To'] = assignedTo;
 
     if (Object.keys(fields).length === 0) {
         return json({ error: 'Nothing to update' }, 400);

@@ -266,14 +266,24 @@ function renderReminders() {
         ? '<span class="reminder-status-badge completed">Done</span>'
         : '<span class="reminder-status-badge cancelled">Cancelled</span>';
 
+    // Format for datetime-local input (YYYY-MM-DDTHH:MM)
+    const dtLocal = dueDate.getTime() ? `${dueDate.getFullYear()}-${String(dueDate.getMonth()+1).padStart(2,'0')}-${String(dueDate.getDate()).padStart(2,'0')}T${String(dueDate.getHours()).padStart(2,'0')}:${String(dueDate.getMinutes()).padStart(2,'0')}` : '';
+
     const actions = r.status === 'Pending'
       ? `<button class="reminder-action-btn done" onclick="completeReminder('${r.id}')">Done</button>
-         <button class="reminder-action-btn cancel" onclick="cancelReminder('${r.id}')">Cancel</button>`
+         <button class="reminder-action-btn cancel" onclick="cancelReminder('${r.id}')">Cancel</button>
+         <button class="reminder-action-btn edit" onclick="toggleReminderEdit('${r.id}')">Edit</button>`
       : '';
 
     return `
       <tr class="${rowClass}">
-        <td class="td-muted">${escHtml(dueStr)}</td>
+        <td class="td-muted">
+          <span id="reminder-due-text-${r.id}">${escHtml(dueStr)}</span>
+          <div id="reminder-edit-${r.id}" class="reminder-edit-row" style="display:none;">
+            <input type="datetime-local" id="reminder-dt-${r.id}" class="reminder-dt-input" value="${dtLocal}">
+            <button class="reminder-action-btn done" style="margin-top:4px" onclick="saveReminderDate('${r.id}')">Save</button>
+          </div>
+        </td>
         <td>
           <div class="lead-name" style="cursor:pointer" onclick="openPanelFromReminder('${escHtml(r.leadRecordId)}')">${escHtml(r.leadName || '—')}</div>
           <div class="td-muted" style="font-size:0.75rem">${escHtml(r.leadPhone || '')}</div>
@@ -329,6 +339,32 @@ async function updateReminderStatus(id, status) {
     }
   } catch (err) {
     console.error('Failed to update reminder:', err);
+  }
+}
+
+function toggleReminderEdit(id) {
+  const editEl = document.getElementById(`reminder-edit-${id}`);
+  if (editEl) editEl.style.display = editEl.style.display === 'none' ? 'block' : 'none';
+}
+
+async function saveReminderDate(id) {
+  const input = document.getElementById(`reminder-dt-${id}`);
+  if (!input || !input.value) return;
+  const newDate = new Date(input.value).toISOString();
+  try {
+    const res = await fetch(`${CRM_API_BASE}/api/update-reminder`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, dueAt: newDate, password: currentPassword }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      const reminder = allReminders.find(r => r.id === id);
+      if (reminder) reminder.dueAt = newDate;
+      renderReminders();
+    }
+  } catch (err) {
+    console.error('Failed to update reminder date:', err);
   }
 }
 

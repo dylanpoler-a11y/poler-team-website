@@ -1282,3 +1282,60 @@ body {
 .activity-type { font-size: 0.8rem; font-weight: 500; color: #1e293b; }
 .activity-detail { font-size: 0.75rem; color: #64748b; }
 .activity-time { font-size: 0.7rem; color: #94a3b8; white-space: nowrap; }
+
+/* ── NOTES HISTORY ──────────────────────────────────────────── */
+.notes-history {
+  margin-top: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.note-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0.625rem 0.75rem;
+}
+.note-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.3rem;
+}
+.note-author {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--navy);
+}
+.note-date {
+  font-size: 0.7rem;
+  color: #94a3b8;
+}
+.note-body {
+  font-size: 0.825rem;
+  color: var(--text);
+  line-height: 1.45;
+  white-space: pre-wrap;
+}
+
+/* ── REMINDER EDIT ──────────────────────────────────────────── */
+.reminder-edit-row {
+  margin-top: 0.35rem;
+}
+.reminder-dt-input {
+  padding: 0.3rem 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-family: inherit;
+  color: var(--text);
+  width: 100%;
+}
+.reminder-dt-input:focus {
+  outline: none;
+  border-color: var(--navy);
+}
+.reminder-action-btn.edit {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
