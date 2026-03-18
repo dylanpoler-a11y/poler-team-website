@@ -1107,12 +1107,12 @@ const furnitureNums = [];
 for (let i = 2717; i <= 2764; i++) furnitureNums.push(i);
 for (let i = 2767; i <= 2813; i++) furnitureNums.push(i);
 const furniturePhotos = furnitureNums.map(n => FURNITURE_BASE + 'IMG_' + n + '.jpg');
-// Cloudinary thumb URLs for grid (400px wide, auto quality)
+// Cloudinary thumb URLs for grid (600px, good quality) — full res on click
 function toThumb(url) {
-    return url.replace('/upload/', '/upload/w_400,q_auto,f_auto/');
+    return url.replace('/upload/', '/upload/w_600,q_auto:good,f_auto/');
 }
 function toFull(url) {
-    return url.replace('/upload/', '/upload/w_1600,q_auto,f_auto/');
+    return url.replace('/upload/', '/upload/q_auto:best,f_auto/');
 }
 
 function openFurnitureLightbox() {
