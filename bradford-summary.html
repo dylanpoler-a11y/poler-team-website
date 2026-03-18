@@ -11,6 +11,7 @@
             --navy: #1a2744;
             --navy-light: #243352;
             --gold: #C9A84C;
+            --gold-dim: rgba(201,168,76,0.15);
             --white: #ffffff;
             --gray-50: #f9fafb;
             --gray-100: #f3f4f6;
@@ -30,7 +31,6 @@
             line-height: 1.6;
         }
 
-        /* Header */
         .header {
             background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%);
             color: var(--white);
@@ -47,11 +47,11 @@
             width: 500px;
             height: 500px;
             border-radius: 50%;
-            background: rgba(201, 168, 76, 0.05);
+            background: rgba(201,168,76,0.05);
         }
 
         .container {
-            max-width: 900px;
+            max-width: 960px;
             margin: 0 auto;
             padding: 0 32px;
             position: relative;
@@ -75,8 +75,8 @@
         }
 
         .confidential {
-            background: rgba(201, 168, 76, 0.15);
-            border: 1px solid rgba(201, 168, 76, 0.3);
+            background: rgba(201,168,76,0.15);
+            border: 1px solid rgba(201,168,76,0.3);
             color: var(--gold);
             font-size: 11px;
             font-weight: 600;
@@ -100,7 +100,7 @@
             font-weight: 300;
         }
 
-        /* Stats Banner */
+        /* Cumulative Stats */
         .stats-banner {
             background: var(--white);
             border-radius: 14px;
@@ -152,7 +152,6 @@
             letter-spacing: 0.3px;
         }
 
-        /* Period note */
         .period-note {
             text-align: center;
             font-size: 13px;
@@ -163,17 +162,138 @@
 
         .period-note strong { color: var(--gray-700); }
 
+        /* Quarter Accordion */
+        .quarter-section {
+            margin-bottom: 24px;
+        }
+
+        .quarter-header {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 14px;
+            padding: 0;
+            cursor: pointer;
+            transition: box-shadow 0.2s, border-color 0.2s;
+            overflow: hidden;
+        }
+
+        .quarter-header:hover {
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+            border-color: var(--gold);
+        }
+
+        .quarter-header.expanded {
+            border-radius: 14px 14px 0 0;
+            border-bottom: 2px solid var(--gold);
+        }
+
+        .qh-top {
+            display: flex;
+            align-items: center;
+            padding: 22px 28px;
+            gap: 18px;
+        }
+
+        .qh-chevron {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--gold-dim);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: transform 0.3s;
+        }
+
+        .quarter-header.expanded .qh-chevron {
+            transform: rotate(90deg);
+        }
+
+        .qh-chevron svg {
+            width: 14px;
+            height: 14px;
+            fill: var(--gold);
+        }
+
+        .qh-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--navy);
+            flex-grow: 1;
+        }
+
+        .qh-badge {
+            background: var(--navy);
+            color: var(--gold);
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            white-space: nowrap;
+        }
+
+        .qh-stats {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 1px;
+            background: var(--gray-200);
+        }
+
+        .qh-stat {
+            background: var(--gray-50);
+            padding: 14px 12px;
+            text-align: center;
+        }
+
+        .qh-stat-num {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--navy);
+            line-height: 1.1;
+        }
+
+        .qh-stat-label {
+            font-size: 10px;
+            color: var(--gray-500);
+            font-weight: 600;
+            margin-top: 3px;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+
+        .qh-stat-sub {
+            font-size: 10px;
+            color: var(--gray-400);
+            margin-top: 2px;
+        }
+
+        /* Expanded content */
+        .quarter-body {
+            display: none;
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-top: 0;
+            border-radius: 0 0 14px 14px;
+            padding: 32px 28px;
+        }
+
+        .quarter-body.visible {
+            display: block;
+        }
+
         /* Timeline */
         .timeline {
             position: relative;
-            padding: 0 0 40px;
+            padding: 0 0 20px;
         }
 
         .timeline::before {
             content: '';
             position: absolute;
-            left: 50%;
-            transform: translateX(-50%);
+            left: 20px;
             top: 0;
             bottom: 0;
             width: 3px;
@@ -183,67 +303,43 @@
 
         .timeline-item {
             position: relative;
-            margin-bottom: 32px;
-            display: flex;
-            align-items: flex-start;
-        }
-
-        .timeline-item:nth-child(odd) {
-            flex-direction: row;
-            padding-right: calc(50% + 28px);
-        }
-
-        .timeline-item:nth-child(even) {
-            flex-direction: row-reverse;
-            padding-left: calc(50% + 28px);
+            margin-bottom: 28px;
+            padding-left: 52px;
         }
 
         .timeline-dot {
             position: absolute;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 14px;
-            height: 14px;
+            left: 13px;
+            width: 18px;
+            height: 18px;
             border-radius: 50%;
             background: var(--gold);
             border: 3px solid var(--white);
             box-shadow: 0 0 0 3px var(--gold);
             z-index: 1;
-            top: 24px;
+            top: 0;
         }
 
         .timeline-date {
-            position: absolute;
-            top: 22px;
             font-size: 12px;
-            font-weight: 600;
+            font-weight: 700;
             color: var(--gold);
             letter-spacing: 0.5px;
-            white-space: nowrap;
-        }
-
-        .timeline-item:nth-child(odd) .timeline-date {
-            left: calc(50% + 28px);
-        }
-
-        .timeline-item:nth-child(even) .timeline-date {
-            right: calc(50% + 28px);
-            text-align: right;
+            margin-bottom: 8px;
+            text-transform: uppercase;
         }
 
         .timeline-card {
-            background: var(--white);
+            background: var(--gray-50);
             border-radius: 12px;
-            padding: 24px;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            padding: 22px 24px;
             border: 1px solid var(--gray-200);
-            width: 100%;
             transition: transform 0.2s, box-shadow 0.2s;
         }
 
         .timeline-card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.08);
         }
 
         .timeline-card h3 {
@@ -278,6 +374,7 @@
         .tag-beds { background: #eff6ff; color: #1d4ed8; }
         .tag-payer { background: #f0fdf4; color: #15803d; }
         .tag-service { background: #fef3c7; color: #92400e; }
+        .tag-source { background: #f3e8ff; color: #7c3aed; }
 
         .card-section {
             margin-bottom: 12px;
@@ -301,7 +398,7 @@
         }
 
         .next-steps {
-            background: var(--gray-50);
+            background: var(--white);
             border-radius: 8px;
             padding: 12px 14px;
             border-left: 3px solid var(--gold);
@@ -311,6 +408,38 @@
             font-size: 13px;
             color: var(--navy);
             font-weight: 500;
+        }
+
+        /* State performance grid */
+        .state-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 14px;
+            margin-bottom: 24px;
+        }
+
+        .state-card {
+            background: var(--gray-50);
+            border: 1px solid var(--gray-200);
+            border-radius: 10px;
+            padding: 16px;
+        }
+
+        .state-card h4 {
+            font-family: 'Playfair Display', serif;
+            font-size: 15px;
+            color: var(--navy);
+            margin-bottom: 8px;
+        }
+
+        .state-card .state-stat {
+            font-size: 12px;
+            color: var(--gray-700);
+            margin-bottom: 2px;
+        }
+
+        .state-card .state-stat strong {
+            color: var(--navy);
         }
 
         /* Footer */
@@ -326,45 +455,20 @@
 
         /* Responsive */
         @media (max-width: 768px) {
-            .timeline::before {
-                left: 20px;
-            }
-
-            .timeline-item,
-            .timeline-item:nth-child(odd),
-            .timeline-item:nth-child(even) {
-                flex-direction: row;
-                padding-left: 52px;
-                padding-right: 0;
-            }
-
-            .timeline-dot {
-                left: 20px;
-            }
-
-            .timeline-item:nth-child(odd) .timeline-date,
-            .timeline-item:nth-child(even) .timeline-date {
-                left: 52px;
-                right: auto;
-                text-align: left;
-                top: 0;
-                position: relative;
-                display: block;
-                margin-bottom: 6px;
-            }
-
-            .stat-row {
-                grid-template-columns: repeat(2, 1fr);
-            }
-
+            .stat-row { grid-template-columns: repeat(2, 1fr); }
+            .qh-stats { grid-template-columns: repeat(3, 1fr); }
+            .state-grid { grid-template-columns: 1fr; }
             .header h1 { font-size: 26px; }
             .container { padding: 0 16px; }
+            .qh-top { padding: 16px 18px; }
+            .qh-title { font-size: 18px; }
+            .quarter-body { padding: 24px 18px; }
         }
 
         @media print {
             body { background: white; }
-            .timeline-card { break-inside: avoid; box-shadow: none; border: 1px solid #ddd; }
-            .stats-banner { box-shadow: none; border: 1px solid #ddd; }
+            .quarter-body { display: block !important; }
+            .timeline-card, .stats-banner { box-shadow: none; border: 1px solid #ddd; }
         }
     </style>
 </head>
@@ -395,442 +499,885 @@
                 <div class="brand">The Poler Team</div>
                 <div class="confidential">Confidential</div>
             </div>
-            <h1>Bradford Pipeline Summary</h1>
-            <p class="subtitle">Intro Calls & Outreach Activity — Jan 16 – Mar 16, 2026</p>
+            <h1>Bradford Deal Sourcing Pipeline</h1>
+            <p class="subtitle">Full Engagement Summary — Q3 2025 through Q1 2026</p>
         </div>
     </div>
 
     <div class="content" style="padding: 48px 0 60px;">
         <div class="container">
 
-            <!-- Stats Banner -->
+            <!-- Cumulative Stats -->
             <div class="stats-banner">
-                <h2>Outreach at a Glance</h2>
+                <h2>Cumulative Engagement</h2>
                 <div class="stat-row">
                     <div class="stat-box">
-                        <div class="stat-num">241</div>
-                        <div class="stat-label">Calls / Texts / VMs</div>
+                        <div class="stat-num">1,638</div>
+                        <div class="stat-label">Total Outreach Messages</div>
                     </div>
                     <div class="stat-box">
-                        <div class="stat-num">137</div>
-                        <div class="stat-label">Companies Contacted</div>
+                        <div class="stat-num">368</div>
+                        <div class="stat-label">Calling (Call / VM / Text)</div>
                     </div>
                     <div class="stat-box">
-                        <div class="stat-num">36</div>
-                        <div class="stat-label">Responded</div>
+                        <div class="stat-num">1,228</div>
+                        <div class="stat-label">LinkedIn Sales Nav</div>
                     </div>
                     <div class="stat-box">
-                        <div class="stat-num">16</div>
+                        <div class="stat-num">23+</div>
                         <div class="stat-label">Intro Calls Completed</div>
                     </div>
                 </div>
             </div>
 
-            <p class="period-note"><strong>Jan 16 – Mar 16, 2026</strong> · Cold outreach via call, text, and voicemail · Intro calls sourced by Dylan Poler</p>
+            <p class="period-note"><strong>Jul 2025 – Mar 2026</strong> · Click any quarter to expand detailed company timelines</p>
 
-            <!-- Timeline -->
-            <div class="timeline">
-
-                <!-- 1. Southern Live Oak — Jan 16 -->
-                <div class="timeline-item">
-                    <div class="timeline-dot"></div>
-                    <div class="timeline-date">Jan 16</div>
-                    <div class="timeline-card">
-                        <h3>Southern Live Oak Wellness</h3>
-                        <div class="location">Atlanta, GA</div>
-                        <div class="tags">
-                            <span class="tag tag-beds">6 RTCs + 2 PHPs</span>
-                            <span class="tag tag-payer">100% OON</span>
-                            <span class="tag tag-service">MH RTC / PHP</span>
+            <!-- ===================== Q3 2025 ===================== -->
+            <div class="quarter-section">
+                <div class="quarter-header" onclick="toggleQ(this)">
+                    <div class="qh-top">
+                        <div class="qh-chevron"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></div>
+                        <div class="qh-title">Q3 2025</div>
+                        <div class="qh-badge">JUL – SEP</div>
+                    </div>
+                    <div class="qh-stats">
+                        <div class="qh-stat">
+                            <div class="qh-stat-num">533</div>
+                            <div class="qh-stat-label">Total Messages</div>
                         </div>
-                        <div class="card-section">
-                            <div class="card-section-title">Key People</div>
-                            <p>A.M. Anderson (Owner), Cory Dowless (BD/Partner)</p>
+                        <div class="qh-stat">
+                            <div class="qh-stat-num">12</div>
+                            <div class="qh-stat-label">Calling</div>
+                            <div class="qh-stat-sub">Call / VM / Text</div>
                         </div>
-                        <div class="card-section">
-                            <div class="card-section-title">What We Learned</div>
-                            <p>Adult & adolescent mental health RTC via ALF-to-RTC conversions. Expanding toward 9 programs. Fully out-of-network commercial & private pay. Facing Dunwoody ordinance litigation and staffing challenges. Want to retain control while exploring eventual in-network transition.</p>
+                        <div class="qh-stat">
+                            <div class="qh-stat-num">514</div>
+                            <div class="qh-stat-label">LinkedIn</div>
+                            <div class="qh-stat-sub">Sales Navigator</div>
                         </div>
-                        <div class="card-section next-steps">
-                            <div class="card-section-title">Next Steps</div>
-                            <p>A.M./Cory to reach out when ready to run a process. Chuck reviewing numbers confidentially and providing strategic payer advice.</p>
+                        <div class="qh-stat">
+                            <div class="qh-stat-num">335</div>
+                            <div class="qh-stat-label">Companies</div>
+                            <div class="qh-stat-sub">Distinct Contacted</div>
+                        </div>
+                        <div class="qh-stat">
+                            <div class="qh-stat-num">7</div>
+                            <div class="qh-stat-label">Intro Calls</div>
+                            <div class="qh-stat-sub">Scheduled</div>
                         </div>
                     </div>
                 </div>
+                <div class="quarter-body">
 
-                <!-- 2. Vizion Health — Jan 16 -->
-                <div class="timeline-item">
-                    <div class="timeline-dot"></div>
-                    <div class="timeline-date">Jan 16</div>
-                    <div class="timeline-card">
-                        <h3>Vizion Health</h3>
-                        <div class="location">Texas / Oklahoma / Louisiana</div>
-                        <div class="tags">
-                            <span class="tag tag-beds">Multi-site</span>
-                            <span class="tag tag-payer">Medicaid + Commercial</span>
-                            <span class="tag tag-service">Adolescent MH / TBI</span>
+                    <!-- State Performance -->
+                    <h3 style="font-family:'Playfair Display',serif; font-size:16px; color:var(--navy); margin-bottom:16px; padding-bottom:8px; border-bottom:2px solid var(--gold); display:inline-block;">State-Level Performance</h3>
+                    <div class="state-grid">
+                        <div class="state-card">
+                            <h4>Louisiana</h4>
+                            <div class="state-stat"><strong>48</strong> calls · <strong>82</strong> LinkedIn</div>
+                            <div class="state-stat">10% call conv · <strong>5 intros</strong></div>
+                            <div class="state-stat">6 of 13 facilities completed</div>
                         </div>
-                        <div class="card-section">
-                            <div class="card-section-title">What We Learned</div>
-                            <p>Adolescent residential subacute MH in Texas, acute psych hospital in Oklahoma, and TBI beds in repurposed facilities. Considering strategic alternatives — potentially selling the adolescent business to focus on TBI. Mix of Medicaid and commercial with some supplemental payment reliance.</p>
+                        <div class="state-card">
+                            <h4>Georgia</h4>
+                            <div class="state-stat"><strong>63</strong> calls · <strong>266</strong> LinkedIn</div>
+                            <div class="state-stat">8% call conv · <strong>5 intros</strong></div>
+                            <div class="state-stat">8 of 18 facilities completed</div>
                         </div>
-                        <div class="card-section next-steps">
-                            <div class="card-section-title">Next Steps</div>
-                            <p>Vizion to notify Bradford if they run a formal process or pursue a sale on any asset. Dylan maintaining market awareness among key contacts.</p>
+                        <div class="state-card">
+                            <h4>North Carolina</h4>
+                            <div class="state-stat"><strong>14</strong> calls · <strong>132</strong> LinkedIn</div>
+                            <div class="state-stat">29% call conv · <strong>4 intros</strong></div>
+                            <div class="state-stat">7 of 10 facilities completed</div>
+                        </div>
+                        <div class="state-card">
+                            <h4>South Carolina</h4>
+                            <div class="state-stat"><strong>16</strong> calls · <strong>75</strong> LinkedIn</div>
+                            <div class="state-stat">13% call conv · <strong>2 intros</strong></div>
+                            <div class="state-stat">3 of 9 facilities completed</div>
+                        </div>
+                        <div class="state-card">
+                            <h4>Virginia</h4>
+                            <div class="state-stat"><strong>17</strong> calls · <strong>155</strong> LinkedIn</div>
+                            <div class="state-stat">0% call conv · <strong>1 intro</strong></div>
+                            <div class="state-stat">1 of 12 facilities completed</div>
+                        </div>
+                        <div class="state-card">
+                            <h4>Texas</h4>
+                            <div class="state-stat">New market entry</div>
+                            <div class="state-stat">Apollo-powered outreach</div>
+                            <div class="state-stat">Pipeline building phase</div>
+                        </div>
+                    </div>
+
+                    <h3 style="font-family:'Playfair Display',serif; font-size:16px; color:var(--navy); margin-bottom:16px; padding-bottom:8px; border-bottom:2px solid var(--gold); display:inline-block;">Intro Calls</h3>
+
+                    <div class="timeline">
+
+                        <!-- Into Action Recovery -->
+                        <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-date">Jul 22</div>
+                            <div class="timeline-card">
+                                <h3>Into Action Recovery Center</h3>
+                                <div class="location">Houston, TX</div>
+                                <div class="tags">
+                                    <span class="tag tag-service">SUD / MH</span>
+                                    <span class="tag tag-source">Poler Sourced</span>
+                                </div>
+                                <div class="card-section">
+                                    <div class="card-section-title">Key People</div>
+                                    <p>Shane (Owner/Operator)</p>
+                                </div>
+                                <div class="card-section">
+                                    <div class="card-section-title">What We Learned</div>
+                                    <p>Chuck Steiner (new CDO) introduced. Bradford entering Texas market, not yet in Houston. Shane open to exploring partnership or sale. Discussion focused on potential fit and growth opportunities.</p>
+                                </div>
+                                <div class="card-section next-steps">
+                                    <div class="card-section-title">Next Steps</div>
+                                    <p>Kevin suggested visiting Shane on-site when closing The Last Resort. Follow-up to assess partnership structure.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- UHS / Peaks Recovery -->
+                        <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-date">Jul 22</div>
+                            <div class="timeline-card">
+                                <h3>UHS ↔ Peaks Recovery Centers</h3>
+                                <div class="location">Colorado Springs, CO</div>
+                                <div class="tags">
+                                    <span class="tag tag-service">SUD / MH</span>
+                                    <span class="tag tag-payer">Commercial</span>
+                                    <span class="tag tag-source">Poler Brokered</span>
+                                </div>
+                                <div class="card-section">
+                                    <div class="card-section-title">Key People</div>
+                                    <p>Christopher Burns (Peaks CEO), Shelah Adams (UHS Corp Dev), Shawn Silva, Chris Hassen</p>
+                                </div>
+                                <div class="card-section">
+                                    <div class="card-section-title">What We Learned</div>
+                                    <p>Dylan brokered off-market intro. Peaks not running formal sale process but open to equity investment or eventual exit after recent financial headwinds. Workforce reduced from ~125 to 54 to right-size payroll. UHS ultimately decided not to pursue — strategic refocus, not legal risk.</p>
+                                </div>
+                                <div class="card-section next-steps">
+                                    <div class="card-section-title">Next Steps</div>
+                                    <p>UHS passed. Dylan maintaining relationship with Chris Burns for future opportunities.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Fellowship Hall -->
+                        <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-date">Jul 29</div>
+                            <div class="timeline-card">
+                                <h3>Fellowship Hall</h3>
+                                <div class="location">North Carolina</div>
+                                <div class="tags">
+                                    <span class="tag tag-service">Nonprofit SUD</span>
+                                    <span class="tag tag-source">Re-engagement</span>
+                                </div>
+                                <div class="card-section">
+                                    <div class="card-section-title">Key People</div>
+                                    <p>Jackie (Leadership)</p>
+                                </div>
+                                <div class="card-section">
+                                    <div class="card-section-title">What We Learned</div>
+                                    <p>Reconnection attempt — introduced Chuck Steiner (new CDO) as Kevin's successor. Chuck has experience transacting with nonprofits. Dylan facilitated warm email intro.</p>
+                                </div>
+                                <div class="card-section next-steps">
+                                    <div class="card-section-title">Next Steps</div>
+                                    <p>Jackie to determine availability for 30-min intro call with Chuck to discuss what a partnership might look like.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Front Porch Recovery -->
+                        <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-date">Aug 12</div>
+                            <div class="timeline-card">
+                                <h3>Front Porch Recovery Center</h3>
+                                <div class="location">Location TBD</div>
+                                <div class="tags">
+                                    <span class="tag tag-service">SUD</span>
+                                    <span class="tag tag-source">Poler Sourced</span>
+                                </div>
+                                <div class="card-section">
+                                    <div class="card-section-title">What We Learned</div>
+                                    <p>Phone call with founder — expressed interest in having a conversation. Will discuss with co-founder (husband) and get back to Dylan.</p>
+                                </div>
+                                <div class="card-section next-steps">
+                                    <div class="card-section-title">Next Steps</div>
+                                    <p>Awaiting confirmation from co-founders to schedule formal intro call with Bradford team.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Recovery Bay Center -->
+                        <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-date">Aug 13</div>
+                            <div class="timeline-card">
+                                <h3>Recovery Bay Center</h3>
+                                <div class="location">Location TBD</div>
+                                <div class="tags">
+                                    <span class="tag tag-service">SUD</span>
+                                    <span class="tag tag-source">Poler Sourced</span>
+                                </div>
+                                <div class="card-section">
+                                    <div class="card-section-title">What We Learned</div>
+                                    <p>Intro call completed. Details to be sourced from Rewind/Otter transcripts.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Armada Recovery -->
+                        <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-date">Aug 13</div>
+                            <div class="timeline-card">
+                                <h3>Armada Recovery</h3>
+                                <div class="location">Location TBD</div>
+                                <div class="tags">
+                                    <span class="tag tag-service">Detox / Outpatient</span>
+                                    <span class="tag tag-source">Poler Sourced</span>
+                                </div>
+                                <div class="card-section">
+                                    <div class="card-section-title">Key People</div>
+                                    <p>Shlomo (Leadership), Trevor, Chuck, Ben</p>
+                                </div>
+                                <div class="card-section">
+                                    <div class="card-section-title">What We Learned</div>
+                                    <p>Detox outpatient program. Meeting included introductions between Shlomo, Chuck, Ben, and Trevor. Discussion around the increasing complexity of the situation and professional program-focused providers.</p>
+                                </div>
+                                <div class="card-section next-steps">
+                                    <div class="card-section-title">Next Steps</div>
+                                    <p>Dylan to call professional program-focused providers across the country. Chuck synergizing internally on fit.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Resolutions Healthcare -->
+                        <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-date">Sep 1</div>
+                            <div class="timeline-card">
+                                <h3>Resolutions Healthcare</h3>
+                                <div class="location">Location TBD</div>
+                                <div class="tags">
+                                    <span class="tag tag-payer">BCBS / TriWest</span>
+                                    <span class="tag tag-source">2nd Call Pending</span>
+                                </div>
+                                <div class="card-section">
+                                    <div class="card-section-title">What We Learned</div>
+                                    <p>Initial call completed. Monitoring BCBS onboarding progress, TriWest utilization, and census trajectory.</p>
+                                </div>
+                                <div class="card-section next-steps">
+                                    <div class="card-section-title">Next Steps</div>
+                                    <p>Follow-up call in early fall 2025 to reassess. Calendar reminder set to check onboarding and census trajectory.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div><!-- /timeline -->
+                </div>
+            </div>
+
+            <!-- ===================== Q4 2025 ===================== -->
+            <div class="quarter-section">
+                <div class="quarter-header" onclick="toggleQ(this)">
+                    <div class="qh-top">
+                        <div class="qh-chevron"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></div>
+                        <div class="qh-title">Q4 2025</div>
+                        <div class="qh-badge">OCT – DEC</div>
+                    </div>
+                    <div class="qh-stats">
+                        <div class="qh-stat">
+                            <div class="qh-stat-num">695</div>
+                            <div class="qh-stat-label">Total Messages</div>
+                        </div>
+                        <div class="qh-stat">
+                            <div class="qh-stat-num">132</div>
+                            <div class="qh-stat-label">Calling</div>
+                            <div class="qh-stat-sub">Call / VM / Text</div>
+                        </div>
+                        <div class="qh-stat">
+                            <div class="qh-stat-num">532</div>
+                            <div class="qh-stat-label">LinkedIn</div>
+                            <div class="qh-stat-sub">Sales Navigator</div>
+                        </div>
+                        <div class="qh-stat">
+                            <div class="qh-stat-num">444</div>
+                            <div class="qh-stat-label">Companies</div>
+                            <div class="qh-stat-sub">Distinct Contacted</div>
+                        </div>
+                        <div class="qh-stat">
+                            <div class="qh-stat-num">2</div>
+                            <div class="qh-stat-label">Intro Calls</div>
+                            <div class="qh-stat-sub">Scheduled</div>
                         </div>
                     </div>
                 </div>
+                <div class="quarter-body">
+                    <h3 style="font-family:'Playfair Display',serif; font-size:16px; color:var(--navy); margin-bottom:16px; padding-bottom:8px; border-bottom:2px solid var(--gold); display:inline-block;">Quarter Highlights</h3>
+                    <div style="background:var(--gray-50); border-radius:10px; padding:20px; border:1px solid var(--gray-200); margin-bottom:24px;">
+                        <p style="font-size:14px; color:var(--gray-700); line-height:1.7;">
+                            <strong>Apollo Integration:</strong> Transitioned from LinkedIn-only to direct phone outreach via Apollo. Contact rates jumped from 6% (LinkedIn only) to 23% success in reaching targets. Call volume increased 12x quarter-over-quarter.<br><br>
+                            <strong>State-Focused Strategy:</strong> Concentrated on 6 priority states (LA, GA, NC, SC, VA, TX) with comprehensive market assessments. Maryland identified as next target.<br><br>
+                            <strong>Pipeline Building:</strong> Heavy outreach volume (695 messages) seeded the pipeline that converted to 16 intro calls in Q1 2026. Most Q4 outreach was first-touch contact laying groundwork.
+                        </p>
+                    </div>
 
-                <!-- 3. The Grove Recovery — Jan 21 -->
-                <div class="timeline-item">
-                    <div class="timeline-dot"></div>
-                    <div class="timeline-date">Jan 21</div>
-                    <div class="timeline-card">
-                        <h3>The Grove Recovery</h3>
-                        <div class="location">Louisiana</div>
-                        <div class="tags">
-                            <span class="tag tag-beds">~150 Beds</span>
-                            <span class="tag tag-payer">75% Medicaid</span>
-                            <span class="tag tag-service">Detox / RTC / IOP</span>
+                    <h3 style="font-family:'Playfair Display',serif; font-size:16px; color:var(--navy); margin-bottom:16px; padding-bottom:8px; border-bottom:2px solid var(--gold); display:inline-block;">Active Pipeline (Carried Into Q1)</h3>
+
+                    <div class="timeline">
+
+                        <!-- Nola Detox -->
+                        <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-date">Q4 Pipeline</div>
+                            <div class="timeline-card">
+                                <h3>Nola Detox &amp; Residential</h3>
+                                <div class="location">Louisiana</div>
+                                <div class="tags">
+                                    <span class="tag tag-service">Detox / Residential</span>
+                                    <span class="tag tag-payer">Under Review</span>
+                                    <span class="tag tag-source">Poler Sourced</span>
+                                </div>
+                                <div class="card-section">
+                                    <div class="card-section-title">What We Learned</div>
+                                    <p>Identified during Louisiana state assessment. Two intro calls logged in Airtable. Reviewed and evaluated for strategic fit.</p>
+                                </div>
+                                <div class="card-section next-steps">
+                                    <div class="card-section-title">Next Steps</div>
+                                    <p>Status: Reviewed. Monitoring for any changes in seller readiness.</p>
+                                </div>
+                            </div>
                         </div>
-                        <div class="card-section">
-                            <div class="card-section-title">Key People</div>
-                            <p>Cody (Founder), Tim Wilson</p>
+
+                        <!-- Clear Fork Academy -->
+                        <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-date">Q4 Pipeline</div>
+                            <div class="timeline-card">
+                                <h3>Clear Fork Academy</h3>
+                                <div class="location">Texas</div>
+                                <div class="tags">
+                                    <span class="tag tag-service">Adolescent SUD</span>
+                                    <span class="tag tag-payer">Under Review</span>
+                                    <span class="tag tag-source">Poler Sourced</span>
+                                </div>
+                                <div class="card-section">
+                                    <div class="card-section-title">What We Learned</div>
+                                    <p>Texas-based adolescent treatment program identified during market expansion. Under active data review during Q4.</p>
+                                </div>
+                                <div class="card-section next-steps">
+                                    <div class="card-section-title">Next Steps</div>
+                                    <p>Complete data review and present prioritized target assessment to board.</p>
+                                </div>
+                            </div>
                         </div>
-                        <div class="card-section">
-                            <div class="card-section-title">What We Learned</div>
-                            <p>~150-bed residential with medical detox, primary treatment, sober living, and IOP. In-network with all major payers, MCOs, and TRICARE. Strong judicial and community referral base. Need additional PHP/3.1 capacity and sprinkled housing. Expect ~7x EBITDA valuation.</p>
+
+                        <!-- South Beach Detox follow-up -->
+                        <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-date">Q4 Pipeline</div>
+                            <div class="timeline-card">
+                                <h3>South Beach Detox (+2 facilities)</h3>
+                                <div class="location">South Florida</div>
+                                <div class="tags">
+                                    <span class="tag tag-service">Detox</span>
+                                    <span class="tag tag-source">Re-engagement</span>
+                                </div>
+                                <div class="card-section">
+                                    <div class="card-section-title">What We Learned</div>
+                                    <p>Continued follow-up from Q3. Dylan reached out to Scott to reschedule intro call with buyer. Scott responsive but scheduling remains pending.</p>
+                                </div>
+                                <div class="card-section next-steps">
+                                    <div class="card-section-title">Next Steps</div>
+                                    <p>Dylan to schedule 20-minute intro call between Scott and Bradford team.</p>
+                                </div>
+                            </div>
                         </div>
-                        <div class="card-section next-steps">
-                            <div class="card-section-title">Next Steps</div>
-                            <p>NDA + data request sent. Cody discussing with partners. If aligned, data submission → site visit → LOI → ~90-day diligence.</p>
+
+                    </div><!-- /timeline -->
+                </div>
+            </div>
+
+            <!-- ===================== Q1 2026 ===================== -->
+            <div class="quarter-section">
+                <div class="quarter-header expanded" onclick="toggleQ(this)">
+                    <div class="qh-top">
+                        <div class="qh-chevron"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></div>
+                        <div class="qh-title">Q1 2026</div>
+                        <div class="qh-badge">JAN – MAR</div>
+                    </div>
+                    <div class="qh-stats">
+                        <div class="qh-stat">
+                            <div class="qh-stat-num">410</div>
+                            <div class="qh-stat-label">Total Messages</div>
+                        </div>
+                        <div class="qh-stat">
+                            <div class="qh-stat-num">224</div>
+                            <div class="qh-stat-label">Calling</div>
+                            <div class="qh-stat-sub">Call / VM / Text</div>
+                        </div>
+                        <div class="qh-stat">
+                            <div class="qh-stat-num">182</div>
+                            <div class="qh-stat-label">LinkedIn</div>
+                            <div class="qh-stat-sub">Sales Navigator</div>
+                        </div>
+                        <div class="qh-stat">
+                            <div class="qh-stat-num">292</div>
+                            <div class="qh-stat-label">Companies</div>
+                            <div class="qh-stat-sub">Distinct Contacted</div>
+                        </div>
+                        <div class="qh-stat">
+                            <div class="qh-stat-num">16</div>
+                            <div class="qh-stat-label">Intro Calls</div>
+                            <div class="qh-stat-sub">Completed</div>
                         </div>
                     </div>
                 </div>
+                <div class="quarter-body visible">
 
-                <!-- 4. Second Chances — Jan 21 -->
-                <div class="timeline-item">
-                    <div class="timeline-dot"></div>
-                    <div class="timeline-date">Jan 21</div>
-                    <div class="timeline-card">
-                        <h3>Second Chances</h3>
-                        <div class="location">Louisiana</div>
-                        <div class="tags">
-                            <span class="tag tag-beds">80 Beds</span>
-                            <span class="tag tag-payer">Medicaid + Commercial</span>
-                            <span class="tag tag-service">Detox / Residential SUD</span>
+                    <div class="timeline">
+
+                        <!-- Southern Live Oak -->
+                        <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-date">Jan 16</div>
+                            <div class="timeline-card">
+                                <h3>Southern Live Oak Wellness</h3>
+                                <div class="location">Atlanta, GA</div>
+                                <div class="tags">
+                                    <span class="tag tag-beds">6 RTCs + 2 PHPs</span>
+                                    <span class="tag tag-payer">100% OON</span>
+                                    <span class="tag tag-service">MH RTC / PHP</span>
+                                </div>
+                                <div class="card-section">
+                                    <div class="card-section-title">Key People</div>
+                                    <p>A.M. Anderson (Owner), Cory Dowless (BD/Partner)</p>
+                                </div>
+                                <div class="card-section">
+                                    <div class="card-section-title">What We Learned</div>
+                                    <p>Adult &amp; adolescent mental health RTC via ALF-to-RTC conversions. Expanding toward 9 programs. Fully out-of-network commercial &amp; private pay. Facing Dunwoody ordinance litigation and staffing challenges. Want to retain control while exploring eventual in-network transition.</p>
+                                </div>
+                                <div class="card-section next-steps">
+                                    <div class="card-section-title">Next Steps</div>
+                                    <p>A.M./Cory to reach out when ready to run a process. Chuck reviewing numbers confidentially and providing strategic payer advice.</p>
+                                </div>
+                            </div>
                         </div>
-                        <div class="card-section">
-                            <div class="card-section-title">Key People</div>
-                            <p>Jjudson – CFO, Four Horn Investments</p>
+
+                        <!-- Vizion Health -->
+                        <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-date">Jan 16</div>
+                            <div class="timeline-card">
+                                <h3>Vizion Health</h3>
+                                <div class="location">Texas / Oklahoma / Louisiana</div>
+                                <div class="tags">
+                                    <span class="tag tag-beds">Multi-site</span>
+                                    <span class="tag tag-payer">Medicaid + Commercial</span>
+                                    <span class="tag tag-service">Adolescent MH / TBI</span>
+                                </div>
+                                <div class="card-section">
+                                    <div class="card-section-title">What We Learned</div>
+                                    <p>Adolescent residential subacute MH in Texas, acute psych hospital in Oklahoma, and TBI beds in repurposed facilities. Considering strategic alternatives — potentially selling the adolescent business to focus on TBI. Mix of Medicaid and commercial with some supplemental payment reliance.</p>
+                                </div>
+                                <div class="card-section next-steps">
+                                    <div class="card-section-title">Next Steps</div>
+                                    <p>Vizion to notify Bradford if they run a formal process or pursue a sale on any asset. Dylan maintaining market awareness among key contacts.</p>
+                                </div>
+                            </div>
                         </div>
-                        <div class="card-section">
-                            <div class="card-section-title">What We Learned</div>
-                            <p>Expanded from 56 to 80 beds; current census ~60-65%. Licensed detox + residential SUD. Ownership via related-party RE (Four Horn Properties) with above-market rent impacting OpCo profitability. Preference for plain-vanilla, majority all-cash deal.</p>
+
+                        <!-- The Grove Recovery -->
+                        <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-date">Jan 21</div>
+                            <div class="timeline-card">
+                                <h3>The Grove Recovery</h3>
+                                <div class="location">Louisiana</div>
+                                <div class="tags">
+                                    <span class="tag tag-beds">~150 Beds</span>
+                                    <span class="tag tag-payer">75% Medicaid</span>
+                                    <span class="tag tag-service">Detox / RTC / IOP</span>
+                                </div>
+                                <div class="card-section">
+                                    <div class="card-section-title">Key People</div>
+                                    <p>Cody (Founder), Tim Wilson</p>
+                                </div>
+                                <div class="card-section">
+                                    <div class="card-section-title">What We Learned</div>
+                                    <p>~150-bed residential with medical detox, primary treatment, sober living, and IOP. In-network with all major payers, MCOs, and TRICARE. Strong judicial and community referral base. Need additional PHP/3.1 capacity and sprinkled housing. Expect ~7x EBITDA valuation.</p>
+                                </div>
+                                <div class="card-section next-steps">
+                                    <div class="card-section-title">Next Steps</div>
+                                    <p>NDA + data request sent. Cody discussing with partners. If aligned, data submission → site visit → LOI → ~90-day diligence.</p>
+                                </div>
+                            </div>
                         </div>
-                        <div class="card-section next-steps">
-                            <div class="card-section-title">Next Steps</div>
-                            <p>NDA + data-request sent. Jjudson providing 3 years of financials + KPIs. Chuck to review materials, draft LOI range (~1 month), visit facility, and coordinate LA regulatory counsel.</p>
+
+                        <!-- Second Chances -->
+                        <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-date">Jan 21</div>
+                            <div class="timeline-card">
+                                <h3>Second Chances</h3>
+                                <div class="location">Louisiana</div>
+                                <div class="tags">
+                                    <span class="tag tag-beds">80 Beds</span>
+                                    <span class="tag tag-payer">Medicaid + Commercial</span>
+                                    <span class="tag tag-service">Detox / Residential SUD</span>
+                                </div>
+                                <div class="card-section">
+                                    <div class="card-section-title">Key People</div>
+                                    <p>Jjudson – CFO, Four Horn Investments</p>
+                                </div>
+                                <div class="card-section">
+                                    <div class="card-section-title">What We Learned</div>
+                                    <p>Expanded from 56 to 80 beds; current census ~60-65%. Licensed detox + residential SUD. Ownership via related-party RE (Four Horn Properties) with above-market rent impacting OpCo profitability. Preference for plain-vanilla, majority all-cash deal.</p>
+                                </div>
+                                <div class="card-section next-steps">
+                                    <div class="card-section-title">Next Steps</div>
+                                    <p>NDA + data-request sent. Jjudson providing 3 years of financials + KPIs. Chuck to review materials, draft LOI range (~1 month), visit facility, and coordinate LA regulatory counsel.</p>
+                                </div>
+                            </div>
                         </div>
-                    </div>
+
+                        <!-- NESS Healthcare -->
+                        <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-date">Jan 22</div>
+                            <div class="timeline-card">
+                                <h3>NESS Healthcare NFP</h3>
+                                <div class="location">Louisiana</div>
+                                <div class="tags">
+                                    <span class="tag tag-beds">Safety-Net Psych</span>
+                                    <span class="tag tag-payer">Medicaid / Public</span>
+                                    <span class="tag tag-service">Acute Psych / Pediatric</span>
+                                </div>
+                                <div class="card-section">
+                                    <div class="card-section-title">Key People</div>
+                                    <p>Tony Shir (Founder)</p>
+                                </div>
+                                <div class="card-section">
+                                    <div class="card-section-title">What We Learned</div>
+                                    <p>Nonprofit providing acute psych for adolescents, adults, children, and pregnant women — largest safety-net psych hospital in Louisiana. Funded via state/federal grants and institutional bonds. Louisiana SUD license moratorium creates unique positioning. Potential public-private JV where Ness brings nonprofit status &amp; public debt access, Bradford brings ops expertise &amp; capital.</p>
+                                </div>
+                                <div class="card-section next-steps">
+                                    <div class="card-section-title">Next Steps</div>
+                                    <p>Chuck briefing Bradford leadership (CEO, missions team) on JV feasibility. Chuck to visit Ness on next Louisiana trip and follow up with Tony on partnership structure.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Serenity Grove -->
+                        <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-date">Jan 29</div>
+                            <div class="timeline-card">
+                                <h3>Serenity Grove</h3>
+                                <div class="location">Georgia</div>
+                                <div class="tags">
+                                    <span class="tag tag-beds">46 Beds (+78 Expansion)</span>
+                                    <span class="tag tag-payer">Aetna / BCBS</span>
+                                    <span class="tag tag-service">Detox / RTC / PHP / IOP</span>
+                                </div>
+                                <div class="card-section">
+                                    <div class="card-section-title">Key People</div>
+                                    <p>Jay (Owner/Operator), Kevin Taggart (Advisor)</p>
+                                </div>
+                                <div class="card-section">
+                                    <div class="card-section-title">What We Learned</div>
+                                    <p>Founded 1998. Full continuum with strong BD and digital marketing (SEO/PPC, alumni). Permits expected soon for +78 beds (campus expansion 4 → 10 acres). Expansion budget $12–15M — wants to share financial risk with a partner. Payer concentration risk (heavy Aetna/BCBS/ACA-subsidy). Jay interested in PE-readiness in 2–3 years.</p>
+                                </div>
+                                <div class="card-section next-steps">
+                                    <div class="card-section-title">Next Steps</div>
+                                    <p>Jay's team providing diligence materials (financials, unit volumes, build docs). Kevin pulling financials with Anca. Chuck to plan site visit once data reviewed.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- New Waters -->
+                        <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-date">Feb 2</div>
+                            <div class="timeline-card">
+                                <h3>New Waters Recovery</h3>
+                                <div class="location">Location TBD</div>
+                                <div class="tags">
+                                    <span class="tag tag-service">SUD / MH</span>
+                                    <span class="tag tag-source">Poler Sourced</span>
+                                </div>
+                                <div class="card-section">
+                                    <div class="card-section-title">What We Learned</div>
+                                    <p>Intro call completed. Full details pending transcript review.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Momentum Recovery -->
+                        <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-date">Feb 6</div>
+                            <div class="timeline-card">
+                                <h3>Momentum Recovery</h3>
+                                <div class="location">North Carolina</div>
+                                <div class="tags">
+                                    <span class="tag tag-beds">The Creek &amp; The Cove</span>
+                                    <span class="tag tag-payer">Commercial + Private Pay</span>
+                                    <span class="tag tag-service">Long-Term SUD</span>
+                                </div>
+                                <div class="card-section">
+                                    <div class="card-section-title">Key People</div>
+                                    <p>Rick Barney (Owner/Operator)</p>
+                                </div>
+                                <div class="card-section">
+                                    <div class="card-section-title">What We Learned</div>
+                                    <p>Two programs: The Creek (young men 18–35) and The Cove (women). Long-term continuum — stabilization → extended care → sober living → outpatient, avg LOS ~280 days. Revenue ~$12M last year. Building in-network PHP/IOP. Capital needs for detox/residential expansion. In-house billing.</p>
+                                </div>
+                                <div class="card-section next-steps">
+                                    <div class="card-section-title">Next Steps</div>
+                                    <p>NDA + data request sent. Rick speaking with partners David &amp; Gabby, then providing financials, census, payer mix, and property details. Bradford to review and plan on-site visit.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Sanctuary Louisiana -->
+                        <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-date">Feb 9</div>
+                            <div class="timeline-card">
+                                <h3>Sanctuary Louisiana</h3>
+                                <div class="location">Louisiana</div>
+                                <div class="tags">
+                                    <span class="tag tag-beds">~160 Beds (Post-Expansion)</span>
+                                    <span class="tag tag-payer">Medicaid + Judicial</span>
+                                    <span class="tag tag-service">SUD / Work-Integration</span>
+                                </div>
+                                <div class="card-section">
+                                    <div class="card-section-title">Key People</div>
+                                    <p>Chris (Leadership), Mr. Lee Mallet (Owner)</p>
+                                </div>
+                                <div class="card-section">
+                                    <div class="card-section-title">What We Learned</div>
+                                    <p>Judicial referral center — 77% court-ordered. 28-day 12-step SUD program (3.5) and 90-day CBT/MRT program (3.1). Unique work-integration model where clients work for ~30 vendors while retaining Medicaid. Legislative efforts (SB 135 / Act 238) to expand referral authority.</p>
+                                </div>
+                                <div class="card-section next-steps">
+                                    <div class="card-section-title">Next Steps</div>
+                                    <p>Non-binding LOI + NDA sent. Chuck sending info request (financials, rent, census, payer mix). Site visit planned. Sanctuary leadership meeting with owner Mr. Mallet about partnership/sale.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Serenity Treatment Center -->
+                        <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-date">Feb 9</div>
+                            <div class="timeline-card">
+                                <h3>Serenity Treatment Center</h3>
+                                <div class="location">Baton Rouge, LA</div>
+                                <div class="tags">
+                                    <span class="tag tag-beds">88 Beds (3 Buildings)</span>
+                                    <span class="tag tag-payer">Medicaid</span>
+                                    <span class="tag tag-service">Residential MH/SUD / IOP</span>
+                                </div>
+                                <div class="card-section">
+                                    <div class="card-section-title">What We Learned</div>
+                                    <p>Foster (50 beds) + Weymouth (40 beds) = 88 active beds across 3 buildings. IOP capacity up to 90 people. Financial performance boosted by Better/Ambetter contract at $720/day — margins up to ~28%. Risks of payer concentration. Expanding into rural Louisiana and additional outpatient.</p>
+                                </div>
+                                <div class="card-section next-steps">
+                                    <div class="card-section-title">Next Steps</div>
+                                    <p>NDA + data request sent. Chuck planning site visit (end of Feb / early Mar). Call with Serenity's owner before releasing full financials.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Williamsville Wellness -->
+                        <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-date">Feb 9</div>
+                            <div class="timeline-card">
+                                <h3>Williamsville Wellness</h3>
+                                <div class="location">Virginia (430-Acre Historic Property)</div>
+                                <div class="tags">
+                                    <span class="tag tag-beds">24 Beds</span>
+                                    <span class="tag tag-service">Gambling Addiction</span>
+                                </div>
+                                <div class="card-section">
+                                    <div class="card-section-title">Key People</div>
+                                    <p>Bob (Owner, age 79)</p>
+                                </div>
+                                <div class="card-section">
+                                    <div class="card-section-title">What We Learned</div>
+                                    <p>Highly specialized gambling addiction treatment with 10–15 individual sessions/week. 430-acre property with main house from 1803. Never been profitable despite uniqueness (prior $17M offer declined). Owners ~79/78, children not interested — need succession plan.</p>
+                                </div>
+                                <div class="card-section next-steps">
+                                    <div class="card-section-title">Next Steps</div>
+                                    <p>Chuck emailing contact details to Bob for his son's successor shortlist. Potential in-person meeting to discuss succession timeline.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Sobrius Health -->
+                        <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-date">Feb 12</div>
+                            <div class="timeline-card">
+                                <h3>Sobrius Health</h3>
+                                <div class="location">Virginia (3 Sites)</div>
+                                <div class="tags">
+                                    <span class="tag tag-beds">Multi-Site</span>
+                                    <span class="tag tag-payer">Medicaid</span>
+                                    <span class="tag tag-service">Residential SUD/MH / PHP</span>
+                                </div>
+                                <div class="card-section">
+                                    <div class="card-section-title">Key People</div>
+                                    <p>Nelson (Leadership), Matt Feehery</p>
+                                </div>
+                                <div class="card-section">
+                                    <div class="card-section-title">What We Learned</div>
+                                    <p>3 Virginia sites: Galax (hub), Lynchburg (19K sq ft residential/PHP), Bassett (women's residential). Strong Medicaid orientation. Home-like milieu with strong community integration. Roanoke expansion underway. Growth plan includes PHP, 3.1, 2.5, IOP, and sober living.</p>
+                                </div>
+                                <div class="card-section next-steps">
+                                    <div class="card-section-title">Next Steps</div>
+                                    <p>NDA + question list sent. Ben scheduling follow-up with Chuck. Sobrius sending one-pager (beds, property, census, payer mix, growth plan). Dylan to build preliminary valuation range and synergy view.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tikvah Lake -->
+                        <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-date">Feb 19</div>
+                            <div class="timeline-card">
+                                <h3>Tikvah Lake / Park Manor Recovery</h3>
+                                <div class="location">South Florida</div>
+                                <div class="tags">
+                                    <span class="tag tag-beds">~6 Rooms (Luxury)</span>
+                                    <span class="tag tag-payer">Private Pay / OON</span>
+                                    <span class="tag tag-service">Residential SUD/MH</span>
+                                </div>
+                                <div class="card-section">
+                                    <div class="card-section-title">Key People</div>
+                                    <p>Adam Nesenoff (Managing Partner / Majority Owner)</p>
+                                </div>
+                                <div class="card-section">
+                                    <div class="card-section-title">What We Learned</div>
+                                    <p>Tikvah Lake: high-end, private-pay, luxury program with ~6 private rooms and heavy individual therapy. $40–60K per stay. Park Manor Recovery: more affordable secondary program. Trailing net profit ~$1.5M, recent $300K distribution in one month. Lender hesitation around OON businesses.</p>
+                                </div>
+                                <div class="card-section next-steps">
+                                    <div class="card-section-title">Next Steps</div>
+                                    <p>NDA + high-level data request sent. Adam to provide T-12 P&amp;L and key operational metrics once NDA signed.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Maryland Treatment Centers -->
+                        <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-date">Feb 25</div>
+                            <div class="timeline-card">
+                                <h3>Maryland Treatment Centers</h3>
+                                <div class="location">Maryland (Statewide)</div>
+                                <div class="tags">
+                                    <span class="tag tag-beds">300–350 Beds / 13-14 Locations</span>
+                                    <span class="tag tag-payer">Medicaid + Commercial</span>
+                                    <span class="tag tag-service">Full Continuum MH/SUD</span>
+                                </div>
+                                <div class="card-section">
+                                    <div class="card-section-title">Key People</div>
+                                    <p>Dr. Marc Fishman, Rebecca Fishman</p>
+                                </div>
+                                <div class="card-section">
+                                    <div class="card-section-title">What We Learned</div>
+                                    <p>Major platform — 13-14 locations, 300-350 beds throughout Maryland. Focused on underserved communities. Strong research division with NIH-funded clinical trials and academic collaborations. Mixed public and commercial payer base.</p>
+                                </div>
+                                <div class="card-section next-steps">
+                                    <div class="card-section-title">Next Steps</div>
+                                    <p>Dylan sending meeting notes. Chuck sending NDA/CDA then basic data request. Chuck doing homework internally on the Maryland platform and planning DC visit.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- DreamLife / Crest View -->
+                        <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-date">Mar 3</div>
+                            <div class="timeline-card">
+                                <h3>DreamLife / Crest View Recovery</h3>
+                                <div class="location">Location TBD</div>
+                                <div class="tags">
+                                    <span class="tag tag-service">SUD / MH</span>
+                                    <span class="tag tag-source">Poler Sourced</span>
+                                </div>
+                                <div class="card-section">
+                                    <div class="card-section-title">What We Learned</div>
+                                    <p>Intro call completed. Full details pending transcript review from weekly Bradford call notes.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Diamond Recovery -->
+                        <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-date">Mar 4</div>
+                            <div class="timeline-card">
+                                <h3>Diamond Recovery</h3>
+                                <div class="location">Florida / Georgia / California</div>
+                                <div class="tags">
+                                    <span class="tag tag-beds">~100+ Beds (Multi-State)</span>
+                                    <span class="tag tag-payer">OON</span>
+                                    <span class="tag tag-service">SUD / MH Residential / Detox</span>
+                                </div>
+                                <div class="card-section">
+                                    <div class="card-section-title">Key People</div>
+                                    <p>ASM (Diamond Leadership)</p>
+                                </div>
+                                <div class="card-section">
+                                    <div class="card-section-title">What We Learned</div>
+                                    <p>~44-bed detox + residential in Atlanta, 24-bed program in North Hollywood (CA), 40-bed MH residential in Tallahassee, plus new 15-bed all-female MH program in Georgia. Primarily OON with curated client base; daily rates ~$600 residential, $750 detox. Hospitality/concierge-style care model.</p>
+                                </div>
+                                <div class="card-section next-steps">
+                                    <div class="card-section-title">Next Steps</div>
+                                    <p>Diamond keeping facilities tour-ready. Chuck to coordinate in-person tours when in South FL, Atlanta, or Tallahassee. Evaluating Tallahassee opportunity internally.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Horowitz Health -->
+                        <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-date">Mar 16</div>
+                            <div class="timeline-card">
+                                <h3>Horowitz Health</h3>
+                                <div class="location">Minneapolis, MN</div>
+                                <div class="tags">
+                                    <span class="tag tag-service">Scheduling Call</span>
+                                </div>
+                                <div class="card-section">
+                                    <div class="card-section-title">Key People</div>
+                                    <p>Drew Horowitz</p>
+                                </div>
+                                <div class="card-section">
+                                    <div class="card-section-title">What We Learned</div>
+                                    <p>Scheduling call only — no substantive business discussion. Dylan introduced the Poler/Bradford relationship. Chuck was on PTO; call being rescheduled to include full Bradford team.</p>
+                                </div>
+                                <div class="card-section next-steps">
+                                    <div class="card-section-title">Next Steps</div>
+                                    <p>Dylan coordinating with Chuck and Ben to reschedule full intro call with Horowitz Health.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div><!-- /timeline -->
                 </div>
-
-                <!-- 5. NESS Healthcare — Jan 22 -->
-                <div class="timeline-item">
-                    <div class="timeline-dot"></div>
-                    <div class="timeline-date">Jan 22</div>
-                    <div class="timeline-card">
-                        <h3>NESS Healthcare NFP</h3>
-                        <div class="location">Louisiana</div>
-                        <div class="tags">
-                            <span class="tag tag-beds">Safety-Net Psych</span>
-                            <span class="tag tag-payer">Medicaid / Public</span>
-                            <span class="tag tag-service">Acute Psych / Pediatric</span>
-                        </div>
-                        <div class="card-section">
-                            <div class="card-section-title">Key People</div>
-                            <p>Tony Shir (Founder)</p>
-                        </div>
-                        <div class="card-section">
-                            <div class="card-section-title">What We Learned</div>
-                            <p>Nonprofit providing acute psych for adolescents, adults, children, and pregnant women — largest safety-net psych hospital in Louisiana. Funded via state/federal grants and institutional bonds. Louisiana SUD license moratorium creates unique positioning. Potential public-private JV where Ness brings nonprofit status & public debt access, Bradford brings ops expertise & capital.</p>
-                        </div>
-                        <div class="card-section next-steps">
-                            <div class="card-section-title">Next Steps</div>
-                            <p>Chuck briefing Bradford leadership (CEO, missions team) on JV feasibility. Chuck to visit Ness on next Louisiana trip and follow up with Tony on partnership structure.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 6. Serenity Grove — Jan 29 -->
-                <div class="timeline-item">
-                    <div class="timeline-dot"></div>
-                    <div class="timeline-date">Jan 29</div>
-                    <div class="timeline-card">
-                        <h3>Serenity Grove</h3>
-                        <div class="location">Location Not Disclosed</div>
-                        <div class="tags">
-                            <span class="tag tag-beds">46 Beds (+78 Expansion)</span>
-                            <span class="tag tag-payer">Aetna / BCBS</span>
-                            <span class="tag tag-service">Detox / RTC / PHP / IOP</span>
-                        </div>
-                        <div class="card-section">
-                            <div class="card-section-title">Key People</div>
-                            <p>Jay (Owner/Operator), Kevin Taggart (Advisor)</p>
-                        </div>
-                        <div class="card-section">
-                            <div class="card-section-title">What We Learned</div>
-                            <p>Founded 1998. Full continuum with strong BD and digital marketing (SEO/PPC, alumni). Permits expected soon for +78 beds (campus expansion 4 → 10 acres). Expansion budget $12–15M — wants to share financial risk with a partner. Payer concentration risk (heavy Aetna/BCBS/ACA-subsidy). Jay interested in PE-readiness in 2–3 years.</p>
-                        </div>
-                        <div class="card-section next-steps">
-                            <div class="card-section-title">Next Steps</div>
-                            <p>Jay's team providing diligence materials (financials, unit volumes, build docs). Kevin pulling financials with Anca. Chuck to plan site visit once data reviewed.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 7. Momentum Recovery — Feb 6 -->
-                <div class="timeline-item">
-                    <div class="timeline-dot"></div>
-                    <div class="timeline-date">Feb 6</div>
-                    <div class="timeline-card">
-                        <h3>Momentum Recovery</h3>
-                        <div class="location">North Carolina</div>
-                        <div class="tags">
-                            <span class="tag tag-beds">The Creek & The Cove</span>
-                            <span class="tag tag-payer">Commercial + Private Pay</span>
-                            <span class="tag tag-service">Long-Term SUD</span>
-                        </div>
-                        <div class="card-section">
-                            <div class="card-section-title">Key People</div>
-                            <p>Rick Barney (Owner/Operator)</p>
-                        </div>
-                        <div class="card-section">
-                            <div class="card-section-title">What We Learned</div>
-                            <p>Two programs: The Creek (young men 18–35) and The Cove (women). Long-term continuum — stabilization → extended care → sober living → outpatient, avg LOS ~280 days. Revenue ~$12M last year. Building in-network PHP/IOP. Capital needs for detox/residential expansion. In-house billing.</p>
-                        </div>
-                        <div class="card-section next-steps">
-                            <div class="card-section-title">Next Steps</div>
-                            <p>NDA + data request sent. Rick speaking with partners David & Gabby, then providing financials, census, payer mix, and property details. Bradford to review and plan on-site visit.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 8. Sanctuary Louisiana — Feb 9 -->
-                <div class="timeline-item">
-                    <div class="timeline-dot"></div>
-                    <div class="timeline-date">Feb 9</div>
-                    <div class="timeline-card">
-                        <h3>Sanctuary Louisiana</h3>
-                        <div class="location">Louisiana</div>
-                        <div class="tags">
-                            <span class="tag tag-beds">~160 Beds (Post-Expansion)</span>
-                            <span class="tag tag-payer">Medicaid + Judicial</span>
-                            <span class="tag tag-service">SUD / Work-Integration</span>
-                        </div>
-                        <div class="card-section">
-                            <div class="card-section-title">Key People</div>
-                            <p>Chris (Leadership), Mr. Lee Mallet (Owner)</p>
-                        </div>
-                        <div class="card-section">
-                            <div class="card-section-title">What We Learned</div>
-                            <p>Judicial referral center — 77% court-ordered. 28-day 12-step SUD program (3.5) and 90-day CBT/MRT program (3.1). Unique work-integration model where clients work for ~30 vendors while retaining Medicaid. Legislative efforts (SB 135 / Act 238) to expand referral authority. Focused on reducing recidivism and jail overcrowding.</p>
-                        </div>
-                        <div class="card-section next-steps">
-                            <div class="card-section-title">Next Steps</div>
-                            <p>Non-binding LOI + NDA sent. Chuck sending info request (financials, rent, census, payer mix) and evaluating work-program fit. Site visit being planned. Sanctuary leadership meeting with owner Mr. Mallet about partnership/sale.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 9. Serenity Treatment Center — Feb 9 -->
-                <div class="timeline-item">
-                    <div class="timeline-dot"></div>
-                    <div class="timeline-date">Feb 9</div>
-                    <div class="timeline-card">
-                        <h3>Serenity Treatment Center</h3>
-                        <div class="location">Baton Rouge, LA</div>
-                        <div class="tags">
-                            <span class="tag tag-beds">88 Beds (3 Buildings)</span>
-                            <span class="tag tag-payer">Medicaid</span>
-                            <span class="tag tag-service">Residential MH/SUD / IOP</span>
-                        </div>
-                        <div class="card-section">
-                            <div class="card-section-title">Key People</div>
-                            <p>CEO of Serenity Treatment Center</p>
-                        </div>
-                        <div class="card-section">
-                            <div class="card-section-title">What We Learned</div>
-                            <p>Foster (50 beds) + Weymouth (40 beds) = 88 active beds across 3 buildings. IOP capacity up to 90 people. Financial performance boosted by Better/Ambetter contract at $720/day — margins up to ~28%. Risks of payer concentration. Expanding into rural Louisiana and additional outpatient.</p>
-                        </div>
-                        <div class="card-section next-steps">
-                            <div class="card-section-title">Next Steps</div>
-                            <p>NDA + data request sent. Chuck planning site visit (end of Feb / early Mar). Call with Serenity's owner before releasing full financials.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 10. Williamsville Wellness — Feb 9 -->
-                <div class="timeline-item">
-                    <div class="timeline-dot"></div>
-                    <div class="timeline-date">Feb 9</div>
-                    <div class="timeline-card">
-                        <h3>Williamsville Wellness</h3>
-                        <div class="location">Virginia (430-Acre Historic Property)</div>
-                        <div class="tags">
-                            <span class="tag tag-beds">24 Beds</span>
-                            <span class="tag tag-payer">Undisclosed</span>
-                            <span class="tag tag-service">Gambling Addiction</span>
-                        </div>
-                        <div class="card-section">
-                            <div class="card-section-title">Key People</div>
-                            <p>Bob (Owner, age 79)</p>
-                        </div>
-                        <div class="card-section">
-                            <div class="card-section-title">What We Learned</div>
-                            <p>Highly specialized gambling addiction treatment with 10–15 individual sessions/week. 430-acre property with main house from 1803. Never been profitable despite uniqueness (prior $17M offer declined). Owners ~79/78, children not interested — need succession plan. Bradford could take over management, likely requiring property ownership or partial land sale.</p>
-                        </div>
-                        <div class="card-section next-steps">
-                            <div class="card-section-title">Next Steps</div>
-                            <p>Chuck emailing contact details to Bob for his son's successor shortlist. Potential in-person meeting (Belle Meade or Pompano) to discuss succession timeline.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 11. Sobrius Health — Feb 12 -->
-                <div class="timeline-item">
-                    <div class="timeline-dot"></div>
-                    <div class="timeline-date">Feb 12</div>
-                    <div class="timeline-card">
-                        <h3>Sobrius Health</h3>
-                        <div class="location">Virginia (3 Sites)</div>
-                        <div class="tags">
-                            <span class="tag tag-beds">Multi-Site</span>
-                            <span class="tag tag-payer">Medicaid</span>
-                            <span class="tag tag-service">Residential SUD/MH / PHP</span>
-                        </div>
-                        <div class="card-section">
-                            <div class="card-section-title">Key People</div>
-                            <p>Nelson (Leadership), Matt Feehery</p>
-                        </div>
-                        <div class="card-section">
-                            <div class="card-section-title">What We Learned</div>
-                            <p>3 Virginia sites: Galax (hub), Lynchburg (19K sq ft residential/PHP), Bassett (women's residential). Strong Medicaid orientation — Virginia has favorable Medicaid environment. Home-like milieu with strong community integration. Roanoke expansion underway. Growth plan includes PHP, 3.1, 2.5, IOP, and sober living.</p>
-                        </div>
-                        <div class="card-section next-steps">
-                            <div class="card-section-title">Next Steps</div>
-                            <p>NDA + question list sent. Ben scheduling follow-up with Chuck. Sobrius sending one-pager (beds, property, census, payer mix, growth plan). Dylan to build preliminary valuation range and synergy view for Bradford board review.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 12. Tikvah Lake — Feb 19 -->
-                <div class="timeline-item">
-                    <div class="timeline-dot"></div>
-                    <div class="timeline-date">Feb 19</div>
-                    <div class="timeline-card">
-                        <h3>Tikvah Lake / Park Manor Recovery</h3>
-                        <div class="location">South Florida</div>
-                        <div class="tags">
-                            <span class="tag tag-beds">~6 Rooms (Luxury)</span>
-                            <span class="tag tag-payer">Private Pay / OON</span>
-                            <span class="tag tag-service">Residential SUD/MH</span>
-                        </div>
-                        <div class="card-section">
-                            <div class="card-section-title">Key People</div>
-                            <p>Adam Nesenoff (Managing Partner / Majority Owner)</p>
-                        </div>
-                        <div class="card-section">
-                            <div class="card-section-title">What We Learned</div>
-                            <p>Tikvah Lake: high-end, private-pay, luxury program with ~6 private rooms and heavy individual therapy. $40–60K per stay. Park Manor Recovery: more affordable secondary program. Trailing net profit ~$1.5M, recent $300K distribution in one month. Lender hesitation around OON businesses and conversion complexity.</p>
-                        </div>
-                        <div class="card-section next-steps">
-                            <div class="card-section-title">Next Steps</div>
-                            <p>NDA + high-level data request sent. Adam to provide T-12 P&L and key operational metrics (avg census, daily rates, per-day cost) once NDA signed.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 13. Maryland Treatment Centers — Feb 25 -->
-                <div class="timeline-item">
-                    <div class="timeline-dot"></div>
-                    <div class="timeline-date">Feb 25</div>
-                    <div class="timeline-card">
-                        <h3>Maryland Treatment Centers</h3>
-                        <div class="location">Maryland (Statewide)</div>
-                        <div class="tags">
-                            <span class="tag tag-beds">300–350 Beds / 13-14 Locations</span>
-                            <span class="tag tag-payer">Medicaid + Commercial</span>
-                            <span class="tag tag-service">Full Continuum MH/SUD</span>
-                        </div>
-                        <div class="card-section">
-                            <div class="card-section-title">Key People</div>
-                            <p>Dr. Marc Fishman, Rebecca Fishman</p>
-                        </div>
-                        <div class="card-section">
-                            <div class="card-section-title">What We Learned</div>
-                            <p>Major platform — 13-14 locations, 300-350 beds throughout Maryland. Focused on underserved communities. Strong research division with NIH-funded clinical trials and academic collaborations. Mixed public and commercial payer base. Interest on both sides in understanding strategic fit and valuation approach.</p>
-                        </div>
-                        <div class="card-section next-steps">
-                            <div class="card-section-title">Next Steps</div>
-                            <p>Dylan sending meeting notes. Chuck sending NDA/CDA then basic data request (financials, census, payer mix). Chuck doing homework internally on the Maryland platform and planning DC visit.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 14. Diamond Recovery — Mar 4 -->
-                <div class="timeline-item">
-                    <div class="timeline-dot"></div>
-                    <div class="timeline-date">Mar 4</div>
-                    <div class="timeline-card">
-                        <h3>Diamond Recovery</h3>
-                        <div class="location">Florida / Georgia / California</div>
-                        <div class="tags">
-                            <span class="tag tag-beds">~100+ Beds (Multi-State)</span>
-                            <span class="tag tag-payer">OON</span>
-                            <span class="tag tag-service">SUD / MH Residential / Detox</span>
-                        </div>
-                        <div class="card-section">
-                            <div class="card-section-title">Key People</div>
-                            <p>ASM (Diamond Leadership)</p>
-                        </div>
-                        <div class="card-section">
-                            <div class="card-section-title">What We Learned</div>
-                            <p>~44-bed detox + residential in Atlanta, 24-bed program in North Hollywood (CA), 40-bed MH residential in Tallahassee, plus new 15-bed all-female MH program in Georgia. Primarily OON with curated client base; daily rates ~$600 residential, $750 detox. NJ detox project upcoming. Hospitality/concierge-style care model.</p>
-                        </div>
-                        <div class="card-section next-steps">
-                            <div class="card-section-title">Next Steps</div>
-                            <p>Diamond keeping facilities tour-ready. Chuck to notify when in South FL, Atlanta, or Tallahassee to coordinate in-person tours. Chuck evaluating Tallahassee opportunity internally and connecting ASM with Bradford facility CEOs.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 15. Horowitz Health — Mar 16 -->
-                <div class="timeline-item">
-                    <div class="timeline-dot"></div>
-                    <div class="timeline-date">Mar 16</div>
-                    <div class="timeline-card">
-                        <h3>Horowitz Health</h3>
-                        <div class="location">Minneapolis, MN</div>
-                        <div class="tags">
-                            <span class="tag tag-service">Scheduling Call</span>
-                        </div>
-                        <div class="card-section">
-                            <div class="card-section-title">Key People</div>
-                            <p>Drew Horowitz</p>
-                        </div>
-                        <div class="card-section">
-                            <div class="card-section-title">What We Learned</div>
-                            <p>Scheduling call only — no substantive business discussion. Dylan introduced the Poler/Bradford relationship. Chuck was on PTO; call being rescheduled to include full Bradford team.</p>
-                        </div>
-                        <div class="card-section next-steps">
-                            <div class="card-section-title">Next Steps</div>
-                            <p>Dylan coordinating with Chuck and Ben to reschedule full intro call with Horowitz Health.</p>
-                        </div>
-                    </div>
-                </div>
-
-            </div><!-- /timeline -->
+            </div>
 
         </div>
     </div>
@@ -845,8 +1392,7 @@
     </div><!-- /page-content -->
 
     <script>
-        var h = '0b65764da74b8e8e89b tried';
-        // Simple hash check
+        // Password
         function hashPw(s) {
             var h = 0;
             for (var i = 0; i < s.length; i++) {
@@ -869,6 +1415,19 @@
         document.getElementById('pw-input').addEventListener('keydown', function(e) {
             if (e.key === 'Enter') checkPw();
         });
+
+        // Quarter toggle
+        function toggleQ(header) {
+            var body = header.nextElementSibling;
+            var isExpanded = header.classList.contains('expanded');
+            if (isExpanded) {
+                header.classList.remove('expanded');
+                body.classList.remove('visible');
+            } else {
+                header.classList.add('expanded');
+                body.classList.add('visible');
+            }
+        }
     </script>
 </body>
 </html>
