@@ -967,16 +967,33 @@ body {
   z-index: 0;
   position: relative;
 }
-/* Keep Leaflet draw toolbar inside the map container */
-.alert-map .leaflet-draw-toolbar,
-.alert-map .leaflet-control {
-  z-index: 1 !important;
+/* MapLibre GL overrides */
+.alert-map .maplibregl-canvas {
+  outline: none;
+}
+.alert-map-controls {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+.alert-map-draw-btn {
+  padding: 0.4rem 0.9rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--navy);
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+.alert-map-draw-btn:hover {
+  background: #dbeafe;
 }
 .alert-map-clear-btn {
-  display: inline-block;
-  margin-top: 0.4rem;
-  padding: 0.3rem 0.8rem;
-  font-size: 0.75rem;
+  padding: 0.4rem 0.9rem;
+  font-size: 0.8rem;
   font-weight: 500;
   color: #dc2626;
   background: #fef2f2;
@@ -984,9 +1001,16 @@ body {
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.15s;
+  font-family: inherit;
 }
 .alert-map-clear-btn:hover {
   background: #fee2e2;
+}
+.alert-map-hint {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 0.35rem;
+  font-style: italic;
 }
 
 /* ── REMINDER BADGE ───────────────────────────────────────── */
