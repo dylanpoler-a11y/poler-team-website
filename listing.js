@@ -128,6 +128,14 @@ function initLeadCapture() {
     leadCaptured = !!localStorage.getItem('poler_lead_v1');
     if (leadCaptured) return;
 
+    // Recognize returning leads from alert emails (URL has ?t=TOKEN)
+    const alertToken = new URLSearchParams(window.location.search).get('t');
+    if (alertToken && alertToken.length >= 10) {
+        localStorage.setItem('poler_lead_v1', 'alert_' + alertToken);
+        leadCaptured = true;
+        return;
+    }
+
     const overlay  = document.getElementById('lead-overlay');
     const bar      = document.getElementById('lead-timer-bar');
     const pageWrap = document.getElementById('page-wrap');
