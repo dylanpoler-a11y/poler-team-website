@@ -120,6 +120,19 @@ body {
     background: var(--gold-light) !important;
 }
 
+.nav-login {
+    border: 1px solid var(--gold) !important;
+    color: var(--gold) !important;
+    padding: 10px 24px;
+    border-radius: 6px;
+    font-weight: 600 !important;
+}
+
+.nav-login:hover {
+    background: var(--gold) !important;
+    color: var(--navy) !important;
+}
+
 .nav-toggle {
     display: none;
     flex-direction: column;
