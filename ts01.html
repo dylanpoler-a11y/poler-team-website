@@ -287,7 +287,7 @@
             <button class="lang-btn active" id="btnPT" onclick="setLang('pt')">PT</button>
             <button class="lang-btn" id="btnEN" onclick="setLang('en')">EN</button>
         </div>
-        <span class="nav-date" data-i18n="nav_updated">Atualizado: 11 de Março, 2026</span>
+        <span class="nav-date" data-i18n="nav_updated">Atualizado: 17 de Março, 2026</span>
     </div>
 </nav>
 
@@ -318,7 +318,7 @@
         </div>
         <div class="stat-item">
             <div class="stat-label" data-i18n="stat_dom">Dias no Mercado</div>
-            <div class="stat-value" id="dom-counter">5</div>
+            <div class="stat-value" id="dom-counter">12</div>
             <div class="stat-detail" data-i18n="stat_dom_detail">Listado em 5 de Março, 2026</div>
         </div>
     </div>
@@ -376,7 +376,7 @@
         <div class="photo-card">
             <img src="https://imgprd.condoblackbook.com/medium_A11978895_47_40cd8a9ad8.jpeg" alt="Master Suite" loading="lazy">
             <div class="photo-label" data-i18n="photo_master">Suíte Master</div>
-            <div class="photo-count-badge" onclick="event.stopPropagation(); openPhotoLightbox('property')" data-i18n="photo_count">&#128247; 70+ Fotos Profissionais</div>
+            <div class="photo-count-badge" onclick="event.stopPropagation(); openPhotoLightbox('property')" data-i18n="photo_count">&#128247; 80+ Fotos Profissionais</div>
         </div>
     </div>
 </section>
@@ -385,7 +385,7 @@
     <div class="metrics-grid">
         <div class="metric-card fade-in">
             <div class="metric-icon gold">&#128197;</div>
-            <div class="metric-number" style="color: var(--gold);" id="counter-dom">5</div>
+            <div class="metric-number" style="color: var(--gold);" id="counter-dom">12</div>
             <div class="metric-label" data-i18n="metric_dom">Dias no Mercado</div>
             <div class="metric-status active"><span class="pulse" style="width:6px;height:6px;"></span><span data-i18n="metric_just_listed">Recém-Listado</span></div>
         </div>
@@ -620,37 +620,11 @@
             <div class="furniture-item-tag" data-i18n="fi4_tag">Automação Completa</div>
         </div>
     </div>
-    <div class="furniture-photo-grid" id="furniturePhotoGrid"></div>
-    <div class="furniture-photo-more" id="furnitureMoreBtn" style="display:none;">
-        <button onclick="showAllFurniturePhotos()" data-i18n="furn_view_all">Ver Todas as Fotos da Mobília</button>
+    <div style="text-align:center;margin-top:2rem;">
+        <button onclick="openFurnitureLightbox()" style="background:linear-gradient(135deg, var(--gold), #b8860b);color:#000;border:none;padding:1rem 2.5rem;border-radius:12px;font-size:1rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:0.5rem;transition:transform 0.2s,box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 25px rgba(212,175,55,0.3)'" onmouseout="this.style.transform='';this.style.boxShadow=''">&#128247; <span data-i18n="furn_view_photos">Ver Fotos da Mobília</span></button>
     </div>
 </section>
 
-<section class="section" style="background: var(--navy-light);">
-    <div class="section-header">
-        <div class="section-eyebrow" data-i18n="analytics_eyebrow">Desempenho Digital</div>
-        <h2 class="section-title" data-i18n="analytics_title">Análises Online</h2>
-        <p class="section-subtitle" data-i18n="analytics_sub">Acompanhamento do desempenho do anúncio em todas as principais plataformas imobiliárias.</p>
-        <div class="divider"></div>
-    </div>
-    <div class="analytics-grid" style="grid-template-columns: repeat(2, 1fr);">
-        <div class="analytics-card fade-in">
-            <span class="coming-soon" style="background:rgba(52,211,153,0.12);color:var(--accent-green);" data-i18n="an_live">&#9679; Ao Vivo</span>
-            <div class="analytics-number" style="color:var(--accent-blue);" id="homes-views">3,364</div>
-            <div class="analytics-label" data-i18n="an_homes_views">Visualizações no Homes.com</div>
-            <div class="analytics-source">homes.com</div>
-        </div>
-        <div class="analytics-card fade-in">
-            <span class="coming-soon" style="background:rgba(52,211,153,0.12);color:var(--accent-green);" data-i18n="an_live">&#9679; Ao Vivo</span>
-            <div class="analytics-number" style="color:var(--gold);" id="zillow-views">131</div>
-            <div class="analytics-label" data-i18n="an_zillow_views">Visualizações no Zillow</div>
-            <div class="analytics-source">zillow.com</div>
-        </div>
-    </div>
-    <div style="text-align:center;margin-top:2rem;">
-        <p style="font-size:0.8rem;color:var(--text-muted);max-width:600px;margin:0 auto;" data-i18n="analytics_note">Visualizações sincronizadas automaticamente do Homes.com e Zillow a cada 4 horas. Sua assinatura premium do Homes.com inclui análises avançadas e tours 3D Matterport.</p>
-    </div>
-</section>
 
 
 <section class="section" id="documents">
@@ -667,7 +641,7 @@
             <div class="doc-desc" data-i18n="doc1_desc">Relatório completo da associação de condomínio incluindo finanças, reservas, litígios pendentes e avaliações especiais.</div>
             <div class="doc-badge available" data-i18n="doc1_badge">&#10003; Disponível</div>
         </div>
-        <a href="https://res.cloudinary.com/dqen6s67c/raw/upload/v1773779097/ts1-dashboard/condo-rider.pdf" target="_blank" class="doc-card fade-in" style="text-decoration:none;color:inherit;cursor:pointer;">
+        <a href="https://res.cloudinary.com/dqen6s67c/raw/upload/v1773792456/ts1-dashboard/condo-rider-articles.pdf" target="_blank" class="doc-card fade-in" style="text-decoration:none;color:inherit;cursor:pointer;">
             <div class="doc-icon">&#128221;</div>
             <div class="doc-name" data-i18n="doc2_name">Condo Rider</div>
             <div class="doc-desc" data-i18n="doc2_desc">Artigos de incorporação e regulamento do condomínio Trump Royale.</div>
@@ -746,6 +720,7 @@
     <div class="photo-lightbox-tabs">
         <button class="photo-lightbox-tab active" onclick="switchPhotoTab('property')" id="tabProperty" data-i18n-tab-property>Imóvel</button>
         <button class="photo-lightbox-tab" onclick="switchPhotoTab('amenities')" id="tabAmenities" data-i18n-tab-amenities>Amenidades</button>
+        <button class="photo-lightbox-tab" onclick="switchPhotoTab('furniture')" id="tabFurniture" data-i18n-tab-furniture>Mobília</button>
     </div>
     <div class="photo-lightbox-body">
         <div class="photo-lightbox-grid" id="lightboxGrid"></div>
@@ -760,7 +735,7 @@
 
 <div class="last-updated">
     <span class="live-dot"></span>
-    <span data-i18n="last_updated">Painel atualizado em: 11 de Março, 2026 &bull; Dados atualizados a cada visita, oferta ou evento de mercado</span>
+    <span data-i18n="last_updated">Painel atualizado em: 17 de Março, 2026 &bull; Dados atualizados a cada visita, oferta ou evento de mercado</span>
 </div>
 
 <footer class="footer">
@@ -774,7 +749,7 @@
 const T = {
 pt: {
     nav_overview: 'Visão Geral', nav_marketing: 'Marketing', nav_showings: 'Visitas', nav_furniture: 'Mobília', nav_docs: 'Documentos', nav_expenses: 'Despesas',
-    nav_updated: 'Atualizado: 11 de Março, 2026',
+    nav_updated: 'Atualizado: 17 de Março, 2026',
     hero_badge: 'Imóvel Ativo', hero_floor: 'Andar 55', hero_type: 'Cobertura Duplex',
     stat_price: 'Preço de Venda', stat_area: 'Área Interna', stat_area_detail: '+ 1.500 SF de Terraço', stat_layout: 'Configuração', stat_bd: 'QT', stat_ba: 'BH', stat_layout_detail: 'Cobertura Duplex', stat_psf: 'Preço / SF', stat_psf_detail: 'Under A/C', stat_dom: 'Dias no Mercado', stat_dom_detail: 'Listado em 5 de Março, 2026',
     metric_dom: 'Dias no Mercado', metric_just_listed: 'Recém-Listado', metric_views: 'Visualizações Online', metric_awaiting: 'Aguardando Dados', metric_showings: 'Total de Visitas', metric_tracking: 'Monitoramento Ativo', metric_offers: 'Ofertas Recebidas',
@@ -813,17 +788,17 @@ pt: {
     fi2_title: 'Acabamentos Florentinos Sob Medida', fi2_desc: 'Louças e acabamentos de banheiro sob medida, provenientes diretamente de artesãos de Florença, Itália.', fi2_tag: 'Importado Sob Medida',
     fi3_title: 'Sistema de Adega', fi3_desc: 'Armazenamento climatizado para 200+ garrafas de vinho, sistema de refrigeração profissional.', fi3_tag: 'Climatizado',
     fi4_title: 'Sistema de Casa Inteligente', fi4_desc: 'Automação residencial completa incluindo iluminação, clima, áudio e sistemas de segurança integrados em ambos os andares.', fi4_tag: 'Automação Completa',
-    furn_view_all: 'Ver Todas as Fotos da Mobília',
+    furn_view_all: 'Ver Todas as Fotos da Mobília', furn_view_photos: 'Ver Fotos da Mobília',
     analytics_eyebrow: 'Desempenho Digital', analytics_title: 'Análises Online', analytics_sub: 'Acompanhamento do desempenho do anúncio em todas as principais plataformas imobiliárias.',
     an_live: '&#9679; Ao Vivo', an_homes_views: 'Visualizações no Homes.com', an_zillow_views: 'Visualizações no Zillow',
     analytics_note: 'Visualizações sincronizadas automaticamente do Homes.com e Zillow a cada 4 horas. Sua assinatura premium do Homes.com inclui análises avançadas e tours 3D Matterport.',
     // Rental
     rental_badge: 'Também Disponível para Aluguel', rental_price_label: 'Aluguel Mensal', rental_psf_label: 'Preço / SF', rental_psf_detail: 'Área Under A/C', rental_type_label: 'Tipo de Aluguel', rental_type_value: 'Mobiliado', rental_type_detail: 'Totalmente Equipado', rental_config_label: 'Configuração', rental_config_detail: 'Cobertura Duplex', rental_status_label: 'Status', rental_status_value: 'Ativo', rental_status_detail: 'Listado em 10 de Março',
-    last_updated: 'Painel atualizado em: 11 de Março, 2026 &bull; Dados atualizados a cada visita, oferta ou evento de mercado',
+    last_updated: 'Painel atualizado em: 17 de Março, 2026 &bull; Dados atualizados a cada visita, oferta ou evento de mercado',
     footer_text: 'Painel Exclusivo do Imóvel &mdash; 18201 Collins Ave, Unit TS1, Sunny Isles Beach, FL 33160',
     footer_confidential: 'Confidencial &mdash; Preparado Exclusivamente para Mario e Rosanne Marchiono pelo Poler Team',
     // Photo gallery
-    photo_main: 'Sala Principal — Vista Oceano', photo_label_living: 'Sala de Estar com Pé-Direito Duplo', photo_kitchen: 'Cozinha Poliform', photo_terrace: 'Terraço & Piscina', photo_wine: 'Adega', photo_master: 'Suíte Master', photo_count: '&#128247; 70+ Fotos Profissionais',
+    photo_main: 'Sala Principal — Vista Oceano', photo_label_living: 'Sala de Estar com Pé-Direito Duplo', photo_kitchen: 'Cozinha Poliform', photo_terrace: 'Terraço & Piscina', photo_wine: 'Adega', photo_master: 'Suíte Master', photo_count: '&#128247; 80+ Fotos Profissionais',
     // Market analysis
     analysis_eyebrow: 'Análise de Mercado', analysis_title: 'Preço por SF vs. Edifícios Comparáveis', analysis_sub: 'Comparação do preço por pé quadrado entre edifícios de luxo em Sunny Isles Beach, levando em consideração o ano de construção de cada um.',
     chart_psf_title: 'Preço por SF — Edifício vs. Ano de Construção', chart_psf_sub: 'Edifícios mais novos tendem a ter $/SF mais alto. Trump Royale (2008) oferece valor excepcional por SF para o tamanho e localização.',
@@ -850,7 +825,7 @@ pt: {
 },
 en: {
     nav_overview: 'Overview', nav_marketing: 'Marketing', nav_showings: 'Showings', nav_furniture: 'Furnishings', nav_docs: 'Documents', nav_expenses: 'Expenses',
-    nav_updated: 'Updated: March 11, 2026',
+    nav_updated: 'Updated: March 17, 2026',
     hero_badge: 'Active Listing', hero_floor: 'Floor 55', hero_type: 'Two-Story Penthouse',
     stat_price: 'List Price', stat_area: 'Living Area', stat_area_detail: '+ 1,500 SF Terrace', stat_layout: 'Layout', stat_bd: 'BD', stat_ba: 'BA', stat_layout_detail: 'Two-Story Penthouse', stat_psf: 'Price / SF', stat_psf_detail: 'Under A/C', stat_dom: 'Days on Market', stat_dom_detail: 'Listed March 5, 2026',
     metric_dom: 'Days on Market', metric_just_listed: 'Just Listed', metric_views: 'Online Views', metric_awaiting: 'Awaiting Data', metric_showings: 'Total Showings', metric_tracking: 'Tracking Active', metric_offers: 'Offers Received',
@@ -890,17 +865,17 @@ en: {
     fi2_title: 'Custom Florentine Vanities', fi2_desc: 'Bespoke bathroom fixtures and vanities sourced directly from artisans in Florence, Italy.', fi2_tag: 'Custom Imported',
     fi3_title: 'Wine Cellar System', fi3_desc: 'Climate-controlled wine storage with capacity for 200+ bottles, professional-grade cooling system.', fi3_tag: 'Climate Controlled',
     fi4_title: 'Smart Home System', fi4_desc: 'Full home automation including lighting, climate, audio, and security systems integrated throughout both floors.', fi4_tag: 'Full Automation',
-    furn_view_all: 'View All Furniture Photos',
+    furn_view_all: 'View All Furniture Photos', furn_view_photos: 'View Furniture Photos',
     analytics_eyebrow: 'Digital Performance', analytics_title: 'Online Analytics', analytics_sub: 'Tracking listing performance across all major real estate platforms.',
     an_live: '&#9679; Live', an_homes_views: 'Homes.com Views', an_zillow_views: 'Zillow Views',
     analytics_note: 'Views auto-synced from Homes.com and Zillow every 4 hours. Your Homes.com premium membership includes enhanced listing analytics and Matterport 3D tours.',
     // Rental
     rental_badge: 'Also Available for Rent', rental_price_label: 'Monthly Rent', rental_psf_label: 'Price / SF', rental_psf_detail: 'Under A/C Area', rental_type_label: 'Lease Type', rental_type_value: 'Furnished', rental_type_detail: 'Fully Equipped', rental_config_label: 'Layout', rental_config_detail: 'Two-Story Penthouse', rental_status_label: 'Status', rental_status_value: 'Active', rental_status_detail: 'Listed March 10',
-    last_updated: 'Dashboard last updated: March 11, 2026 &bull; Data refreshes with each showing, offer, or market event',
+    last_updated: 'Dashboard last updated: March 17, 2026 &bull; Data refreshes with each showing, offer, or market event',
     footer_text: 'Exclusive Listing Dashboard &mdash; 18201 Collins Ave, Unit TS1, Sunny Isles Beach, FL 33160',
     footer_confidential: 'Confidential &mdash; Prepared Exclusively for Mario and Rosanne Marchiono by Poler Team',
     // Photo gallery
-    photo_main: 'Main Living — Ocean View', photo_label_living: 'Double-Height Living Room', photo_kitchen: 'Poliform Kitchen', photo_terrace: 'Terrace & Pool', photo_wine: 'Wine Cellar', photo_master: 'Master Suite', photo_count: '&#128247; 70+ Professional Photos',
+    photo_main: 'Main Living — Ocean View', photo_label_living: 'Double-Height Living Room', photo_kitchen: 'Poliform Kitchen', photo_terrace: 'Terrace & Pool', photo_wine: 'Wine Cellar', photo_master: 'Master Suite', photo_count: '&#128247; 80+ Professional Photos',
     // Market analysis
     analysis_eyebrow: 'Market Analysis', analysis_title: 'Price Per SF vs. Comparable Buildings', analysis_sub: 'Price per square foot comparison across luxury buildings in Sunny Isles Beach, factoring in each building\'s construction year.',
     chart_psf_title: 'Price Per SF — Building vs. Year Built', chart_psf_sub: 'Newer buildings tend to command higher $/SF. Trump Royale (2008) offers exceptional value per SF for the size and location.',
@@ -1063,53 +1038,9 @@ function rebuildCharts() {
 rebuildCharts();
 
 // ===== PHOTO LIGHTBOX =====
-const propertyPhotos = [
-    'https://imgprd.condoblackbook.com/medium_A11978895_1_5daf4e5419.jpeg',
-    'https://imgprd.condoblackbook.com/medium_A11978895_20_37a9a700db.jpeg',
-    'https://imgprd.condoblackbook.com/medium_A11978895_40_9d6a0253e2.jpeg',
-    'https://imgprd.condoblackbook.com/medium_A11978895_35_fb9401f863.jpeg',
-    'https://imgprd.condoblackbook.com/medium_A11978895_47_40cd8a9ad8.jpeg',
-    'https://imgprd.condoblackbook.com/medium_A11978895_2_3e4b37a5f2.jpeg',
-    'https://imgprd.condoblackbook.com/medium_A11978895_3_1e3815ff59.jpeg',
-    'https://imgprd.condoblackbook.com/medium_A11978895_4_abb1e7f04f.jpeg',
-    'https://imgprd.condoblackbook.com/medium_A11978895_5_8aa900e0b9.jpeg',
-    'https://imgprd.condoblackbook.com/medium_A11978895_6_30b1ff5b2b.jpeg',
-    'https://imgprd.condoblackbook.com/medium_A11978895_7_da5b21e5c0.jpeg',
-    'https://imgprd.condoblackbook.com/medium_A11978895_8_6a6c2d1324.jpeg',
-    'https://imgprd.condoblackbook.com/medium_A11978895_9_f456d1ea48.jpeg',
-    'https://imgprd.condoblackbook.com/medium_A11978895_10_05879e73b3.jpeg',
-    'https://imgprd.condoblackbook.com/medium_A11978895_11_6b2acb69ac.jpeg',
-    'https://imgprd.condoblackbook.com/medium_A11978895_12_3c5f7d9e8a.jpeg',
-    'https://imgprd.condoblackbook.com/medium_A11978895_13_a7b4c2d3e5.jpeg',
-    'https://imgprd.condoblackbook.com/medium_A11978895_14_f1e2d3c4b5.jpeg',
-    'https://imgprd.condoblackbook.com/medium_A11978895_15_9a8b7c6d5e.jpeg',
-    'https://imgprd.condoblackbook.com/medium_A11978895_16_4f3e2d1c0b.jpeg',
-    'https://imgprd.condoblackbook.com/medium_A11978895_17_c4d3e2f1a0.jpeg',
-    'https://imgprd.condoblackbook.com/medium_A11978895_18_b5a4c3d2e1.jpeg',
-    'https://imgprd.condoblackbook.com/medium_A11978895_19_e6d5c4b3a2.jpeg',
-    'https://imgprd.condoblackbook.com/medium_A11978895_21_a1b2c3d4e5.jpeg',
-    'https://imgprd.condoblackbook.com/medium_A11978895_22_f6e5d4c3b2.jpeg',
-    'https://imgprd.condoblackbook.com/medium_A11978895_23_1a2b3c4d5e.jpeg',
-    'https://imgprd.condoblackbook.com/medium_A11978895_24_6f5e4d3c2b.jpeg',
-    'https://imgprd.condoblackbook.com/medium_A11978895_25_b1a2c3d4e5.jpeg',
-    'https://imgprd.condoblackbook.com/medium_A11978895_30_d4c3b2a1f0.jpeg',
-    'https://imgprd.condoblackbook.com/medium_A11978895_32_a3b2c1d0e9.jpeg',
-    'https://imgprd.condoblackbook.com/medium_A11978895_33_e4d3c2b1a0.jpeg',
-    'https://imgprd.condoblackbook.com/medium_A11978895_34_f5e4d3c2b1.jpeg',
-    'https://imgprd.condoblackbook.com/medium_A11978895_36_c2d1e0f9a8.jpeg',
-    'https://imgprd.condoblackbook.com/medium_A11978895_37_b3c2d1e0f9.jpeg',
-    'https://imgprd.condoblackbook.com/medium_A11978895_38_a4b3c2d1e0.jpeg',
-    'https://imgprd.condoblackbook.com/medium_A11978895_39_f5e4d3c2b1.jpeg',
-    'https://imgprd.condoblackbook.com/medium_A11978895_41_c6d5e4f3a2.jpeg',
-    'https://imgprd.condoblackbook.com/medium_A11978895_42_b7c6d5e4f3.jpeg',
-    'https://imgprd.condoblackbook.com/medium_A11978895_43_a8b7c6d5e4.jpeg',
-    'https://imgprd.condoblackbook.com/medium_A11978895_44_f9a8b7c6d5.jpeg',
-    'https://imgprd.condoblackbook.com/medium_A11978895_45_e0f9a8b7c6.jpeg',
-    'https://imgprd.condoblackbook.com/medium_A11978895_46_d1e0f9a8b7.jpeg',
-    'https://imgprd.condoblackbook.com/medium_A11978895_48_b3c2d1e0f9.jpeg',
-    'https://imgprd.condoblackbook.com/medium_A11978895_49_a4b3c2d1e0.jpeg',
-    'https://imgprd.condoblackbook.com/medium_A11978895_50_f5e4d3c2b1.jpeg',
-];
+const PRO_BASE = 'https://res.cloudinary.com/dqen6s67c/image/upload/ts1-dashboard/professional/';
+const propertyPhotos = [];
+for (let i = 1; i <= 80; i++) { propertyPhotos.push(PRO_BASE + 'pro-' + String(i).padStart(3,'0') + '.jpg'); }
 
 const amenityPhotos = [
     'https://res.cloudinary.com/dqen6s67c/image/upload/v1773779106/ts1-dashboard/amenities/WhatsApp_Image_2026-03-17_at_9.03.42_AM.jpg',
@@ -1140,7 +1071,8 @@ function closePhotoLightbox() {
 function switchPhotoTab(tab) {
     document.getElementById('tabProperty').classList.toggle('active', tab === 'property');
     document.getElementById('tabAmenities').classList.toggle('active', tab === 'amenities');
-    currentLightboxPhotos = tab === 'property' ? propertyPhotos : amenityPhotos;
+    document.getElementById('tabFurniture').classList.toggle('active', tab === 'furniture');
+    currentLightboxPhotos = tab === 'furniture' ? furniturePhotos : (tab === 'amenities' ? amenityPhotos : propertyPhotos);
     const grid = document.getElementById('lightboxGrid');
     grid.innerHTML = currentLightboxPhotos.map((url, i) =>
         `<img src="${url}" alt="Photo ${i+1}" loading="lazy" onclick="openFullview(${i})" onerror="this.style.display='none'">`
@@ -1176,30 +1108,11 @@ for (let i = 2717; i <= 2764; i++) furnitureNums.push(i);
 for (let i = 2767; i <= 2813; i++) furnitureNums.push(i);
 const furniturePhotos = furnitureNums.map(n => FURNITURE_BASE + 'IMG_' + n + '.jpg');
 
-let furnitureShowAll = false;
-function renderFurniturePhotos() {
-    const grid = document.getElementById('furniturePhotoGrid');
-    const show = furnitureShowAll ? furniturePhotos : furniturePhotos.slice(0, 6);
-    grid.innerHTML = show.map((url, i) =>
-        `<img src="${url}" alt="Furniture ${i+1}" loading="lazy" onclick="openFurnitureFullview(${furnitureShowAll ? i : i})" onerror="this.style.display='none'">`
-    ).join('');
-    const btn = document.getElementById('furnitureMoreBtn');
-    btn.style.display = furnitureShowAll ? 'none' : 'block';
+function openFurnitureLightbox() {
+    document.getElementById('photoLightbox').classList.add('open');
+    document.body.style.overflow = 'hidden';
+    switchPhotoTab('furniture');
 }
-
-function showAllFurniturePhotos() {
-    furnitureShowAll = true;
-    renderFurniturePhotos();
-}
-
-function openFurnitureFullview(idx) {
-    currentLightboxPhotos = furnitureShowAll ? furniturePhotos : furniturePhotos.slice(0, 6);
-    currentFullIdx = idx;
-    document.getElementById('fullviewImg').src = currentLightboxPhotos[idx];
-    document.getElementById('photoFullview').classList.add('open');
-}
-
-renderFurniturePhotos();
 
 </script>
 </body>
