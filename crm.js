@@ -588,6 +588,7 @@ function renderTable() {
             <span class="lead-name">${escHtml(lead.name || '—')}</span>
           </div>
         </td>
+        <td class="td-muted">${relativeTime(lead.createdAt)}</td>
         <td class="td-muted">${escHtml(lead.phone || '—')}</td>
         <td class="td-muted">${escHtml(lead.email || '—')}</td>
         <td class="td-property" title="${escHtml(lead.listingAddress || '')}">${property}</td>
@@ -596,7 +597,6 @@ function renderTable() {
         <td class="td-muted">${escHtml(lead.assignedTo || '—')}</td>
         <td><span class="status-badge ${statusClass}">${escHtml(statusVal)}</span></td>
         <td class="td-alerts">${alertSummary}</td>
-        <td class="td-muted">${relativeTime(lead.createdAt)}</td>
       </tr>`;
   }).join('');
 
@@ -663,6 +663,10 @@ function openPanel(id) {
   // Assigned To
   const assignedEl = document.getElementById('panel-assigned-to');
   if (assignedEl) assignedEl.textContent = lead.assignedTo || '—';
+
+  // Contact info in panel
+  document.getElementById('panel-phone-display').textContent = lead.phone || '—';
+  document.getElementById('panel-email-display').textContent = lead.email || '—';
 
   // Action buttons
   const phoneRaw = (lead.phone || '').replace(/\D/g, '');

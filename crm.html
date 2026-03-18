@@ -164,6 +164,7 @@
                 <tr>
                   <th style="width:44px">#</th>
                   <th data-sort="name">Lead <span class="sort-icon">↕</span></th>
+                  <th data-sort="createdAt" class="sorted">Date <span class="sort-icon">↓</span></th>
                   <th data-sort="phone">Phone <span class="sort-icon">↕</span></th>
                   <th data-sort="email">Email <span class="sort-icon">↕</span></th>
                   <th data-sort="listingAddress">Property <span class="sort-icon">↕</span></th>
@@ -172,7 +173,6 @@
                   <th data-sort="assignedTo">Agent <span class="sort-icon">↕</span></th>
                   <th data-sort="status">Status <span class="sort-icon">↕</span></th>
                   <th>Alerts</th>
-                  <th data-sort="createdAt" class="sorted">Date <span class="sort-icon">↓</span></th>
                 </tr>
               </thead>
               <tbody id="leads-tbody"></tbody>
@@ -246,6 +246,19 @@
       <div>
         <div class="panel-name" id="panel-name">—</div>
         <div class="panel-date" id="panel-date">—</div>
+      </div>
+    </div>
+
+    <!-- Contact Info -->
+    <div class="panel-section">
+      <div class="panel-section-title">Contact</div>
+      <div class="panel-field">
+        <div class="panel-field-label">Phone</div>
+        <div class="panel-field-value" id="panel-phone-display">—</div>
+      </div>
+      <div class="panel-field">
+        <div class="panel-field-label">Email</div>
+        <div class="panel-field-value" id="panel-email-display">—</div>
       </div>
     </div>
 
