@@ -868,10 +868,11 @@ function getAlertPrefsFromPanel() {
   return prefs;
 }
 
-// ── ALERT MAP (Leaflet + Leaflet.draw) ────────────────────────────────────
+// ── ALERT MAP (MapLibre GL JS — vector tiles, smooth zoom) ────────────────
 let alertMap = null;
-let alertMapDrawnLayer = null;
 let alertMapPolygonGeoJSON = null;
+let alertMapDrawing = false;
+let alertMapDrawPoints = [];
 
 function initAlertMap(lead) {
   // Destroy previous map instance
@@ -879,102 +880,192 @@ function initAlertMap(lead) {
     alertMap.remove();
     alertMap = null;
   }
-  alertMapDrawnLayer = null;
   alertMapPolygonGeoJSON = null;
+  alertMapDrawing = false;
+  alertMapDrawPoints = [];
 
   const container = document.getElementById('alert-map');
-  if (!container || typeof L === 'undefined') return;
+  if (!container || typeof maplibregl === 'undefined') return;
 
-  // Initialize map centered on South Florida
-  alertMap = L.map('alert-map', {
-    zoomControl: true,
-    scrollWheelZoom: true,
-    doubleClickZoom: true,
-    dragging: true,
-    tap: true,
-  }).setView([25.9, -80.15], 11);
-
-  // Use OpenStreetMap tiles via CDN
-  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-    maxZoom: 19,
-    crossOrigin: true,
-  }).addTo(alertMap);
-
-  // Force map to recalculate size after panel animation completes
-  setTimeout(() => { if (alertMap) alertMap.invalidateSize(); }, 350);
-  setTimeout(() => { if (alertMap) alertMap.invalidateSize(); }, 700);
-
-  // Drawn items layer
-  const drawnItems = new L.FeatureGroup();
-  alertMap.addLayer(drawnItems);
-
-  // Draw controls (polygon + rectangle)
-  const drawControl = new L.Control.Draw({
-    edit: { featureGroup: drawnItems },
-    draw: {
-      polygon: { shapeOptions: { color: '#1a2744', weight: 2, fillOpacity: 0.15 } },
-      rectangle: { shapeOptions: { color: '#1a2744', weight: 2, fillOpacity: 0.15 } },
-      circle: false,
-      circlemarker: false,
-      marker: false,
-      polyline: false,
-    },
-  });
-  alertMap.addControl(drawControl);
-
-  // On draw created
-  alertMap.on(L.Draw.Event.CREATED, (e) => {
-    // Remove previous drawing
-    drawnItems.clearLayers();
-    drawnItems.addLayer(e.layer);
-    alertMapDrawnLayer = e.layer;
-    alertMapPolygonGeoJSON = e.layer.toGeoJSON().geometry;
+  // Initialize map centered on South Florida with vector tiles
+  alertMap = new maplibregl.Map({
+    container: 'alert-map',
+    style: 'https://tiles.openfreemap.org/styles/liberty',
+    center: [-80.15, 25.9],
+    zoom: 10,
+    attributionControl: true,
   });
 
-  // On draw edited
-  alertMap.on(L.Draw.Event.EDITED, () => {
-    if (alertMapDrawnLayer) {
-      alertMapPolygonGeoJSON = alertMapDrawnLayer.toGeoJSON().geometry;
-    }
-  });
+  alertMap.addControl(new maplibregl.NavigationControl(), 'top-left');
 
-  // On draw deleted
-  alertMap.on(L.Draw.Event.DELETED, () => {
-    alertMapDrawnLayer = null;
-    alertMapPolygonGeoJSON = null;
-  });
+  alertMap.on('load', () => {
+    // Add polygon source + layers
+    alertMap.addSource('alert-polygon', {
+      type: 'geojson',
+      data: { type: 'FeatureCollection', features: [] },
+    });
+    alertMap.addLayer({
+      id: 'alert-polygon-fill',
+      type: 'fill',
+      source: 'alert-polygon',
+      paint: { 'fill-color': '#1a2744', 'fill-opacity': 0.15 },
+    });
+    alertMap.addLayer({
+      id: 'alert-polygon-outline',
+      type: 'line',
+      source: 'alert-polygon',
+      paint: { 'line-color': '#1a2744', 'line-width': 2 },
+    });
 
-  // Load existing polygon if lead has one
-  if (lead && lead.alertPolygon) {
-    try {
-      const geo = typeof lead.alertPolygon === 'string' ? JSON.parse(lead.alertPolygon) : lead.alertPolygon;
-      if (geo && geo.type === 'Polygon' && geo.coordinates) {
-        const layer = L.geoJSON(geo, {
-          style: { color: '#1a2744', weight: 2, fillOpacity: 0.15 },
-        });
-        layer.eachLayer(l => {
-          drawnItems.addLayer(l);
-          alertMapDrawnLayer = l;
-        });
-        alertMapPolygonGeoJSON = geo;
-        // Fit map to polygon bounds
-        alertMap.fitBounds(layer.getBounds().pad(0.2));
+    // Drawing points source (shown while drawing)
+    alertMap.addSource('draw-points', {
+      type: 'geojson',
+      data: { type: 'FeatureCollection', features: [] },
+    });
+    alertMap.addLayer({
+      id: 'draw-points-circle',
+      type: 'circle',
+      source: 'draw-points',
+      paint: { 'circle-radius': 5, 'circle-color': '#1a2744', 'circle-stroke-width': 2, 'circle-stroke-color': '#fff' },
+    });
+    // Drawing line preview
+    alertMap.addSource('draw-line', {
+      type: 'geojson',
+      data: { type: 'FeatureCollection', features: [] },
+    });
+    alertMap.addLayer({
+      id: 'draw-line-stroke',
+      type: 'line',
+      source: 'draw-line',
+      paint: { 'line-color': '#1a2744', 'line-width': 2, 'line-dasharray': [2, 2] },
+    });
+
+    // Load existing polygon
+    if (lead && lead.alertPolygon) {
+      try {
+        const geo = typeof lead.alertPolygon === 'string' ? JSON.parse(lead.alertPolygon) : lead.alertPolygon;
+        if (geo && geo.type === 'Polygon' && geo.coordinates) {
+          alertMapPolygonGeoJSON = geo;
+          showPolygonOnMap(geo);
+          // Fit to polygon bounds
+          const coords = geo.coordinates[0];
+          const bounds = coords.reduce((b, c) => b.extend(c), new maplibregl.LngLatBounds(coords[0], coords[0]));
+          alertMap.fitBounds(bounds, { padding: 40 });
+        }
+      } catch (err) {
+        console.warn('Failed to parse alert polygon:', err);
       }
-    } catch (err) {
-      console.warn('Failed to parse alert polygon:', err);
     }
-  }
+  });
+
+  // Click handler for drawing
+  alertMap.on('click', (e) => {
+    if (!alertMapDrawing) return;
+    alertMapDrawPoints.push([e.lngLat.lng, e.lngLat.lat]);
+    updateDrawPreview();
+  });
+
+  // Double-click finishes polygon
+  alertMap.on('dblclick', (e) => {
+    if (!alertMapDrawing || alertMapDrawPoints.length < 3) return;
+    e.preventDefault();
+    finishDrawing();
+  });
+
+  // Draw button
+  document.getElementById('alert-map-draw').addEventListener('click', () => {
+    if (alertMapDrawing) {
+      // If already drawing with 3+ points, finish
+      if (alertMapDrawPoints.length >= 3) finishDrawing();
+      return;
+    }
+    startDrawing();
+  });
 
   // Clear button
   document.getElementById('alert-map-clear').addEventListener('click', () => {
-    drawnItems.clearLayers();
-    alertMapDrawnLayer = null;
-    alertMapPolygonGeoJSON = null;
+    clearPolygon();
   });
 
-  // Fix map sizing after panel animation
-  setTimeout(() => alertMap.invalidateSize(), 350);
+  // Resize after panel animation
+  setTimeout(() => { if (alertMap) alertMap.resize(); }, 350);
+  setTimeout(() => { if (alertMap) alertMap.resize(); }, 700);
+}
+
+function startDrawing() {
+  alertMapDrawing = true;
+  alertMapDrawPoints = [];
+  // Clear existing polygon
+  if (alertMap.getSource('alert-polygon')) {
+    alertMap.getSource('alert-polygon').setData({ type: 'FeatureCollection', features: [] });
+  }
+  alertMapPolygonGeoJSON = null;
+  document.getElementById('alert-map-hint').style.display = 'block';
+  document.getElementById('alert-map-draw').textContent = '✅ Finish Drawing';
+  alertMap.getCanvas().style.cursor = 'crosshair';
+}
+
+function finishDrawing() {
+  if (alertMapDrawPoints.length < 3) return;
+  alertMapDrawing = false;
+  // Close the ring
+  const ring = [...alertMapDrawPoints, alertMapDrawPoints[0]];
+  alertMapPolygonGeoJSON = { type: 'Polygon', coordinates: [ring] };
+  showPolygonOnMap(alertMapPolygonGeoJSON);
+  // Clear draw preview
+  if (alertMap.getSource('draw-points')) {
+    alertMap.getSource('draw-points').setData({ type: 'FeatureCollection', features: [] });
+  }
+  if (alertMap.getSource('draw-line')) {
+    alertMap.getSource('draw-line').setData({ type: 'FeatureCollection', features: [] });
+  }
+  document.getElementById('alert-map-hint').style.display = 'none';
+  document.getElementById('alert-map-draw').textContent = '✏️ Draw Area';
+  alertMap.getCanvas().style.cursor = '';
+}
+
+function updateDrawPreview() {
+  if (!alertMap || !alertMapDrawPoints.length) return;
+  // Show points
+  alertMap.getSource('draw-points').setData({
+    type: 'FeatureCollection',
+    features: alertMapDrawPoints.map(p => ({ type: 'Feature', geometry: { type: 'Point', coordinates: p } })),
+  });
+  // Show line connecting points
+  if (alertMapDrawPoints.length >= 2) {
+    alertMap.getSource('draw-line').setData({
+      type: 'Feature',
+      geometry: { type: 'LineString', coordinates: alertMapDrawPoints },
+    });
+  }
+}
+
+function showPolygonOnMap(geo) {
+  if (!alertMap || !alertMap.getSource('alert-polygon')) return;
+  alertMap.getSource('alert-polygon').setData({
+    type: 'Feature',
+    geometry: geo,
+  });
+}
+
+function clearPolygon() {
+  alertMapPolygonGeoJSON = null;
+  alertMapDrawing = false;
+  alertMapDrawPoints = [];
+  if (alertMap) {
+    if (alertMap.getSource('alert-polygon')) {
+      alertMap.getSource('alert-polygon').setData({ type: 'FeatureCollection', features: [] });
+    }
+    if (alertMap.getSource('draw-points')) {
+      alertMap.getSource('draw-points').setData({ type: 'FeatureCollection', features: [] });
+    }
+    if (alertMap.getSource('draw-line')) {
+      alertMap.getSource('draw-line').setData({ type: 'FeatureCollection', features: [] });
+    }
+    alertMap.getCanvas().style.cursor = '';
+  }
+  document.getElementById('alert-map-hint').style.display = 'none';
+  document.getElementById('alert-map-draw').textContent = '✏️ Draw Area';
 }
 
 async function sendTestAlert() {
