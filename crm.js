@@ -660,9 +660,9 @@ function openPanel(id) {
   document.getElementById('panel-date').textContent       = 'Registered ' + relativeTime(lead.createdAt);
   document.getElementById('panel-avatar-text').textContent = getInitials(lead.name);
 
-  // Assigned To
+  // Assigned To (dropdown)
   const assignedEl = document.getElementById('panel-assigned-to');
-  if (assignedEl) assignedEl.textContent = lead.assignedTo || '—';
+  if (assignedEl) assignedEl.value = lead.assignedTo || '';
 
   // Contact info in panel
   document.getElementById('panel-phone-display').textContent = lead.phone || '—';
@@ -694,7 +694,8 @@ function openPanel(id) {
   // Status & notes
   const statusSelect = document.getElementById('panel-status');
   statusSelect.value = lead.status || 'New';
-  document.getElementById('panel-notes').value = lead.notes || '';
+  document.getElementById('panel-new-note').value = '';
+  renderNotesHistory(lead.notes || '');
 
   // Alert preferences
   document.getElementById('panel-alert-active').checked = !!lead.alertActive;
@@ -757,6 +758,37 @@ function closePanel() {
   activeLead = null;
 }
 
+// ── NOTES HISTORY ──────────────────────────────────────────────────────────
+function renderNotesHistory(notesStr) {
+  const container = document.getElementById('panel-notes-history');
+  if (!container) return;
+  if (!notesStr || !notesStr.trim()) {
+    container.innerHTML = '<p class="panel-empty-text">No notes yet</p>';
+    return;
+  }
+  // Notes are stored as: "[3/18/2026, 9:30 AM — Kevin] Note text\n\n[...] ..."
+  // Parse into individual notes (split on the date pattern)
+  const noteBlocks = notesStr.split(/(?=\[[\d\/]+,\s[\d:]+\s[AP]M\s—\s)/).filter(Boolean);
+  if (noteBlocks.length === 0 && notesStr.trim()) {
+    // Legacy: old-style single note without timestamp
+    container.innerHTML = `<div class="note-card"><div class="note-body">${escHtml(notesStr)}</div></div>`;
+    return;
+  }
+  container.innerHTML = noteBlocks.map(block => {
+    const headerMatch = block.match(/^\[(.*?)\s—\s(.*?)\]\s*/);
+    if (headerMatch) {
+      const dateStr = headerMatch[1];
+      const author = headerMatch[2];
+      const body = block.slice(headerMatch[0].length).trim();
+      return `<div class="note-card">
+        <div class="note-header"><span class="note-author">${escHtml(author)}</span><span class="note-date">${escHtml(dateStr)}</span></div>
+        <div class="note-body">${escHtml(body)}</div>
+      </div>`;
+    }
+    return `<div class="note-card"><div class="note-body">${escHtml(block.trim())}</div></div>`;
+  }).join('');
+}
+
 // ── SAVE LEAD ──────────────────────────────────────────────────────────────
 async function saveLead() {
   if (!activeLead) return;
@@ -764,7 +796,18 @@ async function saveLead() {
   const btn        = document.getElementById('panel-save');
   const saveStatus = document.getElementById('panel-save-status');
   const status     = document.getElementById('panel-status').value;
-  const notes      = document.getElementById('panel-notes').value;
+  const assignedTo = document.getElementById('panel-assigned-to').value;
+  const newNote    = document.getElementById('panel-new-note').value.trim();
+
+  // Build updated notes: prepend new note with timestamp, keep old notes
+  let notes = activeLead.notes || '';
+  if (newNote) {
+    const now = new Date();
+    const dateStr = now.toLocaleString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });
+    const agent = (currentAgent && currentAgent.name) || 'Agent';
+    const entry = `[${dateStr} — ${agent}] ${newNote}`;
+    notes = notes ? entry + '\n\n' + notes : entry;
+  }
 
   btn.disabled    = true;
   btn.textContent = 'Saving…';
@@ -778,6 +821,7 @@ async function saveLead() {
         id:       activeLead.id,
         status,
         notes,
+        assignedTo,
         password: currentPassword,
       }),
     });
@@ -788,10 +832,13 @@ async function saveLead() {
       // Update local cache
       const lead = allLeads.find(l => String(l.id) === String(activeLead.id));
       if (lead) {
-        lead.status = status;
-        lead.notes  = notes;
-        activeLead  = lead;
+        lead.status     = status;
+        lead.notes      = notes;
+        lead.assignedTo = assignedTo;
+        activeLead      = lead;
       }
+      document.getElementById('panel-new-note').value = '';
+      renderNotesHistory(notes);
       saveStatus.style.color   = '#16a34a';
       saveStatus.textContent   = 'Saved successfully';
       saveStatus.style.display = 'block';

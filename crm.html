@@ -394,10 +394,15 @@
     <!-- Assigned To Section -->
     <div class="panel-section">
       <div class="panel-section-title">Assigned To</div>
-      <div class="panel-field-value" id="panel-assigned-to">—</div>
+      <select id="panel-assigned-to" class="panel-status-select">
+        <option value="">—</option>
+        <option value="Kevin">Kevin</option>
+        <option value="Dylan">Dylan</option>
+        <option value="Rosa">Rosa</option>
+      </select>
     </div>
 
-    <!-- Status & Notes Section -->
+    <!-- Status Section -->
     <div class="panel-section">
       <div class="panel-section-title">Status</div>
       <select id="panel-status" class="panel-status-select">
@@ -412,15 +417,18 @@
       </select>
     </div>
 
+    <!-- Notes Section (multi-note) -->
     <div class="panel-section">
       <div class="panel-section-title">Notes</div>
       <textarea
-        id="panel-notes"
+        id="panel-new-note"
         class="panel-notes"
-        placeholder="Add notes about this lead…"
+        placeholder="Write a new note…"
+        style="min-height:70px"
       ></textarea>
       <button id="panel-save" class="panel-save-btn">Save Changes</button>
       <div id="panel-save-status"></div>
+      <div id="panel-notes-history" class="notes-history"></div>
     </div>
 
     <!-- AI Conversations Section -->
