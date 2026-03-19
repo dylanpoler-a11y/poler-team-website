@@ -1045,17 +1045,35 @@ function initAlertMap(lead) {
     }
   });
 
-  // Click handler for drawing
-  alertMap.on('click', (e) => {
+  // Drawing: use canvas-level mousedown to capture clicks even when dragPan is off
+  let drawMouseDownPos = null;
+  let drawMouseDownTime = 0;
+  alertMap.getCanvas().addEventListener('mousedown', (e) => {
     if (!alertMapDrawing) return;
-    alertMapDrawPoints.push([e.lngLat.lng, e.lngLat.lat]);
+    drawMouseDownPos = { x: e.clientX, y: e.clientY };
+    drawMouseDownTime = Date.now();
+  });
+  alertMap.getCanvas().addEventListener('mouseup', (e) => {
+    if (!alertMapDrawing || !drawMouseDownPos) return;
+    // Only count as a click if mouse didn't move much and was quick
+    const dx = e.clientX - drawMouseDownPos.x;
+    const dy = e.clientY - drawMouseDownPos.y;
+    const dt = Date.now() - drawMouseDownTime;
+    drawMouseDownPos = null;
+    if (Math.sqrt(dx * dx + dy * dy) > 5 || dt > 500) return; // was a drag, not a click
+    // Convert screen point to map coordinates
+    const rect = alertMap.getCanvas().getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const lngLat = alertMap.unproject([x, y]);
+    alertMapDrawPoints.push([lngLat.lng, lngLat.lat]);
     updateDrawPreview();
   });
-
   // Double-click finishes polygon
-  alertMap.on('dblclick', (e) => {
+  alertMap.getCanvas().addEventListener('dblclick', (e) => {
     if (!alertMapDrawing || alertMapDrawPoints.length < 3) return;
     e.preventDefault();
+    e.stopPropagation();
     finishDrawing();
   });
 
