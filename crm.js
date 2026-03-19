@@ -1169,7 +1169,9 @@ function initAlertMap(lead) {
     }
   });
 
-  // Drawing overlay — sits on top of map during draw mode to capture mouse events
+  // Drawing overlay — remove old one if exists, then create fresh
+  const oldOverlay = document.getElementById('alert-map-draw-overlay');
+  if (oldOverlay) oldOverlay.remove();
   const drawOverlay = document.createElement('div');
   drawOverlay.id = 'alert-map-draw-overlay';
   drawOverlay.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;z-index:10;cursor:crosshair;display:none;';
