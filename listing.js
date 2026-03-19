@@ -140,8 +140,8 @@ function initLeadCapture() {
     const bar      = document.getElementById('lead-timer-bar');
     const pageWrap = document.getElementById('page-wrap');
 
-    // Brazil visitors (lang=pt) skip OTP verification
-    const skipOtp = new URLSearchParams(window.location.search).get('lang') === 'pt';
+    // OTP disabled — all leads go straight through after filling form
+    const skipOtp = true;
 
     // Init EmailJS
     if (typeof emailjs !== 'undefined' && EMAILJS_PUBLIC_KEY !== 'YOUR_PUBLIC_KEY') {
