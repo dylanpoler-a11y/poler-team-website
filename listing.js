@@ -403,6 +403,15 @@ async function completeLead(overlay, pageWrap) {
         });
     }
 
+    // Fire Google Ads conversion event
+    if (typeof gtag === 'function') {
+        gtag('event', 'conversion', {
+            'send_to': 'AW-17910762846/subscribe',
+            'value': heroListing ? (heroListing.ListPrice || 0) : 0,
+            'currency': 'USD',
+        });
+    }
+
     // Save lead to Airtable CRM and capture alert token
     const langParam = new URLSearchParams(window.location.search).get('lang') || 'en';
     try {
