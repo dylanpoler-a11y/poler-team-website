@@ -305,54 +305,84 @@
       </div>
 
       <div id="panel-alert-fields" style="display:none;">
-        <div class="panel-field">
-          <div class="panel-field-label">Property Types</div>
-          <div class="alert-checkbox-group" id="panel-alert-types">
-            <label><input type="checkbox" value="Single Family"> Single Family</label>
-            <label><input type="checkbox" value="Condo"> Condo</label>
-            <label><input type="checkbox" value="Townhouse"> Townhouse</label>
-            <label><input type="checkbox" value="Multi Family"> Multi Family</label>
+
+        <!-- Saved profile cards -->
+        <div id="alert-profiles-list"></div>
+        <button id="alert-profile-add-btn" class="alert-profile-add-btn" type="button">+ Add Alert Profile</button>
+
+        <!-- Profile edit form (hidden until Add/Edit) -->
+        <div id="alert-profile-form" class="alert-profile-form" style="display:none;">
+          <div class="panel-field">
+            <div class="panel-field-label">Profile Name</div>
+            <input type="text" id="panel-alert-profile-name" class="panel-input" placeholder="e.g. Sunny Isles Condos" />
+          </div>
+
+          <div class="panel-field">
+            <div class="panel-field-label">Property Types</div>
+            <div class="alert-checkbox-group" id="panel-alert-types">
+              <label><input type="checkbox" value="Single Family"> Single Family</label>
+              <label><input type="checkbox" value="Condo"> Condo</label>
+              <label><input type="checkbox" value="Townhouse"> Townhouse</label>
+              <label><input type="checkbox" value="Multi Family"> Multi Family</label>
+            </div>
+          </div>
+
+          <div class="panel-field">
+            <div class="panel-field-label">Cities</div>
+            <input type="text" id="panel-alert-cities" class="panel-input"
+              placeholder="Miami Beach, Sunny Isles, Aventura…" />
+          </div>
+
+          <div class="panel-field">
+            <div class="panel-field-label">Price Range</div>
+            <div class="alert-range-row">
+              <input type="number" id="panel-alert-price-min" class="panel-input half" placeholder="Min ($)" />
+              <span class="range-sep">—</span>
+              <input type="number" id="panel-alert-price-max" class="panel-input half" placeholder="Max ($)" />
+            </div>
+          </div>
+
+          <div class="panel-field">
+            <div class="panel-field-label">Min Beds / Baths</div>
+            <div class="alert-range-row">
+              <select id="panel-alert-beds" class="panel-input half">
+                <option value="">Any</option>
+                <option value="1">1+</option>
+                <option value="2">2+</option>
+                <option value="3">3+</option>
+                <option value="4">4+</option>
+                <option value="5">5+</option>
+              </select>
+              <span class="range-sep">/</span>
+              <select id="panel-alert-baths" class="panel-input half">
+                <option value="">Any</option>
+                <option value="1">1+</option>
+                <option value="2">2+</option>
+                <option value="3">3+</option>
+                <option value="4">4+</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="panel-field">
+            <div class="panel-field-label">Alert Area (optional — draw on map)</div>
+            <div id="alert-map" class="alert-map"></div>
+            <div class="alert-map-controls">
+              <button id="alert-map-draw-circle" class="alert-map-draw-btn" type="button">⭕ Circle</button>
+              <button id="alert-map-draw-freehand" class="alert-map-draw-btn" type="button">✏️ Freehand</button>
+              <button id="alert-map-clear" class="alert-map-clear-btn" type="button">Clear</button>
+            </div>
+            <div id="alert-map-hint" class="alert-map-hint" style="display:none;"></div>
+          </div>
+
+          <div class="alert-action-row">
+            <button id="alert-profile-save-btn" class="alert-action-btn" type="button">Save Profile</button>
+            <button id="alert-profile-cancel-btn" class="alert-action-btn secondary" type="button">Cancel</button>
           </div>
         </div>
 
-        <div class="panel-field">
-          <div class="panel-field-label">Cities</div>
-          <input type="text" id="panel-alert-cities" class="panel-input"
-            placeholder="Miami Beach, Sunny Isles, Aventura…" />
-        </div>
-
-        <div class="panel-field">
-          <div class="panel-field-label">Price Range</div>
-          <div class="alert-range-row">
-            <input type="number" id="panel-alert-price-min" class="panel-input half" placeholder="Min ($)" />
-            <span class="range-sep">—</span>
-            <input type="number" id="panel-alert-price-max" class="panel-input half" placeholder="Max ($)" />
-          </div>
-        </div>
-
-        <div class="panel-field">
-          <div class="panel-field-label">Min Beds / Baths</div>
-          <div class="alert-range-row">
-            <select id="panel-alert-beds" class="panel-input half">
-              <option value="">Any</option>
-              <option value="1">1+</option>
-              <option value="2">2+</option>
-              <option value="3">3+</option>
-              <option value="4">4+</option>
-              <option value="5">5+</option>
-            </select>
-            <span class="range-sep">/</span>
-            <select id="panel-alert-baths" class="panel-input half">
-              <option value="">Any</option>
-              <option value="1">1+</option>
-              <option value="2">2+</option>
-              <option value="3">3+</option>
-              <option value="4">4+</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="panel-field">
+        <!-- Global alert settings (frequency, count) -->
+        <div class="panel-field" style="margin-top:1rem;">
           <div class="panel-field-label">Frequency</div>
           <select id="panel-alert-frequency" class="panel-input">
             <option value="Daily">Daily</option>
@@ -371,17 +401,6 @@
             <option value="8">8</option>
             <option value="10">10</option>
           </select>
-        </div>
-
-        <div class="panel-field">
-          <div class="panel-field-label">Alert Area (optional — draw on map)</div>
-          <div id="alert-map" class="alert-map"></div>
-          <div class="alert-map-controls">
-            <button id="alert-map-draw-circle" class="alert-map-draw-btn" type="button">⭕ Circle</button>
-            <button id="alert-map-draw-freehand" class="alert-map-draw-btn" type="button">✏️ Freehand</button>
-            <button id="alert-map-clear" class="alert-map-clear-btn" type="button">Clear</button>
-          </div>
-          <div id="alert-map-hint" class="alert-map-hint" style="display:none;"></div>
         </div>
 
         <div class="alert-action-row">

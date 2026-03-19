@@ -735,21 +735,15 @@ function openPanel(id) {
 
   // Alert preferences
   document.getElementById('panel-alert-active').checked = !!lead.alertActive;
-  document.getElementById('panel-alert-cities').value = lead.alertCities || '';
-  document.getElementById('panel-alert-price-min').value = lead.alertPriceMin || '';
-  document.getElementById('panel-alert-price-max').value = lead.alertPriceMax || '';
-  document.getElementById('panel-alert-beds').value = lead.alertBeds || '';
-  document.getElementById('panel-alert-baths').value = lead.alertBaths || '';
   document.getElementById('panel-alert-frequency').value = lead.alertFrequency || 'Weekly';
   document.getElementById('panel-alert-count').value = lead.alertCount || '5';
-  const types = lead.alertPropertyTypes || [];
-  document.querySelectorAll('#panel-alert-types input').forEach(cb => {
-    cb.checked = types.includes(cb.value);
-  });
   toggleAlertFields(lead.alertActive);
 
-  // Initialize alert map
-  initAlertMap(lead);
+  // Load multi-profile alert data
+  loadAlertProfiles(lead);
+
+  // Initialize alert map (will be re-initialized when editing a profile)
+  initAlertMap(null);
 
   // Reset alert status
   const alertStatus = document.getElementById('panel-alert-status');
@@ -932,26 +926,153 @@ function toggleAlertFields(active) {
   if (fields) fields.style.display = active ? 'block' : 'none';
 }
 
-function getAlertPrefsFromPanel() {
+// ── MULTI-PROFILE ALERT SYSTEM ────────────────────────────────
+let alertProfiles = [];
+let editingProfileIndex = -1; // -1 = adding new, >= 0 = editing existing
+
+function loadAlertProfiles(lead) {
+  alertProfiles = [];
+  editingProfileIndex = -1;
+  // Try to load from JSON array field
+  if (lead.alertProfiles) {
+    try {
+      const parsed = typeof lead.alertProfiles === 'string' ? JSON.parse(lead.alertProfiles) : lead.alertProfiles;
+      if (Array.isArray(parsed)) alertProfiles = parsed;
+    } catch (e) { /* ignore bad JSON */ }
+  }
+  // If no profiles but has legacy flat fields, migrate them into a profile
+  if (alertProfiles.length === 0 && lead.alertCities) {
+    alertProfiles.push({
+      name: lead.alertCities.split(',')[0].trim() || 'Default',
+      types: lead.alertPropertyTypes || [],
+      cities: lead.alertCities || '',
+      priceMin: lead.alertPriceMin || 0,
+      priceMax: lead.alertPriceMax || 0,
+      bedsMin: lead.alertBeds || 0,
+      bathsMin: lead.alertBaths || 0,
+      polygon: lead.alertPolygon || '',
+    });
+  }
+  renderProfileCards();
+  hideProfileForm();
+}
+
+function renderProfileCards() {
+  const container = document.getElementById('alert-profiles-list');
+  if (!container) return;
+  if (alertProfiles.length === 0) {
+    container.innerHTML = '<div class="alert-profile-empty">No alert profiles yet. Add one below.</div>';
+    return;
+  }
+  container.innerHTML = alertProfiles.map((p, i) => {
+    const typesStr = (p.types || []).join(', ') || 'All types';
+    const citiesStr = p.cities || 'All cities';
+    const priceStr = (p.priceMin || p.priceMax)
+      ? '$' + (p.priceMin ? Number(p.priceMin).toLocaleString() : '0') + ' — $' + (p.priceMax ? Number(p.priceMax).toLocaleString() : 'Any')
+      : 'Any price';
+    const hasPolygon = p.polygon ? ' | Map area set' : '';
+    return `<div class="alert-profile-card">
+      <div class="alert-profile-card-header">
+        <strong>${escHtml(p.name || 'Profile ' + (i + 1))}</strong>
+        <div class="alert-profile-card-actions">
+          <button class="alert-profile-edit-btn" onclick="editAlertProfile(${i})">Edit</button>
+          <button class="alert-profile-delete-btn" onclick="deleteAlertProfile(${i})">Delete</button>
+        </div>
+      </div>
+      <div class="alert-profile-card-detail">${escHtml(typesStr)} | ${escHtml(citiesStr)}</div>
+      <div class="alert-profile-card-detail">${escHtml(priceStr)}${hasPolygon}</div>
+    </div>`;
+  }).join('');
+}
+
+function showProfileForm(profile) {
+  const form = document.getElementById('alert-profile-form');
+  form.style.display = 'block';
+  document.getElementById('panel-alert-profile-name').value = profile ? profile.name || '' : '';
+  document.getElementById('panel-alert-cities').value = profile ? profile.cities || '' : '';
+  document.getElementById('panel-alert-price-min').value = profile ? profile.priceMin || '' : '';
+  document.getElementById('panel-alert-price-max').value = profile ? profile.priceMax || '' : '';
+  document.getElementById('panel-alert-beds').value = profile ? profile.bedsMin || '' : '';
+  document.getElementById('panel-alert-baths').value = profile ? profile.bathsMin || '' : '';
+  const types = profile ? (profile.types || []) : [];
+  document.querySelectorAll('#panel-alert-types input').forEach(cb => {
+    cb.checked = types.includes(cb.value);
+  });
+  // Load polygon for this profile into the map
+  const fakeLeadForMap = { alertPolygon: profile ? profile.polygon || '' : '' };
+  initAlertMap(fakeLeadForMap);
+  // Scroll form into view
+  setTimeout(() => form.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);
+}
+
+function hideProfileForm() {
+  document.getElementById('alert-profile-form').style.display = 'none';
+  editingProfileIndex = -1;
+}
+
+function getProfileFromForm() {
   const types = [];
   document.querySelectorAll('#panel-alert-types input:checked').forEach(cb => types.push(cb.value));
+  return {
+    name: document.getElementById('panel-alert-profile-name').value.trim() || 'Untitled',
+    types,
+    cities: document.getElementById('panel-alert-cities').value.trim(),
+    priceMin: Number(document.getElementById('panel-alert-price-min').value) || 0,
+    priceMax: Number(document.getElementById('panel-alert-price-max').value) || 0,
+    bedsMin: Number(document.getElementById('panel-alert-beds').value) || 0,
+    bathsMin: Number(document.getElementById('panel-alert-baths').value) || 0,
+    polygon: alertMapPolygonGeoJSON ? JSON.stringify(alertMapPolygonGeoJSON) : '',
+  };
+}
+
+function editAlertProfile(index) {
+  editingProfileIndex = index;
+  showProfileForm(alertProfiles[index]);
+}
+
+function deleteAlertProfile(index) {
+  alertProfiles.splice(index, 1);
+  renderProfileCards();
+  hideProfileForm();
+}
+
+// Wire up Add / Save / Cancel buttons (called once on page load)
+function initProfileButtons() {
+  document.getElementById('alert-profile-add-btn').addEventListener('click', () => {
+    editingProfileIndex = -1;
+    showProfileForm(null);
+  });
+  document.getElementById('alert-profile-save-btn').addEventListener('click', () => {
+    const profile = getProfileFromForm();
+    if (editingProfileIndex >= 0) {
+      alertProfiles[editingProfileIndex] = profile;
+    } else {
+      alertProfiles.push(profile);
+    }
+    renderProfileCards();
+    hideProfileForm();
+  });
+  document.getElementById('alert-profile-cancel-btn').addEventListener('click', () => {
+    hideProfileForm();
+  });
+}
+
+function getAlertPrefsFromPanel() {
+  // Build prefs including the full profiles array
+  const first = alertProfiles[0] || {};
   const prefs = {
     alertActive:    document.getElementById('panel-alert-active').checked,
-    propertyTypes:  types,
-    cities:         document.getElementById('panel-alert-cities').value.trim(),
-    priceMin:       Number(document.getElementById('panel-alert-price-min').value) || 0,
-    priceMax:       Number(document.getElementById('panel-alert-price-max').value) || 0,
-    bedsMin:        Number(document.getElementById('panel-alert-beds').value) || 0,
-    bathsMin:       Number(document.getElementById('panel-alert-baths').value) || 0,
+    propertyTypes:  first.types || [],
+    cities:         first.cities || '',
+    priceMin:       first.priceMin || 0,
+    priceMax:       first.priceMax || 0,
+    bedsMin:        first.bedsMin || 0,
+    bathsMin:       first.bathsMin || 0,
     frequency:      document.getElementById('panel-alert-frequency').value,
     count:          Number(document.getElementById('panel-alert-count').value) || 5,
+    alertPolygon:   first.polygon || '',
+    alertProfiles:  JSON.stringify(alertProfiles),
   };
-  // Include polygon if drawn on map
-  if (alertMapPolygonGeoJSON) {
-    prefs.alertPolygon = JSON.stringify(alertMapPolygonGeoJSON);
-  } else {
-    prefs.alertPolygon = '';
-  }
   return prefs;
 }
 
