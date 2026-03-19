@@ -959,7 +959,9 @@ function getAlertPrefsFromPanel() {
 let alertMap = null;
 let alertMapPolygonGeoJSON = null;
 let alertMapDrawing = false;
+let alertMapDrawMode = null; // 'circle' or 'freehand'
 let alertMapDrawPoints = [];
+let alertMapCircleCenter = null;
 
 function initAlertMap(lead) {
   // Destroy previous map instance
@@ -1046,39 +1048,99 @@ function initAlertMap(lead) {
     }
   });
 
-  // Drawing overlay — sits on top of map during draw mode to capture clicks reliably
+  // Drawing overlay — sits on top of map during draw mode to capture mouse events
   const drawOverlay = document.createElement('div');
   drawOverlay.id = 'alert-map-draw-overlay';
   drawOverlay.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;z-index:10;cursor:crosshair;display:none;';
   container.style.position = 'relative';
   container.appendChild(drawOverlay);
 
-  drawOverlay.addEventListener('click', (e) => {
-    if (!alertMapDrawing) return;
-    e.stopPropagation();
-    const rect = alertMap.getCanvas().getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    const lngLat = alertMap.unproject([x, y]);
-    alertMapDrawPoints.push([lngLat.lng, lngLat.lat]);
-    updateDrawPreview();
-  });
+  let overlayMouseDown = false;
 
-  drawOverlay.addEventListener('dblclick', (e) => {
-    if (!alertMapDrawing || alertMapDrawPoints.length < 3) return;
+  function overlayToLngLat(e) {
+    const rect = alertMap.getCanvas().getBoundingClientRect();
+    return alertMap.unproject([e.clientX - rect.left, e.clientY - rect.top]);
+  }
+
+  drawOverlay.addEventListener('mousedown', (e) => {
+    if (!alertMapDrawing) return;
     e.preventDefault();
     e.stopPropagation();
-    finishDrawing();
+    overlayMouseDown = true;
+    const ll = overlayToLngLat(e);
+
+    if (alertMapDrawMode === 'circle') {
+      alertMapCircleCenter = [ll.lng, ll.lat];
+      // Show initial point
+      alertMap.getSource('alert-polygon').setData({ type: 'FeatureCollection', features: [] });
+    } else if (alertMapDrawMode === 'freehand') {
+      alertMapDrawPoints = [[ll.lng, ll.lat]];
+      alertMap.getSource('alert-polygon').setData({ type: 'FeatureCollection', features: [] });
+    }
   });
 
-  // Draw button
-  document.getElementById('alert-map-draw').addEventListener('click', () => {
-    if (alertMapDrawing) {
-      // If already drawing with 3+ points, finish
-      if (alertMapDrawPoints.length >= 3) finishDrawing();
-      return;
+  drawOverlay.addEventListener('mousemove', (e) => {
+    if (!alertMapDrawing || !overlayMouseDown) return;
+    e.preventDefault();
+    const ll = overlayToLngLat(e);
+
+    if (alertMapDrawMode === 'circle' && alertMapCircleCenter) {
+      // Generate circle polygon from center to current point
+      const radiusKm = haversineDistance(alertMapCircleCenter[1], alertMapCircleCenter[0], ll.lat, ll.lng);
+      const circleGeo = generateCirclePolygon(alertMapCircleCenter[0], alertMapCircleCenter[1], radiusKm);
+      alertMap.getSource('alert-polygon').setData({ type: 'Feature', geometry: circleGeo });
+    } else if (alertMapDrawMode === 'freehand') {
+      alertMapDrawPoints.push([ll.lng, ll.lat]);
+      // Show live freehand line
+      alertMap.getSource('draw-line').setData({
+        type: 'Feature',
+        geometry: { type: 'LineString', coordinates: alertMapDrawPoints },
+      });
     }
-    startDrawing();
+  });
+
+  drawOverlay.addEventListener('mouseup', (e) => {
+    if (!alertMapDrawing || !overlayMouseDown) return;
+    e.preventDefault();
+    e.stopPropagation();
+    overlayMouseDown = false;
+    const ll = overlayToLngLat(e);
+
+    if (alertMapDrawMode === 'circle' && alertMapCircleCenter) {
+      const radiusKm = haversineDistance(alertMapCircleCenter[1], alertMapCircleCenter[0], ll.lat, ll.lng);
+      if (radiusKm > 0.1) { // minimum 100m radius
+        const circleGeo = generateCirclePolygon(alertMapCircleCenter[0], alertMapCircleCenter[1], radiusKm);
+        alertMapPolygonGeoJSON = circleGeo;
+        alertMap.getSource('alert-polygon').setData({ type: 'Feature', geometry: circleGeo });
+      }
+      exitDrawMode();
+    } else if (alertMapDrawMode === 'freehand' && alertMapDrawPoints.length >= 5) {
+      // Close the polygon and simplify
+      const simplified = simplifyPoints(alertMapDrawPoints, 80);
+      const ring = [...simplified, simplified[0]];
+      alertMapPolygonGeoJSON = { type: 'Polygon', coordinates: [ring] };
+      alertMap.getSource('alert-polygon').setData({ type: 'Feature', geometry: alertMapPolygonGeoJSON });
+      alertMap.getSource('draw-line').setData({ type: 'FeatureCollection', features: [] });
+      exitDrawMode();
+    } else {
+      // Not enough movement, reset
+      alertMap.getSource('draw-line').setData({ type: 'FeatureCollection', features: [] });
+    }
+  });
+
+  // Prevent context menu on overlay
+  drawOverlay.addEventListener('contextmenu', (e) => e.preventDefault());
+
+  // Circle button
+  document.getElementById('alert-map-draw-circle').addEventListener('click', () => {
+    if (alertMapDrawing) { exitDrawMode(); return; }
+    enterDrawMode('circle');
+  });
+
+  // Freehand button
+  document.getElementById('alert-map-draw-freehand').addEventListener('click', () => {
+    if (alertMapDrawing) { exitDrawMode(); return; }
+    enterDrawMode('freehand');
   });
 
   // Clear button
@@ -1091,72 +1153,57 @@ function initAlertMap(lead) {
   setTimeout(() => { if (alertMap) alertMap.resize(); }, 700);
 }
 
-function startDrawing() {
+function enterDrawMode(mode) {
+  alertMapDrawMode = mode;
   alertMapDrawing = true;
   alertMapDrawPoints = [];
+  alertMapCircleCenter = null;
   // Clear existing polygon
   if (alertMap.getSource('alert-polygon')) {
     alertMap.getSource('alert-polygon').setData({ type: 'FeatureCollection', features: [] });
   }
+  if (alertMap.getSource('draw-line')) {
+    alertMap.getSource('draw-line').setData({ type: 'FeatureCollection', features: [] });
+  }
   alertMapPolygonGeoJSON = null;
-  document.getElementById('alert-map-hint').style.display = 'block';
-  document.getElementById('alert-map-draw').textContent = '✅ Finish Drawing';
-  // Show the draw overlay on top of the map to capture clicks
+  const hint = document.getElementById('alert-map-hint');
+  hint.style.display = 'block';
+  hint.textContent = mode === 'circle'
+    ? 'Click and drag to draw a circle radius'
+    : 'Click and drag to draw your area';
+  // Highlight active button
+  document.getElementById('alert-map-draw-circle').classList.toggle('active', mode === 'circle');
+  document.getElementById('alert-map-draw-freehand').classList.toggle('active', mode === 'freehand');
+  // Show overlay
   const overlay = document.getElementById('alert-map-draw-overlay');
   if (overlay) overlay.style.display = 'block';
   alertMap.doubleClickZoom.disable();
 }
 
-function finishDrawing() {
-  if (alertMapDrawPoints.length < 3) return;
+function exitDrawMode() {
   alertMapDrawing = false;
-  // Close the ring
-  const ring = [...alertMapDrawPoints, alertMapDrawPoints[0]];
-  alertMapPolygonGeoJSON = { type: 'Polygon', coordinates: [ring] };
-  showPolygonOnMap(alertMapPolygonGeoJSON);
-  // Clear draw preview
+  alertMapDrawMode = null;
+  document.getElementById('alert-map-hint').style.display = 'none';
+  document.getElementById('alert-map-draw-circle').classList.remove('active');
+  document.getElementById('alert-map-draw-freehand').classList.remove('active');
+  const overlay = document.getElementById('alert-map-draw-overlay');
+  if (overlay) overlay.style.display = 'none';
+  alertMap.doubleClickZoom.enable();
+  // Clear draw preview layers
   if (alertMap.getSource('draw-points')) {
     alertMap.getSource('draw-points').setData({ type: 'FeatureCollection', features: [] });
   }
   if (alertMap.getSource('draw-line')) {
     alertMap.getSource('draw-line').setData({ type: 'FeatureCollection', features: [] });
   }
-  document.getElementById('alert-map-hint').style.display = 'none';
-  document.getElementById('alert-map-draw').textContent = '✏️ Draw Area';
-  // Hide the draw overlay
-  const overlay = document.getElementById('alert-map-draw-overlay');
-  if (overlay) overlay.style.display = 'none';
-  alertMap.doubleClickZoom.enable();
-}
-
-function updateDrawPreview() {
-  if (!alertMap || !alertMapDrawPoints.length) return;
-  // Show points
-  alertMap.getSource('draw-points').setData({
-    type: 'FeatureCollection',
-    features: alertMapDrawPoints.map(p => ({ type: 'Feature', geometry: { type: 'Point', coordinates: p } })),
-  });
-  // Show line connecting points
-  if (alertMapDrawPoints.length >= 2) {
-    alertMap.getSource('draw-line').setData({
-      type: 'Feature',
-      geometry: { type: 'LineString', coordinates: alertMapDrawPoints },
-    });
-  }
-}
-
-function showPolygonOnMap(geo) {
-  if (!alertMap || !alertMap.getSource('alert-polygon')) return;
-  alertMap.getSource('alert-polygon').setData({
-    type: 'Feature',
-    geometry: geo,
-  });
 }
 
 function clearPolygon() {
   alertMapPolygonGeoJSON = null;
   alertMapDrawing = false;
+  alertMapDrawMode = null;
   alertMapDrawPoints = [];
+  alertMapCircleCenter = null;
   if (alertMap) {
     if (alertMap.getSource('alert-polygon')) {
       alertMap.getSource('alert-polygon').setData({ type: 'FeatureCollection', features: [] });
@@ -1167,13 +1214,58 @@ function clearPolygon() {
     if (alertMap.getSource('draw-line')) {
       alertMap.getSource('draw-line').setData({ type: 'FeatureCollection', features: [] });
     }
-    alertMap.getCanvas().style.cursor = '';
     alertMap.doubleClickZoom.enable();
   }
   const overlay = document.getElementById('alert-map-draw-overlay');
   if (overlay) overlay.style.display = 'none';
   document.getElementById('alert-map-hint').style.display = 'none';
-  document.getElementById('alert-map-draw').textContent = '✏️ Draw Area';
+  document.getElementById('alert-map-draw-circle').classList.remove('active');
+  document.getElementById('alert-map-draw-freehand').classList.remove('active');
+}
+
+// ── Geometry helpers ──
+
+function haversineDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371; // km
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(lat1 * Math.PI/180) * Math.cos(lat2 * Math.PI/180) *
+            Math.sin(dLon/2) * Math.sin(dLon/2);
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function generateCirclePolygon(centerLng, centerLat, radiusKm, numPoints = 64) {
+  const coords = [];
+  for (let i = 0; i <= numPoints; i++) {
+    const angle = (i / numPoints) * 2 * Math.PI;
+    const dLat = (radiusKm / 6371) * (180 / Math.PI);
+    const dLng = dLat / Math.cos(centerLat * Math.PI / 180);
+    coords.push([
+      centerLng + dLng * Math.cos(angle),
+      centerLat + dLat * Math.sin(angle),
+    ]);
+  }
+  return { type: 'Polygon', coordinates: [coords] };
+}
+
+function simplifyPoints(points, maxPoints) {
+  if (points.length <= maxPoints) return points;
+  // Evenly sample points
+  const step = points.length / maxPoints;
+  const result = [];
+  for (let i = 0; i < maxPoints; i++) {
+    result.push(points[Math.floor(i * step)]);
+  }
+  return result;
+}
+
+function showPolygonOnMap(geo) {
+  if (!alertMap || !alertMap.getSource('alert-polygon')) return;
+  alertMap.getSource('alert-polygon').setData({
+    type: 'Feature',
+    geometry: geo,
+  });
 }
 
 async function sendTestAlert() {

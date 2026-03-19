@@ -994,6 +994,11 @@ body {
 .alert-map-draw-btn:hover {
   background: #dbeafe;
 }
+.alert-map-draw-btn.active {
+  background: var(--navy, #1a2744);
+  color: #fff;
+  border-color: var(--navy, #1a2744);
+}
 .alert-map-clear-btn {
   padding: 0.4rem 0.9rem;
   font-size: 0.8rem;
