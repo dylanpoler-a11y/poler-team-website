@@ -94,6 +94,9 @@ export default async function handler(req) {
             country:            r.fields['Country'] || '',
             timeline:           r.fields['Timeline'] || '',
             assignedTo:         r.fields['Assigned To'] || '',
+            lastLogin:          r.fields['Last Login'] || '',
+            propertiesViewed:   r.fields['Properties Viewed'] || '[]',
+            totalPropertiesViewed: r.fields['Total Properties Viewed'] || 0,
         })));
 
         if (!data.offset) break;

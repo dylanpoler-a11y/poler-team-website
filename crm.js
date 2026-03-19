@@ -626,6 +626,7 @@ function renderTable() {
           </div>
         </td>
         <td class="td-muted">${relativeTime(lead.createdAt)}</td>
+        <td class="td-muted">${lead.lastLogin ? relativeTime(lead.lastLogin) : '—'}</td>
         <td class="td-muted">${escHtml(lead.phone || '—')}</td>
         <td class="td-muted">${escHtml(lead.email || '—')}</td>
         <td class="td-property" title="${escHtml(lead.listingAddress || '')}">${property}</td>
@@ -768,11 +769,12 @@ function openPanel(id) {
   const reminderNote = document.getElementById('panel-reminder-note');
   if (reminderNote) reminderNote.value = '';
 
-  // Load conversations and activity
+  // Load conversations, activity, and properties viewed
   if (lead.email) {
     loadConversations(lead.email);
     loadActivity(lead.email);
   }
+  renderPropertiesViewed(lead);
 
   // Open panel
   document.getElementById('lead-panel').classList.add('open');
