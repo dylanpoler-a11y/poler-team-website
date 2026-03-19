@@ -1021,7 +1021,7 @@ function getProfileFromForm() {
     priceMax: Number(document.getElementById('panel-alert-price-max').value) || 0,
     bedsMin: Number(document.getElementById('panel-alert-beds').value) || 0,
     bathsMin: Number(document.getElementById('panel-alert-baths').value) || 0,
-    polygon: alertMapPolygonGeoJSON ? JSON.stringify(alertMapPolygonGeoJSON) : '',
+    polygon: alertMapPolygons.length > 0 ? JSON.stringify(alertMapPolygons) : '',
   };
 }
 
@@ -1078,7 +1078,7 @@ function getAlertPrefsFromPanel() {
 
 // ── ALERT MAP (MapLibre GL JS — vector tiles, smooth zoom) ────────────────
 let alertMap = null;
-let alertMapPolygonGeoJSON = null;
+let alertMapPolygons = []; // array of GeoJSON Polygon geometries
 let alertMapDrawing = false;
 let alertMapDrawMode = null; // 'circle' or 'freehand'
 let alertMapDrawPoints = [];
@@ -1090,7 +1090,7 @@ function initAlertMap(lead) {
     alertMap.remove();
     alertMap = null;
   }
-  alertMapPolygonGeoJSON = null;
+  alertMapPolygons = [];
   alertMapDrawing = false;
   alertMapDrawPoints = [];
 
@@ -1151,17 +1151,25 @@ function initAlertMap(lead) {
       paint: { 'line-color': '#1a2744', 'line-width': 2, 'line-dasharray': [2, 2] },
     });
 
-    // Load existing polygon
+    // Load existing polygons (supports single Polygon or array of Polygons)
     if (lead && lead.alertPolygon) {
       try {
         const geo = typeof lead.alertPolygon === 'string' ? JSON.parse(lead.alertPolygon) : lead.alertPolygon;
-        if (geo && geo.type === 'Polygon' && geo.coordinates) {
-          alertMapPolygonGeoJSON = geo;
-          showPolygonOnMap(geo);
-          // Fit to polygon bounds
-          const coords = geo.coordinates[0];
-          const bounds = coords.reduce((b, c) => b.extend(c), new maplibregl.LngLatBounds(coords[0], coords[0]));
-          alertMap.fitBounds(bounds, { padding: 40 });
+        if (Array.isArray(geo)) {
+          // New format: array of polygon geometries
+          alertMapPolygons = geo;
+        } else if (geo && geo.type === 'Polygon' && geo.coordinates) {
+          // Legacy format: single polygon
+          alertMapPolygons = [geo];
+        }
+        if (alertMapPolygons.length > 0) {
+          renderAllPolygons();
+          // Fit to bounds of all polygons
+          const allCoords = alertMapPolygons.flatMap(p => p.coordinates[0]);
+          if (allCoords.length > 0) {
+            const bounds = allCoords.reduce((b, c) => b.extend(c), new maplibregl.LngLatBounds(allCoords[0], allCoords[0]));
+            alertMap.fitBounds(bounds, { padding: 40 });
+          }
         }
       } catch (err) {
         console.warn('Failed to parse alert polygon:', err);
@@ -1233,16 +1241,15 @@ function initAlertMap(lead) {
       const radiusKm = haversineDistance(alertMapCircleCenter[1], alertMapCircleCenter[0], ll.lat, ll.lng);
       if (radiusKm > 0.1) { // minimum 100m radius
         const circleGeo = generateCirclePolygon(alertMapCircleCenter[0], alertMapCircleCenter[1], radiusKm);
-        alertMapPolygonGeoJSON = circleGeo;
-        alertMap.getSource('alert-polygon').setData({ type: 'Feature', geometry: circleGeo });
+        alertMapPolygons.push(circleGeo);
+        renderAllPolygons();
       }
       exitDrawMode();
     } else if (alertMapDrawMode === 'freehand' && alertMapDrawPoints.length >= 5) {
-      // Close the polygon and simplify
       const simplified = simplifyPoints(alertMapDrawPoints, 80);
       const ring = [...simplified, simplified[0]];
-      alertMapPolygonGeoJSON = { type: 'Polygon', coordinates: [ring] };
-      alertMap.getSource('alert-polygon').setData({ type: 'Feature', geometry: alertMapPolygonGeoJSON });
+      alertMapPolygons.push({ type: 'Polygon', coordinates: [ring] });
+      renderAllPolygons();
       alertMap.getSource('draw-line').setData({ type: 'FeatureCollection', features: [] });
       exitDrawMode();
     } else {
@@ -1281,14 +1288,10 @@ function enterDrawMode(mode) {
   alertMapDrawing = true;
   alertMapDrawPoints = [];
   alertMapCircleCenter = null;
-  // Clear existing polygon
-  if (alertMap.getSource('alert-polygon')) {
-    alertMap.getSource('alert-polygon').setData({ type: 'FeatureCollection', features: [] });
-  }
+  // Clear draw preview line (but keep existing polygons)
   if (alertMap.getSource('draw-line')) {
     alertMap.getSource('draw-line').setData({ type: 'FeatureCollection', features: [] });
   }
-  alertMapPolygonGeoJSON = null;
   const hint = document.getElementById('alert-map-hint');
   hint.style.display = 'block';
   hint.textContent = mode === 'circle'
@@ -1322,7 +1325,7 @@ function exitDrawMode() {
 }
 
 function clearPolygon() {
-  alertMapPolygonGeoJSON = null;
+  alertMapPolygons = [];
   alertMapDrawing = false;
   alertMapDrawMode = null;
   alertMapDrawPoints = [];
@@ -1383,11 +1386,15 @@ function simplifyPoints(points, maxPoints) {
   return result;
 }
 
-function showPolygonOnMap(geo) {
+function renderAllPolygons() {
   if (!alertMap || !alertMap.getSource('alert-polygon')) return;
+  if (alertMapPolygons.length === 0) {
+    alertMap.getSource('alert-polygon').setData({ type: 'FeatureCollection', features: [] });
+    return;
+  }
   alertMap.getSource('alert-polygon').setData({
-    type: 'Feature',
-    geometry: geo,
+    type: 'FeatureCollection',
+    features: alertMapPolygons.map(geo => ({ type: 'Feature', geometry: geo })),
   });
 }
 
