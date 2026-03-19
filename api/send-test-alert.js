@@ -106,12 +106,18 @@ export default async function handler(req) {
         if (polyStr && profileListings.length > 0) {
             try {
                 const geo = JSON.parse(polyStr);
-                if (geo && geo.type === 'Polygon' && geo.coordinates) {
-                    const ring = geo.coordinates[0];
+                let rings = [];
+                if (Array.isArray(geo)) {
+                    rings = geo.filter(g => g && g.type === 'Polygon' && g.coordinates).map(g => g.coordinates[0]);
+                } else if (geo && geo.type === 'Polygon' && geo.coordinates) {
+                    rings = [geo.coordinates[0]];
+                }
+                if (rings.length > 0) {
                     profileListings = profileListings.filter(l => {
                         const lat = l.Latitude;
                         const lng = l.Longitude;
-                        return lat && lng && pointInPolygon(lat, lng, ring);
+                        if (!lat || !lng) return false;
+                        return rings.some(ring => pointInPolygon(lat, lng, ring));
                     });
                 }
             } catch (e) { /* invalid polygon */ }

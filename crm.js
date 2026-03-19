@@ -1202,11 +1202,8 @@ function initAlertMap(lead) {
 
     if (alertMapDrawMode === 'circle') {
       alertMapCircleCenter = [ll.lng, ll.lat];
-      // Show initial point
-      alertMap.getSource('alert-polygon').setData({ type: 'FeatureCollection', features: [] });
     } else if (alertMapDrawMode === 'freehand') {
       alertMapDrawPoints = [[ll.lng, ll.lat]];
-      alertMap.getSource('alert-polygon').setData({ type: 'FeatureCollection', features: [] });
     }
   });
 
@@ -1216,10 +1213,12 @@ function initAlertMap(lead) {
     const ll = overlayToLngLat(e);
 
     if (alertMapDrawMode === 'circle' && alertMapCircleCenter) {
-      // Generate circle polygon from center to current point
+      // Generate circle polygon from center to current point — show existing + in-progress
       const radiusKm = haversineDistance(alertMapCircleCenter[1], alertMapCircleCenter[0], ll.lat, ll.lng);
       const circleGeo = generateCirclePolygon(alertMapCircleCenter[0], alertMapCircleCenter[1], radiusKm);
-      alertMap.getSource('alert-polygon').setData({ type: 'Feature', geometry: circleGeo });
+      const features = alertMapPolygons.map(g => ({ type: 'Feature', geometry: g }));
+      features.push({ type: 'Feature', geometry: circleGeo });
+      alertMap.getSource('alert-polygon').setData({ type: 'FeatureCollection', features });
     } else if (alertMapDrawMode === 'freehand') {
       alertMapDrawPoints.push([ll.lng, ll.lat]);
       // Show live freehand line

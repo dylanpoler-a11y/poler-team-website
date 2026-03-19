@@ -132,17 +132,26 @@ export default async function handler(req) {
                 };
                 let profileListings = await fetchBridgeListings(bridgeToken, profileLead);
 
-                // Apply polygon filter for this profile
+                // Apply polygon filter for this profile (supports single Polygon or array of Polygons)
                 const polyStr = profile.polygon || '';
                 if (polyStr && profileListings.length > 0) {
                     try {
                         const geo = JSON.parse(polyStr);
-                        if (geo && geo.type === 'Polygon' && geo.coordinates) {
-                            const ring = geo.coordinates[0];
+                        let rings = [];
+                        if (Array.isArray(geo)) {
+                            // New format: array of polygon geometries
+                            rings = geo.filter(g => g && g.type === 'Polygon' && g.coordinates).map(g => g.coordinates[0]);
+                        } else if (geo && geo.type === 'Polygon' && geo.coordinates) {
+                            // Legacy format: single polygon
+                            rings = [geo.coordinates[0]];
+                        }
+                        if (rings.length > 0) {
                             profileListings = profileListings.filter(l => {
                                 const lat = l.Latitude;
                                 const lng = l.Longitude;
-                                return lat && lng && pointInPolygon(lat, lng, ring);
+                                if (!lat || !lng) return false;
+                                // Property must be inside ANY of the drawn areas
+                                return rings.some(ring => pointInPolygon(lat, lng, ring));
                             });
                         }
                     } catch (e) { /* invalid polygon */ }
