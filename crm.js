@@ -1090,8 +1090,10 @@ function startDrawing() {
   document.getElementById('alert-map-hint').style.display = 'block';
   document.getElementById('alert-map-draw').textContent = '✅ Finish Drawing';
   alertMap.getCanvas().style.cursor = 'crosshair';
-  // Disable double-click zoom while drawing (conflicts with finish-on-dblclick)
+  // Disable all map interactions while drawing so clicks place points instead of dragging
   alertMap.doubleClickZoom.disable();
+  alertMap.dragPan.disable();
+  alertMap.dragRotate.disable();
 }
 
 function finishDrawing() {
@@ -1111,8 +1113,10 @@ function finishDrawing() {
   document.getElementById('alert-map-hint').style.display = 'none';
   document.getElementById('alert-map-draw').textContent = '✏️ Draw Area';
   alertMap.getCanvas().style.cursor = '';
-  // Re-enable double-click zoom after drawing
+  // Re-enable all map interactions after drawing
   alertMap.doubleClickZoom.enable();
+  alertMap.dragPan.enable();
+  alertMap.dragRotate.enable();
 }
 
 function updateDrawPreview() {
@@ -1155,6 +1159,8 @@ function clearPolygon() {
     }
     alertMap.getCanvas().style.cursor = '';
     alertMap.doubleClickZoom.enable();
+    alertMap.dragPan.enable();
+    alertMap.dragRotate.enable();
   }
   document.getElementById('alert-map-hint').style.display = 'none';
   document.getElementById('alert-map-draw').textContent = '✏️ Draw Area';
