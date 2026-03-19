@@ -576,6 +576,24 @@ async function initHeroProperty() {
         if (!listing) { renderDefaultHero(container); return; }
         heroListing = listing;
         renderHero(container, listing);
+
+        // Track property view for returning leads (from alert emails)
+        const alertToken = new URLSearchParams(window.location.search).get('t');
+        if (alertToken && alertToken.length >= 10) {
+            fetch(`${OTP_BASE}/api/log-activity`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    token: alertToken,
+                    activityType: 'Property View',
+                    details: {
+                        mlsId: listing.ListingId || listingId,
+                        address: listing.UnparsedAddress || listing.City || '',
+                        price: listing.ListPrice || 0,
+                    },
+                }),
+            }).catch(() => {}); // non-blocking
+        }
     } catch (err) {
         console.error('Hero fetch error:', err);
         renderDefaultHero(container);
