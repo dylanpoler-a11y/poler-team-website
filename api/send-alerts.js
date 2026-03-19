@@ -129,6 +129,7 @@ export default async function handler(req) {
                     priceMax: profile.priceMax || lead.priceMax,
                     bedsMin: profile.bedsMin || lead.bedsMin,
                     bathsMin: profile.bathsMin || lead.bathsMin,
+                    polygon: profile.polygon || '',
                 };
                 let profileListings = await fetchBridgeListings(bridgeToken, profileLead);
 
