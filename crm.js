@@ -1046,17 +1046,28 @@ function initAlertMap(lead) {
     }
   });
 
-  // Click handler for drawing — use MapLibre's click event (works with dragPan enabled)
-  alertMap.on('click', (e) => {
+  // Drawing overlay — sits on top of map during draw mode to capture clicks reliably
+  const drawOverlay = document.createElement('div');
+  drawOverlay.id = 'alert-map-draw-overlay';
+  drawOverlay.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;z-index:10;cursor:crosshair;display:none;';
+  container.style.position = 'relative';
+  container.appendChild(drawOverlay);
+
+  drawOverlay.addEventListener('click', (e) => {
     if (!alertMapDrawing) return;
-    alertMapDrawPoints.push([e.lngLat.lng, e.lngLat.lat]);
+    e.stopPropagation();
+    const rect = alertMap.getCanvas().getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const lngLat = alertMap.unproject([x, y]);
+    alertMapDrawPoints.push([lngLat.lng, lngLat.lat]);
     updateDrawPreview();
   });
 
-  // Double-click finishes polygon
-  alertMap.on('dblclick', (e) => {
+  drawOverlay.addEventListener('dblclick', (e) => {
     if (!alertMapDrawing || alertMapDrawPoints.length < 3) return;
     e.preventDefault();
+    e.stopPropagation();
     finishDrawing();
   });
 
@@ -1090,8 +1101,9 @@ function startDrawing() {
   alertMapPolygonGeoJSON = null;
   document.getElementById('alert-map-hint').style.display = 'block';
   document.getElementById('alert-map-draw').textContent = '✅ Finish Drawing';
-  alertMap.getCanvas().style.cursor = 'crosshair';
-  // Disable double-click zoom while drawing (conflicts with finish-on-dblclick)
+  // Show the draw overlay on top of the map to capture clicks
+  const overlay = document.getElementById('alert-map-draw-overlay');
+  if (overlay) overlay.style.display = 'block';
   alertMap.doubleClickZoom.disable();
 }
 
@@ -1111,8 +1123,9 @@ function finishDrawing() {
   }
   document.getElementById('alert-map-hint').style.display = 'none';
   document.getElementById('alert-map-draw').textContent = '✏️ Draw Area';
-  alertMap.getCanvas().style.cursor = '';
-  // Re-enable double-click zoom after drawing
+  // Hide the draw overlay
+  const overlay = document.getElementById('alert-map-draw-overlay');
+  if (overlay) overlay.style.display = 'none';
   alertMap.doubleClickZoom.enable();
 }
 
@@ -1157,6 +1170,8 @@ function clearPolygon() {
     alertMap.getCanvas().style.cursor = '';
     alertMap.doubleClickZoom.enable();
   }
+  const overlay = document.getElementById('alert-map-draw-overlay');
+  if (overlay) overlay.style.display = 'none';
   document.getElementById('alert-map-hint').style.display = 'none';
   document.getElementById('alert-map-draw').textContent = '✏️ Draw Area';
 }
