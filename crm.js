@@ -743,9 +743,6 @@ function openPanel(id) {
   // Load multi-profile alert data
   loadAlertProfiles(lead);
 
-  // Initialize alert map (will be re-initialized when editing a profile)
-  initAlertMap(null);
-
   // Reset alert status
   const alertStatus = document.getElementById('panel-alert-status');
   alertStatus.style.display = 'none';
@@ -999,11 +996,13 @@ function showProfileForm(profile) {
   document.querySelectorAll('#panel-alert-types input').forEach(cb => {
     cb.checked = types.includes(cb.value);
   });
-  // Load polygon for this profile into the map
-  const fakeLeadForMap = { alertPolygon: profile ? profile.polygon || '' : '' };
-  initAlertMap(fakeLeadForMap);
-  // Scroll form into view
-  setTimeout(() => form.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);
+  // Scroll form into view first, then init map after container is visible
+  setTimeout(() => {
+    form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    // Init map after form is visible and has dimensions
+    const fakeLeadForMap = { alertPolygon: profile ? profile.polygon || '' : '' };
+    initAlertMap(fakeLeadForMap);
+  }, 150);
 }
 
 function hideProfileForm() {
