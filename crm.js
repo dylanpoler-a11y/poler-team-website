@@ -498,6 +498,7 @@ function setupEvents() {
   });
   document.getElementById('panel-alert-send-now').addEventListener('click', sendTestAlert);
   document.getElementById('panel-alert-copy-link').addEventListener('click', copyPreferencesLink);
+  initProfileButtons();
 
   // Table column sorting
   document.querySelectorAll('.leads-table th[data-sort]').forEach(th => {
