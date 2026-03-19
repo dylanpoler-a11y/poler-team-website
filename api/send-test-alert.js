@@ -167,6 +167,53 @@ export default async function handler(req) {
 
 // ── BRIDGE API ────────────────────────────────────────────────────────────────
 
+// South Florida cities with approximate center coordinates
+const SOUTH_FL_CITIES = [
+    { name: 'Miami Beach', lat: 25.790, lng: -80.130 },
+    { name: 'Sunny Isles Beach', lat: 25.951, lng: -80.123 },
+    { name: 'Aventura', lat: 25.956, lng: -80.139 },
+    { name: 'Hallandale Beach', lat: 25.981, lng: -80.148 },
+    { name: 'Hollywood', lat: 26.011, lng: -80.149 },
+    { name: 'Fort Lauderdale', lat: 26.122, lng: -80.137 },
+    { name: 'North Miami Beach', lat: 25.933, lng: -80.162 },
+    { name: 'North Miami', lat: 25.890, lng: -80.186 },
+    { name: 'Miami', lat: 25.761, lng: -80.191 },
+    { name: 'Coral Gables', lat: 25.721, lng: -80.268 },
+    { name: 'Doral', lat: 25.819, lng: -80.355 },
+    { name: 'Hialeah', lat: 25.857, lng: -80.278 },
+    { name: 'Miami Gardens', lat: 25.942, lng: -80.245 },
+    { name: 'Bal Harbour', lat: 25.891, lng: -80.127 },
+    { name: 'Surfside', lat: 25.878, lng: -80.126 },
+    { name: 'Bay Harbor Islands', lat: 25.887, lng: -80.131 },
+    { name: 'Key Biscayne', lat: 25.693, lng: -80.163 },
+    { name: 'Brickell', lat: 25.759, lng: -80.192 },
+    { name: 'Coconut Grove', lat: 25.714, lng: -80.241 },
+    { name: 'Pompano Beach', lat: 26.237, lng: -80.124 },
+    { name: 'Boca Raton', lat: 26.358, lng: -80.083 },
+    { name: 'Deerfield Beach', lat: 26.318, lng: -80.099 },
+    { name: 'Lauderdale By The Sea', lat: 26.192, lng: -80.096 },
+    { name: 'Oakland Park', lat: 26.172, lng: -80.132 },
+    { name: 'Wilton Manors', lat: 26.160, lng: -80.139 },
+    { name: 'Opa Locka', lat: 25.902, lng: -80.250 },
+    { name: 'Homestead', lat: 25.468, lng: -80.477 },
+    { name: 'Kendall', lat: 25.679, lng: -80.317 },
+    { name: 'Palmetto Bay', lat: 25.621, lng: -80.325 },
+    { name: 'Pinecrest', lat: 25.665, lng: -80.308 },
+];
+
+function getCitiesNearPoint(lat, lng) {
+    // Return cities within ~15km of the point
+    const maxDist = 15;
+    const nearby = SOUTH_FL_CITIES
+        .map(c => ({ name: c.name, dist: Math.sqrt(Math.pow((c.lat - lat) * 111, 2) + Math.pow((c.lng - lng) * 111 * Math.cos(lat * Math.PI / 180), 2)) }))
+        .filter(c => c.dist < maxDist)
+        .sort((a, b) => a.dist - b.dist)
+        .slice(0, 8)
+        .map(c => c.name);
+    // Always return at least a few cities if none found nearby
+    return nearby.length > 0 ? nearby : ['Miami Beach', 'Sunny Isles Beach', 'Aventura', 'North Miami Beach', 'Fort Lauderdale'];
+}
+
 function toTitleCase(str) {
     return str.toLowerCase().replace(/(?:^|\s)\S/g, c => c.toUpperCase());
 }
@@ -198,7 +245,7 @@ async function fetchBridgeListings(token, lead) {
 
     const baseParams = new URLSearchParams({
         access_token:   token,
-        limit:          String(hasPolygon && cities.length === 0 ? count * 6 : count * 2), // fetch more when using polygon geo filter
+        limit:          String(hasPolygon && cities.length === 0 ? 50 : count * 2), // fetch many when using polygon-only filter
         sortBy:         'ModificationTimestamp',
         order:          'desc',
         PropertyType:   'Residential',
@@ -210,7 +257,8 @@ async function fetchBridgeListings(token, lead) {
     if (lead.bedsMin > 0) baseParams.set('BedroomsTotal.gte', String(lead.bedsMin));
     if (lead.bathsMin > 0) baseParams.set('BathroomsTotalInteger.gte', String(lead.bathsMin));
 
-    // When polygon exists but no cities, use bounding box from polygon for geo-filtering
+    // When polygon exists but no cities, derive cities from polygon bounding box center
+    let polygonCities = [];
     if (hasPolygon && cities.length === 0) {
         try {
             const geo = JSON.parse(lead.polygon);
@@ -223,22 +271,17 @@ async function fetchBridgeListings(token, lead) {
             if (allCoords.length > 0) {
                 const lats = allCoords.map(c => c[1]);
                 const lngs = allCoords.map(c => c[0]);
-                // Expand bounding box by ~20% to catch nearby listings
-                const latRange = Math.max(...lats) - Math.min(...lats);
-                const lngRange = Math.max(...lngs) - Math.min(...lngs);
-                const latPad = latRange * 0.2 || 0.02;
-                const lngPad = lngRange * 0.2 || 0.02;
-                baseParams.set('Latitude.gte', String(Math.min(...lats) - latPad));
-                baseParams.set('Latitude.lte', String(Math.max(...lats) + latPad));
-                baseParams.set('Longitude.gte', String(Math.min(...lngs) - lngPad));
-                baseParams.set('Longitude.lte', String(Math.max(...lngs) + lngPad));
+                const centerLat = (Math.min(...lats) + Math.max(...lats)) / 2;
+                const centerLng = (Math.min(...lngs) + Math.max(...lngs)) / 2;
+                // Map center coordinates to South Florida cities
+                polygonCities = getCitiesNearPoint(centerLat, centerLng);
             }
         } catch (e) { /* invalid polygon */ }
     }
 
     // Map property types to API values
     const mappedTypes = (lead.types || []).map(t => typeMap[t] || t).filter(Boolean);
-    const effectiveCities = cities.length > 0 ? cities : [null]; // null = no city filter
+    const effectiveCities = cities.length > 0 ? cities : (polygonCities.length > 0 ? polygonCities : [null]);
 
     // Build one request per city × type combination for targeted results
     const requests = [];

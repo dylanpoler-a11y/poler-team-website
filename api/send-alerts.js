@@ -289,7 +289,7 @@ async function fetchBridgeListings(token, lead) {
 
     const baseParams = new URLSearchParams({
         access_token:   token,
-        limit:          String(hasPolygon && cities.length === 0 ? count * 6 : count * 2),
+        limit:          String(hasPolygon && cities.length === 0 ? 50 : count * 2),
         sortBy:         'ModificationTimestamp',
         order:          'desc',
         PropertyType:   'Residential',
@@ -301,7 +301,8 @@ async function fetchBridgeListings(token, lead) {
     if (lead.bedsMin > 0) baseParams.set('BedroomsTotal.gte', String(lead.bedsMin));
     if (lead.bathsMin > 0) baseParams.set('BathroomsTotalInteger.gte', String(lead.bathsMin));
 
-    // When polygon exists but no cities, use bounding box for geo-filtering
+    // When polygon exists but no cities, derive cities from polygon center
+    let polygonCities = [];
     if (hasPolygon && cities.length === 0) {
         try {
             const geo = JSON.parse(lead.polygon);
@@ -314,21 +315,16 @@ async function fetchBridgeListings(token, lead) {
             if (allCoords.length > 0) {
                 const lats = allCoords.map(c => c[1]);
                 const lngs = allCoords.map(c => c[0]);
-                const latRange = Math.max(...lats) - Math.min(...lats);
-                const lngRange = Math.max(...lngs) - Math.min(...lngs);
-                const latPad = latRange * 0.2 || 0.02;
-                const lngPad = lngRange * 0.2 || 0.02;
-                baseParams.set('Latitude.gte', String(Math.min(...lats) - latPad));
-                baseParams.set('Latitude.lte', String(Math.max(...lats) + latPad));
-                baseParams.set('Longitude.gte', String(Math.min(...lngs) - lngPad));
-                baseParams.set('Longitude.lte', String(Math.max(...lngs) + lngPad));
+                const centerLat = (Math.min(...lats) + Math.max(...lats)) / 2;
+                const centerLng = (Math.min(...lngs) + Math.max(...lngs)) / 2;
+                polygonCities = getCitiesNearPoint(centerLat, centerLng);
             }
         } catch (e) { /* invalid polygon */ }
     }
 
     // Map property types to API values
     const mappedTypes = (lead.types || []).map(t => typeMap[t] || t).filter(Boolean);
-    const effectiveCities = cities.length > 0 ? cities : [null]; // null = no city filter
+    const effectiveCities = cities.length > 0 ? cities : (polygonCities.length > 0 ? polygonCities : [null]);
 
     // Build one request per city × type combination for targeted results
     const requests = [];
