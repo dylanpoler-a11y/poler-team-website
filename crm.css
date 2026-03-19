@@ -1021,6 +1021,75 @@ body {
   font-style: italic;
 }
 
+/* ── ALERT PROFILE CARDS ─────────────────────────────────── */
+.alert-profile-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+.alert-profile-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.25rem;
+}
+.alert-profile-card-header strong {
+  font-size: 0.85rem;
+  color: var(--navy, #1a2744);
+}
+.alert-profile-card-actions {
+  display: flex;
+  gap: 0.4rem;
+}
+.alert-profile-edit-btn, .alert-profile-delete-btn {
+  font-size: 0.7rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  border: 1px solid #e2e8f0;
+  cursor: pointer;
+  font-family: inherit;
+  background: #fff;
+}
+.alert-profile-edit-btn { color: #2563eb; }
+.alert-profile-edit-btn:hover { background: #eff6ff; }
+.alert-profile-delete-btn { color: #dc2626; }
+.alert-profile-delete-btn:hover { background: #fef2f2; }
+.alert-profile-card-detail {
+  font-size: 0.75rem;
+  color: #64748b;
+  line-height: 1.4;
+}
+.alert-profile-empty {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  padding: 0.5rem 0;
+  font-style: italic;
+}
+.alert-profile-add-btn {
+  width: 100%;
+  padding: 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--navy, #1a2744);
+  background: #eff6ff;
+  border: 1px dashed #bfdbfe;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: inherit;
+  margin: 0.5rem 0;
+  transition: background 0.15s;
+}
+.alert-profile-add-btn:hover { background: #dbeafe; }
+.alert-profile-form {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0.75rem;
+  margin: 0.5rem 0;
+}
+
 /* ── REMINDER BADGE ───────────────────────────────────────── */
 .reminder-badge {
   display: inline-flex;
