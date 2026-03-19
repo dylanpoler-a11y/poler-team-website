@@ -278,6 +278,7 @@ function pointInPolygon(lat, lng, ring) {
 async function fetchBridgeListings(token, lead) {
     const cities = (lead.cities || '').split(',').map(s => s.trim()).filter(Boolean).map(toTitleCase);
     const count = lead.count || 5;
+    const hasPolygon = !!(lead.polygon);
 
     const typeMap = {
         'Single Family': 'Single Family Residence',
@@ -288,7 +289,7 @@ async function fetchBridgeListings(token, lead) {
 
     const baseParams = new URLSearchParams({
         access_token:   token,
-        limit:          String(count * 2),
+        limit:          String(hasPolygon && cities.length === 0 ? count * 6 : count * 2),
         sortBy:         'ModificationTimestamp',
         order:          'desc',
         PropertyType:   'Residential',
@@ -299,6 +300,31 @@ async function fetchBridgeListings(token, lead) {
     if (lead.priceMax > 0) baseParams.set('ListPrice.lte', String(lead.priceMax));
     if (lead.bedsMin > 0) baseParams.set('BedroomsTotal.gte', String(lead.bedsMin));
     if (lead.bathsMin > 0) baseParams.set('BathroomsTotalInteger.gte', String(lead.bathsMin));
+
+    // When polygon exists but no cities, use bounding box for geo-filtering
+    if (hasPolygon && cities.length === 0) {
+        try {
+            const geo = JSON.parse(lead.polygon);
+            let allCoords = [];
+            if (Array.isArray(geo)) {
+                allCoords = geo.flatMap(g => g.coordinates ? g.coordinates[0] : []);
+            } else if (geo && geo.coordinates) {
+                allCoords = geo.coordinates[0];
+            }
+            if (allCoords.length > 0) {
+                const lats = allCoords.map(c => c[1]);
+                const lngs = allCoords.map(c => c[0]);
+                const latRange = Math.max(...lats) - Math.min(...lats);
+                const lngRange = Math.max(...lngs) - Math.min(...lngs);
+                const latPad = latRange * 0.2 || 0.02;
+                const lngPad = lngRange * 0.2 || 0.02;
+                baseParams.set('Latitude.gte', String(Math.min(...lats) - latPad));
+                baseParams.set('Latitude.lte', String(Math.max(...lats) + latPad));
+                baseParams.set('Longitude.gte', String(Math.min(...lngs) - lngPad));
+                baseParams.set('Longitude.lte', String(Math.max(...lngs) + lngPad));
+            }
+        } catch (e) { /* invalid polygon */ }
+    }
 
     // Map property types to API values
     const mappedTypes = (lead.types || []).map(t => typeMap[t] || t).filter(Boolean);
