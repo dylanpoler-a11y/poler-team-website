@@ -407,7 +407,7 @@ async function fetchBridgeListings(token, lead) {
             seen.add(l.ListingId);
             unique.push(l);
         }
-        if (unique.length >= count) break;
+        if (!hasPolygon && unique.length >= count) break;
     }
 
     return unique;
