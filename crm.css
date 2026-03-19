@@ -1346,6 +1346,21 @@ body {
   border-bottom-left-radius: 3px;
 }
 
+/* ── Properties Viewed ───────────────────────────────────────── */
+.panel-properties-viewed-wrap { display: flex; flex-direction: column; gap: 0; }
+.viewed-property-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0.45rem 0; border-bottom: 1px solid #f1f5f9;
+}
+.viewed-property-item:last-child { border-bottom: none; }
+.viewed-property-info { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; flex: 1; }
+.viewed-property-address {
+  font-size: 0.8rem; color: var(--navy, #1a2744); font-weight: 500;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.viewed-property-price { font-size: 0.72rem; color: #16a34a; font-weight: 600; }
+.viewed-property-time { font-size: 0.7rem; color: #94a3b8; white-space: nowrap; margin-left: 0.5rem; }
+
 /* ── Activity Log ────────────────────────────────────────────── */
 .panel-activity-wrap { display: flex; flex-direction: column; gap: 0.5rem; }
 

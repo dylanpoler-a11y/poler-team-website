@@ -1511,7 +1511,7 @@ function exportCSV() {
   const headers = [
     'Name', 'First Name', 'Last Name', 'Email', 'Phone',
     'Country', 'Buy Timeline', 'Assigned To', 'Status', 'Listing Address', 'Listing Price',
-    'Source URL', 'Notes', 'Registered'
+    'Source URL', 'Notes', 'Registered', 'Last Login', 'Properties Viewed'
   ];
 
   const rows = allLeads.map(l => [
@@ -1529,6 +1529,8 @@ function exportCSV() {
     l.sourceUrl,
     l.notes,
     l.createdAt,
+    l.lastLogin,
+    l.totalPropertiesViewed || 0,
   ].map(v => `"${(v || '').toString().replace(/"/g, '""')}"`));
 
   const csv  = [headers.map(h => `"${h}"`), ...rows].map(r => r.join(',')).join('\n');
@@ -1621,6 +1623,41 @@ async function loadConversations(email) {
     console.error('Load conversations error:', err);
     wrap.innerHTML = '<p class="panel-empty-text">Error loading conversations</p>';
   }
+}
+
+// ── RENDER PROPERTIES VIEWED ──────────────────────────────────────────────
+function renderPropertiesViewed(lead) {
+  const wrap = document.getElementById('panel-properties-viewed');
+  const countEl = document.getElementById('panel-properties-count');
+  if (!wrap) return;
+
+  let viewed = [];
+  try {
+    const raw = lead.propertiesViewed || '[]';
+    viewed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+    if (!Array.isArray(viewed)) viewed = [];
+  } catch { viewed = []; }
+
+  const total = lead.totalPropertiesViewed || viewed.length;
+  if (countEl) countEl.textContent = total;
+
+  if (viewed.length === 0) {
+    wrap.innerHTML = '<p class="panel-empty-text">No properties viewed yet</p>';
+    return;
+  }
+
+  wrap.innerHTML = viewed.slice(0, 20).map(v => {
+    const price = v.price ? '$' + Number(v.price).toLocaleString() : '';
+    const time = v.viewedAt ? relativeTime(v.viewedAt) : '';
+    const addr = v.address || v.mlsId || 'Unknown';
+    return `<div class="viewed-property-item">
+      <div class="viewed-property-info">
+        <span class="viewed-property-address">${escHtml(addr)}</span>
+        ${price ? `<span class="viewed-property-price">${escHtml(price)}</span>` : ''}
+      </div>
+      <span class="viewed-property-time">${escHtml(time)}</span>
+    </div>`;
+  }).join('');
 }
 
 // ── LOAD LEAD ACTIVITY ────────────────────────────────────────────────────
