@@ -981,6 +981,7 @@ function initAlertMap(lead) {
     center: [-80.15, 25.9],
     zoom: 10,
     attributionControl: true,
+    clickTolerance: 10, // pixels — allows small mouse movements to still count as clicks
   });
 
   alertMap.addControl(new maplibregl.NavigationControl(), 'top-left');
