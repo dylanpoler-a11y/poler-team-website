@@ -117,7 +117,8 @@ export default async function handler(req) {
                     profileListings = profileListings.filter(l => {
                         const lat = l.Latitude;
                         const lng = l.Longitude;
-                        if (!lat || !lng) return false;
+                        // If listing has no coordinates, include it (don't penalize missing data)
+                        if (lat == null || lng == null) return true;
                         return rings.some(ring => pointInPolygon(lat, lng, ring));
                     });
                 }

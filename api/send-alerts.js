@@ -150,7 +150,8 @@ export default async function handler(req) {
                             profileListings = profileListings.filter(l => {
                                 const lat = l.Latitude;
                                 const lng = l.Longitude;
-                                if (!lat || !lng) return false;
+                                // If listing has no coordinates, include it
+                                if (lat == null || lng == null) return true;
                                 // Property must be inside ANY of the drawn areas
                                 return rings.some(ring => pointInPolygon(lat, lng, ring));
                             });
