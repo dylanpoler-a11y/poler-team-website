@@ -966,6 +966,9 @@ body {
   margin-top: 0.5rem;
   z-index: 0;
   position: relative;
+  touch-action: none;        /* prevent panel scroll from stealing map gestures */
+  -webkit-user-select: none;
+  user-select: none;
 }
 /* MapLibre GL overrides */
 .alert-map .maplibregl-canvas {
