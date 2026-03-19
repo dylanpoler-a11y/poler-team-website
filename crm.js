@@ -1045,35 +1045,17 @@ function initAlertMap(lead) {
     }
   });
 
-  // Drawing: use canvas-level mousedown to capture clicks even when dragPan is off
-  let drawMouseDownPos = null;
-  let drawMouseDownTime = 0;
-  alertMap.getCanvas().addEventListener('mousedown', (e) => {
+  // Click handler for drawing — use MapLibre's click event (works with dragPan enabled)
+  alertMap.on('click', (e) => {
     if (!alertMapDrawing) return;
-    drawMouseDownPos = { x: e.clientX, y: e.clientY };
-    drawMouseDownTime = Date.now();
-  });
-  alertMap.getCanvas().addEventListener('mouseup', (e) => {
-    if (!alertMapDrawing || !drawMouseDownPos) return;
-    // Only count as a click if mouse didn't move much and was quick
-    const dx = e.clientX - drawMouseDownPos.x;
-    const dy = e.clientY - drawMouseDownPos.y;
-    const dt = Date.now() - drawMouseDownTime;
-    drawMouseDownPos = null;
-    if (Math.sqrt(dx * dx + dy * dy) > 5 || dt > 500) return; // was a drag, not a click
-    // Convert screen point to map coordinates
-    const rect = alertMap.getCanvas().getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    const lngLat = alertMap.unproject([x, y]);
-    alertMapDrawPoints.push([lngLat.lng, lngLat.lat]);
+    alertMapDrawPoints.push([e.lngLat.lng, e.lngLat.lat]);
     updateDrawPreview();
   });
+
   // Double-click finishes polygon
-  alertMap.getCanvas().addEventListener('dblclick', (e) => {
+  alertMap.on('dblclick', (e) => {
     if (!alertMapDrawing || alertMapDrawPoints.length < 3) return;
     e.preventDefault();
-    e.stopPropagation();
     finishDrawing();
   });
 
@@ -1108,10 +1090,8 @@ function startDrawing() {
   document.getElementById('alert-map-hint').style.display = 'block';
   document.getElementById('alert-map-draw').textContent = '✅ Finish Drawing';
   alertMap.getCanvas().style.cursor = 'crosshair';
-  // Disable all map interactions while drawing so clicks place points instead of dragging
+  // Disable double-click zoom while drawing (conflicts with finish-on-dblclick)
   alertMap.doubleClickZoom.disable();
-  alertMap.dragPan.disable();
-  alertMap.dragRotate.disable();
 }
 
 function finishDrawing() {
@@ -1131,10 +1111,8 @@ function finishDrawing() {
   document.getElementById('alert-map-hint').style.display = 'none';
   document.getElementById('alert-map-draw').textContent = '✏️ Draw Area';
   alertMap.getCanvas().style.cursor = '';
-  // Re-enable all map interactions after drawing
+  // Re-enable double-click zoom after drawing
   alertMap.doubleClickZoom.enable();
-  alertMap.dragPan.enable();
-  alertMap.dragRotate.enable();
 }
 
 function updateDrawPreview() {
@@ -1177,8 +1155,6 @@ function clearPolygon() {
     }
     alertMap.getCanvas().style.cursor = '';
     alertMap.doubleClickZoom.enable();
-    alertMap.dragPan.enable();
-    alertMap.dragRotate.enable();
   }
   document.getElementById('alert-map-hint').style.display = 'none';
   document.getElementById('alert-map-draw').textContent = '✏️ Draw Area';
