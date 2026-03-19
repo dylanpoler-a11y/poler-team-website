@@ -93,28 +93,74 @@ export default async function handler(req) {
             token:     f['Alert Token'] || '',
             language:  f['Preferred Language'] || 'en',
             polygon:   f['Alert Polygon'] || '',
+            profiles:  f['Alert Profiles'] || '',
         };
 
         try {
-            // Fetch matching properties
-            let listings = await fetchBridgeListings(bridgeToken, lead);
-
-            // Apply polygon filter if lead has a drawn area
-            if (lead.polygon && listings.length > 0) {
+            // Determine profiles to fetch — multi-profile or legacy single
+            let profilesToFetch = [];
+            if (lead.profiles) {
                 try {
-                    const geo = JSON.parse(lead.polygon);
-                    if (geo && geo.type === 'Polygon' && geo.coordinates) {
-                        const ring = geo.coordinates[0]; // outer ring [[lng,lat], ...]
-                        listings = listings.filter(l => {
-                            const lat = l.Latitude;
-                            const lng = l.Longitude;
-                            return lat && lng && pointInPolygon(lat, lng, ring);
-                        });
-                    }
-                } catch (e) {
-                    // Invalid polygon JSON — skip filtering
-                }
+                    const parsed = JSON.parse(lead.profiles);
+                    if (Array.isArray(parsed) && parsed.length > 0) profilesToFetch = parsed;
+                } catch (e) { /* bad JSON */ }
             }
+            // Fall back to single legacy profile if no multi-profiles
+            if (profilesToFetch.length === 0) {
+                profilesToFetch = [{
+                    types: lead.types,
+                    cities: lead.cities,
+                    priceMin: lead.priceMin,
+                    priceMax: lead.priceMax,
+                    bedsMin: lead.bedsMin,
+                    bathsMin: lead.bathsMin,
+                    polygon: lead.polygon,
+                }];
+            }
+
+            // Fetch listings for each profile and combine
+            let allListings = [];
+            for (const profile of profilesToFetch) {
+                const profileLead = {
+                    ...lead,
+                    types: profile.types || lead.types,
+                    cities: profile.cities || lead.cities,
+                    priceMin: profile.priceMin || lead.priceMin,
+                    priceMax: profile.priceMax || lead.priceMax,
+                    bedsMin: profile.bedsMin || lead.bedsMin,
+                    bathsMin: profile.bathsMin || lead.bathsMin,
+                };
+                let profileListings = await fetchBridgeListings(bridgeToken, profileLead);
+
+                // Apply polygon filter for this profile
+                const polyStr = profile.polygon || '';
+                if (polyStr && profileListings.length > 0) {
+                    try {
+                        const geo = JSON.parse(polyStr);
+                        if (geo && geo.type === 'Polygon' && geo.coordinates) {
+                            const ring = geo.coordinates[0];
+                            profileListings = profileListings.filter(l => {
+                                const lat = l.Latitude;
+                                const lng = l.Longitude;
+                                return lat && lng && pointInPolygon(lat, lng, ring);
+                            });
+                        }
+                    } catch (e) { /* invalid polygon */ }
+                }
+                allListings.push(...profileListings);
+            }
+
+            // Deduplicate by ListingId
+            const seen = new Set();
+            let listings = allListings.filter(l => {
+                const id = l.ListingId;
+                if (seen.has(id)) return false;
+                seen.add(id);
+                return true;
+            });
+
+            // Limit to requested count
+            listings = listings.slice(0, lead.count || 5);
 
             if (listings.length === 0) {
                 results.skipped++;
