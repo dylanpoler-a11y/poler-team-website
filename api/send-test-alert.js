@@ -102,6 +102,7 @@ export default async function handler(req) {
             polygon: profile.polygon || '',
         };
         let profileListings = await fetchBridgeListings(bridgeToken, profileLead);
+        console.log(`[ALERT DEBUG] Profile "${profile.name || 'default'}": ${profileListings.length} listings from Bridge, cities="${profileLead.cities}", types=${JSON.stringify(profileLead.types)}, priceMin=${profileLead.priceMin}, priceMax=${profileLead.priceMax}`);
 
         const polyStr = profile.polygon || '';
         if (polyStr && profileListings.length > 0) {
@@ -122,7 +123,8 @@ export default async function handler(req) {
                         return rings.some(ring => pointInPolygon(lat, lng, ring));
                     });
                 }
-            } catch (e) { /* invalid polygon */ }
+            } catch (e) { console.log(`[ALERT DEBUG] Polygon parse error:`, e.message); }
+            console.log(`[ALERT DEBUG] After polygon filter: ${profileListings.length} listings remain`);
         }
         allListings.push(...profileListings);
     }
@@ -246,7 +248,7 @@ async function fetchBridgeListings(token, lead) {
 
     const baseParams = new URLSearchParams({
         access_token:   token,
-        limit:          String(hasPolygon && cities.length === 0 ? 50 : count * 2), // fetch many when using polygon-only filter
+        limit:          String(hasPolygon ? 50 : count * 2), // fetch many when using polygon filter
         sortBy:         'ModificationTimestamp',
         order:          'desc',
         PropertyType:   'Residential',
@@ -312,7 +314,9 @@ async function fetchBridgeListings(token, lead) {
     }
 
     const results = await Promise.all(requests);
+    console.log(`[ALERT DEBUG] ${requests.length} requests made, results per request: ${results.map(r => r.length).join(', ')}`);
     let allListings = results.flat();
+    console.log(`[ALERT DEBUG] Total raw listings: ${allListings.length}, hasCoords: ${allListings.filter(l => l.Latitude && l.Longitude).length}`);
     allListings.sort((a, b) => new Date(b.ModificationTimestamp || 0) - new Date(a.ModificationTimestamp || 0));
 
     // Deduplicate

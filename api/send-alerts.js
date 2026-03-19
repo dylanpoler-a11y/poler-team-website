@@ -330,7 +330,7 @@ async function fetchBridgeListings(token, lead) {
 
     const baseParams = new URLSearchParams({
         access_token:   token,
-        limit:          String(hasPolygon && cities.length === 0 ? 50 : count * 2),
+        limit:          String(hasPolygon ? 50 : count * 2),
         sortBy:         'ModificationTimestamp',
         order:          'desc',
         PropertyType:   'Residential',
