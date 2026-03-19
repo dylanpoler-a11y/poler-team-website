@@ -257,6 +257,46 @@ function computeNextDue(fromDateStr, frequency) {
 
 // ── BRIDGE API ────────────────────────────────────────────────────────────────
 
+const SOUTH_FL_CITIES = [
+    { name: 'Miami Beach', lat: 25.790, lng: -80.130 },
+    { name: 'Sunny Isles Beach', lat: 25.951, lng: -80.123 },
+    { name: 'Aventura', lat: 25.956, lng: -80.139 },
+    { name: 'Hallandale Beach', lat: 25.981, lng: -80.148 },
+    { name: 'Hollywood', lat: 26.011, lng: -80.149 },
+    { name: 'Fort Lauderdale', lat: 26.122, lng: -80.137 },
+    { name: 'North Miami Beach', lat: 25.933, lng: -80.162 },
+    { name: 'North Miami', lat: 25.890, lng: -80.186 },
+    { name: 'Miami', lat: 25.761, lng: -80.191 },
+    { name: 'Coral Gables', lat: 25.721, lng: -80.268 },
+    { name: 'Doral', lat: 25.819, lng: -80.355 },
+    { name: 'Hialeah', lat: 25.857, lng: -80.278 },
+    { name: 'Miami Gardens', lat: 25.942, lng: -80.245 },
+    { name: 'Bal Harbour', lat: 25.891, lng: -80.127 },
+    { name: 'Surfside', lat: 25.878, lng: -80.126 },
+    { name: 'Bay Harbor Islands', lat: 25.887, lng: -80.131 },
+    { name: 'Key Biscayne', lat: 25.693, lng: -80.163 },
+    { name: 'Pompano Beach', lat: 26.237, lng: -80.124 },
+    { name: 'Boca Raton', lat: 26.358, lng: -80.083 },
+    { name: 'Deerfield Beach', lat: 26.318, lng: -80.099 },
+    { name: 'Lauderdale By The Sea', lat: 26.192, lng: -80.096 },
+    { name: 'Oakland Park', lat: 26.172, lng: -80.132 },
+    { name: 'Wilton Manors', lat: 26.160, lng: -80.139 },
+    { name: 'Homestead', lat: 25.468, lng: -80.477 },
+    { name: 'Palmetto Bay', lat: 25.621, lng: -80.325 },
+    { name: 'Pinecrest', lat: 25.665, lng: -80.308 },
+];
+
+function getCitiesNearPoint(lat, lng) {
+    const maxDist = 15; // km
+    const nearby = SOUTH_FL_CITIES
+        .map(c => ({ name: c.name, dist: Math.sqrt(Math.pow((c.lat - lat) * 111, 2) + Math.pow((c.lng - lng) * 111 * Math.cos(lat * Math.PI / 180), 2)) }))
+        .filter(c => c.dist < maxDist)
+        .sort((a, b) => a.dist - b.dist)
+        .slice(0, 8)
+        .map(c => c.name);
+    return nearby.length > 0 ? nearby : ['Miami Beach', 'Sunny Isles Beach', 'Aventura', 'North Miami Beach', 'Fort Lauderdale'];
+}
+
 function toTitleCase(str) {
     return str.toLowerCase().replace(/(?:^|\s)\S/g, c => c.toUpperCase());
 }
