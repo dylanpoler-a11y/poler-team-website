@@ -1,9 +1,6 @@
 {
-  "cleanUrls": true,
-  "crons": [
-    {
-      "path": "/api/send-alerts",
-      "schedule": "0 9 * * *"
-    }
-  ]
+  "framework": null,
+  "buildCommand": null,
+  "outputDirectory": null,
+  "cleanUrls": true
 }

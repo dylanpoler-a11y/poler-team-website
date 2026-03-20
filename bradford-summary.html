@@ -1,0 +1,1633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bradford Pipeline Summary | The Poler Team</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+
+        :root {
+            --navy: #1a2744;
+            --navy-light: #243352;
+            --gold: #C9A84C;
+            --gold-dim: rgba(201,168,76,0.15);
+            --white: #ffffff;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-700: #374151;
+            --gray-900: #111827;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--gray-50);
+            color: var(--gray-900);
+            line-height: 1.6;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%);
+            color: var(--white);
+            padding: 48px 0 40px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -60%;
+            right: -8%;
+            width: 500px;
+            height: 500px;
+            border-radius: 50%;
+            background: rgba(201,168,76,0.05);
+        }
+
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        .header h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: rgba(255,255,255,0.7);
+            font-size: 0.95rem;
+        }
+
+        .header .gold { color: var(--gold); }
+
+        /* Summary Bar */
+        .summary-bar {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin: -28px auto 32px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .summary-card {
+            background: var(--white);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            border: 1px solid var(--gray-200);
+        }
+
+        .summary-card .number {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--navy);
+        }
+
+        .summary-card .label {
+            font-size: 0.75rem;
+            color: var(--gray-500);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 4px;
+        }
+
+        /* Password Gate */
+        .password-gate {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: var(--navy);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.5s ease;
+        }
+
+        .password-gate.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .password-box {
+            background: var(--white);
+            border-radius: 16px;
+            padding: 48px 40px;
+            text-align: center;
+            max-width: 420px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .password-box h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.5rem;
+            color: var(--navy);
+            margin-bottom: 8px;
+        }
+
+        .password-box p {
+            color: var(--gray-500);
+            font-size: 0.9rem;
+            margin-bottom: 24px;
+        }
+
+        .password-box input {
+            width: 100%;
+            padding: 14px 18px;
+            border: 2px solid var(--gray-200);
+            border-radius: 10px;
+            font-size: 1rem;
+            font-family: 'Inter', sans-serif;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .password-box input:focus {
+            border-color: var(--gold);
+        }
+
+        .password-box input.error {
+            border-color: #ef4444;
+            animation: shake 0.3s ease;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-6px); }
+            75% { transform: translateX(6px); }
+        }
+
+        .password-box button {
+            width: 100%;
+            padding: 14px;
+            background: var(--navy);
+            color: var(--white);
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 12px;
+            transition: background 0.2s;
+        }
+
+        .password-box button:hover {
+            background: var(--navy-light);
+        }
+
+        .password-lock-icon {
+            font-size: 2rem;
+            margin-bottom: 12px;
+        }
+
+        /* Quarter Accordion */
+        .quarter-section {
+            margin-bottom: 16px;
+        }
+
+        .quarter-header {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 12px;
+            padding: 20px 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.2s;
+            user-select: none;
+        }
+
+        .quarter-header:hover {
+            border-color: var(--gold);
+            box-shadow: 0 2px 8px rgba(201,168,76,0.12);
+        }
+
+        .quarter-header.active {
+            border-color: var(--gold);
+            border-bottom-left-radius: 0;
+            border-bottom-right-radius: 0;
+            background: var(--navy);
+            color: var(--white);
+        }
+
+        .quarter-header .q-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+
+        .quarter-header .q-stats {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            font-size: 0.8rem;
+            color: var(--gray-500);
+        }
+
+        .quarter-header.active .q-stats {
+            color: rgba(255,255,255,0.7);
+        }
+
+        .quarter-header .q-stats .stat-pill {
+            background: var(--gold-dim);
+            color: var(--gold);
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.75rem;
+        }
+
+        .quarter-header.active .q-stats .stat-pill {
+            background: rgba(201,168,76,0.25);
+        }
+
+        .quarter-header .chevron {
+            transition: transform 0.3s ease;
+            font-size: 1.1rem;
+            color: var(--gray-400);
+        }
+
+        .quarter-header.active .chevron {
+            transform: rotate(180deg);
+            color: var(--gold);
+        }
+
+        .quarter-body {
+            display: none;
+            background: var(--white);
+            border: 1px solid var(--gold);
+            border-top: none;
+            border-bottom-left-radius: 12px;
+            border-bottom-right-radius: 12px;
+            padding: 24px;
+        }
+
+        .quarter-body.open {
+            display: block;
+        }
+
+        /* Outreach Stats Row */
+        .outreach-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-bottom: 24px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .outreach-stat {
+            text-align: center;
+            padding: 12px 8px;
+            background: var(--gray-50);
+            border-radius: 8px;
+        }
+
+        .outreach-stat .os-num {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--navy);
+        }
+
+        .outreach-stat .os-label {
+            font-size: 0.7rem;
+            color: var(--gray-500);
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        /* Timeline */
+        .timeline {
+            position: relative;
+            padding-left: 28px;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 6px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--gray-200);
+        }
+
+        .timeline-card {
+            position: relative;
+            margin-bottom: 20px;
+            padding: 20px;
+            background: var(--gray-50);
+            border-radius: 10px;
+            border: 1px solid var(--gray-200);
+            transition: border-color 0.2s;
+        }
+
+        .timeline-card:hover {
+            border-color: var(--gold);
+        }
+
+        .timeline-card::before {
+            content: '';
+            position: absolute;
+            left: -25px;
+            top: 26px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--gold);
+            border: 2px solid var(--white);
+            box-shadow: 0 0 0 2px var(--gold);
+        }
+
+        .timeline-card.compact {
+            padding: 14px 20px;
+        }
+
+        .timeline-card.compact .tc-header { margin-bottom: 6px; }
+
+        .tc-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .tc-name {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--navy);
+        }
+
+        .tc-date {
+            font-size: 0.75rem;
+            color: var(--gray-500);
+            font-weight: 500;
+        }
+
+        .tc-location {
+            font-size: 0.8rem;
+            color: var(--gray-500);
+            margin-bottom: 8px;
+        }
+
+        .tc-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        .tag-beds { background: #dbeafe; color: #1e40af; }
+        .tag-payer { background: #d1fae5; color: #065f46; }
+        .tag-service { background: #fef3c7; color: #92400e; }
+        .tag-status { background: #ede9fe; color: #5b21b6; }
+
+        .tc-people {
+            font-size: 0.8rem;
+            color: var(--gray-700);
+            margin-bottom: 8px;
+        }
+
+        .tc-people strong {
+            color: var(--navy);
+        }
+
+        .tc-learned {
+            font-size: 0.85rem;
+            color: var(--gray-700);
+            margin-bottom: 10px;
+            line-height: 1.55;
+        }
+
+        .tc-next {
+            font-size: 0.8rem;
+            color: var(--gold);
+            font-weight: 600;
+            padding-top: 8px;
+            border-top: 1px dashed var(--gray-200);
+        }
+
+        .tc-pending {
+            font-size: 0.8rem;
+            color: var(--gray-400);
+            font-style: italic;
+        }
+
+        /* Special Sections */
+        .highlight-box {
+            background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%);
+            border-radius: 10px;
+            padding: 20px 24px;
+            margin: 24px 0;
+            color: var(--white);
+        }
+
+        .highlight-box h4 {
+            font-family: 'Playfair Display', serif;
+            color: var(--gold);
+            margin-bottom: 12px;
+            font-size: 1rem;
+        }
+
+        .state-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 12px;
+        }
+
+        .state-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255,255,255,0.08);
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 0.82rem;
+        }
+
+        .state-row .state-name {
+            font-weight: 600;
+            color: var(--gold);
+        }
+
+        .state-row .state-details {
+            color: rgba(255,255,255,0.7);
+            text-align: right;
+            font-size: 0.75rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .summary-bar {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .outreach-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .header h1 { font-size: 1.5rem; }
+            .quarter-header .q-stats {
+                display: none;
+            }
+            .state-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .summary-bar {
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+            }
+            .container { padding: 0 16px; }
+            .tc-header { flex-direction: column; align-items: flex-start; }
+        }
+
+        .main-content {
+            display: none;
+        }
+
+        .main-content.visible {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Password Gate -->
+<div class="password-gate" id="passwordGate">
+    <div class="password-box">
+        <div class="password-lock-icon">&#128274;</div>
+        <h2>Bradford Pipeline Summary</h2>
+        <p>Enter password to access this report</p>
+        <input type="password" id="passwordInput" placeholder="Password" autocomplete="off">
+        <button onclick="checkPassword()">Access Report</button>
+    </div>
+</div>
+
+<!-- Main Content -->
+<div class="main-content" id="mainContent">
+
+    <div class="header">
+        <div class="container">
+            <h1>Bradford Deal Sourcing <span class="gold">Pipeline</span></h1>
+            <p>The Poler Team &mdash; Q3 2025 through Q1 2026 &mdash; Behavioral Health M&amp;A</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="summary-bar">
+            <div class="summary-card" id="card-total">
+                <div class="number" id="top-total">1,638</div>
+                <div class="label">Total Messages</div>
+            </div>
+            <div class="summary-card filterable" id="card-calling" onclick="applyFilter('calling')" style="cursor:pointer;transition:all 0.2s;">
+                <div class="number" id="top-calling">368</div>
+                <div class="label">Phone Calls <span style="font-size:0.65rem;opacity:0.6;">▸ click to filter</span></div>
+            </div>
+            <div class="summary-card filterable" id="card-linkedin" onclick="applyFilter('linkedin')" style="cursor:pointer;transition:all 0.2s;">
+                <div class="number" id="top-linkedin">1,228</div>
+                <div class="label">LinkedIn <span style="font-size:0.65rem;opacity:0.6;">▸ click to filter</span></div>
+            </div>
+            <div class="summary-card" id="card-intros">
+                <div class="number" id="top-intros">49</div>
+                <div class="label">Intro Calls</div>
+            </div>
+        </div>
+        <div id="filter-badge" style="display:none;text-align:center;margin:-20px 0 20px;"><span style="background:var(--gold);color:var(--navy);font-size:0.75rem;font-weight:700;padding:4px 14px;border-radius:20px;letter-spacing:0.5px;cursor:pointer;" onclick="applyFilter('all')">FILTERED: <span id="filter-label"></span> · Click to reset</span></div>
+
+        <!-- Conversion Funnel -->
+        <div style="background:var(--white);border:1px solid var(--gray-200);border-radius:12px;padding:24px 28px;margin-bottom:24px;">
+            <div style="font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--navy);margin-bottom:16px;font-weight:700;">Conversion Funnel</div>
+            <div id="funnel" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-size:0.85rem;color:var(--gray-700);">
+                <div style="text-align:center;padding:10px 16px;background:var(--gray-50);border-radius:8px;border:1px solid var(--gray-200);">
+                    <div id="funnel-msgs" style="font-size:1.4rem;font-weight:700;color:var(--navy);" data-all="1,638" data-calling="368" data-linkedin="1,228">1,638</div>
+                    <div>Messages Sent</div>
+                </div>
+                <div style="color:var(--gold);font-size:1.2rem;">→</div>
+                <div style="text-align:center;padding:10px 16px;background:var(--gray-50);border-radius:8px;border:1px solid var(--gray-200);">
+                    <div id="funnel-resp" style="font-size:1.4rem;font-weight:700;color:var(--navy);" data-all="132" data-calling="95" data-linkedin="236">132</div>
+                    <div id="funnel-resp-pct">Responded (8.1%)</div>
+                </div>
+                <div style="color:var(--gold);font-size:1.2rem;">→</div>
+                <div style="text-align:center;padding:10px 16px;background:var(--gray-50);border-radius:8px;border:1px solid var(--gray-200);">
+                    <div id="funnel-intro" style="font-size:1.4rem;font-weight:700;color:var(--navy);" data-all="49" data-calling="73" data-linkedin="172">49</div>
+                    <div id="funnel-intro-pct">Intro Calls (37%)</div>
+                </div>
+                <div style="color:var(--gold);font-size:1.2rem;">→</div>
+                <div style="text-align:center;padding:10px 16px;background:#f0fdf4;border-radius:8px;border:1px solid #bbf7d0;">
+                    <div style="font-size:1.4rem;font-weight:700;color:#15803d;">12+</div>
+                    <div>Active Pipeline</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- By State Performance -->
+        <div id="state-section" style="background:var(--white);border:1px solid var(--gray-200);border-radius:12px;padding:24px 28px;margin-bottom:32px;">
+            <div style="font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--navy);margin-bottom:4px;font-weight:700;">Performance by State</div>
+            <div style="font-size:0.75rem;color:var(--gray-400);margin-bottom:16px;">Click any state to see every company contacted</div>
+            <div id="state-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;"></div>
+            <div id="state-audit" style="display:none;margin-top:16px;"></div>
+            <div style="margin-top:12px;font-size:0.75rem;color:var(--gray-400);">Data from Airtable. Click any state card to drill down into individual companies.</div>
+        </div>
+
+        <!-- Q1 2026 -->
+        <div class="quarter-section">
+            <div class="quarter-header active" onclick="toggleQuarter(this)">
+                <div>
+                    <div class="q-title">Q1 2026 &mdash; Jan&ndash;Mar</div>
+                </div>
+                <div class="q-stats">
+                    <span>410 msgs</span>
+                    <span>224 calls</span>
+                    <span>182 LinkedIn</span>
+                    <span class="stat-pill">18 Intros</span>
+                    <span class="chevron">&#9660;</span>
+                </div>
+            </div>
+            <div class="quarter-body open">
+                <div class="outreach-stats">
+                    <div class="outreach-stat"><div class="os-num">410</div><div class="os-label">Messages</div></div>
+                    <div class="outreach-stat"><div class="os-num">224</div><div class="os-label">Calling</div></div>
+                    <div class="outreach-stat"><div class="os-num">182</div><div class="os-label">LinkedIn</div></div>
+                    <div class="outreach-stat"><div class="os-num">292</div><div class="os-label">Companies</div></div>
+                </div>
+                <div class="timeline">
+
+                    <!-- 1. New Hope Carolinas -->
+                    <div class="timeline-card compact">
+                        <div class="tc-header">
+                            <span class="tc-name">New Hope Carolinas</span>
+                            <span class="tc-date">Jan 7, 2026</span>
+                        </div>
+                        <div class="tc-location">Likely NC/SC</div>
+                        <div class="tc-tags">
+                            <span class="tag tag-service">SUD/MH</span>
+                        </div>
+                        <div class="tc-learned">Discussed in weekly Bradford pipeline calls. Intro call completed — evaluating fit within Bradford's Southeast strategy.</div>
+                        <div class="tc-next">Next: Follow-up pending data review.</div>
+                    </div>
+
+                    <!-- 2. New Vista -->
+                    <div class="timeline-card">
+                        <div class="tc-header">
+                            <span class="tc-name">New Vista</span>
+                            <span class="tc-date">Jan 9, 2026</span>
+                        </div>
+                        <div class="tc-location">Ohio (+ expanding to IN, CO)</div>
+                        <div class="tc-tags">
+                            <span class="tag tag-beds">Largest Inpatient BH in Ohio</span>
+                            <span class="tag tag-payer">Commercial + Medicaid</span>
+                            <span class="tag tag-service">Residential/Detox/PHP/IOP</span>
+                        </div>
+                        <div class="tc-people"><strong>Key People:</strong> Cody Rhynard, Chuck, Dylan</div>
+                        <div class="tc-learned">Expanding from Ohio into Indiana and Colorado. Acquired Johnstown Heights Behavioral Health in CO. Not for sale &mdash; in growth phase. Operates largest inpatient behavioral health in Ohio.</div>
+                        <div class="tc-next">Next: Not for sale currently. Potential future partnerships. Maintaining relationship.</div>
+                    </div>
+
+                    <!-- 3. Southern Live Oak Wellness -->
+                    <div class="timeline-card">
+                        <div class="tc-header">
+                            <span class="tc-name">Southern Live Oak Wellness</span>
+                            <span class="tc-date">Jan 16, 2026</span>
+                        </div>
+                        <div class="tc-location">Atlanta, GA</div>
+                        <div class="tc-tags">
+                            <span class="tag tag-beds">6 RTCs + 2 PHPs</span>
+                            <span class="tag tag-payer">100% OON</span>
+                            <span class="tag tag-service">MH RTC / PHP</span>
+                        </div>
+                        <div class="tc-people"><strong>Key People:</strong> A.M. Anderson (Owner), Cory Dowless (BD/Partner), Chuck</div>
+                        <div class="tc-learned">Adult &amp; adolescent mental health RTC via ALF-to-RTC conversions. Expanding toward 9 programs. Fully out-of-network. Facing Dunwoody ordinance litigation and staffing challenges. Want to retain control while exploring in-network transition.</div>
+                        <div class="tc-next">Next: A.M./Cory to reach out when ready. Chuck reviewing numbers and providing payer advice.</div>
+                    </div>
+
+                    <!-- 4. Vizion Health -->
+                    <div class="timeline-card">
+                        <div class="tc-header">
+                            <span class="tc-name">Vizion Health</span>
+                            <span class="tc-date">Jan 16, 2026</span>
+                        </div>
+                        <div class="tc-location">Texas / Oklahoma / Louisiana</div>
+                        <div class="tc-tags">
+                            <span class="tag tag-beds">Multi-site</span>
+                            <span class="tag tag-payer">Medicaid + Commercial</span>
+                            <span class="tag tag-service">Adolescent MH / TBI</span>
+                        </div>
+                        <div class="tc-people"><strong>Key People:</strong> Ann Miller (BD), Aaron Kneas (CFO), Ben, Chuck</div>
+                        <div class="tc-learned">Willow Crest Hospital (55 beds acute psych + 28 beds residential MH in OK). Taft TX facility (91 beds adolescent SUD). Considering divesting adolescent business to focus on TBI. Not actively marketing but open.</div>
+                        <div class="tc-next">Next: Vizion to notify if they run a formal process. Dylan maintaining contacts.</div>
+                    </div>
+
+                    <!-- 5. Second Chances -->
+                    <div class="timeline-card">
+                        <div class="tc-header">
+                            <span class="tc-name">Second Chances</span>
+                            <span class="tc-date">Jan 21, 2026</span>
+                        </div>
+                        <div class="tc-location">Louisiana</div>
+                        <div class="tc-tags">
+                            <span class="tag tag-beds">80 Beds</span>
+                            <span class="tag tag-payer">Medicaid + Commercial</span>
+                            <span class="tag tag-service">Detox / Residential SUD</span>
+                        </div>
+                        <div class="tc-people"><strong>Key People:</strong> Jjudson (CFO, Four Horn Investments)</div>
+                        <div class="tc-learned">Expanded from 56 to 80 beds; census ~60-65%. Related-party RE with above-market rent impacting OpCo. Preference for plain-vanilla, majority all-cash deal.</div>
+                        <div class="tc-next">Next: NDA + data request sent. Jjudson providing 3 years financials. Chuck to review, draft LOI (~1 month), visit facility.</div>
+                    </div>
+
+                    <!-- 6. The Grove Recovery -->
+                    <div class="timeline-card">
+                        <div class="tc-header">
+                            <span class="tc-name">The Grove Recovery</span>
+                            <span class="tc-date">Jan 21, 2026</span>
+                        </div>
+                        <div class="tc-location">Louisiana</div>
+                        <div class="tc-tags">
+                            <span class="tag tag-beds">~150 Beds</span>
+                            <span class="tag tag-payer">75% Medicaid</span>
+                            <span class="tag tag-service">Detox / RTC / IOP</span>
+                        </div>
+                        <div class="tc-people"><strong>Key People:</strong> Cody (Founder), Tim Wilson</div>
+                        <div class="tc-learned">~150-bed residential with medical detox, primary treatment, sober living, IOP. In-network all major payers, MCOs, TRICARE. Strong judicial/community referral base. Expect ~7x EBITDA.</div>
+                        <div class="tc-next">Next: NDA + data request sent. Cody discussing with partners. Site visit Mar 10.</div>
+                    </div>
+
+                    <!-- 7. NESS Healthcare NFP -->
+                    <div class="timeline-card">
+                        <div class="tc-header">
+                            <span class="tc-name">NESS Healthcare NFP</span>
+                            <span class="tc-date">Jan 22, 2026</span>
+                        </div>
+                        <div class="tc-location">Louisiana</div>
+                        <div class="tc-tags">
+                            <span class="tag tag-beds">Safety-Net Psych</span>
+                            <span class="tag tag-payer">Medicaid / Public</span>
+                            <span class="tag tag-service">Acute Psych / Pediatric</span>
+                        </div>
+                        <div class="tc-people"><strong>Key People:</strong> Tony Shir (Founder)</div>
+                        <div class="tc-learned">Largest safety-net psych hospital in LA. Adolescents, adults, children, pregnant women. State/federal grants and institutional bonds. LA SUD license moratorium creates unique positioning. Potential public-private JV.</div>
+                        <div class="tc-next">Next: Chuck briefing leadership on JV feasibility. Chuck to visit on next LA trip.</div>
+                    </div>
+
+                    <!-- 8. Serenity Grove -->
+                    <div class="timeline-card">
+                        <div class="tc-header">
+                            <span class="tc-name">Serenity Grove</span>
+                            <span class="tc-date">Jan 29, 2026</span>
+                        </div>
+                        <div class="tc-location">Georgia</div>
+                        <div class="tc-tags">
+                            <span class="tag tag-beds">46 Beds (+78 Expansion)</span>
+                            <span class="tag tag-payer">Aetna / BCBS</span>
+                            <span class="tag tag-service">Detox / RTC / PHP / IOP</span>
+                        </div>
+                        <div class="tc-people"><strong>Key People:</strong> Jay (Owner), Kevin Taggart (Advisor)</div>
+                        <div class="tc-learned">Founded 1998. Strong BD and digital marketing. Permits expected for +78 beds (4 to 10 acres). $12-15M expansion budget. Wants to share financial risk. Payer concentration risk. PE-readiness in 2-3 years.</div>
+                        <div class="tc-next">Next: Jay's team providing diligence materials. Chuck to plan site visit.</div>
+                    </div>
+
+                    <!-- 9. New Waters -->
+                    <div class="timeline-card">
+                        <div class="tc-header">
+                            <span class="tc-name">New Waters</span>
+                            <span class="tc-date">Feb 2, 2026</span>
+                        </div>
+                        <div class="tc-location">Raleigh, NC</div>
+                        <div class="tc-tags">
+                            <span class="tag tag-beds">27 Beds</span>
+                            <span class="tag tag-payer">Aetna IN</span>
+                            <span class="tag tag-service">Detox / Stabilization</span>
+                        </div>
+                        <div class="tc-people"><strong>Key People:</strong> Justin McLendon (Founder), Ryan (Investor/Capital Partner), Chuck, Dylan</div>
+                        <div class="tc-learned">27-bed detox and stabilization facility in Raleigh, NC. 3.5 years in operation. In-network with Aetna, evaluating more contracts. No PHP/IOP currently but discussing potential expansion. NC regulatory hurdles for detox discussed.</div>
+                        <div class="tc-next">Next: Bradford exploring Southeast expansion with NC as key target. Deep dive on billing structure and regulatory path. Follow-up on payer expansion strategy.</div>
+                    </div>
+
+                    <!-- 10. Momentum Recovery -->
+                    <div class="timeline-card">
+                        <div class="tc-header">
+                            <span class="tc-name">Momentum Recovery</span>
+                            <span class="tc-date">Feb 6, 2026</span>
+                        </div>
+                        <div class="tc-location">North Carolina</div>
+                        <div class="tc-tags">
+                            <span class="tag tag-beds">36 Men's + 28 Women's Beds</span>
+                            <span class="tag tag-payer">Commercial + Private Pay</span>
+                            <span class="tag tag-service">Long-Term SUD</span>
+                        </div>
+                        <div class="tc-people"><strong>Key People:</strong> Rick Barney (Owner/Operator)</div>
+                        <div class="tc-learned">The Creek (young men 18-35) and The Cove (women). Avg LOS ~280 days. Revenue ~$12M. Building in-network PHP/IOP. In-house billing. Capital needs for detox/residential expansion.</div>
+                        <div class="tc-next">Next: NDA + data request sent. Rick speaking with partners David &amp; Gabby.</div>
+                    </div>
+
+                    <!-- 11. Diamond Recovery -->
+                    <div class="timeline-card">
+                        <div class="tc-header">
+                            <span class="tc-name">Diamond Recovery</span>
+                            <span class="tc-date">Feb 6, 2026 (+ Mar 4 follow-up)</span>
+                        </div>
+                        <div class="tc-location">FL / GA / CA</div>
+                        <div class="tc-tags">
+                            <span class="tag tag-beds">~100+ Beds (Multi-State)</span>
+                            <span class="tag tag-payer">OON</span>
+                            <span class="tag tag-service">SUD / MH Residential / Detox</span>
+                        </div>
+                        <div class="tc-people"><strong>Key People:</strong> ASM (Leadership)</div>
+                        <div class="tc-learned">~44-bed detox + residential Atlanta, 24-bed North Hollywood, 40-bed MH Tallahassee, 15-bed all-female GA. Daily rates ~$600 res / $750 detox. Hospitality/concierge model.</div>
+                        <div class="tc-next">Next: Facilities tour-ready. Chuck to coordinate in-person tours.</div>
+                    </div>
+
+                    <!-- 12. Sanctuary Louisiana -->
+                    <div class="timeline-card">
+                        <div class="tc-header">
+                            <span class="tc-name">Sanctuary Louisiana</span>
+                            <span class="tc-date">Feb 9, 2026</span>
+                        </div>
+                        <div class="tc-location">Louisiana</div>
+                        <div class="tc-tags">
+                            <span class="tag tag-beds">~160 Beds (Post-Expansion)</span>
+                            <span class="tag tag-payer">Medicaid + Judicial</span>
+                            <span class="tag tag-service">SUD / Work-Integration</span>
+                        </div>
+                        <div class="tc-people"><strong>Key People:</strong> Chris (Leadership), Mr. Lee Mallet (Owner)</div>
+                        <div class="tc-learned">77% court-ordered. 28-day 12-step + 90-day CBT/MRT program. Work-integration model (clients work for ~30 vendors). Legislative efforts (SB 135 / Act 238).</div>
+                        <div class="tc-next">Next: Non-binding LOI + NDA sent. Site visit planned.</div>
+                    </div>
+
+                    <!-- 13. Serenity Treatment Center -->
+                    <div class="timeline-card">
+                        <div class="tc-header">
+                            <span class="tc-name">Serenity Treatment Center</span>
+                            <span class="tc-date">Feb 9, 2026</span>
+                        </div>
+                        <div class="tc-location">Baton Rouge, LA</div>
+                        <div class="tc-tags">
+                            <span class="tag tag-beds">88 Beds (3 Buildings)</span>
+                            <span class="tag tag-payer">Medicaid</span>
+                            <span class="tag tag-service">Residential MH/SUD / IOP</span>
+                        </div>
+                        <div class="tc-learned">Foster (50 beds) + Weymouth (40 beds). IOP capacity 90 people. Better/Ambetter $720/day contract, margins ~28%. Payer concentration risk.</div>
+                        <div class="tc-next">Next: NDA + data request. Chuck planning site visit.</div>
+                    </div>
+
+                    <!-- 14. Williamsville Wellness -->
+                    <div class="timeline-card">
+                        <div class="tc-header">
+                            <span class="tc-name">Williamsville Wellness</span>
+                            <span class="tc-date">Feb 9, 2026</span>
+                        </div>
+                        <div class="tc-location">Virginia (430-Acre Property)</div>
+                        <div class="tc-tags">
+                            <span class="tag tag-beds">24 Beds</span>
+                            <span class="tag tag-service">Gambling Addiction</span>
+                        </div>
+                        <div class="tc-people"><strong>Key People:</strong> Bob (Owner, age 79)</div>
+                        <div class="tc-learned">Specialized gambling addiction. 10-15 individual sessions/week. 430-acre property, main house from 1803. Never profitable. Prior $17M offer declined. Owners 79/78, children not interested.</div>
+                        <div class="tc-next">Next: Chuck emailing for successor shortlist. Potential in-person meeting.</div>
+                    </div>
+
+                    <!-- 15. Sobrius Health -->
+                    <div class="timeline-card">
+                        <div class="tc-header">
+                            <span class="tc-name">Sobrius Health</span>
+                            <span class="tc-date">Feb 12, 2026 (+ Feb 20 follow-up)</span>
+                        </div>
+                        <div class="tc-location">Virginia (3 Sites)</div>
+                        <div class="tc-tags">
+                            <span class="tag tag-beds">Multi-Site</span>
+                            <span class="tag tag-payer">Medicaid</span>
+                            <span class="tag tag-service">Residential SUD/MH / PHP</span>
+                        </div>
+                        <div class="tc-people"><strong>Key People:</strong> Nelson (CEO), Matt Feehery, Ben</div>
+                        <div class="tc-learned">Galax (hub), Lynchburg (19K sq ft residential/PHP), Bassett (women-only residential). Home-like milieu. Roanoke expansion underway. Growth plan: PHP, 3.1, 2.5, IOP, sober living. Listening mode, not actively marketing.</div>
+                        <div class="tc-next">Next: NDA + question list sent. Sobrius sending one-pager. Dylan building preliminary valuation.</div>
+                    </div>
+
+                    <!-- 16. Crestview / Dreamlife -->
+                    <div class="timeline-card">
+                        <div class="tc-header">
+                            <span class="tc-name">Crestview / Dreamlife</span>
+                            <span class="tc-date">Feb 17, 2026</span>
+                        </div>
+                        <div class="tc-location">Pittsburgh, PA + Asheville, NC</div>
+                        <div class="tc-tags">
+                            <span class="tag tag-beds">91 Beds (DreamLife) + PHP (Crest View)</span>
+                            <span class="tag tag-payer">Commercial-heavy</span>
+                            <span class="tag tag-service">SUD Residential / PHP</span>
+                        </div>
+                        <div class="tc-people"><strong>Key People:</strong> Howard Schwartz (Owner/Seller), Lidice Morales (VP Ops)</div>
+                        <div class="tc-learned">DreamLife is a 91-bed inpatient SUD facility in Pittsburgh. Crest View is a PHP-focused program in Asheville, NC with housing/sober living model. Commercial-heavy payer mix with very little Medicaid. Seller walked through history, operations, bed count, LOS, and payer mix for both sites.</div>
+                        <div class="tc-next">Next: Bradford explained buy-and-keep-the-brand strategy. Detailed Q&A on detox/residential LOS, completion rates, and geographic catchment. Follow-up with Mertz Taggart re: DreamLife/Crest View.</div>
+                    </div>
+
+                    <!-- 17. Tikvah Lake / Park Manor Recovery -->
+                    <div class="timeline-card">
+                        <div class="tc-header">
+                            <span class="tc-name">Tikvah Lake / Park Manor Recovery</span>
+                            <span class="tc-date">Feb 19, 2026</span>
+                        </div>
+                        <div class="tc-location">South Florida</div>
+                        <div class="tc-tags">
+                            <span class="tag tag-beds">~6 Rooms (Luxury)</span>
+                            <span class="tag tag-payer">Private Pay / OON</span>
+                            <span class="tag tag-service">Residential SUD/MH</span>
+                        </div>
+                        <div class="tc-people"><strong>Key People:</strong> Adam Nesenoff (Managing Partner)</div>
+                        <div class="tc-learned">High-end luxury, ~6 private rooms. $40-60K per stay. Park Manor: more affordable secondary program. Trailing net profit ~$1.5M. Lender hesitation around OON.</div>
+                        <div class="tc-next">Next: NDA + data request sent. Adam to provide T-12 P&amp;L.</div>
+                    </div>
+
+                    <!-- 18. Maryland Treatment Centers -->
+                    <div class="timeline-card">
+                        <div class="tc-header">
+                            <span class="tc-name">Maryland Treatment Centers</span>
+                            <span class="tc-date">Feb 25, 2026</span>
+                        </div>
+                        <div class="tc-location">Maryland (Statewide)</div>
+                        <div class="tc-tags">
+                            <span class="tag tag-beds">300-350 Beds / 13-14 Locations</span>
+                            <span class="tag tag-payer">Medicaid + Commercial</span>
+                            <span class="tag tag-service">Full Continuum MH/SUD</span>
+                        </div>
+                        <div class="tc-people"><strong>Key People:</strong> Dr. Marc Fishman, Rebecca Fishman</div>
+                        <div class="tc-learned">Major platform. Focused on underserved communities. Strong NIH-funded research division. Academic collaborations.</div>
+                        <div class="tc-next">Next: Chuck sending NDA/CDA then data request. Planning DC visit.</div>
+                    </div>
+
+                    <!-- 19. Horowitz Health -->
+                    <div class="timeline-card compact">
+                        <div class="tc-header">
+                            <span class="tc-name">Horowitz Health</span>
+                            <span class="tc-date">Mar 16, 2026</span>
+                        </div>
+                        <div class="tc-location">Minneapolis, MN</div>
+                        <div class="tc-tags">
+                            <span class="tag tag-service">Scheduling Call</span>
+                        </div>
+                        <div class="tc-people"><strong>Key People:</strong> Drew Horowitz</div>
+                        <div class="tc-pending">Scheduling only. Chuck on PTO.</div>
+                        <div class="tc-next">Next: Rescheduling full intro call.</div>
+                    </div>
+
+                    <!-- 20. The Manor by Windrose Recovery -->
+                    <div class="timeline-card compact">
+                        <div class="tc-header">
+                            <span class="tc-name">The Manor by Windrose Recovery</span>
+                            <span class="tc-date">Mar 23, 2026</span>
+                        </div>
+                        <div class="tc-tags">
+                            <span class="tag tag-service">SUD/MH</span>
+                        </div>
+                        <div class="tc-pending">Upcoming intro call.</div>
+                        <div class="tc-next">Next: Pending.</div>
+                    </div>
+
+                    <!-- 21. The Grove Recovery (Site Visit) -->
+                    <div class="timeline-card compact">
+                        <div class="tc-header">
+                            <span class="tc-name">The Grove Recovery (Site Visit)</span>
+                            <span class="tc-date">Mar 10, 2026</span>
+                        </div>
+                        <div class="tc-location">Louisiana</div>
+                        <div class="tc-tags">
+                            <span class="tag tag-status">Site Visit</span>
+                        </div>
+                        <div class="tc-learned">On-site visit following Jan 21 intro call.</div>
+                        <div class="tc-next">Next: Post-visit assessment and LOI timeline.</div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Q4 2025 -->
+        <div class="quarter-section">
+            <div class="quarter-header" onclick="toggleQuarter(this)">
+                <div>
+                    <div class="q-title">Q4 2025 &mdash; Oct&ndash;Dec</div>
+                </div>
+                <div class="q-stats">
+                    <span>695 msgs</span>
+                    <span>132 calls</span>
+                    <span>532 LinkedIn</span>
+                    <span class="stat-pill">19 Intros</span>
+                    <span class="chevron">&#9660;</span>
+                </div>
+            </div>
+            <div class="quarter-body">
+                <div class="outreach-stats">
+                    <div class="outreach-stat"><div class="os-num">695</div><div class="os-label">Messages</div></div>
+                    <div class="outreach-stat"><div class="os-num">132</div><div class="os-label">Calling</div></div>
+                    <div class="outreach-stat"><div class="os-num">532</div><div class="os-label">LinkedIn</div></div>
+                    <div class="outreach-stat"><div class="os-num">444</div><div class="os-label">Companies</div></div>
+                </div>
+
+                <div class="highlight-box">
+                    <h4>Apollo Integration Milestone</h4>
+                    <p style="font-size:0.85rem;color:rgba(255,255,255,0.8);line-height:1.6;">Contact rates jumped from 6% to 23% after Apollo integration. Call volume increased 12x quarter-over-quarter, shifting the outreach mix from LinkedIn-heavy to a balanced multi-channel approach.</p>
+                </div>
+
+                <div class="timeline">
+
+                    <!-- 1. Gold Bridge -->
+                    <div class="timeline-card compact">
+                        <div class="tc-header">
+                            <span class="tc-name">Gold Bridge</span>
+                            <span class="tc-date">Oct 1, 2025</span>
+                        </div>
+                        <div class="tc-tags"><span class="tag tag-service">SUD/MH</span></div>
+                        <div class="tc-pending">Discussed in weekly Bradford pipeline calls. Intro call details in Otter/Rewind transcripts.</div>
+                        <div class="tc-next">Next: Follow-up pending.</div>
+                    </div>
+
+                    <!-- 2. Atlas/Zenith -->
+                    <div class="timeline-card compact">
+                        <div class="tc-header">
+                            <span class="tc-name">Atlas/Zenith</span>
+                            <span class="tc-date">Oct 6, 2025</span>
+                        </div>
+                        <div class="tc-tags"><span class="tag tag-service">SUD/MH</span></div>
+                        <div class="tc-pending">Discussed in weekly Bradford pipeline calls. Intro call details in Otter/Rewind transcripts.</div>
+                        <div class="tc-next">Next: Follow-up pending.</div>
+                    </div>
+
+                    <!-- 3. Cottages on Mountain Creek -->
+                    <div class="timeline-card compact">
+                        <div class="tc-header">
+                            <span class="tc-name">Cottages on Mountain Creek</span>
+                            <span class="tc-date">Oct 7, 2025</span>
+                        </div>
+                        <div class="tc-tags"><span class="tag tag-service">SUD/MH</span></div>
+                        <div class="tc-pending">Discussed in weekly Bradford pipeline calls. Intro call details in Otter/Rewind transcripts.</div>
+                        <div class="tc-next">Next: Follow-up pending.</div>
+                    </div>
+
+                    <!-- 4. Enlightened Recovery -->
+                    <div class="timeline-card compact">
+                        <div class="tc-header">
+                            <span class="tc-name">Enlightened Recovery</span>
+                            <span class="tc-date">Oct 8, 2025 (+ Oct 15 follow-up)</span>
+                        </div>
+                        <div class="tc-tags"><span class="tag tag-service">SUD/MH</span></div>
+                        <div class="tc-learned">Intro call Oct 8, follow-up Oct 15.</div>
+                        <div class="tc-next">Next: Under evaluation.</div>
+                    </div>
+
+                    <!-- 5. Clearfork Academy -->
+                    <div class="timeline-card">
+                        <div class="tc-header">
+                            <span class="tc-name">Clearfork Academy</span>
+                            <span class="tc-date">Oct 9, 2025</span>
+                        </div>
+                        <div class="tc-location">Texas</div>
+                        <div class="tc-tags">
+                            <span class="tag tag-service">Adolescent SUD</span>
+                            <span class="tag tag-status">Under Review</span>
+                        </div>
+                        <div class="tc-learned">Texas-based adolescent treatment. In active pipeline from board deck. Under data review.</div>
+                        <div class="tc-next">Next: Data review and board presentation.</div>
+                    </div>
+
+                    <!-- 6. Southern Sky Recovery -->
+                    <div class="timeline-card compact">
+                        <div class="tc-header">
+                            <span class="tc-name">Southern Sky Recovery</span>
+                            <span class="tc-date">Oct 15, 2025</span>
+                        </div>
+                        <div class="tc-tags"><span class="tag tag-service">SUD</span></div>
+                        <div class="tc-pending">Discussed in weekly Bradford pipeline calls. Intro call details in Otter/Rewind transcripts.</div>
+                        <div class="tc-next">Next: Follow-up pending.</div>
+                    </div>
+
+                    <!-- 7. Green Acres Wellness -->
+                    <div class="timeline-card compact">
+                        <div class="tc-header">
+                            <span class="tc-name">Green Acres Wellness</span>
+                            <span class="tc-date">Oct 21, 2025</span>
+                        </div>
+                        <div class="tc-tags"><span class="tag tag-service">SUD/MH</span></div>
+                        <div class="tc-pending">Discussed in weekly Bradford pipeline calls. Intro call details in Otter/Rewind transcripts.</div>
+                        <div class="tc-next">Next: Follow-up pending.</div>
+                    </div>
+
+                    <!-- 8. Angel House of GA -->
+                    <div class="timeline-card compact">
+                        <div class="tc-header">
+                            <span class="tc-name">Angel House of GA</span>
+                            <span class="tc-date">Oct 28, 2025</span>
+                        </div>
+                        <div class="tc-location">Georgia</div>
+                        <div class="tc-tags"><span class="tag tag-service">SUD/MH</span></div>
+                        <div class="tc-pending">Discussed in weekly Bradford pipeline calls. Intro call details in Otter/Rewind transcripts.</div>
+                        <div class="tc-next">Next: Follow-up pending.</div>
+                    </div>
+
+                    <!-- 9. Riverwalk Ranch -->
+                    <div class="timeline-card">
+                        <div class="tc-header">
+                            <span class="tc-name">Riverwalk Ranch</span>
+                            <span class="tc-date">Oct 29, 2025</span>
+                        </div>
+                        <div class="tc-location">Texas (+ Austin location)</div>
+                        <div class="tc-tags">
+                            <span class="tag tag-beds">95 Beds (at capacity)</span>
+                            <span class="tag tag-payer">~98% IN Commercial</span>
+                            <span class="tag tag-service">Residential/Detox/PHP/IOP</span>
+                        </div>
+                        <div class="tc-people"><strong>Key People:</strong> Raul, John (CFO), Chuck, Ben, Dylan</div>
+                        <div class="tc-learned">Beds completely full (1 open out of 95). Need partner to expand physical capacity. 90% digital/Google Ads referrals with no BD team. ~$5M+ EBITDA. Transitioning from OON to IN (now 98%). Step-down funnel from Riverwalk to Fort Worth (288 licensed slots). Previous LOIs at 8x multiple. Majority investor (80% owner) looking to retire.</div>
+                        <div class="tc-next">Next: Site visit planned. Chuck wants operator on-site. Ben/Dylan requesting referral data. Bradford targets 90-day close post-LOI.</div>
+                    </div>
+
+                    <!-- 10. Woodlake Center -->
+                    <div class="timeline-card compact">
+                        <div class="tc-header">
+                            <span class="tc-name">Woodlake Center</span>
+                            <span class="tc-date">Nov 11, 2025</span>
+                        </div>
+                        <div class="tc-tags"><span class="tag tag-service">SUD/MH</span></div>
+                        <div class="tc-pending">Discussed in weekly Bradford pipeline calls. Intro call details in Otter/Rewind transcripts.</div>
+                        <div class="tc-next">Next: Follow-up pending.</div>
+                    </div>
+
+                    <!-- 11. Banyan (Sebring) -->
+                    <div class="timeline-card compact">
+                        <div class="tc-header">
+                            <span class="tc-name">Banyan (Sebring)</span>
+                            <span class="tc-date">Nov 13, 2025</span>
+                        </div>
+                        <div class="tc-location">Sebring, FL</div>
+                        <div class="tc-tags"><span class="tag tag-service">SUD/MH</span></div>
+                        <div class="tc-pending">Discussed in weekly Bradford pipeline calls. Intro call details in Otter/Rewind transcripts.</div>
+                        <div class="tc-next">Next: Follow-up pending.</div>
+                    </div>
+
+                    <!-- 12. Centric Behavioral Health (follow-up) -->
+                    <div class="timeline-card compact">
+                        <div class="tc-header">
+                            <span class="tc-name">Centric Behavioral Health (follow-up)</span>
+                            <span class="tc-date">Nov 13, 2025</span>
+                        </div>
+                        <div class="tc-tags"><span class="tag tag-service">SUD/MH</span></div>
+                        <div class="tc-learned">Follow-up from Jan 6, 2025 intro call.</div>
+                        <div class="tc-next">Next: Under evaluation.</div>
+                    </div>
+
+                    <!-- 13. Southeast Detox / Addiction -->
+                    <div class="timeline-card">
+                        <div class="tc-header">
+                            <span class="tc-name">Southeast Detox / Addiction</span>
+                            <span class="tc-date">Nov 18, 2025</span>
+                        </div>
+                        <div class="tc-location">Rome GA, Norcross GA, Nashville TN</div>
+                        <div class="tc-tags">
+                            <span class="tag tag-beds">24 Beds (Rome) + 40 OP (ATL) + 30-40 OP (Nashville)</span>
+                            <span class="tag tag-payer">~35% OON + IN (BCBS/VA/TriCare)</span>
+                            <span class="tag tag-service">Detox/Residential/PHP/IOP</span>
+                        </div>
+                        <div class="tc-people"><strong>Key People:</strong> Nick Diamantides (Founder), Chuck, Dylan</div>
+                        <div class="tc-learned">~$5M EBITDA. Clean geographic cluster in GA and Nashville. Nick open to "split" deal &mdash; sell Southeast assets (GA/TN) while retaining Engage Wellness (MA/MO). Rome detox always at capacity. Right to Purchase option in lease. Chuck floated 7-8x multiple ($35-40M), Nick responded well.</div>
+                        <div class="tc-next">Next: NDA and data request sent. Nick discussing with partners. Chuck plans Dec site visit to Atlanta/Rome.</div>
+                    </div>
+
+                    <!-- 14. Nola Detox & Residential -->
+                    <div class="timeline-card compact">
+                        <div class="tc-header">
+                            <span class="tc-name">Nola Detox &amp; Residential</span>
+                            <span class="tc-date">Dec 4, 2025</span>
+                        </div>
+                        <div class="tc-location">Louisiana</div>
+                        <div class="tc-tags">
+                            <span class="tag tag-service">Detox/Residential</span>
+                            <span class="tag tag-status">Under Review</span>
+                        </div>
+                        <div class="tc-learned">Louisiana-based detox/residential identified during state assessment.</div>
+                        <div class="tc-next">Next: Reviewed. Monitoring seller readiness.</div>
+                    </div>
+
+                    <!-- 15. Recovery Now / Longbranch -->
+                    <div class="timeline-card">
+                        <div class="tc-header">
+                            <span class="tc-name">Recovery Now / Longbranch</span>
+                            <span class="tc-date">Dec 5, 2025</span>
+                        </div>
+                        <div class="tc-location">New Orleans LA, Nashville-area, GA, FL Panhandle</div>
+                        <div class="tc-tags">
+                            <span class="tag tag-beds">32 Beds (+57 expansion) / 5-location acq pending</span>
+                            <span class="tag tag-payer">VA + Commercial (BCBS)</span>
+                            <span class="tag tag-service">Residential/Detox/PHP/IOP/Sober Living/Eating Disorder</span>
+                        </div>
+                        <div class="tc-people"><strong>Key People:</strong> Mike Rickman (Recovery Now), Chuck, Ben, Dylan</div>
+                        <div class="tc-learned">$13M EBITDA run rate, projecting ~$30M post Feb 2nd acquisition (5 locations, 86 beds, $9M EBITDA). Longbranch: 32 to 57 beds, negotiated BCBS LA rate increase. Heavy VA exposure (~$2K/day rate). Eating disorder facility (17 beds). GA asset: 24-bed detox, plan to flip OON to IN.</div>
+                        <div class="tc-next">Next: Mike needs ~90 days to close pending acquisition. Reconnect Q1 2026. Chuck and Mike to grab lunch in Birmingham.</div>
+                    </div>
+
+                    <!-- 16. GHR (follow-up) -->
+                    <div class="timeline-card">
+                        <div class="tc-header">
+                            <span class="tc-name">GHR Center (follow-up)</span>
+                            <span class="tc-date">Dec 5, 2025</span>
+                        </div>
+                        <div class="tc-location">Virginia</div>
+                        <div class="tc-tags">
+                            <span class="tag tag-beds">~270 Patients</span>
+                            <span class="tag tag-payer">Medicaid + Commercial</span>
+                            <span class="tag tag-service">MAT/Psych/Therapy OP</span>
+                        </div>
+                        <div class="tc-people"><strong>Key People:</strong> Dr. Larry Ross, Chuck</div>
+                        <div class="tc-learned">Ross looking to sell 50% stake and retire. Partner Germano wants to stay. $300-400K EBITDA. Previous billing company lost $1.7M in unbilled services. Pass/Hold &mdash; no VA residential hub yet.</div>
+                        <div class="tc-next">Next: Ross providing full-year financials in January. Chuck looking for VA residential to make GHR a bolt-on.</div>
+                    </div>
+
+                    <!-- 17. Sylvia Brafman Mental Health Center -->
+                    <div class="timeline-card compact">
+                        <div class="tc-header">
+                            <span class="tc-name">Sylvia Brafman Mental Health Center</span>
+                            <span class="tc-date">Dec 12, 2025</span>
+                        </div>
+                        <div class="tc-location">Likely FL</div>
+                        <div class="tc-tags"><span class="tag tag-service">Mental Health</span></div>
+                        <div class="tc-pending">Discussed in weekly Bradford pipeline calls. Intro call details in Otter/Rewind transcripts.</div>
+                        <div class="tc-next">Next: Follow-up pending.</div>
+                    </div>
+
+                    <!-- 18. Genesis Behavioral Hospital -->
+                    <div class="timeline-card compact">
+                        <div class="tc-header">
+                            <span class="tc-name">Genesis Behavioral Hospital</span>
+                            <span class="tc-date">Dec 17, 2025</span>
+                        </div>
+                        <div class="tc-tags"><span class="tag tag-service">Behavioral Health</span></div>
+                        <div class="tc-pending">Discussed in weekly Bradford pipeline calls. Intro call details in Otter/Rewind transcripts.</div>
+                        <div class="tc-next">Next: Follow-up pending.</div>
+                    </div>
+
+                    <!-- 19. 7 Summit Pathways / Wellness Group of Tampa -->
+                    <div class="timeline-card">
+                        <div class="tc-header">
+                            <span class="tc-name">7 Summit Pathways / Wellness Group of Tampa</span>
+                            <span class="tc-date">Dec 18, 2025</span>
+                        </div>
+                        <div class="tc-location">Tampa, FL</div>
+                        <div class="tc-tags">
+                            <span class="tag tag-beds">Full Continuum</span>
+                            <span class="tag tag-payer">United IN / BCBS OON</span>
+                            <span class="tag tag-service">Professionals Program / Indigenous Recovery</span>
+                        </div>
+                        <div class="tc-people"><strong>Key People:</strong> Heather, Dr. Wilson, Chuck, Ben, Dylan</div>
+                        <div class="tc-learned">Niche Professionals Program (doctors, nurses) aligns with Bradford's "Warrior" program in AL. Census low (~22 historically). 5-acre expansion property leased but lacks capital to build. Owns residential property. "Stuck" operationally &mdash; needs partner to scale.</div>
+                        <div class="tc-next">Next: NDA and data request. Chuck visiting Tampa week of Jan 13.</div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Q3 2025 -->
+        <div class="quarter-section">
+            <div class="quarter-header" onclick="toggleQuarter(this)">
+                <div>
+                    <div class="q-title">Q3 2025 &mdash; Jul&ndash;Sep</div>
+                </div>
+                <div class="q-stats">
+                    <span>533 msgs</span>
+                    <span>12 calls</span>
+                    <span>514 LinkedIn</span>
+                    <span class="stat-pill">12 Intros</span>
+                    <span class="chevron">&#9660;</span>
+                </div>
+            </div>
+            <div class="quarter-body">
+                <div class="outreach-stats">
+                    <div class="outreach-stat"><div class="os-num">533</div><div class="os-label">Messages</div></div>
+                    <div class="outreach-stat"><div class="os-num">12</div><div class="os-label">Calling</div></div>
+                    <div class="outreach-stat"><div class="os-num">514</div><div class="os-label">LinkedIn</div></div>
+                    <div class="outreach-stat"><div class="os-num">335</div><div class="os-label">Companies</div></div>
+                </div>
+
+                <div class="highlight-box">
+                    <h4>State-Level Performance Grid (Board Presentation)</h4>
+                    <div class="state-grid">
+                        <div class="state-row">
+                            <span class="state-name">Louisiana</span>
+                            <span class="state-details">48 calls &middot; 82 LinkedIn &middot; 10% conv &middot; 5 intros &middot; 6/13 facilities</span>
+                        </div>
+                        <div class="state-row">
+                            <span class="state-name">Georgia</span>
+                            <span class="state-details">63 calls &middot; 266 LinkedIn &middot; 8% conv &middot; 5 intros &middot; 8/18 facilities</span>
+                        </div>
+                        <div class="state-row">
+                            <span class="state-name">North Carolina</span>
+                            <span class="state-details">14 calls &middot; 132 LinkedIn &middot; 29% conv &middot; 4 intros &middot; 7/10 facilities</span>
+                        </div>
+                        <div class="state-row">
+                            <span class="state-name">South Carolina</span>
+                            <span class="state-details">16 calls &middot; 75 LinkedIn &middot; 13% conv &middot; 2 intros &middot; 3/9 facilities</span>
+                        </div>
+                        <div class="state-row">
+                            <span class="state-name">Virginia</span>
+                            <span class="state-details">17 calls &middot; 155 LinkedIn &middot; 0% conv &middot; 1 intro &middot; 1/12 facilities</span>
+                        </div>
+                        <div class="state-row">
+                            <span class="state-name">Texas</span>
+                            <span class="state-details">New market entry &middot; Apollo-powered</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="timeline">
+
+                    <!-- 1. Mainspring Recovery -->
+                    <div class="timeline-card compact">
+                        <div class="tc-header">
+                            <span class="tc-name">Mainspring Recovery</span>
+                            <span class="tc-date">Jun 19, 2025</span>
+                        </div>
+                        <div class="tc-tags"><span class="tag tag-service">SUD/MH</span></div>
+                        <div class="tc-pending">Discussed in weekly Bradford pipeline calls. Intro call details in Otter/Rewind transcripts.</div>
+                        <div class="tc-next">Next: Follow-up pending.</div>
+                    </div>
+
+                    <!-- 2. Into Action Recovery (Chuck Intro) -->
+                    <div class="timeline-card">
+                        <div class="tc-header">
+                            <span class="tc-name">Into Action Recovery (Chuck Intro)</span>
+                            <span class="tc-date">Jul 22, 2025</span>
+                        </div>
+                        <div class="tc-location">Houston, TX</div>
+                        <div class="tc-tags">
+                            <span class="tag tag-service">SUD/MH</span>
+                        </div>
+                        <div class="tc-people"><strong>Key People:</strong> Shane (Owner), Chuck Steiner</div>
+                        <div class="tc-learned">Re-engagement. Chuck introduced as new CDO. Bradford entering Texas market. Shane open to partnership.</div>
+                        <div class="tc-next">Next: Kevin suggested visiting when closing The Last Resort.</div>
+                    </div>
+
+                    <!-- 3. Fellowship Hall (Re-engagement) -->
+                    <div class="timeline-card">
+                        <div class="tc-header">
+                            <span class="tc-name">Fellowship Hall (Re-engagement)</span>
+                            <span class="tc-date">Jul 29, 2025</span>
+                        </div>
+                        <div class="tc-location">North Carolina</div>
+                        <div class="tc-tags">
+                            <span class="tag tag-service">Nonprofit SUD</span>
+                        </div>
+                        <div class="tc-people"><strong>Key People:</strong> Jackie (Leadership), Chuck</div>
+                        <div class="tc-learned">Reconnect attempt. Introduced Chuck as Kevin's successor. Chuck has nonprofit transaction experience.</div>
+                        <div class="tc-next">Next: Jackie to determine availability for intro call.</div>
+                    </div>
+
+                    <!-- 4. The Wave International -->
+                    <div class="timeline-card compact">
+                        <div class="tc-header">
+                            <span class="tc-name">The Wave International</span>
+                            <span class="tc-date">Jul 31, 2025</span>
+                        </div>
+                        <div class="tc-tags"><span class="tag tag-service">SUD/MH</span></div>
+                        <div class="tc-pending">Discussed in weekly Bradford pipeline calls. Intro call details in Otter/Rewind transcripts.</div>
+                        <div class="tc-next">Next: Follow-up pending.</div>
+                    </div>
+
+                    <!-- 5. Recovery Bay Center -->
+                    <div class="timeline-card compact">
+                        <div class="tc-header">
+                            <span class="tc-name">Recovery Bay Center</span>
+                            <span class="tc-date">Aug 13, 2025</span>
+                        </div>
+                        <div class="tc-tags"><span class="tag tag-service">SUD</span></div>
+                        <div class="tc-pending">Discussed in weekly Bradford pipeline calls. Intro call details in Otter/Rewind transcripts.</div>
+                        <div class="tc-next">Next: Follow-up pending.</div>
+                    </div>
+
+                    <!-- 6. Armada Recovery -->
+                    <div class="timeline-card">
+                        <div class="tc-header">
+                            <span class="tc-name">Armada Recovery</span>
+                            <span class="tc-date">Aug 13, 2025</span>
+                        </div>
+                        <div class="tc-tags">
+                            <span class="tag tag-service">Detox/Outpatient</span>
+                        </div>
+                        <div class="tc-people"><strong>Key People:</strong> Shlomo, Trevor, Chuck, Ben</div>
+                        <div class="tc-learned">Detox outpatient program. Introductions between Shlomo, Chuck, Ben, and Trevor.</div>
+                        <div class="tc-next">Next: Dylan to call professional program-focused providers. Chuck evaluating fit.</div>
+                    </div>
+
+                    <!-- 7. Front Porch Recovery -->
+                    <div class="timeline-card compact">
+                        <div class="tc-header">
+                            <span class="tc-name">Front Porch Recovery</span>
+                            <span class="tc-date">Aug 15, 2025</span>
+                        </div>
+                        <div class="tc-tags"><span class="tag tag-service">SUD</span></div>
+                        <div class="tc-learned">Phone call with founder. Interested in conversation. Discussing with co-founder.</div>
+                        <div class="tc-next">Next: Awaiting confirmation for formal intro call.</div>
+                    </div>
+
+                    <!-- 8. Harrison/Zinnia (Chuck/Ben) -->
+                    <div class="timeline-card">
+                        <div class="tc-header">
+                            <span class="tc-name">Harrison/Zinnia (Chuck/Ben)</span>
+                            <span class="tc-date">Sep 3, 2025</span>
+                        </div>
+                        <div class="tc-location">6 states</div>
+                        <div class="tc-tags">
+                            <span class="tag tag-beds">18 Facilities / ~330 Beds</span>
+                        </div>
+                        <div class="tc-people"><strong>Key People:</strong> Harrison Katzen, Chuck, Ben</div>
+                        <div class="tc-learned">Follow-up call with new Bradford team (Chuck replaced Kevin). Re-engagement of Zinnia relationship.</div>
+                        <div class="tc-next">Next: Continued dialogue.</div>
+                    </div>
+
+                    <!-- 9. Enterhealth -->
+                    <div class="timeline-card compact">
+                        <div class="tc-header">
+                            <span class="tc-name">Enterhealth</span>
+                            <span class="tc-date">Sep 9, 2025</span>
+                        </div>
+                        <div class="tc-location">Likely TX</div>
+                        <div class="tc-tags"><span class="tag tag-service">SUD/MH</span></div>
+                        <div class="tc-pending">Discussed in weekly Bradford pipeline calls. Intro call details in Otter/Rewind transcripts.</div>
+                        <div class="tc-next">Next: Follow-up pending.</div>
+                    </div>
+
+                    <!-- 10. Health Care Alliance (HCANA) -->
+                    <div class="timeline-card">
+                        <div class="tc-header">
+                            <span class="tc-name">Health Care Alliance (HCANA)</span>
+                            <span class="tc-date">Sep 11, 2025</span>
+                        </div>
+                        <div class="tc-location">Asheville NC, Nashville TN, Knoxville TN</div>
+                        <div class="tc-tags">
+                            <span class="tag tag-beds">62 PHP/IOP + 16 Detox + 42 Detox/Res</span>
+                            <span class="tag tag-payer">40% Cash-Pay Executive + Insurance</span>
+                            <span class="tag tag-service">RTC/Detox/PHP/IOP</span>
+                        </div>
+                        <div class="tc-people"><strong>Key People:</strong> Danny Dillow, John Wood, Enrique (Partners), Chuck, Ben, Dylan</div>
+                        <div class="tc-learned">$1.7-2.0M/month revenue, ~$500K/month net profit. 4 facilities across NC and TN. The only private detox in Western NC (took 2.5 years to license). 40% cash-pay "Executive" treatment ($30-100K/month). John opened door to selling Asheville Detox asset to complement Bradford's Red Oak.</div>
+                        <div class="tc-next">Next: Chuck to visit Mick at Red Oak and coordinate Asheville visit. No NDA yet, keeping informal.</div>
+                    </div>
+
+                    <!-- 11. Revive Recover -->
+                    <div class="timeline-card compact">
+                        <div class="tc-header">
+                            <span class="tc-name">Revive Recover</span>
+                            <span class="tc-date">Sep 17, 2025</span>
+                        </div>
+                        <div class="tc-tags"><span class="tag tag-service">SUD</span></div>
+                        <div class="tc-pending">Discussed in weekly Bradford pipeline calls. Intro call details in Otter/Rewind transcripts.</div>
+                        <div class="tc-next">Next: Follow-up pending.</div>
+                    </div>
+
+                    <!-- 12. Slate Recovery -->
+                    <div class="timeline-card compact">
+                        <div class="tc-header">
+                            <span class="tc-name">Slate Recovery</span>
+                            <span class="tc-date">Sep 24, 2025</span>
+                        </div>
+                        <div class="tc-tags"><span class="tag tag-service">SUD/MH</span></div>
+                        <div class="tc-pending">Discussed in weekly Bradford pipeline calls. Intro call details in Otter/Rewind transcripts.</div>
+                        <div class="tc-next">Next: Follow-up pending.</div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <div style="text-align:center;padding:40px 0 60px;color:var(--gray-400);font-size:0.8rem;">
+            The Poler Team &mdash; Bradford Deal Sourcing Pipeline &mdash; Confidential
+        </div>
+
+    </div>
+</div>
+
+<style>
+    .state-card{padding:12px 16px;background:var(--gray-50);border-radius:8px;border:1px solid var(--gray-200);cursor:pointer;transition:all .2s;}
+    .state-card:hover{border-color:var(--gold);box-shadow:0 2px 8px rgba(201,168,76,.15);}
+    .state-card.active{border-color:var(--gold);background:var(--gold-dim);}
+    .state-card.star{background:#eff6ff;border-color:#bfdbfe;}
+    .state-card.star:hover,.state-card.star.active{border-color:var(--gold);background:var(--gold-dim);}
+    .audit-table{width:100%;border-collapse:collapse;font-size:.78rem;}
+    .audit-table th{background:var(--navy);color:#fff;padding:8px 10px;text-align:left;font-weight:600;position:sticky;top:0;font-size:.72rem;text-transform:uppercase;letter-spacing:.3px;}
+    .audit-table td{padding:6px 10px;border-bottom:1px solid var(--gray-200);}
+    .audit-table tr:hover td{background:var(--gold-dim);}
+    .audit-table .num{text-align:center;font-variant-numeric:tabular-nums;}
+    .badge{display:inline-block;padding:1px 6px;border-radius:4px;font-size:.65rem;font-weight:600;}
+    .badge-yes{background:#dcfce7;color:#15803d;}.badge-no{background:var(--gray-100);color:var(--gray-400);}
+    .badge-pipe{background:#dbeafe;color:#1d4ed8;}.badge-ni{background:#fef2f2;color:#dc2626;}
+    .filter-active{box-shadow:0 0 0 2px var(--gold);transform:scale(1.03);}
+</style>
+<script>
+    // Password
+    function simpleHash(str){let h=0;for(let i=0;i<str.length;i++){h=((h<<5)-h)+str.charCodeAt(i);h=h&h;}return h;}
+    const CORRECT_HASH=simpleHash('vrabel');
+    function checkPassword(){const i=document.getElementById('passwordInput'),g=document.getElementById('passwordGate'),c=document.getElementById('mainContent');if(simpleHash(i.value)===CORRECT_HASH){g.classList.add('hidden');c.classList.add('visible');setTimeout(()=>{g.style.display='none';},500);}else{i.classList.add('error');setTimeout(()=>{i.classList.remove('error');},400);i.value='';i.focus();}}
+    document.getElementById('passwordInput').addEventListener('keydown',e=>{if(e.key==='Enter')checkPassword();});
+    function toggleQuarter(h){const b=h.nextElementSibling;if(h.classList.contains('active')){h.classList.remove('active');b.classList.remove('open');}else{h.classList.add('active');b.classList.add('open');}}
+
+    // ====== MEDIUM FILTER ======
+    let activeFilter='all';
+    const funnelData={
+        all:{msgs:'1,638',resp:'132',respPct:'8.1',intro:'49',introPct:'37'},
+        calling:{msgs:'368',resp:'95',respPct:'25.8',intro:'73',introPct:'76.8'},
+        linkedin:{msgs:'1,228',resp:'236',respPct:'19.2',intro:'172',introPct:'72.9'}
+    };
+    // Per-state data for filter: [msgs, responded, calls, linkedin, respRate]
+    const stateFilterData={
+        FL:{all:[285,18,31,241,'6.3'],calling:[31,14,31,0,'45.2'],linkedin:[241,47,0,241,'19.5']},
+        GA:{all:[245,20,71,164,'8.2'],calling:[71,23,71,0,'32.4'],linkedin:[164,34,0,164,'20.7']},
+        TX:{all:[184,10,21,158,'5.4'],calling:[21,5,21,0,'23.8'],linkedin:[158,26,0,158,'16.5']},
+        LA:{all:[109,20,71,36,'18.3'],calling:[71,14,71,0,'19.7'],linkedin:[36,16,0,36,'44.4']},
+        NC:{all:[101,12,18,83,'11.9'],calling:[18,9,18,0,'50.0'],linkedin:[83,18,0,83,'21.7']},
+        AR:{all:[95,2,23,67,'2.1'],calling:[23,1,23,0,'4.3'],linkedin:[67,4,0,67,'6.0']},
+        TN:{all:[84,2,6,78,'2.4'],calling:[6,3,6,0,'50.0'],linkedin:[78,15,0,78,'19.2']},
+        VA:{all:[77,5,30,47,'6.5'],calling:[30,5,30,0,'16.7'],linkedin:[47,8,0,47,'17.0']},
+        MD:{all:[32,7,23,9,'21.9'],calling:[23,3,23,0,'13.0'],linkedin:[9,4,0,9,'44.4']},
+        SC:{all:[51,8,15,34,'15.7'],calling:[15,7,15,0,'46.7'],linkedin:[34,10,0,34,'29.4']},
+        MI:{all:[50,5,14,36,'10.0'],calling:[14,4,14,0,'28.6'],linkedin:[36,7,0,36,'19.4']},
+        KY:{all:[34,4,2,32,'11.8'],calling:[2,2,2,0,'100.0'],linkedin:[32,6,0,32,'18.8']}
+    };
+    const stateNames={FL:'Florida',GA:'Georgia',TX:'Texas',LA:'Louisiana',NC:'North Carolina',AR:'Arkansas',TN:'Tennessee',VA:'Virginia',MD:'Maryland',SC:'South Carolina',MI:'Michigan',KY:'Kentucky'};
+    const starStates=['LA','MD','SC'];
+    const stateOrder=['FL','GA','TX','LA','NC','AR','TN','VA','MD','SC','MI','KY'];
+
+    function applyFilter(filter){
+        if(filter===activeFilter)filter='all';
+        activeFilter=filter;
+        // Update summary cards
+        document.querySelectorAll('.filterable').forEach(c=>c.classList.remove('filter-active'));
+        const badge=document.getElementById('filter-badge');
+        const label=document.getElementById('filter-label');
+        if(filter==='calling'){
+            document.getElementById('card-calling').classList.add('filter-active');
+            badge.style.display='block';label.textContent='PHONE CALLS ONLY';
+        }else if(filter==='linkedin'){
+            document.getElementById('card-linkedin').classList.add('filter-active');
+            badge.style.display='block';label.textContent='LINKEDIN ONLY';
+        }else{
+            badge.style.display='none';
+        }
+        // Update funnel
+        const d=funnelData[filter];
+        document.getElementById('funnel-msgs').textContent=d.msgs;
+        document.getElementById('funnel-resp').textContent=d.resp;
+        document.getElementById('funnel-resp-pct').textContent='Responded ('+d.respPct+'%)';
+        document.getElementById('funnel-intro').textContent=d.intro;
+        document.getElementById('funnel-intro-pct').textContent='Intro Calls ('+d.introPct+'%)';
+        // Update state cards
+        renderStateCards();
+    }
+
+    function renderStateCards(){
+        const grid=document.getElementById('state-grid');
+        grid.innerHTML='';
+        stateOrder.forEach(st=>{
+            const d=stateFilterData[st][activeFilter];
+            const isStar=starStates.includes(st)&&activeFilter==='all';
+            const card=document.createElement('div');
+            card.className='state-card'+(isStar?' star':'');
+            card.dataset.state=st;
+            card.onclick=()=>toggleStateAudit(st);
+            const name=stateNames[st]+(isStar?' \u2B50':'');
+            const respColor=parseFloat(d[4])>=15?'#1d4ed8':'var(--gray-600)';
+            card.innerHTML='<div style="font-weight:700;color:var(--navy);margin-bottom:4px;">'+name+'</div>'+
+                '<div style="font-size:0.8rem;color:'+respColor+';">'+d[0]+' msgs \u00B7 '+d[1]+' responded ('+d[4]+'%)</div>'+
+                '<div style="font-size:0.75rem;color:var(--gray-400);">'+d[2]+' calls \u00B7 '+d[3]+' LinkedIn</div>';
+            grid.appendChild(card);
+        });
+    }
+
+    // ====== STATE AUDIT DRILL-DOWN ======
+    let openState=null;
+    function toggleStateAudit(st){
+        const auditDiv=document.getElementById('state-audit');
+        // Toggle off
+        if(openState===st){
+            auditDiv.style.display='none';
+            openState=null;
+            document.querySelectorAll('.state-card').forEach(c=>c.classList.remove('active'));
+            return;
+        }
+        openState=st;
+        document.querySelectorAll('.state-card').forEach(c=>{
+            c.classList.toggle('active',c.dataset.state===st);
+        });
+        const companies=AUDIT_DATA[st]||[];
+        if(!companies.length){
+            auditDiv.innerHTML='<div style="padding:16px;color:var(--gray-500);font-size:.85rem;">No companies contacted in '+stateNames[st]+'.</div>';
+            auditDiv.style.display='block';
+            return;
+        }
+        // cols: [name, msgs, li, ph, tx, em, responded, intro, meeting, notInterested, pipelineStatus, ownership]
+        let totM=0,totLi=0,totPh=0,totR=0,totI=0,totMt=0,totNi=0;
+        companies.forEach(c=>{totM+=c[1];totLi+=c[2];totPh+=c[3];totR+=c[6];totI+=c[7];totMt+=c[8];totNi+=c[9];});
+        let html='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">'+
+            '<div style="font-weight:700;color:var(--navy);font-size:1rem;">'+stateNames[st]+' \u2014 '+companies.length+' Companies Contacted</div>'+
+            '<div style="font-size:.75rem;color:var(--gray-500);cursor:pointer;" onclick="toggleStateAudit(\''+st+'\')">\u2715 Close</div></div>';
+        html+='<div style="display:flex;gap:16px;margin-bottom:12px;flex-wrap:wrap;">';
+        html+='<div style="font-size:.8rem;"><strong>'+totM+'</strong> msgs</div>';
+        html+='<div style="font-size:.8rem;"><strong>'+totR+'</strong> responded <span style="color:var(--gray-400);">('+((totR/companies.length)*100).toFixed(1)+'%)</span></div>';
+        html+='<div style="font-size:.8rem;"><strong>'+totI+'</strong> intros</div>';
+        html+='<div style="font-size:.8rem;"><strong>'+totMt+'</strong> meetings</div>';
+        html+='</div>';
+        html+='<div style="max-height:400px;overflow-y:auto;border:1px solid var(--gray-200);border-radius:8px;">';
+        html+='<table class="audit-table"><thead><tr>';
+        html+='<th>Company</th><th>Type</th><th class="num">Msgs</th><th class="num">LI</th><th class="num">Ph</th><th class="num">Txt</th><th class="num">Em</th>';
+        html+='<th class="num">Resp</th><th class="num">Intro</th><th class="num">Mtg</th><th>Status</th>';
+        html+='</tr></thead><tbody>';
+        companies.forEach(c=>{
+            const resp=c[6]?'<span class="badge badge-yes">Yes</span>':'<span class="badge badge-no">No</span>';
+            const intro=c[7]?'<span class="badge badge-yes">Yes</span>':'<span class="badge badge-no">No</span>';
+            const mtg=c[8]?'<span class="badge badge-yes">Yes</span>':'<span class="badge badge-no">No</span>';
+            let status='';
+            if(c[10])status='<span class="badge badge-pipe">'+c[10]+'</span>';
+            else if(c[9])status='<span class="badge badge-ni">Not Int.</span>';
+            const ownership=c[11]||'';
+            const owBadge=ownership==='Private Equity'?'PE':ownership==='Mom \'n Pop'?'M&P':ownership==='Non-Profit'?'NP':ownership.substring(0,3);
+            html+='<tr><td><strong>'+c[0]+'</strong></td><td style="font-size:.7rem;color:var(--gray-400);">'+owBadge+'</td>';
+            html+='<td class="num">'+c[1]+'</td><td class="num">'+c[2]+'</td><td class="num">'+c[3]+'</td><td class="num">'+c[4]+'</td><td class="num">'+c[5]+'</td>';
+            html+='<td class="num">'+resp+'</td><td class="num">'+intro+'</td><td class="num">'+mtg+'</td><td>'+status+'</td></tr>';
+        });
+        html+='</tbody></table></div>';
+        auditDiv.innerHTML=html;
+        auditDiv.style.display='block';
+        auditDiv.scrollIntoView({behavior:'smooth',block:'nearest'});
+    }
+
+
+</script>
+<!-- Audit Data -->
+<script>
+const AUDIT_DATA={"GA":[["Georgia Recovery Campus",19,9,8,1,1,0,0,0,0,"","Private Equity"],["West Georgia Wellness Center",18,10,5,0,0,0,0,0,0,"","Mom 'n Pop"],["Hope Harbor Wellness",18,10,5,0,0,0,0,0,0,"","Mom 'n Pop"],["Red Top Wellness Center",15,8,5,2,0,1,1,1,1,"","Mom 'n Pop"],["Eagle Overlook Recovery for Adolescents",15,6,8,1,0,0,0,0,0,"","Mom 'n Pop"],["Purple Recovery Center for Men",13,7,3,1,0,1,1,1,1,"","Mom 'n Pop"],["Diamond Recovery",13,8,4,1,0,1,1,1,0,"New Lead","Mom 'n Pop"],["Southeast Addiction Center",13,8,3,2,0,1,1,1,0,"","Mom 'n Pop"],["St Mary's Wellness Center",13,9,3,0,1,1,1,1,0,"","Mom 'n Pop"],["Southeast Detox",12,8,2,2,0,1,1,1,0,"Stalled","Mom 'n Pop"],["Thoroughbred Wellness and Recovery",10,10,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Dunwoody Recovery Place",10,7,2,0,1,1,1,1,0,"","Mom 'n Pop"],["The Summit Wellness Group",10,7,2,1,0,0,0,0,0,"","Mom 'n Pop"],["Green Acres Wellness",9,4,3,0,0,1,1,1,0,"","Mom 'n Pop"],["Buckhead Behavioral Health",9,7,1,1,0,1,0,0,0,"","Mom 'n Pop"],["Southern Live Oak Wellness",9,6,2,0,1,1,1,1,0,"Stand By","Mom 'n Pop"],["Athens Addiction Recovery Center",9,5,4,0,0,1,1,1,0,"","Mom 'n Pop"],["Serenity Grove",9,5,4,0,0,1,1,1,0,"Active - Waiting on Data","Mom 'n Pop"],["Samba Recovery",8,6,1,0,0,1,1,1,1,"","Mom 'n Pop"],["Empowered Recovery Center | Addiction Treatment",6,4,1,0,0,0,0,0,0,"","Mom 'n Pop"],["Atlas Behavioral Health",6,5,1,0,0,1,1,1,0,"","Mom 'n Pop"],["Black Bear Lodge Treatment Center (+1)",6,6,0,0,0,0,0,0,0,"","Publicly Traded"],["Counterpoint Recovery",6,5,1,0,0,1,1,1,0,"","Mom 'n Pop"],["The Carter Treatment Center",6,6,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Centered Recovery Programs Mental Health and Addiction Rehabs Atlanta | Drug Rehabs Roswell",6,6,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Addiction & Mental Health Treatment",6,4,2,0,0,0,0,0,0,"","Non-Profit"],["Zenith Mental Health",6,5,1,0,0,1,1,1,0,"","Mom 'n Pop"],["Mt. Sinai Wellness Center",6,6,0,0,0,1,0,0,0,"","Private Equity"],["Recovery Place, Inc.",6,5,1,0,0,1,1,0,1,"","Non-Profit"],["Peachtree Recovery Solutions",6,6,0,0,0,0,0,0,0,"","Mom 'n Pop"],["View Point Health",5,5,0,0,0,0,0,0,0,"","Non-Profit"],["The Center for Wellness and Recovery",5,4,0,0,0,0,0,0,0,"","Non-Profit"],["MARR Addiction Treatment Center",5,4,0,0,0,0,0,0,0,"","Non-Profit"],["Peachtree Wellness Solutions",5,5,0,0,0,1,0,0,0,"","Mom 'n Pop"],["Peachtree Detox",4,4,0,0,0,1,0,0,0,"Stand By","Mom 'n Pop"],["Georgia Addiction Center",4,2,2,0,0,1,1,1,1,"","Mom 'n Pop"],["New Day Treatment Center",4,4,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Riverwoods Behavioral Health System",4,4,0,0,0,0,0,0,0,"","Publicly Traded"],["Twin Lakes Recovery Center",4,4,0,0,0,0,0,0,0,"","Private Equity"],["Tangu Inc- Alcohol & Drug Rehab Atlanta",4,4,0,0,0,1,1,0,1,"","Mom 'n Pop"],["Coastal Harbor Health System",4,4,0,0,0,0,0,0,0,"","Publicly Traded"],["Lakeview Behavioral Health Hospital",4,2,2,0,0,1,1,1,0,"","Publicly Traded"],["Atlanta Recovery Place",4,4,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Providence Recovery Place",4,4,0,0,0,0,0,0,0,"","Non-Profit"],["Blue Ridge Mountain Recovery Center",4,4,0,0,0,0,0,0,0,"","Publicly Traded"],["The Anchorage",3,3,0,0,0,0,0,0,0,"","Non-Profit"],["Penfield Addiction Ministries",3,3,0,0,0,0,0,0,0,"","Non-Profit"],["Inner Voyage",3,2,1,0,0,0,0,0,0,"","Mom 'n Pop"],["Old Town Recovery",3,1,2,0,0,1,1,1,0,"","Mom 'n Pop"],["Hope House",3,2,1,0,0,0,0,0,0,"","Non-Profit"],["Georgia HOPE",3,3,0,0,0,0,0,0,0,"","Private Equity"],["RiverMend Health",3,3,0,0,0,1,1,0,1,"","Private Equity"],["No Longer Bound",3,3,0,0,0,0,0,0,0,"","Non-Profit"],["Breakthrough Recovery Outreach",3,3,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Promise of Hope",3,3,0,0,0,0,0,0,0,"","Non-Profit"],["Docs Place Recovery",3,1,2,0,0,1,1,1,0,"","Mom 'n Pop"],["Cottages on Mountain Creek",3,2,1,0,0,1,1,1,0,"","Mom 'n Pop"],["House of T.I.M.E.",3,3,0,0,0,0,0,0,0,"","Non-Profit"],["North Georgia Recovery Center",3,3,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Skyland Trail",3,3,0,0,0,0,0,0,0,"","Non-Profit"],["Skyland Trail",3,3,0,0,0,0,0,0,0,"","Non-Profit"],["Revelare Recovery",3,3,0,0,0,0,0,0,0,"","Non-Profit"],["The Summit Wellness Group",2,2,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Ridgeview Institute - Monroe",2,2,0,0,0,0,0,0,0,"","Private Equity"],["Turning Point Care Center",2,2,0,0,0,0,0,0,0,"","Publicly Traded"],["Anchor Hospital",2,2,0,0,0,1,0,0,0,"","Publicly Traded"],["Inner Voyage Recovery Center",2,2,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Angel House of GA",2,2,0,0,0,1,1,1,0,"","Non-Profit"],["Greenleaf Behavioral Health Hospital",2,2,0,0,0,0,0,0,0,"","Publicly Traded"],["Willingway",2,2,0,0,0,0,0,0,0,"","Private Equity"],["Peachford Hospital",2,2,0,0,0,0,0,0,0,"","Publicly Traded"],["Peachtree Recoveruy Solutions",2,2,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Perimeter Healthcare",2,2,0,0,0,1,0,0,1,"","Mom 'n Pop"],["ATHENS AREA COMMENCEMENT CENTER",2,2,0,0,0,0,0,0,0,"","Mom 'n Pop"],["The Insight Program",2,2,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Acworth Outpatient Detox",2,1,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Front Porch Recovery Center",1,0,1,0,0,1,1,1,0,"","Mom 'n Pop"],["Gateway Behavioral Health Services",1,1,0,0,0,0,0,0,0,"",""],["Graceway Recovery",1,1,0,0,0,0,0,0,0,"",""],["Tour - The Berman Center",1,1,0,0,0,0,0,0,0,"","Mom 'n Pop"],["River\u2011Edge / Life Spring",1,1,0,0,0,0,0,0,0,"",""],["Lighthouse Care Center of Augusta",1,1,0,0,0,0,0,0,0,"",""],["Fairland Recovery Center",1,1,0,0,0,0,0,0,0,"","Mom 'n Pop"],["SummitRidge Hospital",1,1,0,0,0,1,1,0,1,"","Publicly Traded"],["Tides of Change Recovery Residences",1,1,0,0,0,0,0,0,0,"",""],["The Recovery Center USA",1,1,0,0,0,1,1,1,0,"","Mom 'n Pop"],["Creekside Recovery Residences",1,1,0,0,0,0,0,0,0,"","Private Equity"],["Wellness and Recovery Center",1,1,0,0,0,0,0,0,0,"",""],["No Longer Bound Addiction Treatment Program",1,1,0,0,0,0,0,0,0,"",""],["HopeQuest",1,1,0,0,0,1,0,0,1,"","Non-Profit"],["Lakeview Behavioralhealth",1,1,0,0,0,0,0,0,0,"","Publicly Traded"],["River Edge Behavioral Health",1,1,0,0,0,0,0,0,0,"","Non-Profit"],["Assisted Recovery Center of GA",1,1,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Riverwoods Behavioral Health System",1,1,0,0,0,0,0,0,0,"","Publicly Traded"],["Highland Rivers",1,1,0,0,0,0,0,0,0,"","GOV"],["The Retreat of Atlanta",1,1,0,0,0,0,0,0,0,"","Private Equity"],["Etowah Recovery Center",1,1,0,0,0,1,1,1,1,"","Mom 'n Pop"],["Penfield Christian Homes \u2013 Heart Campus",1,1,0,0,0,0,0,0,0,"",""],["Georgia Regional Hospital",1,1,0,0,0,0,0,0,0,"","GOV"]],"FL":[["Clean Recovery Centers",10,8,2,0,0,1,0,0,1,"","Mom 'n Pop"],["The Guest House Ocala",9,4,5,0,0,1,0,0,0,"","Mom 'n Pop"],["Serenity Springs Recovery Center",9,7,2,0,0,1,0,0,0,"","Mom 'n Pop"],["Footprints Beachside Recovery Center",9,7,2,0,0,1,0,0,0,"","Mom 'n Pop"],["7 Summit Pathways",8,7,0,0,1,1,1,1,0,"Stand By","Mom 'n Pop"],["St John's Recovery Place",8,6,2,0,0,0,0,0,0,"","Mom 'n Pop"],["Tranquil Shores",8,7,0,0,1,0,0,0,0,"","Non-Profit"],["Spring Gardens Recovery",8,7,1,0,0,0,0,0,0,"","Mom 'n Pop"],["Florida Springs Wellness and Recovery Center",8,8,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Archstone Behavioral Health",8,8,0,0,0,0,0,0,0,"","Mom 'n Pop"],["The Sylvia Brafman Mental Health Center",8,5,1,1,0,1,1,1,0,"Stand By","Mom 'n Pop"],["Augustine Recovery",7,6,1,0,0,0,0,0,0,"","Mom 'n Pop"],["Riverside Recovery of Tampa",7,4,1,1,0,0,0,0,0,"","Mom 'n Pop"],["White Sands Treatment Center",7,7,0,0,0,0,0,0,0,"","Mom 'n Pop"],["South Beach Detox (+2)",7,6,0,0,1,1,1,1,0,"","Mom 'n Pop"],["Recovery Unplugged",7,4,2,1,0,1,0,0,0,"","Mom 'n Pop"],["BEACHES RECOVERY SERVICES",7,7,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Haven Health Management",7,5,1,1,0,0,0,0,0,"","Mom 'n Pop"],["Recreate Behavioral Health Network",6,6,0,0,0,0,0,0,0,"","Mom 'n Pop"],["New Season Treatment Centers",6,6,0,0,0,1,0,0,0,"","Private Equity"],["Gulf Breeze Recovery",6,6,0,0,0,0,0,0,0,"","Mom 'n Pop"],["The Watershed Addiction Treatment Programs Inc",6,6,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Advanced Recovery Systems, LLC",6,5,0,1,0,1,1,1,0,"","Private Equity"],["Legacy Healing Center",6,6,0,0,0,0,0,0,0,"","Mom 'n Pop"],["ANR Clinic\u00ae",6,6,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Beachway Therapy Center",6,6,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Positive Pathways",6,6,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Banyan Treatment Centers",6,5,0,0,1,1,1,1,1,"","Private Equity"],["Boca Recovery Center",6,5,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Beachside Rehab",5,5,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Creekside Recovery Group",5,5,0,0,0,1,0,0,0,"","Mom 'n Pop"],["We Level Up Treatment Centers",5,5,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Guardian Recovery",5,5,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Mark Behavioral Health",5,5,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Ambrosia Treatment Center",5,5,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Tampa Bay Recovery Center",5,5,0,0,0,1,0,0,0,"","Mom 'n Pop"],["Allure Detox",5,5,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Compass Health Systems, PA",5,4,0,0,1,1,1,1,0,"","Mom 'n Pop"],["On Par Capital (+5)",5,4,1,0,0,1,1,1,0,"","Mom 'n Pop"],["Recovery Keys",5,3,1,0,0,1,0,0,1,"","Mom 'n Pop"],["My TMS (+5)",5,4,1,0,0,1,1,1,0,"","Mom 'n Pop"],["Turning Point Of Tampa",5,2,2,0,1,1,1,0,1,"","Private Equity"],["Compassion Behavioral Health",5,5,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Still Detox",4,4,0,0,0,1,1,0,0,"","Mom 'n Pop"],["Refresh Mental Health",4,4,0,0,0,0,0,0,0,"","Private Equity"],["United Recovery Project",4,4,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Banyan Sebring",4,3,0,0,1,1,1,1,1,"","Private Equity"],["Palm Beach Recovery Center",4,4,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Lifeskills South Florida",4,3,0,0,0,0,0,0,0,"","Private Equity"],["Summit Detox",4,4,0,0,0,1,1,0,0,"","Private Equity"],["Resilience Recovery Resources LLC",4,4,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Sabal Palms Recovery Center",4,4,0,0,0,0,0,0,0,"","Publicly Traded"],["Twelve Oaks Treatment Center",4,4,0,0,0,0,0,0,0,"","Publicly Traded"],["All In Behavioral Health (+2)",4,4,0,0,0,1,1,0,1,"","Mom 'n Pop"],["House of Freedom Inc",4,3,1,0,0,0,0,0,0,"","Non-Profit"],["Behavioral Health of the Palm Beaches",3,2,1,0,0,1,1,1,0,"","Private Equity"],["St Johns Recovery Place",3,3,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Tides Edge Recovery Services, LLC",3,3,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Holistix Treatment Centers",3,3,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Spring Gardens Recovery",3,2,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Serenity Springs Recovery Center",3,3,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Heroes' Mile",3,3,0,0,0,0,0,0,0,"","Mom 'n Pop"],["EPIC Recovery Center Epic Behavioral Healthcare",3,2,0,0,0,0,0,0,0,"","Non-Profit"],["Harmony Hills Behavioral Health",3,3,0,0,0,0,0,0,1,"","Mom 'n Pop"],["The Refuge, A Healing Place",3,3,0,0,0,0,0,0,0,"","Publicly Traded"],["Calusa Recovery (+1)",3,3,0,0,0,0,0,0,0,"","Mom 'n Pop"],["TRANSFORMATIONS MENDING FENCES, LLC",3,3,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Comprehensive Wellness Centers",3,3,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Gateway Steps to Recovery",3,3,0,0,0,0,0,0,0,"","Non-Profit"],["Royal Life Centers",3,2,0,1,0,0,0,0,0,"","Mom 'n Pop"],["Bayshore Retreat LLC",3,3,0,0,0,0,0,0,0,"","Mom 'n Pop"],["White Sands Treatment Center",3,3,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Oglethorpe, Inc.",3,3,0,0,0,1,1,1,0,"","Mom 'n Pop"],["Cipriano & Johnson",3,3,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Tikvah Lake",3,1,1,1,0,1,1,1,0,"",""],["River Oaks Treatment Center",3,3,0,0,0,0,0,0,0,"","Publicly Traded"],["Health and Psychiatry",2,1,1,0,0,0,0,0,0,"",""],["All In Solutions Wellness Center",2,2,0,0,0,1,1,0,1,"","Mom 'n Pop"],["Futures Recovery Healthcare",2,2,0,0,0,0,0,0,0,"","Private Equity"],["Sunrise Detox Center",2,2,0,0,0,1,1,1,0,"","Mom 'n Pop"],["DETOX OF SOUTH FLORIDA, INC.",2,2,0,0,0,0,0,0,0,"","Mom 'n Pop"],["La Amistad Behavioral Health Services",2,2,0,0,0,0,0,0,0,"","Publicly Traded"],["Lakeview Health",2,2,0,0,0,1,0,0,0,"","Private Equity"],["Central Florida Treatment Center",2,2,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Fellowship House",2,2,0,0,0,0,0,0,0,"","Non-Profit"],["Voyage Recovery Center",2,2,0,0,0,0,0,0,0,"","Mom 'n Pop"],["North Tampa Behavioral Health Hospital",2,2,0,0,0,0,0,0,0,"","Publicly Traded"],["Seastone of Delray",2,2,0,0,0,0,0,0,0,"","CLOSED"],["GUD in Lakeview",2,1,0,1,0,1,1,1,0,"","Mom 'n Pop"],["Recovery By The Sea",2,2,0,0,0,1,1,1,1,"","Mom 'n Pop"],["Promises Five Palms",2,2,0,0,0,0,0,0,0,"","Private Equity"],["Recovery Solutions",2,2,0,0,0,0,0,0,0,"","Private Equity"],["Board Prep Recovery",2,1,1,0,0,1,0,0,0,"","Mom 'n Pop"],["JC's Recovery Center",2,2,0,0,0,1,1,1,0,"","Mom 'n Pop"],["The Best Treatment Center, LLC",2,2,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Evoke Wellness",2,2,0,0,0,1,1,0,0,"","Mom 'n Pop"],["South Beach Detox, LLC",2,1,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Coastal Detox Inc",2,1,0,0,0,1,0,0,1,"","Mom 'n Pop"],["Lighthouse Recovery Institute",2,2,0,0,0,0,0,0,0,"","Mom 'n Pop"],["RECO Intensive | Renowned Addiction Treatment",2,2,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Transformations Treatment Center",2,2,0,0,0,1,1,0,0,"","Publicly Traded"],["Fairwinds Treatment Center",2,1,1,0,0,1,0,0,0,"","Mom 'n Pop"],["Live Oak Detox",2,2,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Sophros Recovery",2,2,0,0,0,1,1,1,0,"","Mom 'n Pop"],["Port Charlotte Detox, LLC",2,2,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Dignity Healing",2,2,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Agape Treatment Center",2,2,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Recovery Bay Center",2,2,0,0,0,1,1,1,0,"Active","Mom 'n Pop"],["Sunlight Recovery",1,1,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Addiction Recovery Institute of America (ARIA)",1,1,0,0,0,0,0,0,0,"","Mom 'n Pop"],["River Point Behavioral Health",1,1,0,0,0,0,0,0,0,"","Publicly Traded"],["Fort Lauderdale Behavioral Health Center",1,1,0,0,0,1,1,0,1,"","Publicly Traded"],["LifeSkills Orlando",1,1,0,0,0,0,0,0,0,"","Private Equity"],["The Haven Detox",1,1,0,0,0,0,0,0,0,"","Mom 'n Pop"],["CALUSA RECOVERY SERVICES, LLC",1,1,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Mandala Healing Center",1,1,0,0,0,0,0,0,0,"","Mom 'n Pop"],["La Amistad Behavioral Health Servs",1,1,0,0,0,0,0,0,0,"","Publicly Traded"],["Family First Adolescent Services",1,1,0,0,0,0,0,0,0,"","Private Equity"],["The Refuge, A Healing Place",1,1,0,0,0,0,0,0,0,"","Publicly Traded"],["Beachside Rehab",1,1,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Wekiva Springs Center",1,1,0,0,0,0,0,0,0,"","Publicly Traded"],["Park Royal Hospital",1,1,0,0,0,0,0,0,0,"","Publicly Traded"],["Reprieve Recovery Center",1,1,0,0,0,1,0,0,1,"","Mom 'n Pop"],["Hanley Center at Origins",1,1,0,0,0,0,0,0,0,"","Non-Profit"],["Destination Hope",1,1,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Chapel Hill Medical Detox",1,1,0,0,0,0,0,0,0,"","Mom 'n Pop"],["CuraSouth Florida",1,1,0,0,0,0,0,0,0,"","Private Equity"],["Solutions Healthcare",1,1,0,0,0,1,1,0,1,"","Mom 'n Pop"],["Recreate Life Counseling Services BH, LLC",1,1,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Coastal Detox",1,1,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Praesum Healthcare",1,1,0,0,0,1,1,1,0,"","Mom 'n Pop"],["Ascension Recovery Services",1,1,0,0,0,0,0,0,0,"","Private Equity"],["Real Recovery Solutions",1,0,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Aloha Detox",1,1,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Recovery Bay Center",1,1,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Family Center For Recovery",1,1,0,0,0,0,0,0,0,"","CLOSED"],["Principles Recovery Center",1,1,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Beach House Center for Recovery",1,1,0,0,0,1,1,1,0,"","Private Equity"],["Singer Island Health",1,1,0,0,0,0,0,0,0,"","Private Equity"],["Immersion Recovery Center",1,1,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Recreate Behavioral Health of Ohio",1,1,0,0,0,0,0,0,0,"","Private Equity"],["USR Holdings",1,1,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Central Florida Detox LLC",1,1,0,0,0,0,0,0,0,"","Private Equity"],["Park Place Behavioral Healthcare",1,1,0,0,0,0,0,0,0,"","Non-Profit"],["Futures of Palm Beach",1,1,0,0,0,0,0,0,0,"","Private Equity"],["Lifeskills South Florida",1,1,0,0,0,1,0,0,0,"","Private Equity"],["Stepping Stone Center for Recovery",1,1,0,0,0,0,0,0,0,"","Private Equity"],["The Vines Hospital",1,1,0,0,0,0,0,0,0,"","Publicly Traded"],["Oglethorpe - The Blackberry Center",1,0,0,0,0,0,0,0,0,"","Private Equity"],["Lantana Wellness",1,1,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Central Florida Recovery Centers",1,1,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Riverside Recovery of Tampa",1,1,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Amethyst Recovery",1,1,0,0,0,0,0,0,0,"","Mom 'n Pop"],["REMEDY THERAPY, LLC",1,0,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Lakeview Health",1,1,0,0,0,0,0,0,0,"","Private Equity"],["Aspen Behavioral Health",1,0,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Miracles Recovery Center",1,1,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Prevail Recovery Center",1,1,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Amethyst Recover Center LLC",1,1,0,0,0,0,0,0,0,"","Private Equity"],["Onyx Behavioral Health",1,1,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Beachcomber Family Treatment Center",1,1,0,0,0,1,0,0,0,"","Mom 'n Pop"],["FHE Health",1,1,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Beach House Center for Recovery",1,1,0,0,0,0,0,0,0,"","Private Equity"],["Bright Futures Treatment Center",1,1,0,0,0,0,0,0,0,"","Mom 'n Pop"],["The Recovery Team",1,1,0,0,0,0,0,0,0,"","Mom 'n Pop"],["The Recovery Village at Baptist Health",1,1,0,0,0,0,0,0,0,"","Private Equity"],["Behavioral Health of the Palm Beaches (Banyan)f",1,1,0,0,0,0,0,0,0,"","Private Equity"],["Reign Residential Treatment Center",1,1,0,0,0,1,1,1,0,"Stand By","Mom 'n Pop"],["Valiant Recovery Corp",1,1,0,0,0,0,0,0,0,"","Mom 'n Pop"],["1 Solution Detox",1,1,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Agency for Community Treatment Services (ACTS)",1,0,0,0,0,0,0,0,0,"","Non-Profit"],["Kandela Recovery Center",1,1,0,0,0,0,0,0,0,"","Mom 'n Pop"],["THE RECOVERY VILLAGE AT UMATILLA",1,1,0,0,0,0,0,0,0,"","Private Equity"],["Serenity House Detox Palm Beach, LLC",1,1,0,0,0,0,0,0,0,"","CLOSED"],["Reign Residential Treatment Centers",1,1,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Flagler Health and Wellness LLC",1,1,0,0,0,0,0,0,0,"","Mom 'n Pop"],["The Recovery Team, Inc.",1,1,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Harm Reduction Center",1,1,0,0,0,1,1,1,0,"","Mom 'n Pop"],["Retreat Behavioral Health Service Ctr",1,1,0,0,0,0,0,0,0,"","CLOSED"],["Sunrise Detox III",1,1,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Remedy Therapy Behavioral Health",1,1,0,0,0,0,0,0,0,"","Mom 'n Pop"]],"IL":[["SunCloud Health",6,6,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Northern Illinois Recovery Center (NIRC)",5,5,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Footprints to Recovery",4,3,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Streamwood Behavioral Healthcare System",2,2,0,0,0,0,0,0,0,"","Publicly Traded"],["NuLife Behavioral Health",2,2,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Shore Capital Partners",1,1,0,0,0,1,1,0,1,"","Private Equity"]],"IN":[["Indiana Center for Recovery",11,9,1,1,0,0,0,0,0,"","Mom 'n Pop"],["Indiana Center for Recovery",10,10,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Bridges of Hope Treatment Center",9,8,1,0,0,0,0,0,0,"","Mom 'n Pop"],["Parkdale Center for Professionals",9,9,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Fort Wayne Recovery (+1)",9,9,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Hickory Recovery Network",7,6,1,0,0,0,0,0,0,"","Mom 'n Pop"],["Spark Recovery Indiana",6,5,0,0,0,0,0,0,0,"","Mom 'n Pop"],["SEE Purpose",6,5,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Allendale Treatment",4,4,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Tara Treatment Center",4,2,1,1,0,0,0,0,0,"","Non-Profit"],["Zinnia Health",4,1,0,2,1,1,1,1,0,"","Mom 'n Pop"],["Wooded Glen Recovery Center",3,3,0,0,0,0,0,0,0,"","Private Equity"],["First City Recovery Center",3,1,2,0,0,0,0,0,0,"","Mom 'n Pop"],["Valle Vista Health System",2,2,0,0,0,0,0,0,0,"","Publicly Traded"],["Cardinal Recovery",2,2,0,0,0,1,0,0,1,"Stand By","Mom 'n Pop"],["Harsha Behavioral Health",2,0,2,0,0,1,0,0,1,"","Mom 'n Pop"],["The Grove Estate",1,1,0,0,0,0,0,0,0,"","Mom 'n Pop"]],"VA":[["Williamsville Wellness",15,9,6,0,0,1,1,1,0,"Stalled","Mom 'n Pop"],["Bridging the Gaps, Inc.",10,9,1,0,0,0,0,0,0,"","Mom 'n Pop"],["Addiction Allies",9,8,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Freedom Recovery Centers",8,5,2,1,0,0,0,0,0,"","Mom 'n Pop"],["The Virginia Center for Addiction Medicine (Rebranded: Master Center)",8,7,0,0,1,0,0,0,0,"","Mom 'n Pop"],["Coleman Institute for Addiction Medicine",8,8,0,0,0,0,0,0,0,"","Mom 'n Pop"],["True Recovery RVA",7,6,1,0,0,0,0,0,0,"","Mom 'n Pop"],["Hallmark Youth Care",6,5,1,0,0,0,0,0,0,"","Private Equity"],["Intercept Health",5,1,4,0,0,0,0,0,0,"","Mom 'n Pop"],["Arrowwood ATC",5,4,1,0,0,1,1,1,0,"","Mom 'n Pop"],["Warrenton Woods",5,2,3,0,0,0,0,0,0,"","Mom 'n Pop"],["Three Rivers Treatment Center",5,2,2,1,0,0,0,0,0,"","Mom 'n Pop"],["New Paradigm Recovery",4,4,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Sagebrush\u00a0Treatment\u00a0Center",4,4,0,0,0,0,0,0,0,"","CLOSED"],["Pathways",4,4,0,0,0,0,0,0,0,"","Non-Profit"],["Mainspring Recovery",4,4,0,0,0,1,1,1,0,"","Mom 'n Pop"],["Aquila Recovery Clinic",4,4,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Mount Regis Center",4,4,0,0,0,0,0,0,0,"","Publicly Traded"],["Conscious Healing, Inc",3,3,0,0,0,1,0,0,0,"","Mom 'n Pop"],["Dominion Care",3,3,0,0,0,0,0,0,0,"","Private Equity"],["Warriors Heart",3,1,1,1,0,0,1,1,0,"","Mom 'n Pop"],["Strategic Behavioral Health",3,3,0,0,0,0,0,0,0,"","Private Equity"],["Orchard Mountain Recovery",2,2,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Insight Recovery Centers",2,2,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Living Free Health Services",2,2,0,0,0,0,0,0,0,"","Non-Profit"],["The Pavilion at Williamsburg Place",2,2,0,0,0,0,0,0,0,"","Private Equity"],["Winchester Community Mental Health Center",2,2,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Embark Behavioral Health",2,2,0,0,0,0,0,0,0,"","Private Equity"],["Life Center of Galax",2,2,0,0,0,0,0,0,0,"","Publicly Traded"],["Momentum Recovery Virginia",2,0,2,0,0,0,0,0,0,"","Mom 'n Pop"],["GHR Center for Addiction Recovery and Treatment",2,2,0,0,0,1,1,1,0,"Stand By","Mom 'n Pop"],["River City Integrative Counseling",2,2,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Poplar Springs Hospital",2,2,0,0,0,0,0,0,0,"","Publicly Traded"],["EDGEHILL RECOVERY RETREAT CENTER",2,2,0,0,0,0,0,0,0,"","Non-Profit"],["Virginia Recovery Centers Alcohol & Drug Rehab In Virginia",2,1,0,1,0,0,0,0,0,"","Mom 'n Pop"],["Harbor Point Behavioral Health Center",2,2,0,0,0,0,0,0,0,"","Publicly Traded"],["Sobrius Holistic Recovery",2,0,2,0,0,1,1,1,0,"",""],["Behavioral Health Services of Virginia",2,2,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Safe Harbor Recovery Center",2,2,0,0,0,1,1,0,1,"","Private Equity"],["National Capital Treatment & Recovery, formerly Phoenix House Mid-Atlantic",2,2,0,0,0,0,0,0,0,"","Non-Profit"],["Multicultural Clinical Center (MCC)",2,2,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Insight Recovery",2,2,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Washington Behavioral Health",2,2,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Faith Recovery",2,1,1,0,0,0,0,0,0,"","Non-Profit"],["ncgCARE",1,0,1,0,0,1,1,1,1,"","Mom 'n Pop"],["Embrace Healthy Solutions",1,1,0,0,0,0,0,0,0,"","Mom 'n Pop"],["The Ranch at Dove Tree",1,1,0,0,0,0,0,0,0,"","Private Equity"],["VAMED Health Group LLC",1,1,0,0,0,1,1,1,0,"","Mom 'n Pop"],["Virginia Beach Psychiatric Center",1,1,0,0,0,1,1,0,1,"","Publicly Traded"],["Hopewood Recovery Center",1,1,0,0,0,0,0,0,0,"","Publicly Traded"],["Anderson Treatment",1,0,1,0,0,1,1,1,0,"","Mom 'n Pop"],["Be Bold Recovery",1,1,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Horizon Behavioral Health",1,1,0,0,0,0,0,0,0,"","Non-Profit"],["Evolution House",1,1,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Eagles Nest",1,1,0,0,0,0,0,0,0,"","Non-Profit"],["Methadone Treatment Centers",1,1,0,0,0,0,0,0,0,"","Mom 'n Pop"]],"MN":[["Meridian Behavioral Health",1,1,0,0,0,0,0,0,0,"","Private Equity"],["Abria Recovery",1,1,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Anthony Louis Centers",1,1,0,0,0,0,0,0,0,"","Mom 'n Pop"],["North Star Regional",1,1,0,0,0,0,0,0,0,"","Private Equity"],["NorthStar Behavioral Health (NBH)",1,1,0,0,0,0,0,0,0,"","Mom 'n Pop"]],"TN":[["Iris Wellness Group",18,10,5,0,0,0,0,0,0,"","Mom 'n Pop"],["Southeast Addiction Center Tennessee",12,8,2,2,0,1,1,1,0,"","Mom 'n Pop"],["Evoraa Healthcare",10,9,1,0,0,1,0,0,0,"","Mom 'n Pop"],["American Addiction Centers",9,9,0,0,0,0,0,0,0,"","Private Equity"],["Tulip Hill Healthcare",8,8,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Promises Behavioral Health",7,7,0,0,0,0,0,0,0,"","Private Equity"],["Focus Treatment Centers",7,7,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Lifepoint Health\u00ae",7,7,0,0,0,0,0,0,0,"","Private Equity"],["Tennessee Valley Recovery",6,6,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Tennessee Valley Recovery",6,6,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Tennessee Behavioral Health",6,6,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Genesis Medical Detox",6,6,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Acute Behavioral Health (Hallmark)",6,5,1,0,0,0,0,0,0,"","Mom 'n Pop"],["Acadia Healthcare",6,6,0,0,0,0,0,0,0,"","Publicly Traded"],["Creekside Behavioral Health",5,3,1,1,0,0,0,0,0,"","Private Equity"],["Epiphany Wellness",5,5,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Village Behavioral Health Treatment Center",5,5,0,0,0,0,0,0,0,"","Publicly Traded"],["New Hope Healthcare Institute",5,5,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Freeman Recovery Center",5,4,1,0,0,1,1,0,1,"","Mom 'n Pop"],["Cedar Recovery",5,5,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Brooks Healing Center",5,5,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Summit BHC (+1)",5,5,0,0,0,1,1,0,1,"","Private Equity"],["Spero Health",4,4,0,0,0,0,0,0,0,"","Private Equity"],["Brentwood Springs Detox",4,4,0,0,0,0,0,0,0,"","Mom 'n Pop"],["The Ranch TN",4,4,0,0,0,0,0,0,0,"","Private Equity"],["Magnolia Ranch Recovery",4,4,0,0,0,0,0,0,0,"","Mom 'n Pop"],["The Ranch Tennessee",4,4,0,0,0,0,0,0,0,"","Private Equity"],["SaVida Health",4,4,0,0,0,1,0,0,0,"","Private Equity"],["Cumberland Heights Recovery Cebter",4,4,0,0,0,0,0,0,0,"","Non-Profit"],["Integrative Life Center",4,4,0,0,0,1,0,0,0,"","Mom 'n Pop"],["Chattanooga Recovery Center",4,4,0,0,0,0,0,0,0,"","Mom 'n Pop"],["TrustPoint Hospital",4,4,0,0,0,0,0,0,0,"","Publicly Traded"],["Apex Recovery Rehab",4,3,1,0,0,0,0,0,0,"","Mom 'n Pop"],["English Mountain Recovery",3,3,0,0,0,0,0,0,0,"","Private Equity"],["ReVIDA Recovery Centers",3,3,0,0,0,0,0,0,0,"","Private Equity"],["Landmark Recovery",3,3,0,0,0,1,1,0,1,"","Private Equity"],["Springstone",3,3,0,0,0,0,0,0,0,"","Private Equity"],["Detox West Tennessee",3,3,0,0,0,1,1,0,1,"","Mom 'n Pop"],["CleanSlate Centers",3,3,0,0,0,1,1,0,1,"","Private Equity"],["Haven Behavioral Healthcare",3,3,0,0,0,1,0,0,1,"","Private Equity"],["English Mountain Recovery",3,3,0,0,0,0,0,0,0,"","Private Equity"],["Mirror Lake Recovery Center",2,2,0,0,0,0,0,0,0,"","Publicly Traded"],["Lakeside Behavioral Health System",2,2,0,0,0,1,0,0,0,"","Publicly Traded"],["Vertava Health",2,2,0,0,0,1,1,0,1,"","Private Equity"],["Delta Specialty Hospital",2,2,0,0,0,0,0,0,0,"","Publicly Traded"],["JourneyPure",2,2,0,0,0,0,0,0,0,"","Private Equity"],["Solutions Retreat, In-patient Residential",2,2,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Parkridge Valley",2,2,0,0,0,0,1,0,1,"","Publicly Traded"],["Crestwyn Behavioral Health",2,2,0,0,0,0,0,0,0,"","Publicly Traded"],["Arbor Wellness",2,2,0,0,0,1,0,0,1,"","Mom 'n Pop"],["Health Connect America",2,2,0,0,0,0,0,0,0,"","Private Equity"],["Harmony Oaks Recovery Center",2,2,0,0,0,0,0,0,0,"","Private Equity"],["Samaritan Recovery",2,2,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Knoxville Center for Behavioral Medicine",2,2,0,0,0,1,1,0,1,"","Mom 'n Pop"],["Foundations Recovery Network",2,2,0,0,0,0,0,0,0,"","Publicly Traded"],["Rolling Hills Hospital",2,2,0,0,0,0,0,0,0,"","Publicly Traded"],["Memphis Mental Health Institute",1,1,0,0,0,0,0,0,0,"","GOV"],["Cornerstone of Recovery",1,1,0,0,0,0,0,0,0,"","Private Equity"],["Vanderbilt Psychiatric Hospital (VPH)",1,1,0,0,0,0,0,0,0,"","Publicly Traded"],["Jackson Area Council on Alchoholism & Drug Dependency",1,1,0,0,0,0,0,0,0,"",""],["Aspell Recovery Center",1,1,0,0,0,0,0,0,0,"",""],["Moccasin Bend Mental Health Institute",1,1,0,0,0,0,0,0,0,"","GOV"],["The Next Door Recovery",1,1,0,0,0,0,0,0,0,"","Non-Profit"],["Ridgeview Psychiatric Hospital & Center",1,1,0,0,0,0,0,0,0,"","Non-Profit"],["Peninsula Behavioral Health (Covenant Health)",1,1,0,0,0,0,0,0,0,"",""],["JourneyPure at the River",1,1,0,0,0,0,0,0,0,"",""],["Youth Villages \u2013 Deer Valley Campus",1,1,0,0,0,0,0,0,0,"","Non-Profit"],["Middle TN Mental Health Institute",1,1,0,0,0,0,0,0,0,"","GOV"],["Promises Five Palms",1,1,0,0,0,0,0,0,0,"","Private Equity"],["Journey Pure/Regard Recovery",1,1,0,0,0,1,1,1,0,"","Private Equity"],["Daybreak Treatment Center",1,1,0,0,0,0,0,0,0,"","Publicly Traded"],["Erlanger Behavioral Health Hospital",1,1,0,0,0,0,0,0,0,"","Publicly Traded"],["Case Management, Inc.-BabyLove/Pregnant Women Residential Treatment Center",1,1,0,0,0,0,0,0,0,"",""]],"CA":[["Hotel California By the Sea",5,5,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Silver Ridge LLC",3,3,0,0,0,0,0,0,0,"","Mom 'n Pop"],["BrightQuest Treatment Centers",2,2,0,0,0,0,0,0,0,"","Private Equity"],["All Points North (APN) Capital (+2)",2,2,0,0,0,0,0,0,0,"","Private Equity"],["Opus Health",2,2,0,0,0,0,0,0,0,"","Mom 'n Pop"],["San Jose Behavioral Health",2,2,0,0,0,0,0,0,0,"","Publicly Traded"],["HERO Program",2,1,1,0,0,0,0,0,0,"","Mom 'n Pop"],["Sunshine Behavioral Health",2,2,0,0,0,1,1,1,0,"","Mom 'n Pop"],["AToN Center Drug & Alcohol Rehab",2,2,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Monarch Shores",2,2,0,0,0,0,0,0,0,"","Private Equity"],["ARIA",1,1,0,0,0,0,0,0,0,"","Private Equity"],["Newport Academy",1,1,0,0,0,0,0,0,0,"","Private Equity"],["First Steps Recovery",1,1,0,0,0,0,0,0,0,"","Private Equity"],["Mission Healthcare",1,1,0,0,0,0,0,0,0,"","Private Equity"],["Socal Detox",1,1,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Discovery Behavioral Health",1,1,0,0,0,0,0,0,0,"","Private Equity"],["Living at Reflections Rehab",1,1,0,0,0,0,0,0,0,"","Private Equity"],["Asana Recovery",1,1,0,0,0,0,0,0,0,"","Mom 'n Pop"],["South Coast Behavioral Health",1,1,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Passages Malibu",1,1,0,0,0,0,0,0,0,"","Mom 'n Pop"]],"TX":[["Kemah Palms Recovery",11,6,3,1,1,0,0,0,0,"","Mom 'n Pop"],["Stonegate Center",11,9,0,0,2,0,0,0,0,"","Mom 'n Pop"],["Orchard on the Brazos",10,7,2,1,0,1,0,0,1,"","Mom 'n Pop"],["BayMark Health Services",10,10,0,0,0,0,0,0,0,"","Private Equity"],["La Hacienda Treatment Center",10,10,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Serenity Light Recovery",8,6,2,0,0,0,0,0,0,"","Mom 'n Pop"],["Sante Center for Healing",8,8,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Right Step",8,8,0,0,0,0,0,0,0,"","Private Equity"],["The Haven Texas",8,8,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Greenhouse Treatment Center",7,7,0,0,0,0,0,0,0,"","Private Equity"],["Alamo\u202fBehavioral\u202fHealth",7,7,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Magnolia City Detox",7,4,3,0,0,1,1,1,1,"",""],["Riverwalk Ranch",7,7,0,0,0,1,1,1,0,"Stand By","Mom 'n Pop"],["The Arbor Behavioral Healthcare",7,7,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Aspire Hospital",7,5,1,0,1,0,0,0,0,"","Mom 'n Pop"],["Infinite Recovery",6,6,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Taylor Recovery Center",6,5,1,0,0,0,0,0,0,"","Mom 'n Pop"],["Enterhealth",6,6,0,0,0,1,1,1,0,"","Mom 'n Pop"],["Sage Recovery Austin",6,6,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Clearfork Academy",6,6,0,0,0,1,1,1,0,"Active - Placing Bid","Mom 'n Pop"],["Behavioral Health Group - BHG",6,5,0,0,1,1,0,0,0,"","Private Equity"],["Arise Recovery Centers",6,6,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Driftwood Recovery",6,5,1,0,0,0,0,0,0,"","Mom 'n Pop"],["Dallas Behavioral Healthcare Hospital",5,5,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Resurgence texas",5,5,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Adapt Programs LLC",5,4,1,0,0,0,0,0,0,"","Mom 'n Pop"],["Blue\u202fHeron\u202fRecovery",5,4,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Virtue Recovery Center",5,4,1,0,0,1,1,1,0,"","Mom 'n Pop"],["J. Flowers Health Institute",5,3,1,1,0,0,0,0,0,"",""],["Lone\u202fStar\u202fBehavioral\u202fHealth",5,3,1,0,1,0,0,0,0,"","Mom 'n Pop"],["Bay Area Recovery Center",5,3,1,0,1,0,0,0,0,"","Mom 'n Pop"],["Cypress Lakes Recovery",5,5,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Oceans Healthcare",5,5,0,0,0,0,0,0,0,"","Private Equity"],["Turning Point Recovery Network",5,5,0,0,0,0,0,0,0,"","Non-Profit"],["Summer Sky Treatment Center",5,5,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Eudaimonia Recovery Homes",5,5,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Lighthouse Recovery",5,5,0,0,0,0,0,0,0,"","Mom 'n Pop"],["PaRC BH (Prevention and Recovery Center)",5,5,0,0,0,0,0,0,0,"","Private Equity"],["Discovery Point Retreat (+2)",4,3,0,1,0,1,1,1,0,"","Mom 'n Pop"],["Skyward Treatment Solutions LLC (\u201cSkyward Treatment\u201d)",4,3,1,0,0,0,0,0,0,"","Mom 'n Pop"],["Care Star BHS",4,4,0,0,0,0,0,0,0,"","Mom 'n Pop"],["BasePoint Academy",4,4,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Ripple Ranch Recovery Center",4,4,0,0,0,1,0,0,0,"","Mom 'n Pop"],["Carrus Health",4,4,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Kingwood Pines Hospital",4,4,0,0,0,0,0,0,0,"","Publicly Traded"],["Origins Behavioral HealthCare",4,4,0,0,0,0,0,0,0,"","Non-Profit"],["Grace\u202fCounseling",4,4,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Nova Recovery Center (+2)",4,4,0,0,0,1,1,1,1,"","Mom 'n Pop"],["Into Action Recovery Center",4,4,0,0,0,1,1,1,0,"","Mom 'n Pop"],["Rock Springs",4,4,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Cross Creek Hospital",4,4,0,0,0,0,0,0,0,"","Publicly Traded"],["Burning Tree Ranch",4,4,0,0,0,1,0,0,0,"","Mom 'n Pop"],["New Choices Treatment Centers",4,3,1,0,0,0,0,0,0,"","Mom 'n Pop"],["Brazos Recovery Services",4,4,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Glen Oaks Hospital",4,4,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Asic Recovery Services",4,4,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Sundown Ranch",4,4,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Sycamore Behavioral Health",3,2,1,0,0,1,1,1,0,"New Lead","Mom 'n Pop"],["Mallard Lake Detox Center",3,3,0,0,0,0,0,0,0,"","Mom 'n Pop"],["WESTBRIDGE RECOVERY CENTER, INC",3,3,0,0,0,0,0,0,0,"","Mom 'n Pop"],["The Last Resort Recovery Center",3,3,0,0,0,1,1,1,0,"","Mom 'n Pop"],["Austin Pines Ranch",3,3,0,0,0,1,1,1,0,"","Mom 'n Pop"],["SOBA Texas",3,3,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Any Length Retreat",3,3,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Gateway\u202fto\u202fSobriety (Revive Recover)",3,3,0,0,0,1,1,1,0,"Stand By","Mom 'n Pop"],["Carrollton Springs | Collin Springs",3,3,0,0,0,0,0,0,0,"","Private Equity"],["Symetria Recovery",3,3,0,0,0,0,0,0,0,"","Private Equity"],["Windmill Wellness Ranch",3,3,0,0,0,1,1,0,1,"","Mom 'n Pop"],["Heartwood Recovery",3,3,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Perimeter Behavioral Hospital of Dallas",2,2,0,0,0,0,0,0,0,"","Private Equity"],["ABODE Treatment Inc",2,2,0,0,0,1,0,0,0,"","Mom 'n Pop"],["H.O.P.E.",2,2,0,0,0,0,0,0,0,"","Mom 'n Pop"],["3rd Day Treatment Center",2,2,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Stages of Recovery",2,2,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Pursuit of Hope",2,2,0,0,0,1,0,0,1,"","Mom 'n Pop"],["Woodland Springs Behavioral Health",2,2,0,0,0,0,0,0,0,"","Publicly Traded"],["Soba Recovery Center",2,2,0,0,0,1,0,0,1,"","Mom 'n Pop"],["Connections Wellness Group",2,2,0,0,0,0,0,0,0,"","Private Equity"],["UBH Denton",2,2,0,0,0,0,0,0,0,"","Publicly Traded"],["Willow Springs Recovery",2,2,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Stages Of Recovery, Inc.",2,2,0,0,0,1,0,0,1,"","Mom 'n Pop"],["San Marcos Treatment Center",2,2,0,0,0,1,0,0,0,"","Publicly Traded"],["Fort Behavioral Health",2,2,0,0,0,0,0,0,0,"","Private Equity"],["Starlite Recovery Center",2,2,0,0,0,0,0,0,0,"","Publicly Traded"],["Crestone Wellness Drug and Alcohol Detox, and Residential Treatment",2,2,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Resolutions Healthcare",1,1,0,0,0,1,1,1,0,"","Mom 'n Pop"],["The Prairie Recovery Center",1,0,1,0,0,0,0,0,0,"",""],["Texas Clinic",1,1,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Laurel Ridge Treatment Center",1,1,0,0,0,0,0,0,0,"","Publicly Traded"],["Bay Area Recovery Center",1,1,0,0,0,0,0,0,0,"","Mom 'n Pop"],["New Day Recovery Services",1,1,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Stone River Recovery Center",1,1,0,0,0,0,0,0,0,"","Private Equity"],["Briarwood Detox",1,1,0,0,0,1,1,1,1,"","Mom 'n Pop"],["The Recovery Center",1,1,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Best Recovery Health Care Inc",1,1,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Fire Sky Recovery",1,1,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Ethos Behavioral Health",1,0,1,0,0,0,0,0,0,"",""],["WTCR Programs",1,0,0,0,1,0,0,0,0,"","Mom 'n Pop"],["Fulshear Treatment to Transition",1,1,0,0,0,0,0,0,0,"","Private Equity"],["Nexus Health Systems",1,0,1,0,0,0,0,0,0,"","Mom 'n Pop"],["MedMark Treatment Centers",1,1,0,0,0,1,0,0,1,"","Private Equity"],["Red River Hospital",1,1,0,0,0,0,0,0,0,"","Publicly Traded"],["Great Oaks Recovery Center",1,1,0,0,0,0,0,0,0,"","Private Equity"],["Positive Recovery Centers",1,1,0,0,0,1,1,1,0,"","Mom 'n Pop"],["AppleGate Recovery",1,1,0,0,0,0,0,0,0,"","Private Equity"],["Add Life Recovery Center LLC",1,1,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Trinity River Recovery Center",1,1,0,0,0,0,0,0,0,"","Private Equity"],["More Than Rehab",1,1,0,0,0,0,0,0,0,"","Mom 'n Pop"],["PAM Voyages Behavioral Health",1,0,1,0,0,1,0,0,0,"",""]],"MS":[["Stonewater Adolescent Recovery Center",6,6,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Mississippi Drug and Alcohol Treatment Center",5,4,1,0,0,1,0,0,1,"","Mom 'n Pop"],["Clearview Recovery Center",5,5,0,0,0,0,0,0,0,"","Non-Profit"],["Extra Mile Recovery Addiction Rehab",5,5,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Three Oaks Behavioral Health",3,2,1,0,0,0,0,0,0,"","Mom 'n Pop"],["Pine Grove Behavioral Health & Addiction Services",3,3,0,0,0,0,0,0,0,"","Non-Profit"],["Alliance Health Center",2,2,0,0,0,0,0,0,0,"","Publicly Traded"],["Parkwood Behavioral Health System",2,2,0,0,0,0,0,0,0,"","Publicly Traded"],["Jackson Comprehensive Treatment Center",2,2,0,0,0,1,1,0,0,"","Publicly Traded"],["Defining Wellness Centers",2,2,0,0,0,1,1,0,1,"","Private Equity"],["Woodland Recovery Center",2,2,0,0,0,0,0,0,0,"","Private Equity"],["Oxford Treatment Center",2,2,0,0,0,0,0,0,0,"","Private Equity"],["The Estate at River Bend",1,1,0,0,0,0,0,0,0,"",""],["Brentwood Behavioral Healthcare",1,1,0,0,0,0,0,0,0,"","Publicly Traded"],["Pines and Cady Hills Recover Center",1,1,0,0,0,0,0,0,0,"",""],["Born Free Primary Residential Treatment",1,1,0,0,0,0,0,0,0,"",""]],"NC":[["Oasis Recovery Center NC",15,15,0,0,0,1,1,1,0,"","Mom 'n Pop"],["Asheville Detox Center",13,13,0,0,0,1,1,1,0,"Active - Awaiting Response","Mom 'n Pop"],["Health Care Alliance North America",13,13,0,0,0,1,1,1,0,"","Mom 'n Pop"],["Carolina Center for Recovery",12,9,3,0,0,1,1,1,1,"","Mom 'n Pop"],["The Blanchard Institute",12,10,2,0,0,1,1,1,0,"","Mom 'n Pop"],["New Waters Recovery",9,5,4,0,0,1,1,1,0,"Active - Waiting on Data","Mom 'n Pop"],["Momentum Recovery",8,6,2,0,0,1,1,1,0,"Active - Waiting on Data","Mom 'n Pop"],["Southeastern Recovery Center",6,6,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Next Step Recovery | NSR of Asheville",6,6,0,0,0,0,0,0,0,"","Non-Profit"],["Otter House Wellness",5,5,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Carolina Recovery Solutions",5,5,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Changing\u202fTides\u202fAddiction\u202fTreatment\u202fCenter",5,5,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Carolina Outpatient Detox",5,4,1,0,0,1,0,0,0,"","Mom 'n Pop"],["Welwynn\u202fOutpatient\u202fCenter",5,5,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Silver Ridge Recovery",5,5,0,0,0,1,0,0,0,"","Private Equity"],["Triple Play Farm",5,5,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Wilmington Treatment Center",4,4,0,0,0,0,0,0,0,"","Publicly Traded"],["Fellowship Hall",4,2,2,0,0,1,1,1,0,"","Mom 'n Pop"],["Crest View Recovery Center",4,3,1,0,0,1,1,1,0,"","Mom 'n Pop"],["Greenhill Recovery",4,4,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Pavillon Treatment Center",3,3,0,0,0,0,0,0,0,"","Non-Profit"],["Dixon Social Interactive Services, Inc.",3,2,1,0,0,1,1,1,1,"","Mom 'n Pop"],["First Step Services of North Carolina",3,3,0,0,0,0,0,0,0,"","Publicly Traded"],["Genesis... A New Beginning",3,3,0,0,0,0,0,0,0,"","Mom 'n Pop"],["RHA Health Services, LLC",3,3,0,0,0,0,0,0,0,"","Private Equity"],["Focused Addiction Recovery",3,3,0,0,0,1,1,1,0,"","Mom 'n Pop"],["Vizion Health",2,1,1,0,0,1,1,1,0,"Active - Waiting on Data","Mom 'n Pop"],["Tree House Recovery",2,1,1,0,0,0,0,0,0,"","Mom 'n Pop"],["HopeWay",2,2,0,0,0,0,0,0,0,"","Non-Profit"],["The Ritual Recovery",2,2,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Red Oak Recovery",2,2,0,0,0,1,1,0,0,"","Private Equity"],["Harmony Recovery Center",2,2,0,0,0,0,0,0,0,"","Private Equity"],["Harmony Health Group",1,1,0,0,0,1,1,1,1,"","Private Equity"],["Unity Healing Center",1,1,0,0,0,0,0,0,0,"",""],["Middle River Asheville",1,1,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Holy Hill Hospital",1,1,0,0,0,0,0,0,0,"","Publicly Traded"],["Anuvia",1,1,0,0,0,0,0,0,0,"","CLOSED"],["Carolina Wellness Center",1,1,0,0,0,1,0,0,1,"",""],["Family Solutions USA",1,1,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Brighter Start Health",1,1,0,0,0,1,0,0,1,"","Mom 'n Pop"],["Abhaya\u202fWellness",1,1,0,0,0,0,0,0,0,"","Mom 'n Pop"],["UNC Healthcare at Wakebrook Inpatient Unit",1,1,0,0,0,0,0,0,0,"",""],["Broadstep Behavioral Health",1,1,0,0,0,0,0,0,0,"","Private Equity"],["Triangle\u202fWellness\u202f&\u202fRecovery\u202f(TWR)",1,1,0,0,0,0,0,0,0,"","Mom 'n Pop"]],"PA":[["AVENUES RECOVERY CENTER",14,12,2,0,0,1,0,0,1,"","Mom 'n Pop"],["Pyramid Healthcare, Inc.",6,6,0,0,0,1,0,0,0,"","Private Equity"],["The Bridgeway",5,5,0,0,0,0,0,0,0,"","Private Equity"],["DreamLife Recovery PA",4,3,1,0,0,1,1,1,0,"Active - Analizing Data","Mom 'n Pop"],["Malvern Treatment Centers",2,2,0,0,0,0,0,0,0,"","Mom 'n Pop"],["UHS",2,2,0,0,0,1,1,1,0,"","Publicly Traded"],["Recovery Centers of America",2,2,0,0,0,1,1,0,1,"","Private Equity"],["Brookdale Premier Addiction Recovery",1,1,0,0,0,0,0,0,0,"","Private Equity"],["Clearbrook Treatment Centers",1,1,0,0,0,0,0,0,0,"","Private Equity"],["ARS Treatment Centers",1,1,0,0,0,0,0,0,0,"","Private Equity"],["Pocono Mountain Recovery Center",1,1,0,0,0,0,0,0,0,"","Publicly Traded"],["NewSpring Capital",1,1,0,0,0,0,0,0,0,"","Private Equity"],["Mountain Laurel Recovery Center",1,1,0,0,0,0,0,0,0,"","Private Equity"],["Just Believe Recovery Center",1,1,0,0,0,0,0,0,0,"","Mom 'n Pop"]],"KY":[["Impact Wellness Network",14,13,1,0,0,1,1,1,0,"","Mom 'n Pop"],["Lexington Addiction Center",10,10,0,0,0,0,0,0,0,"","Mom 'n Pop"],["The Healing Place (+1)",8,8,0,0,0,0,0,0,0,"","Non-Profit"],["SUN Behavioral Kentucky",6,6,0,0,0,0,0,0,0,"","Private Equity"],["Louisville Addiction Center",6,6,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Robert Alexander Center",5,4,1,0,0,1,1,1,0,"","Private Equity"],["Yonder Behavioral Health",5,5,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Serenity Ranch Recovery",5,5,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Bluegrass Recovery Center",5,5,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Isaiah House",4,4,0,0,0,0,0,0,0,"","Non-Profit"],["Addiction Recovery Care",4,3,0,0,1,1,1,1,0,"","Mom 'n Pop"],["Louisville Recovery Center",3,3,0,0,0,1,0,0,1,"","Mom 'n Pop"],["The Brook Hospitals",2,2,0,0,0,0,0,0,0,"","Publicly Traded"],["Ethan Health",2,2,0,0,0,1,1,1,0,"","Mom 'n Pop"],["The Healing Place",2,2,0,0,0,0,0,0,0,"","Non-Profit"],["Stepworks",1,1,0,0,0,1,1,1,1,"","Private Equity"],["Rivendell Behavioral Health Hospital",1,1,0,0,0,0,0,0,0,"","Publicly Traded"]],"MD":[["Centers for Behavioral Health, LLC",7,7,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Amatus Recovery Centers",7,4,3,0,0,1,1,1,1,"","Private Equity"],["Tranquility Woods Addiction Treatment Center",5,1,3,1,0,1,1,1,0,"","Mom 'n Pop"],["Alpas Wellness",5,3,2,0,0,0,0,0,0,"","Mom 'n Pop"],["The Freedom Center",5,5,0,0,0,0,0,0,0,"","Non-Profit"],["Maryland Treatment Centers",4,1,3,0,0,0,0,0,0,"","Mom 'n Pop"],["TruHealing Addiction and Mental Health Treatment",4,3,1,0,0,0,0,0,0,"","Private Equity"],["Project Chesapeake",4,4,0,0,0,0,0,0,0,"","Mom 'n Pop"],["The Valley Treatment Center",2,0,2,0,0,1,0,0,0,"","Mom 'n Pop"],["CONCERTED CARE GROUP LLC",2,2,0,0,0,0,0,0,0,"","Private Equity"],["Hope's Horizon",2,2,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Kolmac Integrated Behavioral Health",1,1,0,0,0,0,0,0,0,"","Private Equity"],["Summit Maryland",1,1,0,0,0,1,1,1,0,"","Mom 'n Pop"],["Evolve Life Centers",1,0,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Maryland Recovery",1,1,0,0,0,0,0,0,0,"",""],["HYGEA Healthcare",1,1,0,0,0,0,0,0,0,"","Publicly Traded"],["Maryland Addiction Recovery Center",1,1,0,0,0,1,0,0,0,"","Mom 'n Pop"],["Glass House",1,1,0,0,0,0,0,0,0,"","Publicly Traded"],["Ashley Addiction Treatment",1,1,0,0,0,0,0,0,0,"",""],["HYGEA Healthcare",1,1,0,0,0,0,0,0,0,"",""]],"NJ":[["Continuum Healthcare, Inc.",4,4,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Sun Behavioral",4,4,0,0,0,0,0,0,0,"","Private Equity"],["Pinnacle Treatment Centers, Inc.",3,3,0,0,0,1,1,0,1,"","Private Equity"],["Rubicon Recovery Center",2,2,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Evolve Recovery Center",1,1,0,0,0,0,0,0,0,"","Private Equity"],["Enlightened Recovery",1,1,0,0,0,1,1,1,0,"","Mom 'n Pop"],["The Haven Detox LLC",1,1,0,0,0,0,0,0,0,"",""]],"OH":[["Lumiere Healing Centers",7,7,0,0,0,0,0,0,0,"","Mom 'n Pop"],["The Woods at Parkside",6,6,0,0,0,1,0,0,1,"","Private Equity"],["The Ridge Ohio",5,5,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Ray Recovery",5,5,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Legends Recovery Center",5,5,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Arrow Passage Recovery",5,5,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Ethan Crossing Addiction Treatment",5,4,0,0,1,1,1,1,0,"Stand By","Mom 'n Pop"],["Recovery Institute of Ohio",5,5,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Hope Valley Recovery",5,5,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Ohio Community Health",5,5,0,0,0,0,0,0,0,"","Non-Profit"],["First Step Recovery",5,5,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Focus Residential Group, LLC",5,5,0,0,0,0,0,0,0,"","Mom 'n Pop"],["White Light Behavioral Health",5,5,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Ohio Addiction Recovery Center",5,5,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Silver Maple Recovery",4,4,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Modern Psychiatry and Wellness",4,4,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Cedar Oaks Wellness Center",4,4,0,0,0,0,0,0,0,"","Mom 'n Pop"],["MidWest Recovery Center",4,3,1,0,0,0,0,0,0,"","Private Equity"],["The Bluffs - Addiction Campuses",3,3,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Lighthouse Behavioral Health Solutions",3,3,0,0,0,0,0,0,0,"","Private Equity"],["New Pathways Clinic",3,3,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Armada Recovery",3,2,0,0,0,1,1,1,0,"","Mom 'n Pop"],["Findlay Recovery Center",3,3,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Ohio Addiction Recovery Center",3,3,0,0,0,0,0,0,0,"","Mom 'n Pop"],["The Recovery Center of Ohio",2,2,0,0,0,1,1,0,1,"","Mom 'n Pop"],["Beckett Springs",2,2,0,0,0,0,0,0,0,"","Private Equity"],["BrightView Health",2,2,0,0,0,1,1,1,0,"","Private Equity"],["Columbus Springs",1,1,0,0,0,0,0,0,0,"","Publicly Traded"],["Your Recovery Counseling",1,1,0,0,0,0,0,0,0,"","Mom 'n Pop"]],"LA":[["St. Christopher's Addiction Wellness Center",17,10,5,1,1,0,0,0,0,"","Mom 'n Pop"],["Second Chances Addiction Recovery Center",10,5,3,2,0,1,1,1,0,"Active - Analizing Data","Mom 'n Pop"],["Longbranch Healthcare",9,5,4,0,0,1,1,1,0,"Active","Mom 'n Pop"],["Townsend Treatment Center",8,7,1,0,0,1,0,0,1,"","Publicly Traded"],["Compass Behavioral Center",7,0,7,0,0,0,0,0,0,"","Mom 'n Pop"],["The Grove Recovery Centers",7,1,4,2,0,1,1,1,0,"Stalled","Mom 'n Pop"],["Apollo Behavioral Health",7,1,6,0,0,0,0,0,0,"","Mom 'n Pop"],["Nova\u00a0Vital\u00a0Recovery",6,2,4,0,0,1,1,1,0,"","Mom 'n Pop"],["Rayville Recovery",6,2,4,0,0,0,0,0,0,"","Mom 'n Pop"],["Genesis Behavioral Hospital",4,1,2,0,0,1,1,1,0,"Stand By","Mom 'n Pop"],["Loving Hearts of Louisiana (+2)",4,4,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Palmetto Addiction Recovery Center",4,1,3,0,0,1,0,0,0,"","Mom 'n Pop"],["Edgefield Recovery Center",4,2,2,0,0,0,0,0,0,"","Mom 'n Pop"],["Regions Behavioral Hospital",4,1,3,0,0,1,1,1,1,"Stand By","Mom 'n Pop"],["Power House Services",3,1,1,1,0,1,1,1,0,"","Mom 'n Pop"],["Whispering Oaks Lodge",3,3,0,0,0,1,1,1,0,"","Mom 'n Pop"],["Evangelhouse Christian Academy",3,1,2,0,0,1,1,1,1,"","Mom 'n Pop"],["Uprising Addiction Center",3,0,3,0,0,1,1,1,0,"","Mom 'n Pop"],["Woodlake Addiction Recovery",3,2,1,0,0,1,1,1,0,"Stand By","Mom 'n Pop"],["Pecan Haven Addiction Recovery Center",3,1,1,1,0,0,0,0,0,"","Mom 'n Pop"],["The Maples",2,0,1,0,0,0,0,0,0,"","Private Equity"],["Serenity Treatment Center",2,0,2,0,0,1,1,1,0,"Active","Mom 'n Pop"],["The Ness Center",2,1,0,1,0,1,1,1,0,"",""],["Crossroads Recovery Center of Louisiana",2,2,0,0,0,0,0,0,0,"",""],["Sanctuary Louisiana",2,0,2,0,0,1,1,1,0,"Active","Mom 'n Pop"],["Red River Behavioral",2,1,1,0,0,0,0,0,0,"","Mom 'n Pop"],["Brentwood Hospital",1,1,0,0,0,0,0,0,0,"",""],["Victory Addiction Recovery Center",1,1,0,0,0,0,0,0,0,"","Private Equity"],["O'Brien House",1,1,0,0,0,1,0,0,1,"","Non-Profit"],["Odyssey House Louisiana",1,1,0,0,0,0,0,0,0,"",""],["Northlake Behavioral Health System",1,1,0,0,0,0,0,0,0,"","Non-Profit"],["Steps Detox",1,1,0,0,0,1,1,1,0,"",""],["Journey Home",1,1,0,0,0,0,0,0,0,"","Non-Profit"],["Nola Detox",1,1,0,0,0,1,1,1,0,"Active","Mom 'n Pop"],["Bridge House / Grace House",1,1,0,0,0,0,0,0,0,"",""],["Townsend Treatment Center",1,0,0,0,0,0,0,0,0,"","Private Equity"],["Vermilion Behavioral Health Systems",1,1,0,0,0,0,0,0,0,"",""],["STC Addiction Wellness Center",1,1,0,0,0,0,0,0,0,"",""]],"MO":[["Midwest Recovery Centers",3,3,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Sana Lake Recovery",2,2,0,0,0,1,0,0,0,"","Mom 'n Pop"],["Centene Corporation",1,1,0,0,0,0,0,0,0,"","Publicly Traded"],["INSynergy",1,1,0,0,0,1,1,0,1,"","Mom 'n Pop"],["SpecialCare Hospital Management",1,1,0,0,0,0,0,0,0,"","Private Equity"]],"AZ":[["Meadows Behavioral Healthcare",4,4,0,0,0,0,0,0,0,"","Private Equity"],["33",4,4,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Aliya Health Group",2,1,0,1,0,1,1,1,1,"","Mom 'n Pop"],["Buena Vista Health & Recovery Centers",2,2,0,0,0,1,1,0,1,"","Mom 'n Pop"],["St. Luke's Medical Center",2,2,0,0,0,0,0,0,0,"","Non-Profit"],["Soberman's Estate",1,1,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Calvary Healing Center",1,1,0,0,0,0,0,0,0,"","Publicly Traded"],["Community Medical Services",1,1,0,0,0,0,0,0,0,"","Private Equity"],["ALPINE VILLA LLC",1,1,0,0,0,1,1,0,1,"","Mom 'n Pop"]],"AR":[["Capstone Treatment Center",13,9,4,0,0,0,0,0,0,"","Mom 'n Pop"],["True Self Recovery",7,5,1,0,0,0,0,0,0,"","Mom 'n Pop"],["Oasis Renewal Center",7,6,0,0,0,0,0,0,0,"","Non-Profit"],["EagleCrest Recovery",6,5,1,0,0,1,1,1,0,"","Mom 'n Pop"],["River Valley Medical Wellness",6,6,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Peak State Recovery",5,1,2,2,0,0,0,0,0,"","Mom 'n Pop"],["Retreat at Sky Ridge",5,5,0,0,0,1,1,1,0,"","Mom 'n Pop"],["Time Wellness Arkansas",5,5,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Quapaw House Inc CORT",4,4,0,0,0,0,0,0,0,"","Non-Profit"],["Harbor House, Inc.",4,3,1,0,0,0,0,0,0,"","Non-Profit"],["Kingdom Life Recovery",4,3,0,0,0,0,0,0,0,"","Non-Profit"],["Arisa Health",4,4,0,0,0,1,0,0,1,"","Non-Profit"],["Recovery Centers of Arkansas (RCA)",4,3,0,0,0,0,0,0,0,"","Non-Profit"],["SOZO Recovery Center",4,3,0,0,0,0,0,0,0,"","Non-Profit"],["Birch Tree Communities",4,4,0,0,0,0,0,0,0,"","Non-Profit"],["Methodist Family Health",4,4,0,0,0,0,0,0,0,"","Non-Profit"],["The Centers (for Youth & Families)",4,3,0,0,0,0,0,0,0,"","Non-Profit"],["Serenity Park Recovery Center",4,4,0,0,0,0,0,0,0,"","Private Equity"],["Youth Home, Inc.",3,3,0,0,0,0,0,0,0,"","Non-Profit"],["Crowson Open Addiction Treatment",3,3,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Teen Challenge Ranch",3,3,0,0,0,0,0,0,0,"","Non-Profit"],["Rivendell Behavioral Health Services of Arkansas",2,2,0,0,0,0,0,0,0,"","Publicly Traded"],["Conway Behavioral Health Hospital (+1)",2,2,0,0,0,0,0,0,0,"","Publicly Traded"],["Vantage Point Behavioral Health Hospital",2,2,0,0,0,0,0,0,0,"","Publicly Traded"],["Acceptance Treatment & Counseling",2,0,2,0,0,0,0,0,0,"","Mom 'n Pop"],["Natural State Recovery Centers",1,1,0,0,0,1,1,1,1,"","Mom 'n Pop"],["Valley Behavioral Health System",1,1,0,0,0,0,0,0,0,"","Publicly Traded"]],"NV":[["First Dawn Recovery Veterans Program",2,2,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Vogue Recovery Center",2,2,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Seven Hills Behavioral Health Hospital",1,1,0,0,0,0,0,0,0,"","Publicly Traded"]],"MA":[["Engage Wellness",8,5,2,1,0,0,0,0,0,"","Mom 'n Pop"],["Webster Equity Partners",6,6,0,0,0,0,0,0,0,"","Private Equity"],["Groups Recover Together",4,4,0,0,0,0,0,0,0,"","Private Equity"],["Rockland Recovery Treatment Centers, LLC",2,2,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Eleanor Health",1,1,0,0,0,0,0,0,0,"","Private Equity"],["Transition House Inc",1,1,0,0,0,0,0,0,0,"","Non-Profit"]],"NY":[["US HealthVest",6,5,0,0,1,1,1,1,0,"","Private Equity"],["BestSelf Behavioral Health",5,5,0,0,0,0,0,0,0,"","Non-Profit"],["WindRose Health Investors",3,3,0,0,0,0,0,0,0,"","Private Equity"],["Forge Health",1,1,0,0,0,0,0,0,0,"","Private Equity"],["Arms Acres",1,1,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Apollo Global Management",1,1,0,0,0,0,0,0,0,"","Publicly Traded"],["Hillside",1,1,0,0,0,0,0,0,0,"","Private Equity"]],"AL":[["Recover now",9,5,4,0,0,1,1,1,0,"","Mom 'n Pop"],["Pathway Healthcare",8,7,1,0,0,0,0,0,0,"","Mom 'n Pop"],["Blackberry Ridge, LLC",8,7,0,0,0,0,0,0,0,"","Mom 'n Pop"],["IOP\u202fServices\u202fLLC",6,6,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Impact Recovery Center",3,3,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Cedar Lodge",2,2,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Client Care Continuum",2,1,1,0,0,0,0,0,0,"","Mom 'n Pop"],["AltaPointe",1,1,0,0,0,0,0,0,0,"","Non-Profit"],["Anniston Fellowship House",1,1,0,0,0,0,0,0,0,"","Non-Profit"],["Behavioral Health Systems",1,1,0,0,0,0,0,0,0,"","Publicly Traded"],["Longleaf Recovery Huntsville",1,1,0,0,0,0,0,0,0,"","Private Equity"],["Southeast Intervention Group/Herring House/Step By Step Recovery",1,1,0,0,0,0,0,0,0,"","Non-Profit"],["CED Fellowship House",1,1,0,0,0,0,0,0,0,"","Non-Profit"],["Northwest Alabama Mental Health Center",1,1,0,0,0,0,0,0,0,"","Non-Profit"],["Birmingham Recovery Center",1,1,0,0,0,0,0,0,0,"","Mom 'n Pop"],["SpectraCare-The Haven",1,1,0,0,0,0,0,0,0,"","Non-Profit"],["Bridge, Inc-Northwood",1,1,0,0,0,0,0,0,0,"","Non-Profit"],["Drug Alternative Program",1,1,0,0,0,0,0,0,0,"","Non-Profit"],["Wellstone (New Horizons)",1,1,0,0,0,0,0,0,0,"","Non-Profit"],["Bradford at Madison",1,1,0,0,0,0,0,0,0,"","Private Equity"],["Aletheia House",1,1,0,0,0,0,0,0,0,"","Non-Profit"]],"OK":[["Maric Healthcare (+3)",4,4,0,0,0,1,1,0,0,"","Mom 'n Pop"],["GRAND Mental Health",3,2,0,1,0,0,0,0,0,"","Non-Profit"],["Country Road Recovery Center - A Pathways Facility",3,3,0,0,0,0,0,0,0,"","Private Equity"],["Living Hope Eating Disorder Treatment Center",2,2,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Slate Recovery",2,2,0,0,0,1,1,1,0,"","Mom 'n Pop"],["Red Rock Behavioral Health Services",2,1,1,0,0,0,0,0,0,"",""],["Cedar Ridge Behavioral Hospital",2,2,0,0,0,0,0,0,0,"","Publicly Traded"],["Red River Youth Academy",1,1,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Catalyst Behavioral Services",1,0,1,0,0,0,0,0,0,"",""]],"OR":[["Another Chance Drug and Alcohol Rehab of Portland",2,2,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Madrona Recovery",1,1,0,0,0,0,0,0,0,"",""],["Recovery Works NW",1,1,0,0,0,0,0,0,0,"",""],["Oregon Trail Recovery LLC",1,1,0,0,0,1,0,0,1,"",""],["Crestview Recovery",1,1,0,0,0,0,0,0,0,"",""],["Virtue at the Pointe Recovery Center",1,1,0,0,0,0,0,0,0,"",""]],"SC":[["South Carolina Addiction Treatment",11,8,3,0,0,1,1,1,1,"","Mom 'n Pop"],["The Owl's Nest Recovery",6,5,1,0,0,1,1,1,1,"","Mom 'n Pop"],["CHARLESTON RECOVERY CENTER",6,4,2,0,0,1,1,0,0,"","Non-Profit"],["Hammocks on the Edisto",6,3,2,0,1,1,1,1,1,"","Mom 'n Pop"],["Lantana Recovery",6,5,1,0,0,0,0,0,0,"","Mom 'n Pop"],["Greenville Transitions Recovery Center",6,6,0,0,0,0,0,0,0,"","Mom 'n Pop"],["BriteLife Recovery",5,3,1,0,1,1,1,1,1,"","Mom 'n Pop"],["Southern Sky Recovery",5,4,1,0,0,1,1,1,0,"Stand By","Mom 'n Pop"],["New Hope Carolinas",4,3,1,0,0,1,1,1,0,"Stand By","Mom 'n Pop"],["Springbrook Behavioral Health System",3,2,1,0,0,0,0,0,0,"","Mom 'n Pop"],["American Detox & Treatment Center (ADTC)",3,1,2,0,0,0,0,0,0,"","Mom 'n Pop"],["Crossroads",3,3,0,0,0,0,0,0,0,"","Private Equity"],["Waypoint Recovery Center",3,3,0,0,0,0,0,0,0,"","Private Equity"],["The Carolina Center For Behavioral Health",2,2,0,0,0,0,0,0,0,"","Publicly Traded"],["The Middle Path at Barrier Island",2,2,0,0,0,1,0,0,1,"","Mom 'n Pop"],["Rebound Behavioral Health Hospital",2,2,0,0,0,0,0,0,0,"","Publicly Traded"],["Lighthouse Behavioral Health Hospital",2,2,0,0,0,1,1,0,1,"","Publicly Traded"],["Three Rivers Behavioral Health",2,2,0,0,0,0,0,0,0,"","Publicly Traded"],["Palmetto Lowcountry Behavioral Health",2,2,0,0,0,0,0,0,0,"","Publicly Traded"],["Coastal Recovery",1,1,0,0,0,0,0,0,0,"","Mom 'n Pop"],["The Wave International",1,1,0,0,0,1,1,1,0,"Stand By","Mom 'n Pop"],["Havenwood Behavioral health",1,1,0,0,0,0,0,0,0,"","Mom 'n Pop"]],"CO":[["The Recovery Village at Palmer Lake",3,3,0,0,0,0,0,0,0,"","Private Equity"],["Red Rock Recovery Center",3,3,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Gallus Medical Detox Centers",3,3,0,0,0,1,1,1,0,"","Private Equity"],["Mile High Recovery Center",2,2,0,0,0,0,0,0,0,"","Mom 'n Pop"],["West Pines Behavioral Hospital",2,2,0,0,0,0,0,0,0,"","Publicly Traded"],["Peak View Behavioral Health",2,2,0,0,0,0,0,0,0,"","Private Equity"],["Sandstone Care",2,2,0,0,0,0,0,0,0,"","Private Equity"],["Flatirons Recovery",2,2,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Cedar Springs Hospital",2,2,0,0,0,0,0,0,0,"","Publicly Traded"],["Mountain Springs Recovery",1,1,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Denver Recovery Center",1,1,0,0,0,1,1,0,1,"","Mom 'n Pop"],["Rocky Mountain Detox, LLC",1,1,0,0,0,1,1,1,1,"","Mom 'n Pop"],["Denver Springs",1,1,0,0,0,1,1,0,1,"","Private Equity"],["Healing Pines Recovery",1,1,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Choice House Colorado",1,1,0,0,0,0,0,0,0,"","Mom 'n Pop"],["The Raleigh House",1,1,0,0,0,1,1,1,1,"","Mom 'n Pop"],["Jaywalker Lodge",1,1,0,0,0,1,1,0,1,"","Mom 'n Pop"],["Sandstone Care",1,1,0,0,0,1,0,0,0,"","Private Equity"],["Peaks Recovery Centers",1,1,0,0,0,1,1,1,0,"","Mom 'n Pop"]],"NH":[["Granite Recovery Centers",2,2,0,0,0,0,0,0,0,"","Private Equity"]],"":[["Odyssey Behavioral Healthcare",7,7,0,0,0,0,0,0,0,"","Private Equity"],["Michael's House",3,3,0,0,0,1,1,0,1,"","Non-Profit"],["URP Lake Worth - Genesis House",3,3,0,0,0,0,0,0,0,"",""],["New Vista Health",1,0,0,0,1,1,1,1,0,"",""],["Huml Health",1,1,0,0,0,0,0,0,0,"",""],["Advantage Behavioral Health",1,1,0,0,0,0,0,0,0,"",""],["The Willows at Red Oak Recovery",1,1,0,0,0,0,0,0,0,"",""]],"KS":[["Arista Recovery",11,11,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Holland Pathways",8,8,0,0,0,0,0,0,0,"","Mom 'n Pop"],["SUNFLOWER WELLNESS RETREAT",6,6,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Gold Bridge Treatment Center",4,4,0,0,0,1,1,1,0,"","Mom 'n Pop"],["Cherry Creek Treatment Center",4,4,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Cottonwood Springs",3,3,0,0,0,0,0,0,0,"","Publicly Traded"],["Bel Aire Recovery Center",2,2,0,0,0,0,0,0,0,"","Private Equity"],["KISA LIFE RECOVERY, LLC",2,2,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Mirror",1,1,0,0,0,1,0,0,1,"","Non-Profit"]],"MI":[["Turning Leaf Behavioral Health Services",9,3,6,0,0,1,0,0,0,"New Lead","Mom 'n Pop"],["Sanford West Behavioral Health Campus",5,2,3,0,0,0,0,0,0,"","Mom 'n Pop"],["Skywood Recovery",4,4,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Rushton Recovery",4,2,2,0,0,1,0,0,1,"","Mom 'n Pop"],["Partners in Change",3,3,0,0,0,0,0,0,0,"","Mom 'n Pop"],["The Behavioral Center of Michigan",3,1,1,1,0,1,0,0,1,"","Mom 'n Pop"],["Bear River Health",3,3,0,0,0,0,0,0,0,"","Mom 'n Pop"],["All Opiates Detox",3,3,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Dawn Farm",3,3,0,0,0,0,0,0,0,"","Non-Profit"],["Pine Rest Retreat Clinic",2,2,0,0,0,0,0,0,0,"","Non-Profit"],["Sacred Heart Rehabilitation Center",2,2,0,0,0,0,0,0,0,"","Non-Profit"],["Team Mental Health Services",2,1,1,0,0,1,0,0,0,"","Mom 'n Pop"],["Wedgwood Christian Services",2,2,0,0,0,0,0,0,0,"","Non-Profit"],["Easterseals MORC",2,2,0,0,0,1,0,0,0,"","Non-Profit"],["Communicare Michigan",1,1,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Great Lakes Recovery Centers (GLRC)",1,1,0,0,0,0,0,0,0,"","Non-Profit"],["Advanced Rapid Detox",1,1,0,0,0,1,1,0,0,"Stand By","Mom 'n Pop"],["Liberty House Recovery Center",1,1,0,0,0,1,0,0,0,"","Mom 'n Pop"],["Zion Healing Center Grand Rapids",1,1,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Evolve Behavioral Health",1,1,0,0,0,0,0,0,0,"","Mom 'n Pop"]],"CT":[["Aware Recovery Care, Inc.",1,1,0,0,0,0,0,0,0,"","Private Equity"]],"WA":[["Lakeside-Milam Recovery Centers",2,2,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Ideal Option",1,1,0,0,0,0,0,0,0,"","Private Equity"],["Northpoint Recovery Washington",1,1,0,0,0,0,0,0,0,"","Private Equity"]],"ID":[["Northpoint Recovery",1,1,0,0,0,0,0,0,0,"","Private Equity"]],"DC":[["Kolmac",3,3,0,0,0,0,0,0,0,"","Private Equity"]],"NE":[["CHI Health",1,1,0,0,0,0,0,0,0,"","Non-Profit"]],"UT":[["Diamond Recovery Centers",1,1,0,0,0,0,0,0,0,"","Mom 'n Pop"]],"WI":[["Wellbrook Recovery",4,4,0,0,0,0,0,0,0,"","Mom 'n Pop"]],"IA":[["Ember Recovery",2,2,0,0,0,0,0,0,0,"","Non-Profit"]],"WV":[["Lotus Recovery Centers",4,4,0,0,0,1,1,1,0,"","Private Equity"],["Harmony Ridge Recovery Center",3,3,0,0,0,0,0,0,0,"","Mom 'n Pop"],["Wise Path Recovery",1,1,0,0,0,0,0,0,0,"","Private Equity"]]};
+applyFilter('calling');
+</script>
+
+</body>
+</html>
