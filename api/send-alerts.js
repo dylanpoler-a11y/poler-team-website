@@ -130,6 +130,9 @@ export default async function handler(req) {
                     bedsMin: profile.bedsMin || lead.bedsMin,
                     bathsMin: profile.bathsMin || lead.bathsMin,
                     polygon: profile.polygon || '',
+                    features: profile.features || [],
+                    yearBuiltMin: profile.yearBuiltMin || 0,
+                    keywords: profile.keywords || '',
                 };
                 let profileListings = await fetchBridgeListings(bridgeToken, profileLead);
 
@@ -320,6 +323,9 @@ async function fetchBridgeListings(token, lead) {
     const cities = (lead.cities || '').split(',').map(s => s.trim()).filter(Boolean).map(toTitleCase);
     const count = lead.count || 5;
     const hasPolygon = !!(lead.polygon);
+    const hasFeatures = (lead.features || []).length > 0;
+    const hasKeywords = !!(lead.keywords);
+    const needsClientFilter = hasPolygon || hasFeatures || hasKeywords;
 
     const typeMap = {
         'Single Family': 'Single Family Residence',
@@ -330,7 +336,7 @@ async function fetchBridgeListings(token, lead) {
 
     const baseParams = new URLSearchParams({
         access_token:   token,
-        limit:          String(hasPolygon ? 50 : count * 2),
+        limit:          String(needsClientFilter ? 100 : count * 2),
         sortBy:         'ModificationTimestamp',
         order:          'desc',
         PropertyType:   'Residential',
@@ -341,6 +347,7 @@ async function fetchBridgeListings(token, lead) {
     if (lead.priceMax > 0) baseParams.set('ListPrice.lte', String(lead.priceMax));
     if (lead.bedsMin > 0) baseParams.set('BedroomsTotal.gte', String(lead.bedsMin));
     if (lead.bathsMin > 0) baseParams.set('BathroomsTotalInteger.gte', String(lead.bathsMin));
+    if (lead.yearBuiltMin > 0) baseParams.set('YearBuilt.gte', String(lead.yearBuiltMin));
 
     // When polygon exists but no cities, derive cities from polygon center
     let polygonCities = [];

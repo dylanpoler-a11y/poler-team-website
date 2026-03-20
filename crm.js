@@ -971,6 +971,10 @@ function renderProfileCards() {
       ? '$' + (p.priceMin ? Number(p.priceMin).toLocaleString() : '0') + ' — $' + (p.priceMax ? Number(p.priceMax).toLocaleString() : 'Any')
       : 'Any price';
     const hasPolygon = p.polygon ? ' | Map area set' : '';
+    const featuresStr = (p.features || []).length > 0 ? (p.features || []).join(', ') : '';
+    const yearStr = p.yearBuiltMin ? 'Built ' + p.yearBuiltMin + '+' : '';
+    const keywordsStr = p.keywords ? '"' + p.keywords + '"' : '';
+    const extraParts = [featuresStr, yearStr, keywordsStr].filter(Boolean).join(' | ');
     return `<div class="alert-profile-card">
       <div class="alert-profile-card-header">
         <strong>${escHtml(p.name || 'Profile ' + (i + 1))}</strong>
@@ -981,6 +985,7 @@ function renderProfileCards() {
       </div>
       <div class="alert-profile-card-detail">${escHtml(typesStr)} | ${escHtml(citiesStr)}</div>
       <div class="alert-profile-card-detail">${escHtml(priceStr)}${hasPolygon}</div>
+      ${extraParts ? `<div class="alert-profile-card-detail">${escHtml(extraParts)}</div>` : ''}
     </div>`;
   }).join('');
 }
@@ -998,6 +1003,12 @@ function showProfileForm(profile) {
   document.querySelectorAll('#panel-alert-types input').forEach(cb => {
     cb.checked = types.includes(cb.value);
   });
+  const features = profile ? (profile.features || []) : [];
+  document.querySelectorAll('#panel-alert-features input').forEach(cb => {
+    cb.checked = features.includes(cb.value);
+  });
+  document.getElementById('panel-alert-year-built').value = profile ? profile.yearBuiltMin || '' : '';
+  document.getElementById('panel-alert-keywords').value = profile ? profile.keywords || '' : '';
   // Scroll form into view first, then init map after container is visible
   setTimeout(() => {
     form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -1015,6 +1026,8 @@ function hideProfileForm() {
 function getProfileFromForm() {
   const types = [];
   document.querySelectorAll('#panel-alert-types input:checked').forEach(cb => types.push(cb.value));
+  const features = [];
+  document.querySelectorAll('#panel-alert-features input:checked').forEach(cb => features.push(cb.value));
   return {
     name: document.getElementById('panel-alert-profile-name').value.trim() || 'Untitled',
     types,
@@ -1024,6 +1037,9 @@ function getProfileFromForm() {
     bedsMin: Number(document.getElementById('panel-alert-beds').value) || 0,
     bathsMin: Number(document.getElementById('panel-alert-baths').value) || 0,
     polygon: alertMapPolygons.length > 0 ? JSON.stringify(alertMapPolygons) : '',
+    features,
+    yearBuiltMin: Number(document.getElementById('panel-alert-year-built').value) || 0,
+    keywords: document.getElementById('panel-alert-keywords').value.trim(),
   };
 }
 

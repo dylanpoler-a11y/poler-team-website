@@ -100,6 +100,9 @@ export default async function handler(req) {
             bedsMin: profile.bedsMin || lead.bedsMin,
             bathsMin: profile.bathsMin || lead.bathsMin,
             polygon: profile.polygon || '',
+            features: profile.features || [],
+            yearBuiltMin: profile.yearBuiltMin || 0,
+            keywords: profile.keywords || '',
         };
         let profileListings = await fetchBridgeListings(bridgeToken, profileLead);
         console.log(`[ALERT DEBUG] Profile "${profile.name || 'default'}": ${profileListings.length} listings from Bridge, cities="${profileLead.cities}", types=${JSON.stringify(profileLead.types)}, priceMin=${profileLead.priceMin}, priceMax=${profileLead.priceMax}`);
@@ -238,6 +241,9 @@ async function fetchBridgeListings(token, lead) {
     const cities = (lead.cities || '').split(',').map(s => s.trim()).filter(Boolean).map(toTitleCase);
     const count = lead.count || 5;
     const hasPolygon = !!(lead.polygon);
+    const hasFeatures = (lead.features || []).length > 0;
+    const hasKeywords = !!(lead.keywords);
+    const needsClientFilter = hasPolygon || hasFeatures || hasKeywords;
 
     const typeMap = {
         'Single Family': 'Single Family Residence',
@@ -248,7 +254,7 @@ async function fetchBridgeListings(token, lead) {
 
     const baseParams = new URLSearchParams({
         access_token:   token,
-        limit:          String(hasPolygon ? 50 : count * 2), // fetch many when using polygon filter
+        limit:          String(needsClientFilter ? 100 : count * 2), // fetch many when client-side filtering is needed
         sortBy:         'ModificationTimestamp',
         order:          'desc',
         PropertyType:   'Residential',
@@ -259,6 +265,7 @@ async function fetchBridgeListings(token, lead) {
     if (lead.priceMax > 0) baseParams.set('ListPrice.lte', String(lead.priceMax));
     if (lead.bedsMin > 0) baseParams.set('BedroomsTotal.gte', String(lead.bedsMin));
     if (lead.bathsMin > 0) baseParams.set('BathroomsTotalInteger.gte', String(lead.bathsMin));
+    if (lead.yearBuiltMin > 0) baseParams.set('YearBuilt.gte', String(lead.yearBuiltMin));
 
     // When polygon exists but no cities, derive cities from polygon bounding box center
     let polygonCities = [];
@@ -327,11 +334,57 @@ async function fetchBridgeListings(token, lead) {
             seen.add(l.ListingId);
             unique.push(l);
         }
-        // Don't limit here if polygon will filter further; let caller handle final count
-        if (!hasPolygon && unique.length >= count) break;
+        if (!needsClientFilter && unique.length >= count) break;
     }
 
-    return unique;
+    // Client-side feature filtering
+    let filtered = unique;
+    const features = lead.features || [];
+    if (features.length > 0) {
+        filtered = filtered.filter(l => {
+            return features.every(feat => matchesFeature(l, feat));
+        });
+        console.log(`[ALERT DEBUG] After feature filter (${features.join(', ')}): ${filtered.length} remain`);
+    }
+
+    // Client-side keyword filtering (check PublicRemarks)
+    if (lead.keywords) {
+        const kws = lead.keywords.toLowerCase().split(',').map(s => s.trim()).filter(Boolean);
+        if (kws.length > 0) {
+            filtered = filtered.filter(l => {
+                const remarks = (l.PublicRemarks || '').toLowerCase();
+                return kws.some(kw => remarks.includes(kw));
+            });
+            console.log(`[ALERT DEBUG] After keyword filter ("${lead.keywords}"): ${filtered.length} remain`);
+        }
+    }
+
+    return filtered;
+}
+
+// Check if a listing matches a feature tag
+function matchesFeature(listing, feature) {
+    const arrContains = (arr, ...terms) => {
+        if (!Array.isArray(arr)) return false;
+        const lower = arr.map(s => (s || '').toLowerCase());
+        return terms.some(t => lower.some(v => v.includes(t.toLowerCase())));
+    };
+    switch (feature) {
+        case 'Waterfront / Ocean View':
+            return arrContains(listing.View, 'ocean', 'water', 'bay', 'intracoastal')
+                || arrContains(listing.WaterfrontFeatures, 'ocean', 'water', 'bay');
+        case 'Balcony / Terrace':
+            return arrContains(listing.PatioAndPorchFeatures, 'balcony', 'terrace', 'deck', 'lanai');
+        case 'Pool':
+            return Array.isArray(listing.PoolFeatures) && listing.PoolFeatures.length > 0;
+        case 'High Rise':
+            return arrContains(listing.ArchitecturalStyle, 'high rise', 'highrise');
+        case 'Penthouse':
+            return arrContains(listing.ArchitecturalStyle, 'penthouse')
+                || (listing.PublicRemarks || '').toLowerCase().includes('penthouse');
+        default:
+            return true;
+    }
 }
 
 // ── EMAIL TEMPLATE ────────────────────────────────────────────────────────────
