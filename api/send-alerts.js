@@ -414,10 +414,53 @@ async function fetchBridgeListings(token, lead) {
             seen.add(l.ListingId);
             unique.push(l);
         }
-        if (!hasPolygon && unique.length >= count) break;
+        if (!needsClientFilter && unique.length >= count) break;
     }
 
-    return unique;
+    // Client-side feature filtering
+    let filtered = unique;
+    const features = lead.features || [];
+    if (features.length > 0) {
+        filtered = filtered.filter(l => features.every(feat => matchesFeature(l, feat)));
+    }
+
+    // Client-side keyword filtering (check PublicRemarks)
+    if (lead.keywords) {
+        const kws = lead.keywords.toLowerCase().split(',').map(s => s.trim()).filter(Boolean);
+        if (kws.length > 0) {
+            filtered = filtered.filter(l => {
+                const remarks = (l.PublicRemarks || '').toLowerCase();
+                return kws.some(kw => remarks.includes(kw));
+            });
+        }
+    }
+
+    return filtered;
+}
+
+// Check if a listing matches a feature tag
+function matchesFeature(listing, feature) {
+    const arrContains = (arr, ...terms) => {
+        if (!Array.isArray(arr)) return false;
+        const lower = arr.map(s => (s || '').toLowerCase());
+        return terms.some(t => lower.some(v => v.includes(t.toLowerCase())));
+    };
+    switch (feature) {
+        case 'Waterfront / Ocean View':
+            return arrContains(listing.View, 'ocean', 'water', 'bay', 'intracoastal')
+                || arrContains(listing.WaterfrontFeatures, 'ocean', 'water', 'bay');
+        case 'Balcony / Terrace':
+            return arrContains(listing.PatioAndPorchFeatures, 'balcony', 'terrace', 'deck', 'lanai');
+        case 'Pool':
+            return Array.isArray(listing.PoolFeatures) && listing.PoolFeatures.length > 0;
+        case 'High Rise':
+            return arrContains(listing.ArchitecturalStyle, 'high rise', 'highrise');
+        case 'Penthouse':
+            return arrContains(listing.ArchitecturalStyle, 'penthouse')
+                || (listing.PublicRemarks || '').toLowerCase().includes('penthouse');
+        default:
+            return true;
+    }
 }
 
 // ── EMAIL TEMPLATE ────────────────────────────────────────────────────────────
