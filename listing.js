@@ -406,7 +406,7 @@ async function completeLead(overlay, pageWrap) {
     // Fire Google Ads conversion event
     if (typeof gtag === 'function') {
         gtag('event', 'conversion', {
-            'send_to': 'AW-17910762846/subscribe',
+            'send_to': 'AW-17910762846/QUhRCKn1wPEbEN6awtxC',
             'value': heroListing ? (heroListing.ListPrice || 0) : 0,
             'currency': 'USD',
         });
