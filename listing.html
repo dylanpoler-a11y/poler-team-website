@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Property Listings — The Poler Team</title>
+    <meta name="description" content="Search luxury South Florida real estate. Sunny Isles Beach, Aventura, North Miami Beach.">
+    <meta name="robots" content="index, follow">
+    <link rel="icon" href="favicon.ico">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="listing.css">
+
+    <!-- Meta Pixel Code -->
+    <script>
+    !function(f,b,e,v,n,t,s)
+    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+    n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];
+    s.parentNode.insertBefore(t,s)}(window, document,'script',
+    'https://connect.facebook.net/en_US/fbevents.js');
+    fbq('init', '1221841166090741');
+    fbq('track', 'PageView');
+    </script>
+    <noscript><img height="1" width="1" style="display:none"
+    src="https://www.facebook.com/tr?id=1221841166090741&ev=PageView&noscript=1"
+    /></noscript>
+    <!-- End Meta Pixel Code -->
+
+    <!-- Google Ads tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=AW-17910762846"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'AW-17910762846');
+    </script>
+    <!-- End Google Ads tag -->
+</head>
+<body>
+
+<!-- ============================================================
+     LEAD CAPTURE OVERLAY (fires after 10s, blocks dismissal)
+     ============================================================ -->
+<div id="lead-overlay" class="lead-overlay" aria-modal="true" role="dialog" aria-labelledby="lead-title">
+    <div class="lead-modal">
+        <div class="lead-modal-brand">
+            <img src="logo-white.png" alt="The Poler Team" class="lead-logo">
+        </div>
+        <div class="lead-modal-body">
+
+            <!-- ── Step 1: Info form ── -->
+            <div id="lead-step-1">
+                <h2 class="lead-title" id="lead-title" data-i18n="leadTitle">View Full Property Details</h2>
+                <p class="lead-subtitle" data-i18n="leadSubtitle">Create your free account to unlock photos, pricing history, neighborhood stats, and schedule a private showing.</p>
+                <div class="lead-timer-wrap">
+                    <div class="lead-timer-bar" id="lead-timer-bar"></div>
+                </div>
+                <form id="lead-form" class="lead-form" novalidate>
+                    <div class="lead-form-row">
+                        <div class="lead-field">
+                            <input type="text" id="lead-first" placeholder="First Name" data-i18n="firstName" required autocomplete="given-name">
+                        </div>
+                        <div class="lead-field">
+                            <input type="text" id="lead-last" placeholder="Last Name" data-i18n="lastName" required autocomplete="family-name">
+                        </div>
+                    </div>
+                    <div class="lead-field">
+                        <input type="email" id="lead-email" placeholder="Email Address" data-i18n="emailAddress" required autocomplete="email">
+                    </div>
+                    <div class="lead-field lead-phone-wrap">
+                        <select id="country-code" aria-label="Country code">
+                            <option value="+1" selected>🇺🇸 +1 (US)</option>
+                            <option value="+355">🇦🇱 +355 (AL)</option>
+                            <option value="+1AG">🇦🇬 +1 (AG)</option>
+                            <option value="+54">🇦🇷 +54 (AR)</option>
+                            <option value="+297">🇦🇼 +297 (AW)</option>
+                            <option value="+43">🇦🇹 +43 (AT)</option>
+                            <option value="+1BS">🇧🇸 +1 (BS)</option>
+                            <option value="+1BB">🇧🇧 +1 (BB)</option>
+                            <option value="+32">🇧🇪 +32 (BE)</option>
+                            <option value="+501">🇧🇿 +501 (BZ)</option>
+                            <option value="+591">🇧🇴 +591 (BO)</option>
+                            <option value="+55">🇧🇷 +55 (BR)</option>
+                            <option value="+359">🇧🇬 +359 (BG)</option>
+                            <option value="+1CA">🇨🇦 +1 (CA)</option>
+                            <option value="+1KY">🇰🇾 +1 (KY)</option>
+                            <option value="+56">🇨🇱 +56 (CL)</option>
+                            <option value="+57">🇨🇴 +57 (CO)</option>
+                            <option value="+506">🇨🇷 +506 (CR)</option>
+                            <option value="+385">🇭🇷 +385 (HR)</option>
+                            <option value="+53">🇨🇺 +53 (CU)</option>
+                            <option value="+599">🇨🇼 +599 (CW)</option>
+                            <option value="+357">🇨🇾 +357 (CY)</option>
+                            <option value="+420">🇨🇿 +420 (CZ)</option>
+                            <option value="+45">🇩🇰 +45 (DK)</option>
+                            <option value="+1DM">🇩🇲 +1 (DM)</option>
+                            <option value="+1DO">🇩🇴 +1 (DO)</option>
+                            <option value="+593">🇪🇨 +593 (EC)</option>
+                            <option value="+503">🇸🇻 +503 (SV)</option>
+                            <option value="+372">🇪🇪 +372 (EE)</option>
+                            <option value="+358">🇫🇮 +358 (FI)</option>
+                            <option value="+33">🇫🇷 +33 (FR)</option>
+                            <option value="+49">🇩🇪 +49 (DE)</option>
+                            <option value="+30">🇬🇷 +30 (GR)</option>
+                            <option value="+1GD">🇬🇩 +1 (GD)</option>
+                            <option value="+502">🇬🇹 +502 (GT)</option>
+                            <option value="+592">🇬🇾 +592 (GY)</option>
+                            <option value="+509">🇭🇹 +509 (HT)</option>
+                            <option value="+504">🇭🇳 +504 (HN)</option>
+                            <option value="+36">🇭🇺 +36 (HU)</option>
+                            <option value="+354">🇮🇸 +354 (IS)</option>
+                            <option value="+353">🇮🇪 +353 (IE)</option>
+                            <option value="+39">🇮🇹 +39 (IT)</option>
+                            <option value="+1JM">🇯🇲 +1 (JM)</option>
+                            <option value="+371">🇱🇻 +371 (LV)</option>
+                            <option value="+370">🇱🇹 +370 (LT)</option>
+                            <option value="+352">🇱🇺 +352 (LU)</option>
+                            <option value="+356">🇲🇹 +356 (MT)</option>
+                            <option value="+52">🇲🇽 +52 (MX)</option>
+                            <option value="+31">🇳🇱 +31 (NL)</option>
+                            <option value="+505">🇳🇮 +505 (NI)</option>
+                            <option value="+47">🇳🇴 +47 (NO)</option>
+                            <option value="+507">🇵🇦 +507 (PA)</option>
+                            <option value="+595">🇵🇾 +595 (PY)</option>
+                            <option value="+51">🇵🇪 +51 (PE)</option>
+                            <option value="+48">🇵🇱 +48 (PL)</option>
+                            <option value="+351">🇵🇹 +351 (PT)</option>
+                            <option value="+1PR">🇵🇷 +1 (PR)</option>
+                            <option value="+40">🇷🇴 +40 (RO)</option>
+                            <option value="+381">🇷🇸 +381 (RS)</option>
+                            <option value="+421">🇸🇰 +421 (SK)</option>
+                            <option value="+386">🇸🇮 +386 (SI)</option>
+                            <option value="+34">🇪🇸 +34 (ES)</option>
+                            <option value="+1KN">🇰🇳 +1 (KN)</option>
+                            <option value="+1LC">🇱🇨 +1 (LC)</option>
+                            <option value="+1VC">🇻🇨 +1 (VC)</option>
+                            <option value="+597">🇸🇷 +597 (SR)</option>
+                            <option value="+46">🇸🇪 +46 (SE)</option>
+                            <option value="+41">🇨🇭 +41 (CH)</option>
+                            <option value="+1TT">🇹🇹 +1 (TT)</option>
+                            <option value="+90">🇹🇷 +90 (TR)</option>
+                            <option value="+380">🇺🇦 +380 (UA)</option>
+                            <option value="+44">🇬🇧 +44 (UK)</option>
+                            <option value="+598">🇺🇾 +598 (UY)</option>
+                            <option value="+58">🇻🇪 +58 (VE)</option>
+                        </select>
+                        <input type="tel" id="lead-phone" placeholder="(555) 123-4567" data-i18n="phonePlaceholder" required autocomplete="tel">
+                    </div>
+                    <!-- Timeline pills -->
+                    <div class="timeline-field">
+                        <label class="timeline-label">When do you plan to buy?</label>
+                        <div class="timeline-pills" id="timeline-pills">
+                            <button type="button" class="timeline-pill" data-value="0-3 months">0-3 Mo</button>
+                            <button type="button" class="timeline-pill" data-value="3-6 months">3-6 Mo</button>
+                            <button type="button" class="timeline-pill" data-value="6-12 months">6-12 Mo</button>
+                            <button type="button" class="timeline-pill" data-value="12+ months">12+ Mo</button>
+                        </div>
+                        <input type="hidden" id="lead-timeline" value="">
+                    </div>
+
+                    <p class="lead-error" id="lead-error" style="display:none"></p>
+                    <button type="submit" class="lead-submit" id="lead-submit-btn">
+                        <span id="lead-submit-text" data-i18n="sendVerification">Send Verification Code</span>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 014.68 11.6 19.79 19.79 0 011.61 3a2 2 0 012-2.18h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L7.91 8.09a16 16 0 006 6l.91-.91a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+                    </button>
+                    <p class="lead-disclaimer" data-i18n="leadDisclaimer">We'll text a code to verify your number. No spam, ever.</p>
+                </form>
+            </div>
+
+            <!-- ── Step 2: OTP verification ── -->
+            <div id="lead-step-2" style="display:none">
+                <h2 class="lead-title" data-i18n="verifyTitle">Verify Your Number</h2>
+                <p class="lead-subtitle" id="otp-subtitle">We sent a 6-digit code to your phone. Enter it below to continue.</p>
+                <div class="otp-inputs-wrap" id="otp-inputs-wrap">
+                    <input class="otp-digit" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 1">
+                    <input class="otp-digit" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 2">
+                    <input class="otp-digit" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 3">
+                    <input class="otp-digit" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 4">
+                    <input class="otp-digit" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 5">
+                    <input class="otp-digit" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 6">
+                </div>
+                <p class="lead-error" id="otp-error" style="display:none"></p>
+                <button type="button" class="lead-submit" id="otp-verify-btn">
+                    <span id="otp-verify-text" data-i18n="verifyAndContinue">Verify &amp; Continue</span>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </button>
+                <div class="otp-footer">
+                    <button type="button" class="otp-resend-btn" id="otp-resend-btn" disabled>
+                        <span data-i18n="resendCode">Resend code</span> <span id="otp-resend-timer">(60s)</span>
+                    </button>
+                    <button type="button" class="otp-call-btn" id="otp-call-btn">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                        <span data-i18n="callMeInstead">Call me instead</span>
+                    </button>
+                    <button type="button" class="otp-back-btn" id="otp-back-btn" data-i18n="changeNumber">← Change number</button>
+                </div>
+            </div>
+
+
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================
+     PAGE WRAPPER (blurs when lead modal fires)
+     ============================================================ -->
+<div id="page-wrap" class="page-wrap">
+
+    <!-- HEADER -->
+    <header class="lp-header">
+        <div class="lp-header-inner">
+            <a href="index.html" class="lp-logo-link">
+                <img src="logo.png" alt="The Poler Team" class="lp-logo">
+            </a>
+            <div class="lp-header-right">
+                <span class="lp-tagline" data-i18n="tagline">South Florida Luxury Real Estate</span>
+
+                <!-- Language Selector -->
+                <div class="lang-selector" id="lang-selector">
+                    <button class="lang-selector-btn" id="lang-selector-btn" aria-label="Select language" aria-expanded="false">
+                        <span id="lang-btn-text">🇺🇸 EN</span>
+                        <svg class="lang-chevron" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                    </button>
+                    <div class="lang-dropdown" id="lang-dropdown">
+                        <button class="lang-option active" data-lang="en">🇺🇸 English</button>
+                        <button class="lang-option" data-lang="es">🇪🇸 Español</button>
+                        <button class="lang-option" data-lang="pt">🇵🇹 Português</button>
+                    </div>
+                </div>
+
+                <a href="tel:+19542354046" class="lp-call-btn">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 014.68 11.6 19.79 19.79 0 011.61 3a2 2 0 012-2.18h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L7.91 8.09a16 16 0 006 6l.91-.91a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+                    <span data-i18n="callUs">Call Us</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- HERO PROPERTY (populated by JS from ?id= param) -->
+    <section id="hero-property" class="hero-property">
+        <div id="hero-loading" class="hero-loading">
+            <div class="hero-skeleton-img shimmer"></div>
+            <div class="hero-skeleton-info">
+                <div class="skeleton-line shimmer" style="width:35%;height:14px"></div>
+                <div class="skeleton-line shimmer" style="width:60%;height:28px;margin:0.6rem 0"></div>
+                <div class="skeleton-line shimmer" style="width:45%;height:12px"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================
+         PROPERTY LOOKUP (MLS # or address — like Deal Analyzer)
+         ============================================================ -->
+    <section class="lookup-section">
+        <div class="lookup-container">
+            <div class="lookup-header-row">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                <h3 class="lookup-title" data-i18n="lookupTitle">Look Up Any Property</h3>
+            </div>
+
+            <!-- Address search fields (visible by default) -->
+            <div class="lookup-advanced open" id="lookup-advanced">
+                <p class="lookup-adv-hint">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                    <span data-i18n="advSearchHint">Enter exact address fields for precise MLS lookup (no fuzzy matching)</span>
+                </p>
+                <div class="adv-grid">
+                    <div class="adv-field adv-col-3">
+                        <label><span data-i18n="streetNum">Street #</span><span class="adv-req">*</span></label>
+                        <input type="text" id="adv-street-num" placeholder="e.g., 12944" autocomplete="off">
+                    </div>
+                    <div class="adv-field adv-col-2">
+                        <label data-i18n="dir">Dir</label>
+                        <select id="adv-dir">
+                            <option value="">None</option>
+                            <option>N</option><option>S</option><option>E</option><option>W</option>
+                            <option>NE</option><option>NW</option><option>SE</option><option>SW</option>
+                        </select>
+                    </div>
+                    <div class="adv-field adv-col-5">
+                        <label><span data-i18n="streetName">Street Name</span><span class="adv-req">*</span></label>
+                        <input type="text" id="adv-street-name" placeholder="e.g., Banyan" autocomplete="off">
+                    </div>
+                    <div class="adv-field adv-col-2">
+                        <label data-i18n="unitNum">Unit #</label>
+                        <input type="text" id="adv-unit" placeholder="e.g., 101" autocomplete="off">
+                    </div>
+                    <div class="adv-field adv-col-5">
+                        <label data-i18n="city">City</label>
+                        <input type="text" id="adv-city" placeholder="North Miami" autocomplete="off">
+                    </div>
+                    <div class="adv-field adv-col-3">
+                        <label data-i18n="zipCode">ZIP Code</label>
+                        <input type="text" id="adv-zip" placeholder="33181" autocomplete="off">
+                    </div>
+                    <div class="adv-field adv-col-2 adv-btn-cell">
+                        <button id="lookup-adv-btn" class="lookup-search-btn">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                            Search
+                        </button>
+                    </div>
+                </div>
+                <p class="adv-required-note" data-i18n="advRequired" data-i18n-html>* Required fields. City or ZIP is <strong>required</strong> for accurate matching.</p>
+            </div>
+
+            <!-- Lookup result card -->
+            <div id="lookup-result" class="lookup-result" style="display:none"></div>
+        </div>
+    </section>
+
+    <!-- ============================================================
+         SEARCH & BROWSE (InvestorOS Deal Finder style)
+         ============================================================ -->
+    <section class="search-section" id="search-section">
+        <div class="search-layout">
+
+            <!-- SIDEBAR FILTERS -->
+            <aside class="filter-sidebar">
+                <div class="filter-sidebar-head">
+                    <div class="filter-sidebar-title-row">
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
+                        <span class="filter-sidebar-title" data-i18n="filters">Filters</span>
+                    </div>
+                    <button class="filter-mobile-toggle" id="filter-toggle" aria-expanded="false">
+                        <span id="filter-toggle-label" data-i18n="showFilters">Show Filters</span>
+                        <svg id="filter-toggle-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                    </button>
+                </div>
+
+                <div class="filter-body" id="filter-body">
+
+                    <!-- Location -->
+                    <div class="filter-group">
+                        <label class="filter-label" for="f-location" data-i18n="location">Location (comma-separated)</label>
+                        <div class="filter-icon-wrap">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                            <input type="text" id="f-location" class="filter-input" placeholder="Miami Beach, Hollywood, Sunny Isles..." data-i18n="locationPlaceholder">
+                        </div>
+                    </div>
+
+                    <!-- Property Type -->
+                    <div class="filter-group">
+                        <label class="filter-label" for="f-type" data-i18n="propertyType">Property Type</label>
+                        <select id="f-type" class="filter-select">
+                            <option value="all" data-i18n="allTypes">All Types</option>
+                            <option value="Single Family Residence" data-i18n="singleFamily">Single Family</option>
+                            <option value="Condominium" data-i18n="condoVilla">Condo / CoOp / Villa / Townhouse</option>
+                            <option value="MultiFamily" data-i18n="multiFamily">MultiFamily</option>
+                        </select>
+                    </div>
+
+                    <!-- Price Range -->
+                    <div class="filter-group">
+                        <label class="filter-label" data-i18n="priceRange">Price Range (000s)</label>
+                        <div class="filter-two-col">
+                            <input type="number" id="f-price-min" class="filter-input" placeholder="e.g., 100 (=$100K)" min="0">
+                            <input type="number" id="f-price-max" class="filter-input" placeholder="e.g., 2500 (=$2.5M)" min="0">
+                        </div>
+                        <p class="filter-error" id="price-error" style="display:none">Min must be less than Max</p>
+                    </div>
+
+                    <!-- Beds / Baths -->
+                    <div class="filter-group">
+                        <div class="filter-two-col">
+                            <div>
+                                <label class="filter-label" for="f-beds" data-i18n="minBeds">Min Beds</label>
+                                <select id="f-beds" class="filter-select">
+                                    <option value="0">Any</option>
+                                    <option value="1">1+</option>
+                                    <option value="2">2+</option>
+                                    <option value="3">3+</option>
+                                    <option value="4">4+</option>
+                                    <option value="5">5+</option>
+                                    <option value="6">6+</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="filter-label" for="f-baths" data-i18n="minBaths">Min Baths</label>
+                                <select id="f-baths" class="filter-select">
+                                    <option value="0">Any</option>
+                                    <option value="1">1+</option>
+                                    <option value="2">2+</option>
+                                    <option value="3">3+</option>
+                                    <option value="4">4+</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Advanced toggle -->
+                    <button class="filter-adv-toggle" id="filter-adv-toggle" aria-expanded="true">
+                        <svg id="filter-adv-chevron" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>
+                        <span data-i18n="advancedFilters">Advanced Filters</span>
+                    </button>
+
+                    <div class="filter-advanced" id="filter-advanced">
+
+                        <!-- Listing Status -->
+                        <div class="filter-group">
+                            <label class="filter-label" data-i18n="listingStatus">Listing Status</label>
+                            <div class="filter-checkboxes">
+                                <label class="filter-check-item"><input type="checkbox" name="status" value="Active" checked><span data-i18n="active">Active</span></label>
+                                <label class="filter-check-item"><input type="checkbox" name="status" value="Pending"><span data-i18n="pending">Pending</span></label>
+                                <label class="filter-check-item"><input type="checkbox" name="status" value="ActiveUnderContract"><span data-i18n="underContract">Under Contract</span></label>
+                                <label class="filter-check-item"><input type="checkbox" name="status" value="ComingSoon"><span data-i18n="comingSoon">Coming Soon</span></label>
+                                <label class="filter-check-item"><input type="checkbox" name="status" value="Closed"><span data-i18n="closed">Closed</span></label>
+                            </div>
+                        </div>
+
+                        <!-- Square Feet -->
+                        <div class="filter-group">
+                            <label class="filter-label" data-i18n="squareFeet">Square Feet</label>
+                            <div class="filter-two-col">
+                                <input type="number" id="f-sqft-min" class="filter-input" placeholder="Min sqft" min="0">
+                                <input type="number" id="f-sqft-max" class="filter-input" placeholder="Max sqft" min="0">
+                            </div>
+                        </div>
+
+                        <!-- Year Built slider -->
+                        <div class="filter-group">
+                            <label class="filter-label">Year Built &mdash; <span id="year-range-label">Any</span></label>
+                            <div class="year-slider-wrap">
+                                <div class="year-track">
+                                    <div class="year-track-fill" id="year-fill"></div>
+                                </div>
+                                <input type="range" id="year-min" class="year-range" min="1900" max="2026" value="1900" step="1" aria-label="Min year built">
+                                <input type="range" id="year-max" class="year-range" min="1900" max="2026" value="2026" step="1" aria-label="Max year built">
+                            </div>
+                        </div>
+
+                        <!-- Lot Size -->
+                        <div class="filter-group">
+                            <label class="filter-label" data-i18n="lotSize">Lot Size (sqft)</label>
+                            <div class="filter-two-col">
+                                <input type="number" id="f-lot-min" class="filter-input" placeholder="Min lot sqft" min="0">
+                                <input type="number" id="f-lot-max" class="filter-input" placeholder="Max lot sqft" min="0">
+                            </div>
+                        </div>
+
+                        <!-- County -->
+                        <div class="filter-group">
+                            <label class="filter-label" for="f-county" data-i18n="county">County</label>
+                            <input type="text" id="f-county" class="filter-input" placeholder="e.g., Miami-Dade...">
+                        </div>
+
+                        <!-- Waterfront -->
+                        <div class="filter-group">
+                            <div class="filter-switch-row">
+                                <label class="filter-label" style="margin:0" data-i18n="waterfront">Waterfront</label>
+                                <label class="filter-switch" aria-label="Waterfront filter">
+                                    <input type="checkbox" id="f-waterfront">
+                                    <span class="filter-switch-track"></span>
+                                </label>
+                            </div>
+                            <div class="waterfront-subtypes" id="waterfront-subtypes" style="display:none">
+                                <label class="filter-radio-item"><input type="radio" name="wf-type" value="any" checked><span data-i18n="anyWaterfront">Any Waterfront</span></label>
+                                <label class="filter-radio-item"><input type="radio" name="wf-type" value="bay"><span data-i18n="bayfront">Bayfront</span></label>
+                                <label class="filter-radio-item"><input type="radio" name="wf-type" value="canal"><span data-i18n="canalfront">Canalfront</span></label>
+                                <label class="filter-radio-item"><input type="radio" name="wf-type" value="ocean"><span data-i18n="oceanBeachfront">Ocean / Beachfront</span></label>
+                            </div>
+                        </div>
+
+                    </div><!-- /filter-advanced -->
+
+                    <button class="filter-search-btn" id="search-btn">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                        <span id="search-btn-text" data-i18n="searchProperties">Search Properties</span>
+                    </button>
+
+                </div><!-- /filter-body -->
+            </aside>
+
+            <!-- RESULTS AREA -->
+            <div class="results-area">
+                <div class="results-header">
+                    <p class="results-count" id="results-count" data-i18n="showingFeatured">Showing featured South Florida properties</p>
+                </div>
+                <div class="results-grid" id="results-grid">
+                    <!-- Populated by JS -->
+                </div>
+                <div id="load-more-wrap" class="load-more-wrap" style="display:none">
+                    <button class="load-more-btn" id="load-more-btn" data-i18n="loadMore">Load More Properties</button>
+                </div>
+                <div id="no-results" class="no-results" style="display:none">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                    <p data-i18n="noResults">No properties found matching your filters.</p>
+                    <p class="no-results-hint" data-i18n="noResultsHint">Try broadening your search — adjust price range, location, or remove some filters.</p>
+                </div>
+            </div>
+
+            <!-- AGENT CONTACT PANEL (Homes.com style sticky sidebar) -->
+            <aside class="agent-panel">
+                <div class="agent-panel-top">
+                    <img src="team-rosa.jpg" alt="Rosa Poler" class="agent-panel-photo">
+                    <div class="agent-panel-info">
+                        <div class="agent-panel-name">Rosa Poler</div>
+                        <div class="agent-panel-badge">REALTOR®</div>
+                        <div class="agent-panel-brokerage">Optimar International Realty</div>
+                    </div>
+                </div>
+                <div class="agent-panel-body">
+                    <a href="tel:+19542354046" class="agent-panel-phone">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 014.68 11.6 19.79 19.79 0 011.61 3a2 2 0 012-2.18h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L7.91 8.09a16 16 0 006 6l.91-.91a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+                        (954) 235-4046
+                    </a>
+                    <div class="agent-panel-divider"></div>
+                    <p class="agent-panel-message-label" data-i18n="sendMessage">Send a Message</p>
+                    <textarea class="agent-panel-message" id="agent-message" rows="4" placeholder="Hi Rosa, I'm interested in a property I saw..." data-i18n="agentMsgPlaceholder"></textarea>
+                    <button class="agent-panel-send" id="agent-send-btn" onclick="sendAgentMessage()">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                        <span data-i18n="sendMessageBtn">Send Message</span>
+                    </button>
+                    <button class="agent-panel-connect" onclick="window.location.href='index.html#contact'">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+                        <span data-i18n="contactAgent">Contact Agent</span>
+                    </button>
+                    <img src="optimar-logo.jpg" alt="Optimar International Realty" class="agent-panel-logo">
+                </div>
+            </aside>
+
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="lp-footer">
+        <div class="lp-footer-inner">
+            <img src="logo-white.png" alt="The Poler Team" class="lp-footer-logo">
+            <p class="lp-footer-copy" data-i18n="footerCopy">&copy; 2025 The Poler Team &mdash; Optimar International Realty. All rights reserved.</p>
+            <a href="index.html" class="lp-footer-back" data-i18n="backToMain">&#8592; Back to Main Site</a>
+        </div>
+    </footer>
+
+</div><!-- /page-wrap -->
+
+<!-- ============================================================
+     AI CHAT WIDGET — outside page-wrap so position:fixed works
+     correctly (parent filter:blur breaks fixed positioning)
+     ============================================================ -->
+<div id="ai-chat-widget" class="ai-chat-widget">
+
+    <!-- Floating toggle button -->
+    <button id="ai-chat-toggle" class="ai-chat-toggle" aria-label="Open AI home assistant" aria-expanded="false">
+        <span class="ai-chat-toggle-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+        </span>
+        <span class="ai-chat-toggle-label" data-i18n="aiAssistant">AI Assistant</span>
+        <span class="ai-chat-ping" id="ai-chat-ping" aria-hidden="true"></span>
+    </button>
+
+    <!-- Chat panel -->
+    <div id="ai-chat-panel" class="ai-chat-panel" aria-hidden="true" role="dialog" aria-label="AI Home Assistant">
+
+        <!-- Header -->
+        <div class="ai-chat-header">
+            <div class="ai-chat-header-left">
+                <div class="ai-chat-avatar">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                </div>
+                <div class="ai-chat-header-info">
+                    <div class="ai-chat-header-name" data-i18n="aiChatName">AI Home Assistant</div>
+                    <div class="ai-chat-header-sub" data-i18n="aiChatSub">The Poler Team &middot; South Florida Real Estate</div>
+                </div>
+            </div>
+            <button class="ai-chat-close" id="ai-chat-close" aria-label="Close chat">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+
+        <!-- Messages -->
+        <div class="ai-chat-messages" id="ai-chat-messages" role="log" aria-live="polite"></div>
+
+        <!-- Input area -->
+        <div class="ai-chat-input-area">
+            <textarea
+                id="ai-chat-input"
+                class="ai-chat-input"
+                placeholder="Ask me anything about real estate..." data-i18n="aiChatPlaceholder"
+                rows="1"
+                aria-label="Chat message"
+                maxlength="2000"
+            ></textarea>
+            <button id="ai-chat-send" class="ai-chat-send-btn" aria-label="Send message">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            </button>
+        </div>
+
+    </div>
+</div>
+
+<!-- EmailJS SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script src="i18n.js"></script>
+<script src="listing.js"></script>
+</body>
+</html>
