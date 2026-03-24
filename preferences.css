@@ -1,0 +1,399 @@
+/* ============================================================
+   preferences.css — Self-service property alert preferences page
+   Design: matches Poler Team branding (navy/white/gold, Inter + Playfair)
+   ============================================================ */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #f8fafc;
+    color: #1e293b;
+    min-height: 100vh;
+}
+
+/* ── HEADER ──────────────────────────────────────────────── */
+
+.pref-header {
+    background: #1a2744;
+    border-bottom: 3px solid #c8a55a;
+}
+
+.pref-header-inner {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.pref-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+}
+
+.pref-logo {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+}
+
+.pref-brand-name {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: #ffffff;
+    letter-spacing: 0.3px;
+}
+
+.pref-brand-sub {
+    font-size: 10px;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+}
+
+.lang-switcher {
+    display: flex;
+    gap: 4px;
+}
+
+.lang-btn {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.2);
+    color: #94a3b8;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.lang-btn:hover {
+    border-color: rgba(255,255,255,0.5);
+    color: #ffffff;
+}
+
+.lang-btn.active {
+    background: #c8a55a;
+    border-color: #c8a55a;
+    color: #1a2744;
+}
+
+/* ── LOADING / ERROR STATES ──────────────────────────────── */
+
+.pref-loading,
+.pref-error {
+    max-width: 640px;
+    margin: 80px auto;
+    text-align: center;
+    color: #64748b;
+    font-size: 15px;
+}
+
+.loading-spinner {
+    width: 36px;
+    height: 36px;
+    border: 3px solid #e2e8f0;
+    border-top-color: #1a2744;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 16px;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.error-icon {
+    font-size: 40px;
+    margin-bottom: 12px;
+}
+
+.error-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 8px;
+}
+
+.error-msg {
+    color: #64748b;
+    line-height: 1.5;
+}
+
+/* ── MAIN CONTENT ────────────────────────────────────────── */
+
+main {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 32px 20px 60px;
+}
+
+/* ── CARD ────────────────────────────────────────────────── */
+
+.pref-card {
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 20px rgba(0,0,0,0.04);
+    padding: 32px 28px;
+}
+
+/* ── GREETING ────────────────────────────────────────────── */
+
+.pref-greeting {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 8px;
+}
+
+.pref-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: #1a2744;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.pref-title {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: #1a2744;
+}
+
+.pref-subtitle {
+    font-size: 14px;
+    color: #64748b;
+    margin-top: 2px;
+}
+
+.pref-desc {
+    font-size: 14px;
+    color: #64748b;
+    line-height: 1.6;
+    margin: 16px 0 24px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+/* ── TOGGLE ROW ──────────────────────────────────────────── */
+
+.pref-toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: #1a2744;
+    border-bottom: 1px solid #f1f5f9;
+    margin-bottom: 20px;
+}
+
+.toggle-wrap {
+    position: relative;
+    width: 44px;
+    height: 24px;
+    cursor: pointer;
+}
+
+.toggle-wrap input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    inset: 0;
+    background: #cbd5e1;
+    border-radius: 12px;
+    transition: background 0.25s;
+}
+
+.toggle-slider::before {
+    content: '';
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    left: 3px;
+    top: 3px;
+    background: #ffffff;
+    border-radius: 50%;
+    transition: transform 0.25s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+}
+
+.toggle-wrap input:checked + .toggle-slider {
+    background: #16a34a;
+}
+
+.toggle-wrap input:checked + .toggle-slider::before {
+    transform: translateX(20px);
+}
+
+/* ── FORM FIELDS ─────────────────────────────────────────── */
+
+.pref-field {
+    margin-bottom: 20px;
+}
+
+.pref-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.pref-input {
+    width: 100%;
+    padding: 10px 14px;
+    font-size: 14px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    color: #1e293b;
+    background: #ffffff;
+    font-family: inherit;
+    transition: border-color 0.2s;
+}
+
+.pref-input:focus {
+    outline: none;
+    border-color: #1a2744;
+    box-shadow: 0 0 0 3px rgba(26,39,68,0.08);
+}
+
+.pref-input.half {
+    width: calc(50% - 16px);
+}
+
+.range-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.range-sep {
+    color: #94a3b8;
+    font-size: 16px;
+    flex-shrink: 0;
+}
+
+/* ── CHECKBOX GROUP ──────────────────────────────────────── */
+
+.checkbox-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.checkbox-group label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: #334155;
+    cursor: pointer;
+    padding: 8px 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    transition: all 0.2s;
+}
+
+.checkbox-group label:hover {
+    border-color: #1a2744;
+    background: #f8fafc;
+}
+
+.checkbox-group input[type="checkbox"] {
+    accent-color: #1a2744;
+    width: 16px;
+    height: 16px;
+}
+
+/* ── SAVE BUTTON ─────────────────────────────────────────── */
+
+.pref-save-btn {
+    width: 100%;
+    padding: 14px;
+    margin-top: 24px;
+    background: #1a2744;
+    color: #ffffff;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.pref-save-btn:hover {
+    background: #243352;
+}
+
+.pref-save-btn:disabled {
+    background: #94a3b8;
+    cursor: not-allowed;
+}
+
+.pref-status {
+    text-align: center;
+    font-size: 14px;
+    margin-top: 12px;
+    display: none;
+}
+
+/* ── CONTACT FOOTER ──────────────────────────────────────── */
+
+.pref-contact {
+    text-align: center;
+    margin-top: 28px;
+    font-size: 13px;
+    color: #64748b;
+    line-height: 1.6;
+}
+
+.pref-contact a {
+    color: #1a2744;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.pref-contact a:hover {
+    text-decoration: underline;
+}
+
+/* ── RESPONSIVE ──────────────────────────────────────────── */
+
+@media (max-width: 480px) {
+    .pref-card {
+        padding: 24px 20px;
+        border-radius: 12px;
+    }
+
+    .pref-title {
+        font-size: 18px;
+    }
+
+    .checkbox-group {
+        grid-template-columns: 1fr;
+    }
+
+    .pref-input.half {
+        width: calc(50% - 12px);
+    }
+}

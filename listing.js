@@ -425,7 +425,9 @@ async function completeLead(overlay, pageWrap) {
                 email,
                 phone:          leadFormData.normalizedPhone,
                 countryIso:     leadFormData.countryIso || '',
-                listingAddress: heroListing ? (heroListing.UnparsedAddress || heroListing.City || '') : '',
+                listingAddress: heroListing
+                    ? (heroListing.UnparsedAddress || heroListing.City || '')
+                    : (new URLSearchParams(window.location.search).get('id') ? 'MLS# ' + new URLSearchParams(window.location.search).get('id') : ''),
                 listingPrice:   heroListing ? (heroListing.ListPrice || 0) : 0,
                 sourceUrl:      window.location.href,
                 language:       langParam,
@@ -598,6 +600,71 @@ async function initHeroProperty() {
         console.error('Hero fetch error:', err);
         renderDefaultHero(container);
     }
+}
+
+// ── INVESTMENT ANALYSIS PANEL (powered by InvestorOS) ────────────────────────
+function renderInvestmentPanel(listing) {
+    if (typeof computeInvestmentMetrics !== 'function') return '';
+    const m = computeInvestmentMetrics(listing);
+    if (!m) return '';
+
+    const cfClass = m.monthlyCashFlow >= 0 ? 'positive' : 'negative';
+
+    // Build InvestorOS deep link — sends user to register page
+    const investorOsUrl = 'https://investoros1.com/register';
+
+    return `
+    <div class="inv-panel lp-section">
+        <div class="inv-panel-header">
+            <span class="inv-panel-title">Investment Analysis</span>
+            <span>
+                <span class="inv-panel-badge" style="background:${m.decisionColor}">${m.decision} &middot; ${m.dealScore}</span>
+                <span class="inv-powered">Powered by InvestorOS</span>
+            </span>
+        </div>
+
+        <div class="inv-rent-row">
+            <div>
+                <div class="inv-rent-value">Est. Rent: $${m.estimatedMonthlyRent.toLocaleString()}/mo</div>
+                <div class="inv-rent-source">${m.rentExplanation}</div>
+            </div>
+        </div>
+
+        <div class="inv-metrics">
+            <div class="inv-metric">
+                <div class="inv-metric-value">${fmtPct(m.capRate)}</div>
+                <div class="inv-metric-label">Cap Rate</div>
+            </div>
+            <div class="inv-metric">
+                <div class="inv-metric-value">${fmtPct(m.cashOnCash)}</div>
+                <div class="inv-metric-label">Cash-on-Cash</div>
+            </div>
+            <div class="inv-metric">
+                <div class="inv-metric-value">${fmtDscr(m.dscr)}</div>
+                <div class="inv-metric-label">DSCR</div>
+            </div>
+            <div class="inv-metric">
+                <div class="inv-metric-value ${cfClass}">${fmtCash(m.monthlyCashFlow)}</div>
+                <div class="inv-metric-label">Cash Flow</div>
+            </div>
+        </div>
+
+        <div class="inv-details">
+            <span>NOI: ${fmtMoney(m.noi)}/yr</span>
+            <span>Mortgage: $${Math.round(m.monthlyMortgage).toLocaleString()}/mo</span>
+            <span>Down: ${fmtMoney(m.downPayment)} (20%)</span>
+            <span>Cash Invested: ${fmtMoney(m.cashInvested)}</span>
+        </div>
+
+        <div class="inv-assumptions">
+            80% LTV &middot; 7% rate &middot; 30yr &middot; Est. rent, tax &amp; insurance &middot; Not financial advice
+        </div>
+
+        <a href="${investorOsUrl}" target="_blank" rel="noopener" class="inv-cta">
+            Analyze This Property in Detail on InvestorOS
+        </a>
+        <div class="inv-cta-sub">MLS rent comps &middot; 5-year projections &middot; IRR &middot; AI deal scoring</div>
+    </div>`;
 }
 
 function renderHero(container, listing) {
@@ -783,6 +850,8 @@ function renderHero(container, listing) {
                 <h2 class="lp-section-title">${t('keyFacts')}</h2>
                 <div class="lp-highlights-grid">${highlightsHtml}</div>
             </div>` : ''}
+
+            ${renderInvestmentPanel(listing)}
 
             ${descHtml}
 
@@ -1104,7 +1173,7 @@ function initFilterToggle() {
 // SEARCH — build params + fetch from Bridge API
 // ============================================================
 function buildSearchParams() {
-    const params = { limit: PAGE_SIZE, sortBy: 'ListPrice', order: 'desc' };
+    const params = { limit: PAGE_SIZE, sortBy: 'ListPrice', order: 'desc', TransactionType: 'Sale' };
 
     // Location (comma-separated cities → multiple City params handled below)
     const loc = document.getElementById('f-location').value.trim();
@@ -1201,6 +1270,7 @@ async function fetchCuratedListings() {
             ranges.map(r => apiFetch({
                 ...r,
                 StandardStatus: 'Active',
+                TransactionType: 'Sale',
                 limit: 8,
             }))
         );
@@ -1305,14 +1375,22 @@ function renderCard(listing) {
 
     const statusClass = status === 'Active' ? 'status-active' : status === 'Pending' ? 'status-pending' : 'status-other';
 
+    // Quick cap rate badge for investor scanning
+    let capBadge = '';
+    if (typeof computeInvestmentMetrics === 'function') {
+        const m = computeInvestmentMetrics(listing);
+        if (m) capBadge = `<span class="inv-card-badge">Cap ${fmtPct(m.capRate)}</span>`;
+    }
+
     return `
     <div class="listing-card" onclick="window.location.href='listing.html?mls=${lid}'">
-        <div class="listing-image">
+        <div class="listing-image" style="position:relative">
             ${imgHtml}
             <div class="listing-overlay">
                 <span class="listing-area">${city}</span>
                 <span class="listing-status-badge ${statusClass}">${status}</span>
             </div>
+            ${capBadge}
         </div>
         <div class="listing-details">
             <div class="listing-price">${price}</div>
