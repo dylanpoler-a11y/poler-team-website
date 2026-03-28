@@ -853,8 +853,6 @@ function renderHero(container, listing) {
                 <div class="lp-highlights-grid">${highlightsHtml}</div>
             </div>` : ''}
 
-            ${renderInvestmentPanel(listing)}
-
             ${descHtml}
 
             ${listingRows.length ? `
