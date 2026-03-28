@@ -1173,7 +1173,7 @@ function initFilterToggle() {
 // SEARCH — build params + fetch from Bridge API
 // ============================================================
 function buildSearchParams() {
-    const params = { limit: PAGE_SIZE, sortBy: 'ListPrice', order: 'desc', TransactionType: 'Sale' };
+    const params = { limit: PAGE_SIZE, sortBy: 'ListPrice', order: 'desc' };
 
     // Location (comma-separated cities → multiple City params handled below)
     const loc = document.getElementById('f-location').value.trim();
@@ -1270,7 +1270,7 @@ async function fetchCuratedListings() {
             ranges.map(r => apiFetch({
                 ...r,
                 StandardStatus: 'Active',
-                TransactionType: 'Sale',
+                PropertyType: 'Residential',
                 limit: 8,
             }))
         );
