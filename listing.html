@@ -320,10 +320,12 @@
                     </div>
 
                     <div class="filter-bar-item fb-price">
-                        <input type="number" id="f-price-min" class="fb-input" placeholder="Min Price (0" min="0" data-i18n="minPrice">
+                        <input type="number" id="f-price-min" class="fb-input" placeholder="Min Price (000s)" min="0">
                         <span class="fb-dash">&ndash;</span>
-                        <input type="number" id="f-price-max" class="fb-input" placeholder="Max Price (0" min="0" data-i18n="maxPrice">
+                        <input type="number" id="f-price-max" class="fb-input" placeholder="Max Price (000s)" min="0">
                         <p class="filter-error" id="price-error" style="display:none">Min &gt; Max</p>
+                    </div>
+                    <div class="filter-bar-item fb-price-hint-wrap">
                         <p class="price-hint" id="price-hint" data-i18n="priceHint">Prices in thousands — e.g. 500 = $500,000</p>
                     </div>
 
@@ -356,7 +358,7 @@
 
                     <button class="fb-search-btn" id="search-btn">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-                        <span data-i18n="searchProperties">Search</span>
+                        <span id="search-btn-text" data-i18n="searchProperties">Search</span>
                     </button>
                 </div>
 

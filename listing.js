@@ -1202,14 +1202,15 @@ function buildSearchParams() {
         params.PropertyType = baseType;
     }
 
-    // Price
+    // Price — Buy mode uses thousands shorthand (500 = $500K), Rent mode uses exact amount
     const pMin = parseFloat(document.getElementById('f-price-min').value);
     const pMax = parseFloat(document.getElementById('f-price-max').value);
     const pErr = document.getElementById('price-error');
     if (!isNaN(pMin) && !isNaN(pMax) && pMin > pMax) { pErr.style.display = 'block'; return null; }
     pErr.style.display = 'none';
-    if (!isNaN(pMin) && pMin > 0) params['ListPrice.gte'] = pMin * 1000;
-    if (!isNaN(pMax) && pMax > 0) params['ListPrice.lte'] = pMax * 1000;
+    const priceMult = isRent ? 1 : 1000;
+    if (!isNaN(pMin) && pMin > 0) params['ListPrice.gte'] = pMin * priceMult;
+    if (!isNaN(pMax) && pMax > 0) params['ListPrice.lte'] = pMax * priceMult;
 
     // Beds / Baths
     const beds  = parseInt(document.getElementById('f-beds').value);
@@ -1456,7 +1457,7 @@ async function runSearch(append = false) {
     }
 
     searchBtn.disabled = true;
-    searchTxt.textContent = t('search') + '...';
+    if (searchTxt) searchTxt.textContent = t('search') + '...';
 
     try {
         const listings = await fetchListings({ ...lastQuery }, searchOffset);
@@ -1510,7 +1511,7 @@ async function runSearch(append = false) {
         }
     } finally {
         searchBtn.disabled = false;
-        searchTxt.textContent = t('searchProperties');
+        if (searchTxt) searchTxt.textContent = t('searchProperties');
     }
 }
 
@@ -1554,6 +1555,23 @@ function initTabs() {
                 if (searchWrap) searchWrap.style.display = '';
                 if (sellPanel) sellPanel.style.display = 'none';
                 if (browseSection) browseSection.style.display = '';
+
+                // Update price hint and placeholders based on mode
+                const hint = document.getElementById('price-hint');
+                const pMin = document.getElementById('f-price-min');
+                const pMax = document.getElementById('f-price-max');
+                if (activeTab === 'rent') {
+                    if (hint) hint.style.display = 'none';
+                    if (pMin) pMin.placeholder = 'Min Rent';
+                    if (pMax) pMax.placeholder = 'Max Rent';
+                } else {
+                    if (hint) hint.style.display = '';
+                    if (pMin) pMin.placeholder = 'Min Price (000s)';
+                    if (pMax) pMax.placeholder = 'Max Price (000s)';
+                }
+                // Clear price inputs when switching modes
+                if (pMin) pMin.value = '';
+                if (pMax) pMax.value = '';
 
                 // Re-fetch with correct mode (buy = sale listings, rent = rental listings)
                 hasActiveSearch = false;
