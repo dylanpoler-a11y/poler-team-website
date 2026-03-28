@@ -1148,32 +1148,32 @@ function initWaterfrontToggle() {
 // FILTER SIDEBAR MOBILE TOGGLE
 // ============================================================
 function initFilterToggle() {
+    // Mobile sidebar toggle (may not exist on desktop)
     const btn     = document.getElementById('filter-toggle');
     const body    = document.getElementById('filter-body');
     const label   = document.getElementById('filter-toggle-label');
     const chevron = document.getElementById('filter-toggle-chevron');
 
-    if (!btn || !body) return; // Elements not in DOM
+    if (btn && body) {
+        btn.addEventListener('click', () => {
+            const open = body.classList.toggle('open');
+            if (label) label.textContent = open ? t('hideFilters') : t('showFilters');
+            if (chevron) chevron.style.transform = open ? 'rotate(180deg)' : '';
+            btn.setAttribute('aria-expanded', open);
+        });
+    }
 
-    btn.addEventListener('click', () => {
-        const open = body.classList.toggle('open');
-        label.textContent = open ? t('hideFilters') : t('showFilters');
-        chevron.style.transform = open ? 'rotate(180deg)' : '';
-        btn.setAttribute('aria-expanded', open);
-    });
-
-    // Advanced section toggle inside sidebar
+    // Advanced filters toggle (More Filters button)
     const advToggle = document.getElementById('filter-adv-toggle');
     const advPanel  = document.getElementById('filter-advanced');
-    const advChev   = document.getElementById('filter-adv-chevron');
 
-    if (!advToggle || !advPanel) return;
-
-    advToggle.addEventListener('click', () => {
-        const collapsed = advPanel.classList.toggle('collapsed');
-        advChev.style.transform = collapsed ? 'rotate(180deg)' : '';
-        advToggle.setAttribute('aria-expanded', !collapsed);
-    });
+    if (advToggle && advPanel) {
+        advToggle.addEventListener('click', () => {
+            const isHidden = advPanel.style.display === 'none' || advPanel.style.display === '';
+            advPanel.style.display = isHidden ? 'block' : 'none';
+            advToggle.setAttribute('aria-expanded', isHidden);
+        });
+    }
 }
 
 // ============================================================
