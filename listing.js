@@ -1012,6 +1012,7 @@ function sendHeroAgentMessage() {
 function initLookup() {
     // Address lookup
     const advBtn = document.getElementById('lookup-adv-btn');
+    if (!advBtn) return; // Element not in DOM yet or removed
 
     async function lookupByAddress() {
         const streetNum  = document.getElementById('adv-street-num').value.trim();
@@ -1150,6 +1151,8 @@ function initFilterToggle() {
     const label   = document.getElementById('filter-toggle-label');
     const chevron = document.getElementById('filter-toggle-chevron');
 
+    if (!btn || !body) return; // Elements not in DOM
+
     btn.addEventListener('click', () => {
         const open = body.classList.toggle('open');
         label.textContent = open ? t('hideFilters') : t('showFilters');
@@ -1161,6 +1164,8 @@ function initFilterToggle() {
     const advToggle = document.getElementById('filter-adv-toggle');
     const advPanel  = document.getElementById('filter-advanced');
     const advChev   = document.getElementById('filter-adv-chevron');
+
+    if (!advToggle || !advPanel) return;
 
     advToggle.addEventListener('click', () => {
         const collapsed = advPanel.classList.toggle('collapsed');
