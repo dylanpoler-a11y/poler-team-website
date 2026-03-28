@@ -69,6 +69,7 @@ let searchOffset   = 0;      // Pagination offset
 let lastQuery      = {};     // Last search params
 let totalResults   = 0;      // Total from API
 let leadCaptured   = false;  // Has user already registered?
+let activeTab      = 'buy';  // 'buy' | 'rent' | 'sell'
 let timerInterval  = null;
 
 // ============================================================
@@ -401,12 +402,18 @@ async function completeLead(overlay, pageWrap) {
             value: heroListing ? (heroListing.ListPrice || 0) : 0,
             currency: 'USD',
         });
+        fbq('track', 'Purchase', {
+            content_name: heroListing ? (heroListing.UnparsedAddress || heroListing.City || '') : 'Browse page',
+            content_category: 'Real Estate',
+            value: heroListing ? (heroListing.ListPrice || 0) : 0,
+            currency: 'USD',
+        });
     }
 
     // Fire Google Ads conversion event
     if (typeof gtag === 'function') {
         gtag('event', 'conversion', {
-            'send_to': 'AW-17910762846/QUhRCKn1wPEbEN6awtxC',
+            'send_to': 'AW-17910762846/E5E_CMfftJEcEN6awtxC',
             'value': heroListing ? (heroListing.ListPrice || 0) : 0,
             'currency': 'USD',
         });
@@ -1145,35 +1152,25 @@ function initWaterfrontToggle() {
 // FILTER SIDEBAR MOBILE TOGGLE
 // ============================================================
 function initFilterToggle() {
-    const btn     = document.getElementById('filter-toggle');
-    const body    = document.getElementById('filter-body');
-    const label   = document.getElementById('filter-toggle-label');
-    const chevron = document.getElementById('filter-toggle-chevron');
-
-    btn.addEventListener('click', () => {
-        const open = body.classList.toggle('open');
-        label.textContent = open ? t('hideFilters') : t('showFilters');
-        chevron.style.transform = open ? 'rotate(180deg)' : '';
-        btn.setAttribute('aria-expanded', open);
-    });
-
-    // Advanced section toggle inside sidebar
+    // Advanced filters toggle (horizontal bar)
     const advToggle = document.getElementById('filter-adv-toggle');
     const advPanel  = document.getElementById('filter-advanced');
-    const advChev   = document.getElementById('filter-adv-chevron');
 
-    advToggle.addEventListener('click', () => {
-        const collapsed = advPanel.classList.toggle('collapsed');
-        advChev.style.transform = collapsed ? 'rotate(180deg)' : '';
-        advToggle.setAttribute('aria-expanded', !collapsed);
-    });
+    if (advToggle && advPanel) {
+        advToggle.addEventListener('click', () => {
+            const isOpen = advPanel.style.display !== 'none';
+            advPanel.style.display = isOpen ? 'none' : '';
+            advToggle.classList.toggle('open', !isOpen);
+        });
+    }
 }
 
 // ============================================================
 // SEARCH — build params + fetch from Bridge API
 // ============================================================
 function buildSearchParams() {
-    const params = { limit: PAGE_SIZE, sortBy: 'ListPrice', order: 'desc', TransactionType: 'Sale' };
+    const txType = activeTab === 'rent' ? 'Lease' : 'Sale';
+    const params = { limit: PAGE_SIZE, sortBy: 'ListPrice', order: 'desc', TransactionType: txType };
 
     // Location (comma-separated cities → multiple City params handled below)
     const loc = document.getElementById('f-location').value.trim();
@@ -1498,6 +1495,282 @@ async function runSearch(append = false) {
     }
 }
 
+// ============================================================
+// TABS — Buy / Rent / Sell
+// ============================================================
+function initTabs() {
+    const tabs = document.querySelectorAll('.search-tab');
+    const searchWrap = document.getElementById('search-bar-wrap');
+    const sellPanel  = document.getElementById('sell-form-panel');
+    const filterBar  = document.getElementById('filter-bar');
+
+    if (!tabs.length) return;
+
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            const mode = tab.dataset.tab;
+            activeTab = mode;
+
+            // Update tab active state
+            tabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+
+            // Toggle panels
+            if (mode === 'sell') {
+                if (searchWrap) searchWrap.style.display = 'none';
+                if (sellPanel)  sellPanel.style.display = '';
+                if (filterBar)  filterBar.style.display = 'none';
+            } else {
+                if (searchWrap) searchWrap.style.display = '';
+                if (sellPanel)  sellPanel.style.display = 'none';
+                if (filterBar)  filterBar.style.display = '';
+                // Re-run search with new transaction type
+                runSearch(false);
+            }
+        });
+    });
+
+    // Support ?tab= URL param
+    const urlTab = new URLSearchParams(window.location.search).get('tab');
+    if (urlTab && ['buy', 'rent', 'sell'].includes(urlTab)) {
+        const tabBtn = document.querySelector(`.search-tab[data-tab="${urlTab}"]`);
+        if (tabBtn) tabBtn.click();
+    }
+}
+
+// ============================================================
+// AUTOCOMPLETE — City / ZIP / Address suggestions
+// ============================================================
+function initAutocomplete() {
+    const input    = document.getElementById('search-autocomplete');
+    const dropdown = document.getElementById('search-ac-dropdown');
+    const goBtn    = document.getElementById('search-bar-go');
+    if (!input || !dropdown) return;
+
+    let acItems = [];
+    let acIndex = -1;
+
+    function buildSuggestions(query) {
+        const q = query.toLowerCase().trim();
+        if (!q) return [];
+        const items = [];
+
+        // Check if it looks like a ZIP code (5 digits)
+        if (/^\d{3,5}$/.test(q)) {
+            items.push({ type: 'zip', label: `Search ZIP: ${q}`, value: q, icon: 'zip' });
+        }
+
+        // Match cities from SOUTH_FL_CITIES
+        const cityMatches = SOUTH_FL_CITIES.filter(c => c.toLowerCase().includes(q));
+        cityMatches.slice(0, 6).forEach(city => {
+            items.push({ type: 'city', label: city, sub: 'South Florida', value: city, icon: 'city' });
+        });
+
+        // If it looks like an address (starts with a number + text), offer address search
+        if (/^\d+\s+\w/.test(q)) {
+            items.push({ type: 'address', label: `Search address: "${query}"`, value: query, icon: 'address' });
+        }
+
+        // If no matches, offer as general text search
+        if (!items.length) {
+            items.push({ type: 'text', label: `Search for "${query}"`, value: query, icon: 'search' });
+        }
+
+        return items;
+    }
+
+    function renderDropdown(items) {
+        if (!items.length) { dropdown.style.display = 'none'; return; }
+        acItems = items;
+        acIndex = -1;
+        const iconMap = {
+            city: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>',
+            zip: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M7 8h4M7 12h6"/></svg>',
+            address: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>',
+            search: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>',
+        };
+        dropdown.innerHTML = items.map((item, i) => `
+            <div class="search-ac-item" data-index="${i}">
+                ${iconMap[item.icon] || iconMap.search}
+                <div>
+                    <div>${item.label}</div>
+                    ${item.sub ? `<div class="search-ac-item-sub">${item.sub}</div>` : ''}
+                </div>
+            </div>
+        `).join('');
+        dropdown.style.display = '';
+
+        dropdown.querySelectorAll('.search-ac-item').forEach(el => {
+            el.addEventListener('click', () => selectAcItem(parseInt(el.dataset.index)));
+        });
+    }
+
+    function selectAcItem(index) {
+        const item = acItems[index];
+        if (!item) return;
+        dropdown.style.display = 'none';
+        input.value = item.label.replace(/^Search (for |address: |ZIP: )?"?/i, '').replace(/"$/, '');
+
+        const locInput = document.getElementById('f-location');
+
+        if (item.type === 'city') {
+            if (locInput) locInput.value = item.value;
+            runSearch(false);
+        } else if (item.type === 'zip') {
+            // Direct ZIP search
+            if (locInput) locInput.value = '';
+            const grid = document.getElementById('results-grid');
+            const countEl = document.getElementById('results-count');
+            grid.innerHTML = renderSkeletons();
+            countEl.textContent = t('searching') || 'Searching...';
+            const txType = activeTab === 'rent' ? 'Lease' : 'Sale';
+            const params = { limit: PAGE_SIZE, sortBy: 'ListPrice', order: 'desc', TransactionType: txType, PropertyType: 'Residential', PostalCode: item.value };
+            lastQuery = { ...params };
+            fetchListings(params).then(listings => {
+                grid.innerHTML = '';
+                const noResults = document.getElementById('no-results');
+                if (!listings.length) { noResults.style.display = 'block'; countEl.textContent = 'No results found'; return; }
+                noResults.style.display = 'none';
+                listings.forEach(l => grid.insertAdjacentHTML('beforeend', renderCard(l)));
+                countEl.textContent = `Showing ${listings.length} properties`;
+            });
+        } else if (item.type === 'address') {
+            // Parse address and do Bridge API lookup
+            const parts = item.value.match(/^(\d+)\s+(.+)/);
+            if (parts) {
+                const streetNum = parts[1];
+                const streetName = parts[2];
+                apiFetch({ StreetNumber: streetNum, StreetName: streetName, limit: 5 }).then(data => {
+                    const listing = data.success && data.bundle && data.bundle[0];
+                    if (listing) {
+                        window.location.href = `listing?id=${listing.ListingId}`;
+                    } else {
+                        if (locInput) locInput.value = item.value;
+                        runSearch(false);
+                    }
+                }).catch(() => {
+                    if (locInput) locInput.value = item.value;
+                    runSearch(false);
+                });
+            }
+        } else {
+            // Generic text — treat as city search
+            if (locInput) locInput.value = item.value;
+            runSearch(false);
+        }
+    }
+
+    // Debounced input handler
+    let debounceTimer;
+    input.addEventListener('input', () => {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+            const items = buildSuggestions(input.value);
+            renderDropdown(items);
+        }, 150);
+    });
+
+    // Keyboard navigation
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            acIndex = Math.min(acIndex + 1, acItems.length - 1);
+            dropdown.querySelectorAll('.search-ac-item').forEach((el, i) => el.classList.toggle('active', i === acIndex));
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            acIndex = Math.max(acIndex - 1, 0);
+            dropdown.querySelectorAll('.search-ac-item').forEach((el, i) => el.classList.toggle('active', i === acIndex));
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            if (acIndex >= 0) {
+                selectAcItem(acIndex);
+            } else if (acItems.length) {
+                selectAcItem(0);
+            } else {
+                // Raw text — treat as city
+                const locInput = document.getElementById('f-location');
+                if (locInput) locInput.value = input.value.trim();
+                runSearch(false);
+                dropdown.style.display = 'none';
+            }
+        } else if (e.key === 'Escape') {
+            dropdown.style.display = 'none';
+        }
+    });
+
+    // Close dropdown on outside click
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.search-bar-wrap')) dropdown.style.display = 'none';
+    });
+
+    // Search button click
+    if (goBtn) {
+        goBtn.addEventListener('click', () => {
+            if (acItems.length) {
+                selectAcItem(acIndex >= 0 ? acIndex : 0);
+            } else {
+                const locInput = document.getElementById('f-location');
+                if (locInput) locInput.value = input.value.trim();
+                runSearch(false);
+            }
+        });
+    }
+}
+
+// ============================================================
+// SELL FORM — Home valuation lead capture
+// ============================================================
+function initSellForm() {
+    const form = document.getElementById('sell-form');
+    if (!form) return;
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const address = document.getElementById('sell-address').value.trim();
+        const name    = document.getElementById('sell-name').value.trim();
+        const email   = document.getElementById('sell-email').value.trim();
+        const phone   = document.getElementById('sell-phone').value.trim();
+
+        if (!address || !name || !email) return;
+
+        const submitBtn = form.querySelector('.sell-submit');
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Submitting...';
+
+        try {
+            const nameParts = name.split(' ');
+            await fetch(`${OTP_BASE}/api/save-lead`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    first_name: nameParts[0] || name,
+                    last_name: nameParts.slice(1).join(' ') || '',
+                    email: email,
+                    phone: phone,
+                    timeline: 'Seller Valuation',
+                    source_url: window.location.href,
+                    listing_address: address,
+                    utm_source: 'listing-page',
+                    utm_medium: 'sell-tab',
+                }),
+            });
+
+            // Track with Meta Pixel if available
+            if (typeof fbq === 'function') {
+                fbq('track', 'Lead', { content_name: 'Seller Valuation', value: 0, currency: 'USD' });
+            }
+
+            form.style.display = 'none';
+            document.getElementById('sell-success').style.display = '';
+        } catch (err) {
+            console.error('Sell form error:', err);
+            submitBtn.textContent = 'Error — try again';
+        } finally {
+            submitBtn.disabled = false;
+        }
+    });
+}
+
 function initSearch() {
     document.getElementById('search-btn').addEventListener('click', () => runSearch(false));
 
@@ -1511,7 +1784,7 @@ function initSearch() {
     });
 
     // Enter key in filter inputs triggers search
-    document.querySelectorAll('.filter-input, .filter-select').forEach(el => {
+    document.querySelectorAll('.fb-input, .fb-select, .fb-input-sm').forEach(el => {
         el.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') { e.preventDefault(); runSearch(false); }
         });
@@ -1525,10 +1798,47 @@ function initSearch() {
         if (locInput) locInput.value = decodeURIComponent(cityParam.replace(/\+/g, ' '));
     }
 
+    // Pre-fill zip code from ?zip= URL param (used by Google Ads ad groups)
+    const zipParam = urlParams.get('zip');
+    if (zipParam) {
+        const zipInput = document.getElementById('adv-zip');
+        if (zipInput) zipInput.value = zipParam;
+    }
+
+    // Pre-fill minimum price from ?minprice= URL param (for luxury buyer targeting)
+    const minPriceParam = urlParams.get('minprice');
+    if (minPriceParam) {
+        const priceMinInput = document.getElementById('f-price-min');
+        if (priceMinInput) priceMinInput.value = minPriceParam;
+    }
+
     // If no specific search params, show curated mix; otherwise run normal search
-    const hasSearchParam = urlParams.get('mls') || urlParams.get('city') || urlParams.get('id');
+    const hasSearchParam = urlParams.get('mls') || urlParams.get('city') || urlParams.get('id') || urlParams.get('zip');
     if (hasSearchParam) {
-        runSearch(false);
+        // For zip param, inject PostalCode directly into search
+        if (zipParam) {
+            const grid = document.getElementById('results-grid');
+            const countEl = document.getElementById('results-count');
+            const noResults = document.getElementById('no-results');
+            const loadMore = document.getElementById('load-more-wrap');
+            grid.innerHTML = renderSkeletons();
+            countEl.textContent = 'Searching...';
+            noResults.style.display = 'none';
+            loadMore.style.display = 'none';
+            const params = { limit: PAGE_SIZE, sortBy: 'ListPrice', order: 'desc', TransactionType: 'Sale', PropertyType: 'Residential', PostalCode: zipParam };
+            if (minPriceParam) params['ListPrice.gte'] = parseFloat(minPriceParam) * 1000;
+            lastQuery = { ...params };
+            fetchListings(params).then(listings => {
+                grid.innerHTML = '';
+                if (!listings.length) { noResults.style.display = 'block'; countEl.textContent = 'No results found'; return; }
+                listings.forEach(l => grid.insertAdjacentHTML('beforeend', renderCard(l)));
+                searchOffset = listings.length;
+                countEl.textContent = `Showing ${listings.length} propert${listings.length === 1 ? 'y' : 'ies'}`;
+                loadMore.style.display = listings.length === PAGE_SIZE ? 'block' : 'none';
+            }).catch(() => { grid.innerHTML = ''; noResults.style.display = 'block'; countEl.textContent = 'Search error'; });
+        } else {
+            runSearch(false);
+        }
     } else {
         fetchCuratedListings();
     }
@@ -1970,7 +2280,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     initLeadCapture();
     initHeroProperty();
-    initLookup();
+    initTabs();
+    initAutocomplete();
+    initSellForm();
     initYearSlider();
     initWaterfrontToggle();
     initFilterToggle();
