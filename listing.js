@@ -70,6 +70,8 @@ let lastQuery      = {};     // Last search params
 let totalResults   = 0;      // Total from API
 let leadCaptured   = false;  // Has user already registered?
 let timerInterval  = null;
+let activeTab      = 'buy';  // Current tab: 'buy', 'rent', or 'sell'
+let hasActiveSearch = false; // Track if user has explicitly searched
 
 // ============================================================
 // UTILITIES
@@ -1178,24 +1180,26 @@ function initFilterToggle() {
 // SEARCH — build params + fetch from Bridge API
 // ============================================================
 function buildSearchParams() {
-    const params = { limit: PAGE_SIZE, sortBy: 'ListPrice', order: 'desc' };
+    const isRent = activeTab === 'rent';
+    const params = { limit: PAGE_SIZE, sortBy: 'ListPrice', order: 'desc', StandardStatus: 'Active' };
 
     // Location (comma-separated cities → multiple City params handled below)
     const loc = document.getElementById('f-location').value.trim();
     if (loc) params._cities = loc.split(',').map(s => s.trim()).filter(Boolean);
 
-    // Property Type
+    // Property Type — respect Buy vs Rent tab
+    const baseType = isRent ? 'Residential Lease' : 'Residential';
     const type = document.getElementById('f-type').value;
     if (type !== 'all') {
         if (type === 'MultiFamily') {
-            params.PropertyType = 'Residential';
+            params.PropertyType = baseType;
             params.PropertySubType = 'Multi Family';
         } else {
-            params.PropertyType = 'Residential';
+            params.PropertyType = baseType;
             params.PropertySubType = type;
         }
     } else {
-        params.PropertyType = 'Residential';
+        params.PropertyType = baseType;
     }
 
     // Price
@@ -1264,18 +1268,25 @@ async function fetchCuratedListings() {
     loadMore.style.display  = 'none';
     countEl.textContent = 'Loading featured properties...';
 
-    const ranges = [
-        { 'ListPrice.gte': 500000,  'ListPrice.lte': 1000000 },
-        { 'ListPrice.gte': 1000000, 'ListPrice.lte': 5000000 },
-        { 'ListPrice.gte': 5000000, 'ListPrice.lte': 10000000 },
-    ];
+    const isRent = activeTab === 'rent';
+    const ranges = isRent
+        ? [
+            { 'ListPrice.gte': 1500,  'ListPrice.lte': 5000 },
+            { 'ListPrice.gte': 5000,  'ListPrice.lte': 15000 },
+            { 'ListPrice.gte': 15000, 'ListPrice.lte': 50000 },
+          ]
+        : [
+            { 'ListPrice.gte': 500000,  'ListPrice.lte': 1000000 },
+            { 'ListPrice.gte': 1000000, 'ListPrice.lte': 5000000 },
+            { 'ListPrice.gte': 5000000, 'ListPrice.lte': 10000000 },
+          ];
 
     try {
         const results = await Promise.allSettled(
             ranges.map(r => apiFetch({
                 ...r,
                 StandardStatus: 'Active',
-                PropertyType: 'Residential',
+                PropertyType: isRent ? 'Residential Lease' : 'Residential',
                 limit: 8,
             }))
         );
@@ -1503,8 +1514,57 @@ async function runSearch(append = false) {
     }
 }
 
+// ============================================================
+// REFRESH GRID — called by language switcher to re-render without breaking
+// ============================================================
+function refreshGrid() {
+    if (hasActiveSearch && lastQuery && Object.keys(lastQuery).length > 0) {
+        // Re-run the last search to update translated labels
+        runSearch(false);
+    } else {
+        // Re-fetch curated listings with translated labels
+        fetchCuratedListings();
+    }
+}
+
+// ============================================================
+// TABS — Buy / Rent / Sell
+// ============================================================
+function initTabs() {
+    const tabs = document.querySelectorAll('.search-tab');
+    const searchWrap = document.getElementById('search-bar-wrap');
+    const sellPanel  = document.getElementById('sell-form-panel');
+    const browseSection = document.getElementById('browse-section');
+
+    if (!tabs.length) return;
+
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            // Update active tab styling
+            tabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            activeTab = tab.dataset.tab;
+
+            // Show/hide sell form vs search bar
+            if (activeTab === 'sell') {
+                if (searchWrap) searchWrap.style.display = 'none';
+                if (sellPanel) sellPanel.style.display = 'block';
+                if (browseSection) browseSection.style.display = 'none';
+            } else {
+                if (searchWrap) searchWrap.style.display = '';
+                if (sellPanel) sellPanel.style.display = 'none';
+                if (browseSection) browseSection.style.display = '';
+
+                // Re-fetch with correct mode (buy = sale listings, rent = rental listings)
+                hasActiveSearch = false;
+                fetchCuratedListings();
+            }
+        });
+    });
+}
+
 function initSearch() {
-    document.getElementById('search-btn').addEventListener('click', () => runSearch(false));
+    document.getElementById('search-btn').addEventListener('click', () => { hasActiveSearch = true; runSearch(false); });
 
     document.getElementById('load-more-btn').addEventListener('click', () => {
         document.getElementById('load-more-btn').disabled = true;
@@ -1518,7 +1578,7 @@ function initSearch() {
     // Enter key in filter inputs triggers search
     document.querySelectorAll('.filter-input, .filter-select').forEach(el => {
         el.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') { e.preventDefault(); runSearch(false); }
+            if (e.key === 'Enter') { e.preventDefault(); hasActiveSearch = true; runSearch(false); }
         });
     });
 
@@ -1976,6 +2036,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     initLeadCapture();
     initHeroProperty();
+    initTabs();
     initLookup();
     initYearSlider();
     initWaterfrontToggle();

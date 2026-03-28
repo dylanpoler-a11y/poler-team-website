@@ -7,6 +7,49 @@
 
 const I18N = {
 
+    // ── Search Tabs ──────────────────────────────────────────
+    tabBuy: { en: 'Buy', es: 'Comprar', pt: 'Comprar' },
+    tabRent: { en: 'Rent', es: 'Alquilar', pt: 'Alugar' },
+    tabSell: { en: 'Sell', es: 'Vender', pt: 'Vender' },
+    searchPlaceholder: {
+        en: 'Address, City, or ZIP Code',
+        es: 'Dirección, Ciudad o Código Postal',
+        pt: 'Endereço, Cidade ou CEP',
+    },
+    moreFilters: { en: 'More Filters', es: 'Más Filtros', pt: 'Mais Filtros' },
+    anyBeds: { en: 'Beds', es: 'Habitaciones', pt: 'Quartos' },
+    anyBaths: { en: 'Baths', es: 'Baños', pt: 'Banheiros' },
+
+    // ── Sell Tab ──────────────────────────────────────────────
+    sellTitle: {
+        en: "What's Your Home Worth?",
+        es: '¿Cuánto Vale Su Casa?',
+        pt: 'Quanto Vale Sua Casa?',
+    },
+    sellSubtitle: {
+        en: 'Get a free home valuation from our team.',
+        es: 'Obtenga una valoración gratuita de nuestro equipo.',
+        pt: 'Obtenha uma avaliação gratuita da nossa equipe.',
+    },
+    sellPropertyAddress: {
+        en: 'Property Address',
+        es: 'Dirección de la Propiedad',
+        pt: 'Endereço do Imóvel',
+    },
+    sellName: { en: 'Your Name', es: 'Su Nombre', pt: 'Seu Nome' },
+    sellEmail: { en: 'Email Address', es: 'Correo Electrónico', pt: 'E-mail' },
+    sellPhone: { en: 'Phone Number', es: 'Teléfono', pt: 'Telefone' },
+    sellSubmit: {
+        en: 'Get My Home Value',
+        es: 'Obtener Valor de Mi Casa',
+        pt: 'Obter Valor do Meu Imóvel',
+    },
+    sellSuccess: {
+        en: 'Thank you! Rosa will contact you shortly with your valuation.',
+        es: '¡Gracias! Rosa se pondrá en contacto pronto con su valoración.',
+        pt: 'Obrigado! Rosa entrará em contato em breve com sua avaliação.',
+    },
+
     // ── Header ──────────────────────────────────────────────
     tagline: {
         en: 'South Florida Luxury Real Estate',
@@ -273,6 +316,11 @@ const I18N = {
     condoVilla: { en: 'Condo / CoOp / Villa / Townhouse', es: 'Condo / CoOp / Villa / Townhouse', pt: 'Apartamento / CoOp / Villa / Townhouse' },
     multiFamily: { en: 'MultiFamily', es: 'Multifamiliar', pt: 'Multifamiliar' },
     priceRange: { en: 'Price Range (000s)', es: 'Rango de Precio (000s)', pt: 'Faixa de Preço (000s)' },
+    priceHint: {
+        en: 'Prices in thousands — e.g. 500 = $500,000',
+        es: 'Precios en miles — ej. 500 = $500,000',
+        pt: 'Preços em milhares — ex. 500 = $500.000',
+    },
     minBeds: { en: 'Min Beds', es: 'Hab. Mín', pt: 'Quartos Mín' },
     minBaths: { en: 'Min Baths', es: 'Baños Mín', pt: 'Banheiros Mín' },
     any: { en: 'Any', es: 'Cualquiera', pt: 'Qualquer' },
@@ -493,9 +541,9 @@ function initLanguageSelector() {
                 reRenderHero();
             }
 
-            // Re-run search to update card labels (bd/ba/sf)
-            if (typeof runSearch === 'function') {
-                runSearch(false);
+            // Re-fetch curated listings or re-run active search to update translated labels
+            if (typeof refreshGrid === 'function') {
+                refreshGrid();
             }
         });
     });
