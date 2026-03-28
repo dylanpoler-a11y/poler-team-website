@@ -1530,8 +1530,9 @@ function initSearch() {
         if (locInput) locInput.value = decodeURIComponent(cityParam.replace(/\+/g, ' '));
     }
 
-    // If no specific search params, show curated mix; otherwise run normal search
-    const hasSearchParam = urlParams.get('mls') || urlParams.get('city') || urlParams.get('id');
+    // If search-specific params exist, run search; otherwise show curated mix.
+    // Note: 'id' and 'mls' are for the hero property display, not for grid search.
+    const hasSearchParam = urlParams.get('city');
     if (hasSearchParam) {
         runSearch(false);
     } else {
