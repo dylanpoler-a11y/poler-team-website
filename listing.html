@@ -40,6 +40,24 @@
     gtag('config', 'AW-17910762846');
     </script>
     <!-- End Google Ads tag -->
+
+    <!-- Event snippet for Lead Form Submit - homesinsoflorida.com conversion page -->
+    <script>
+    function gtag_report_conversion(url) {
+      var callback = function () {
+        if (typeof(url) != 'undefined') {
+          window.location = url;
+        }
+      };
+      gtag('event', 'conversion', {
+          'send_to': 'AW-17910762846/E5E_CMfftJEcEN6awtxC',
+          'value': 1.0,
+          'currency': 'USD',
+          'event_callback': callback
+      });
+      return false;
+    }
+    </script>
 </head>
 <body>
 

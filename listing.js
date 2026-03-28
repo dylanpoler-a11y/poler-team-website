@@ -472,6 +472,11 @@ async function completeLead(overlay, pageWrap) {
     localStorage.setItem('poler_lead_v1', email);
     leadCaptured = true;
 
+    // Fire Google Ads conversion tracking
+    if (typeof gtag_report_conversion === 'function') {
+        gtag_report_conversion();
+    }
+
     // Unlock immediately after OTP verification (no more Step 3)
     unlockPage(overlay, pageWrap);
 }
