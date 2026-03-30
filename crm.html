@@ -525,6 +525,17 @@
 
   </aside>
 
+  <!-- Property Detail Modal -->
+  <div id="property-modal" class="property-modal" style="display:none">
+    <div class="property-modal-backdrop" onclick="closePropertyModal()"></div>
+    <div class="property-modal-content">
+      <button class="property-modal-close" onclick="closePropertyModal()">&times;</button>
+      <div id="property-modal-body">
+        <div class="property-modal-loading">Loading property details...</div>
+      </div>
+    </div>
+  </div>
+
   <script src="https://unpkg.com/maplibre-gl@4.1.2/dist/maplibre-gl.js"></script>
   <script src="crm.js" defer></script>
 </body>

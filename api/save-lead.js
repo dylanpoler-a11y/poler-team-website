@@ -150,14 +150,14 @@ export default async function handler(req) {
     // Detect country: prefer ISO code from dropdown, fallback to phone prefix
     const country = (countryIso && ISO_COUNTRY[countryIso.toUpperCase()]) || detectCountry(phone);
 
-    // Auto-assign agent: Brazil → Rosa, others → Kevin/Dylan (deterministic hash split)
+    // Auto-assign agent: Portuguese/Brazil → Rosa, others → 50/50 Kevin/Rosa
     let assignedTo = '';
-    if (country === 'Brazil' || language === 'pt') {
+    if (country === 'Brazil' || language === 'pt' || country === 'Portugal') {
         assignedTo = 'Rosa';
     } else {
-        // Simple hash of email for ~50/50 split between Kevin and Dylan
+        // 50/50 split between Kevin and Rosa (deterministic hash)
         const hash = (email || first || last || phone || '').split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
-        assignedTo = hash % 2 === 0 ? 'Kevin' : 'Dylan';
+        assignedTo = hash % 2 === 0 ? 'Kevin' : 'Rosa';
     }
     coreFields['Assigned To'] = assignedTo;
 

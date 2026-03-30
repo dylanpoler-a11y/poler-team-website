@@ -5,6 +5,8 @@
 
 // ── CONFIG ─────────────────────────────────────────────────────────────────
 const CRM_API_BASE = 'https://poler-team-website-two.vercel.app';
+const BRIDGE_TOKEN = 'fceef76441eaf7579daff17411bffca2';
+const BRIDGE_BASE  = 'https://api.bridgedataoutput.com/api/v2/miamire';
 const STATUSES = ['New','Contacted','Warm','Hot','Appointment Set','Under Contract','Closed','Dead'];
 
 const AGENTS = [
@@ -609,9 +611,14 @@ function renderTable() {
     const price       = lead.listingPrice
       ? '$' + Number(lead.listingPrice).toLocaleString()
       : '';
-    const property    = lead.listingAddress
-      ? escHtml(lead.listingAddress) + (price ? ' · ' + price : '')
-      : '—';
+    let property = '—';
+    if (lead.listingAddress) {
+      property = escHtml(lead.listingAddress) + (price ? ' · ' + price : '');
+    } else if (lead.sourceUrl) {
+      // Try to extract MLS ID or useful info from the source URL
+      const urlMatch = lead.sourceUrl.match(/[?&]id=([^&]+)/);
+      property = urlMatch ? `MLS# ${escHtml(urlMatch[1])}` : '<span class="td-muted-light">Browse page</span>';
+    }
     const statusVal   = lead.status || 'New';
     const statusClass = 'status-' + statusVal.replace(/\s+/g, '-');
     const alertSummary = getAlertSummary(lead);
@@ -629,7 +636,11 @@ function renderTable() {
         <td class="td-muted">${lead.lastLogin ? relativeTime(lead.lastLogin) : '—'}</td>
         <td class="td-muted">${escHtml(lead.phone || '—')}</td>
         <td class="td-muted">${escHtml(lead.email || '—')}</td>
-        <td class="td-property" title="${escHtml(lead.listingAddress || '')}">${property}</td>
+        <td class="td-property" title="${escHtml(lead.listingAddress || '')}">
+          ${lead.listingAddress
+            ? `<a href="#" class="property-link" data-address="${escHtml(lead.listingAddress)}" data-source="${escHtml(lead.sourceUrl || '')}" onclick="event.stopPropagation();openPropertyModal(this.dataset.address, this.dataset.source);return false;">${property}</a>`
+            : property}
+        </td>
         <td class="td-muted">${escHtml(lead.country || '—')}</td>
         <td class="td-muted">${escHtml(lead.timeline || '—')}</td>
         <td class="td-muted">${escHtml(lead.assignedTo || '—')}</td>
@@ -789,34 +800,127 @@ function closePanel() {
 }
 
 // ── NOTES HISTORY ──────────────────────────────────────────────────────────
+let parsedNotes = []; // array of { header, body, raw } for editing
+
 function renderNotesHistory(notesStr) {
   const container = document.getElementById('panel-notes-history');
   if (!container) return;
   if (!notesStr || !notesStr.trim()) {
+    parsedNotes = [];
     container.innerHTML = '<p class="panel-empty-text">No notes yet</p>';
     return;
   }
   // Notes are stored as: "[3/18/2026, 9:30 AM — Kevin] Note text\n\n[...] ..."
-  // Parse into individual notes (split on the date pattern)
   const noteBlocks = notesStr.split(/(?=\[[\d\/]+,\s[\d:]+\s[AP]M\s—\s)/).filter(Boolean);
   if (noteBlocks.length === 0 && notesStr.trim()) {
-    // Legacy: old-style single note without timestamp
-    container.innerHTML = `<div class="note-card"><div class="note-body">${escHtml(notesStr)}</div></div>`;
+    parsedNotes = [{ header: '', body: notesStr.trim(), raw: notesStr.trim() }];
+    container.innerHTML = `<div class="note-card">
+      <div class="note-body">${escHtml(notesStr)}</div>
+      <div class="note-actions">
+        <button class="note-edit-btn" onclick="editNote(0)">Edit</button>
+        <button class="note-delete-btn" onclick="deleteNote(0)">Delete</button>
+      </div>
+    </div>`;
     return;
   }
-  container.innerHTML = noteBlocks.map(block => {
+  parsedNotes = noteBlocks.map(block => {
     const headerMatch = block.match(/^\[(.*?)\s—\s(.*?)\]\s*/);
+    if (headerMatch) {
+      return { header: headerMatch[0].trim(), body: block.slice(headerMatch[0].length).trim(), raw: block.trim() };
+    }
+    return { header: '', body: block.trim(), raw: block.trim() };
+  });
+  container.innerHTML = parsedNotes.map((note, i) => {
+    const headerMatch = note.raw.match(/^\[(.*?)\s—\s(.*?)\]\s*/);
     if (headerMatch) {
       const dateStr = headerMatch[1];
       const author = headerMatch[2];
-      const body = block.slice(headerMatch[0].length).trim();
-      return `<div class="note-card">
+      return `<div class="note-card" id="note-card-${i}">
         <div class="note-header"><span class="note-author">${escHtml(author)}</span><span class="note-date">${escHtml(dateStr)}</span></div>
-        <div class="note-body">${escHtml(body)}</div>
+        <div class="note-body" id="note-body-${i}">${escHtml(note.body)}</div>
+        <div class="note-actions">
+          <button class="note-edit-btn" onclick="editNote(${i})">Edit</button>
+          <button class="note-delete-btn" onclick="deleteNote(${i})">Delete</button>
+        </div>
       </div>`;
     }
-    return `<div class="note-card"><div class="note-body">${escHtml(block.trim())}</div></div>`;
+    return `<div class="note-card" id="note-card-${i}">
+      <div class="note-body" id="note-body-${i}">${escHtml(note.body)}</div>
+      <div class="note-actions">
+        <button class="note-edit-btn" onclick="editNote(${i})">Edit</button>
+        <button class="note-delete-btn" onclick="deleteNote(${i})">Delete</button>
+      </div>
+    </div>`;
   }).join('');
+}
+
+function editNote(index) {
+  const note = parsedNotes[index];
+  if (!note) return;
+  const card = document.getElementById(`note-card-${index}`);
+  const bodyEl = document.getElementById(`note-body-${index}`);
+  if (!card || !bodyEl) return;
+  // Replace body with textarea
+  const textarea = document.createElement('textarea');
+  textarea.className = 'note-edit-textarea';
+  textarea.value = note.body;
+  textarea.rows = 3;
+  bodyEl.replaceWith(textarea);
+  // Replace actions with Save/Cancel
+  const actionsEl = card.querySelector('.note-actions');
+  actionsEl.innerHTML = `
+    <button class="note-save-btn" onclick="saveEditedNote(${index})">Save</button>
+    <button class="note-cancel-btn" onclick="cancelEditNote()">Cancel</button>
+  `;
+}
+
+function saveEditedNote(index) {
+  const note = parsedNotes[index];
+  if (!note) return;
+  const card = document.getElementById(`note-card-${index}`);
+  const textarea = card.querySelector('.note-edit-textarea');
+  if (!textarea) return;
+  const newBody = textarea.value.trim();
+  if (!newBody) { deleteNote(index); return; }
+  // Rebuild the note with original header + new body
+  parsedNotes[index].body = newBody;
+  parsedNotes[index].raw = note.header ? note.header + ' ' + newBody : newBody;
+  // Rebuild full notes string and save
+  rebuildAndSaveNotes();
+}
+
+function deleteNote(index) {
+  if (!confirm('Delete this note?')) return;
+  parsedNotes.splice(index, 1);
+  rebuildAndSaveNotes();
+}
+
+function cancelEditNote() {
+  // Re-render notes from current state
+  const notesStr = parsedNotes.map(n => n.raw).join('\n\n');
+  renderNotesHistory(notesStr);
+}
+
+async function rebuildAndSaveNotes() {
+  const notes = parsedNotes.map(n => n.raw).join('\n\n');
+  activeLead.notes = notes;
+  renderNotesHistory(notes);
+  // Save to Airtable
+  try {
+    await fetch(`${CRM_API_BASE}/api/update-lead`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: activeLead.id,
+        status: activeLead.status,
+        notes,
+        assignedTo: activeLead.assignedTo,
+        password: currentPassword,
+      }),
+    });
+    const lead = allLeads.find(l => String(l.id) === String(activeLead.id));
+    if (lead) lead.notes = notes;
+  } catch (err) { console.warn('Failed to save edited note:', err); }
 }
 
 // ── SAVE LEAD ──────────────────────────────────────────────────────────────
@@ -1723,3 +1827,125 @@ async function loadActivity(email) {
     wrap.innerHTML = '<p class="panel-empty-text">Error loading activity</p>';
   }
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PROPERTY DETAIL MODAL — fetch from Bridge MLS API and display
+// ═══════════════════════════════════════════════════════════════════════════
+
+function openPropertyModal(address, sourceUrl) {
+  const modal = document.getElementById('property-modal');
+  const body  = document.getElementById('property-modal-body');
+  modal.style.display = 'flex';
+  body.innerHTML = '<div class="property-modal-loading">Loading property details...</div>';
+  document.body.style.overflow = 'hidden';
+
+  // Extract MLS ID from source URL if available
+  let mlsId = '';
+  if (sourceUrl) {
+    const match = sourceUrl.match(/[?&](?:id|mls)=([^&]+)/);
+    if (match) mlsId = match[1];
+  }
+
+  // Search by MLS ID first, then by address
+  const searchPromise = mlsId
+    ? fetchBridgeListing({ ListingId: mlsId })
+    : fetchBridgeByAddress(address);
+
+  searchPromise.then(listing => {
+    if (!listing) {
+      body.innerHTML = `<div class="pm-error">Property not found in MLS.<br><small>${escHtml(address)}</small></div>`;
+      return;
+    }
+    renderPropertyModal(body, listing);
+  }).catch(err => {
+    console.error('Property modal error:', err);
+    body.innerHTML = `<div class="pm-error">Error loading property details</div>`;
+  });
+}
+
+function closePropertyModal() {
+  document.getElementById('property-modal').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+async function fetchBridgeListing(params) {
+  const qs = new URLSearchParams({ access_token: BRIDGE_TOKEN, ...params, limit: 1 }).toString();
+  const res = await fetch(`${BRIDGE_BASE}/listings?${qs}`);
+  const data = await res.json();
+  return data.success && data.bundle && data.bundle[0] ? data.bundle[0] : null;
+}
+
+async function fetchBridgeByAddress(address) {
+  if (!address) return null;
+  // Try to parse address components for Bridge API search
+  const parts = address.match(/^(\d+)\s+(.+?)(?:,\s*(.+?))?(?:\s+FL\s+\d{5})?$/i);
+  if (parts) {
+    const listing = await fetchBridgeListing({ StreetNumber: parts[1], StreetName: parts[2].replace(/[,#].*/,'').trim(), limit: 1 });
+    if (listing) return listing;
+  }
+  // Fallback: search by unparsed address
+  return fetchBridgeListing({ UnparsedAddress: address.split(',')[0].trim(), limit: 1 });
+}
+
+function renderPropertyModal(container, l) {
+  const photos = (l.Media || []).sort((a,b) => (a.Order||0)-(b.Order||0)).map(m => m.MediaURL).filter(Boolean);
+  const price = l.ListPrice ? '$' + Number(l.ListPrice).toLocaleString() : 'Price N/A';
+  const addr = l.UnparsedAddress || '';
+  const cityStateZip = [l.City, 'FL', l.PostalCode].filter(Boolean).join(' ');
+  const beds = l.BedroomsTotal || '—';
+  const baths = l.BathroomsTotalInteger || '—';
+  const sqft = l.LivingArea ? Number(l.LivingArea).toLocaleString() : '—';
+  const yearBuilt = l.YearBuilt || '—';
+  const pricePerSqft = (l.ListPrice && l.LivingArea) ? '$' + Math.round(l.ListPrice / l.LivingArea).toLocaleString() : '—';
+  const status = l.StandardStatus || '—';
+  const mlsNum = l.ListingId || '—';
+  const propType = l.PropertySubType || l.PropertyType || '—';
+  const hoa = l.AssociationFee ? '$' + Number(l.AssociationFee).toLocaleString() + '/mo' : '—';
+  const lot = l.LotSizeSquareFeet ? Number(l.LotSizeSquareFeet).toLocaleString() + ' sqft' : '—';
+  const garage = l.GarageSpaces ? l.GarageSpaces + ' Cars' : '—';
+  const pool = (l.PoolFeatures && l.PoolFeatures.length) ? 'Yes' : '—';
+  const waterfront = l.WaterfrontYN === true ? 'Yes' : '—';
+  const county = l.CountyOrParish || '—';
+  const dom = l.DaysOnMarket || '—';
+  const desc = l.PublicRemarks || '';
+
+  // Photo gallery (up to 5)
+  const galleryPhotos = photos.slice(0, 5);
+  const galleryHtml = galleryPhotos.length
+    ? `<div class="pm-gallery">${galleryPhotos.map(url => `<img src="${url}" alt="Property photo" loading="lazy">`).join('')}</div>`
+    : '';
+
+  container.innerHTML = `
+    ${galleryHtml}
+    <div class="pm-header">
+      <div class="pm-price">${price}</div>
+      <div class="pm-address">${escHtml(addr)}${cityStateZip ? ', ' + escHtml(cityStateZip) : ''}</div>
+    </div>
+    <div class="pm-stats">
+      <div class="pm-stat"><div class="pm-stat-val">${beds}</div><div class="pm-stat-label">Beds</div></div>
+      <div class="pm-stat"><div class="pm-stat-val">${baths}</div><div class="pm-stat-label">Baths</div></div>
+      <div class="pm-stat"><div class="pm-stat-val">${sqft}</div><div class="pm-stat-label">Sq Ft</div></div>
+      <div class="pm-stat"><div class="pm-stat-val">${pricePerSqft}</div><div class="pm-stat-label">$/Sq Ft</div></div>
+      <div class="pm-stat"><div class="pm-stat-val">${dom}</div><div class="pm-stat-label">Days on Market</div></div>
+    </div>
+    <div class="pm-details">
+      <div class="pm-detail"><span class="pm-detail-label">Status</span><span class="pm-detail-value">${escHtml(status)}</span></div>
+      <div class="pm-detail"><span class="pm-detail-label">MLS #</span><span class="pm-detail-value">${escHtml(mlsNum)}</span></div>
+      <div class="pm-detail"><span class="pm-detail-label">Type</span><span class="pm-detail-value">${escHtml(propType)}</span></div>
+      <div class="pm-detail"><span class="pm-detail-label">Year Built</span><span class="pm-detail-value">${yearBuilt}</span></div>
+      <div class="pm-detail"><span class="pm-detail-label">HOA</span><span class="pm-detail-value">${hoa}</span></div>
+      <div class="pm-detail"><span class="pm-detail-label">Lot Size</span><span class="pm-detail-value">${lot}</span></div>
+      <div class="pm-detail"><span class="pm-detail-label">Garage</span><span class="pm-detail-value">${garage}</span></div>
+      <div class="pm-detail"><span class="pm-detail-label">Pool</span><span class="pm-detail-value">${pool}</span></div>
+      <div class="pm-detail"><span class="pm-detail-label">Waterfront</span><span class="pm-detail-value">${waterfront}</span></div>
+      <div class="pm-detail"><span class="pm-detail-label">County</span><span class="pm-detail-value">${escHtml(county)}</span></div>
+    </div>
+    ${desc ? `<div class="pm-desc"><h3>Description</h3><p>${escHtml(desc).substring(0, 500)}${desc.length > 500 ? '...' : ''}</p></div>` : ''}
+    ${mlsNum !== '—' ? `<a class="pm-link" href="https://homesinsoflorida.com/listing?id=${encodeURIComponent(mlsNum)}" target="_blank">View Full Listing on HomesInSoFlorida.com &rarr;</a>` : ''}
+  `;
+}
+
+// Close modal on Escape key
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closePropertyModal();
+});

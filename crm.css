@@ -228,7 +228,7 @@ body {
 #crm-main {
   flex: 1;
   padding: 2rem;
-  overflow-x: hidden;
+  overflow-x: auto;
   min-width: 0;
 }
 
@@ -406,7 +406,7 @@ body {
   background: white;
   border-radius: 12px;
   box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-  overflow: hidden;
+  overflow-x: auto;
   border: 1px solid rgba(0,0,0,0.04);
 }
 
@@ -1409,6 +1409,39 @@ body {
   line-height: 1.45;
   white-space: pre-wrap;
 }
+.note-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.4rem;
+  justify-content: flex-end;
+}
+.note-edit-btn, .note-save-btn, .note-cancel-btn, .note-delete-btn {
+  background: none;
+  border: none;
+  font-size: 0.7rem;
+  cursor: pointer;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+.note-edit-btn { color: #3b82f6; }
+.note-edit-btn:hover { background: #eff6ff; }
+.note-delete-btn { color: #ef4444; }
+.note-delete-btn:hover { background: #fef2f2; }
+.note-save-btn { color: #fff; background: #16a34a; }
+.note-save-btn:hover { background: #15803d; }
+.note-cancel-btn { color: #64748b; }
+.note-cancel-btn:hover { background: #f1f5f9; }
+.note-edit-textarea {
+  width: 100%;
+  font-size: 0.825rem;
+  color: var(--text);
+  line-height: 1.45;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 0.5rem;
+  resize: vertical;
+  font-family: inherit;
+}
 
 /* ── REMINDER EDIT ──────────────────────────────────────────── */
 .reminder-edit-row {
@@ -1431,3 +1464,68 @@ body {
   background: #eff6ff;
   color: #1d4ed8;
 }
+
+/* ── PROPERTY LINK ──────────────────────────────────────────── */
+.property-link {
+  color: var(--navy);
+  text-decoration: underline;
+  text-decoration-color: rgba(26,39,68,0.3);
+  text-underline-offset: 2px;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+.property-link:hover {
+  color: #2563eb;
+  text-decoration-color: #2563eb;
+}
+
+/* ── PROPERTY DETAIL MODAL ──────────────────────────────────── */
+.property-modal {
+  position: fixed; inset: 0; z-index: 2000;
+  display: flex; align-items: center; justify-content: center;
+}
+.property-modal-backdrop {
+  position: absolute; inset: 0;
+  background: rgba(0,0,0,0.5);
+}
+.property-modal-content {
+  position: relative; z-index: 1;
+  background: white; border-radius: 16px;
+  width: 90vw; max-width: 800px; max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.2);
+  padding: 2rem;
+}
+.property-modal-close {
+  position: absolute; top: 1rem; right: 1rem;
+  background: none; border: none; font-size: 1.5rem;
+  cursor: pointer; color: #6b7280; line-height: 1;
+  width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+  border-radius: 50%; transition: background 0.15s;
+}
+.property-modal-close:hover { background: #f3f4f6; }
+.property-modal-loading {
+  text-align: center; padding: 3rem; color: #6b7280; font-size: 0.9rem;
+}
+
+/* Property modal content styles */
+.pm-gallery { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 1.5rem; border-radius: 12px; overflow: hidden; }
+.pm-gallery img { width: 100%; height: 200px; object-fit: cover; cursor: pointer; transition: opacity 0.15s; }
+.pm-gallery img:hover { opacity: 0.9; }
+.pm-gallery img:first-child { grid-column: 1 / -1; height: 300px; }
+.pm-header { margin-bottom: 1rem; }
+.pm-price { font-size: 1.75rem; font-weight: 700; color: var(--navy); }
+.pm-address { font-size: 1rem; color: #6b7280; margin-top: 0.25rem; }
+.pm-stats { display: flex; gap: 1.5rem; margin: 1rem 0; flex-wrap: wrap; }
+.pm-stat { text-align: center; }
+.pm-stat-val { font-size: 1.25rem; font-weight: 700; color: var(--navy); }
+.pm-stat-label { font-size: 0.72rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; }
+.pm-details { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem 1.5rem; margin-top: 1rem; }
+.pm-detail { display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid #f1f5f9; font-size: 0.85rem; }
+.pm-detail-label { color: #6b7280; text-transform: uppercase; font-size: 0.72rem; font-weight: 600; }
+.pm-detail-value { color: var(--navy); font-weight: 500; }
+.pm-desc { margin-top: 1.5rem; }
+.pm-desc h3 { font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem; }
+.pm-desc p { font-size: 0.85rem; color: #374151; line-height: 1.6; }
+.pm-link { display: inline-block; margin-top: 1rem; color: #2563eb; font-weight: 500; font-size: 0.85rem; }
+.pm-error { text-align: center; padding: 2rem; color: #ef4444; }
