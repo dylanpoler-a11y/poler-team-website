@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SMS Communications | The Poler Team</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; color: #1a2744; background: #fff; line-height: 1.7; }
+        .container { max-width: 720px; margin: 0 auto; padding: 60px 24px; }
+        h1 { font-family: 'Playfair Display', serif; font-size: 2rem; margin-bottom: 8px; }
+        h2 { font-family: 'Playfair Display', serif; font-size: 1.3rem; margin: 32px 0 12px; color: #1a2744; }
+        .subtitle { color: #C9A84C; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 32px; }
+        p, li { font-size: 15px; color: #444; margin-bottom: 12px; }
+        ul { padding-left: 24px; margin-bottom: 16px; }
+        li { margin-bottom: 6px; }
+        .highlight { background: #f8f6f0; border-left: 3px solid #C9A84C; padding: 20px 24px; border-radius: 0 8px 8px 0; margin: 24px 0; }
+        .highlight p { margin-bottom: 0; }
+        .consent-form { background: #1a2744; color: #fff; border-radius: 12px; padding: 32px; margin: 40px 0; }
+        .consent-form h2 { color: #C9A84C; margin-top: 0; }
+        .consent-form p { color: rgba(255,255,255,0.8); }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-size: 13px; color: rgba(255,255,255,0.6); margin-bottom: 6px; }
+        .form-group input { width: 100%; padding: 12px 16px; border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; background: rgba(255,255,255,0.05); color: #fff; font-size: 15px; }
+        .form-group input::placeholder { color: rgba(255,255,255,0.3); }
+        .checkbox-group { display: flex; align-items: flex-start; gap: 10px; margin: 20px 0; }
+        .checkbox-group input[type="checkbox"] { margin-top: 4px; width: 18px; height: 18px; flex-shrink: 0; }
+        .checkbox-group label { font-size: 13px; color: rgba(255,255,255,0.7); line-height: 1.5; }
+        .submit-btn { width: 100%; padding: 14px; background: #C9A84C; color: #1a2744; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; }
+        .submit-btn:hover { background: #d4b86a; }
+        .footer-links { text-align: center; margin-top: 40px; padding-top: 24px; border-top: 1px solid #eee; }
+        .footer-links a { color: #C9A84C; text-decoration: none; margin: 0 12px; font-size: 14px; }
+        a { color: #C9A84C; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>SMS Communications Policy</h1>
+        <p class="subtitle">The Poler Team</p>
+
+        <p>The Poler Team ("we," "us," or "our") uses SMS text messaging to communicate with commercial real estate investors, hospitality industry professionals, and other business contacts about investment property opportunities.</p>
+
+        <h2>What Messages You'll Receive</h2>
+        <p>By opting in to SMS communications from The Poler Team, you may receive messages about:</p>
+        <ul>
+            <li>Commercial real estate investment opportunities in South Florida</li>
+            <li>Property details, pricing, and availability updates</li>
+            <li>Meeting and call scheduling confirmations</li>
+            <li>Follow-up communications regarding properties of interest</li>
+        </ul>
+
+        <h2>How to Opt In</h2>
+        <p>You may opt in to receive SMS messages from The Poler Team by:</p>
+        <ul>
+            <li>Submitting the contact form below with your phone number and consent</li>
+            <li>Providing your phone number to a Poler Team representative and consenting to receive texts</li>
+            <li>Responding to an initial outreach message</li>
+        </ul>
+
+        <div class="highlight">
+            <p><strong>By providing your phone number and opting in, you consent to receive text messages from The Poler Team regarding commercial real estate opportunities. Message frequency varies. Message and data rates may apply.</strong></p>
+        </div>
+
+        <h2>How to Opt Out</h2>
+        <p>You can opt out of SMS communications at any time by:</p>
+        <ul>
+            <li>Replying <strong>STOP</strong> to any message you receive from us</li>
+            <li>Emailing us at <a href="mailto:info@polerteam.com">info@polerteam.com</a> with your opt-out request</li>
+            <li>Calling us at (954) 833-5106</li>
+        </ul>
+        <p>After opting out, you will receive one final confirmation message and no further texts.</p>
+
+        <h2>Message Frequency</h2>
+        <p>Message frequency varies based on your engagement with our team and available properties. Typically, you may receive 1-4 messages per month.</p>
+
+        <h2>Help</h2>
+        <p>For help or questions about our SMS program, reply <strong>HELP</strong> to any message, email <a href="mailto:info@polerteam.com">info@polerteam.com</a>, or call (954) 833-5106.</p>
+
+        <h2>Privacy</h2>
+        <p>Your phone number and personal information will not be shared with third parties for marketing purposes. For more details, see our <a href="/privacy">Privacy Policy</a>.</p>
+
+        <div class="consent-form">
+            <h2>Request Property Information via SMS</h2>
+            <p>Interested in South Florida commercial real estate opportunities? Enter your details below to receive property updates via text.</p>
+            <form id="sms-consent-form" onsubmit="handleSubmit(event)">
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" name="name" placeholder="John Smith" required>
+                </div>
+                <div class="form-group">
+                    <label>Company</label>
+                    <input type="text" name="company" placeholder="Your company name">
+                </div>
+                <div class="form-group">
+                    <label>Phone Number</label>
+                    <input type="tel" name="phone" placeholder="(954) 555-0123" required>
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" name="email" placeholder="john@example.com">
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="sms-consent" required>
+                    <label for="sms-consent">I agree to receive SMS text messages from The Poler Team about commercial real estate investment opportunities. Message frequency varies. Message and data rates may apply. Reply STOP to opt out at any time.</label>
+                </div>
+                <button type="submit" class="submit-btn">Subscribe to Property Updates</button>
+            </form>
+        </div>
+
+        <div class="footer-links">
+            <a href="/">Home</a>
+            <a href="/privacy">Privacy Policy</a>
+            <a href="/terms">Terms of Service</a>
+        </div>
+    </div>
+
+    <script>
+    function handleSubmit(e) {
+        e.preventDefault();
+        const form = e.target;
+        const data = new FormData(form);
+        alert('Thank you! You have been subscribed to The Poler Team property updates. You will receive a confirmation text shortly.');
+        form.reset();
+    }
+    </script>
+</body>
+</html>
