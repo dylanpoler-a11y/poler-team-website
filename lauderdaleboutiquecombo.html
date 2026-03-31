@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Lauderdale Expansion — 505 + 506 SE 16th St</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --navy: #1a2744;
+    --gold: #C9A84C;
+    --light-gold: #f5f0e1;
+    --dark: #0f1729;
+    --white: #ffffff;
+    --gray: #f8f9fa;
+    --text: #333;
+    --text-light: #666;
+  }
+  body { font-family: 'Inter', sans-serif; color: var(--text); background: var(--white); }
+  h1, h2, h3 { font-family: 'Playfair Display', serif; color: var(--navy); }
+
+  /* COVER */
+  .cover {
+    background: linear-gradient(135deg, var(--navy) 0%, var(--dark) 100%);
+    color: var(--white);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 60px 40px;
+    page-break-after: always;
+  }
+  .cover h1 { font-size: 52px; color: var(--gold); margin-bottom: 16px; letter-spacing: -1px; }
+  .cover .subtitle { font-size: 22px; font-weight: 300; margin-bottom: 40px; opacity: 0.9; }
+  .cover .tag { display: inline-block; background: var(--gold); color: var(--navy); padding: 10px 28px; border-radius: 6px; font-weight: 700; font-size: 14px; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 40px; }
+  .cover-stats { display: flex; gap: 48px; margin-top: 20px; }
+  .cover-stat { text-align: center; }
+  .cover-stat .val { font-size: 36px; font-weight: 700; color: var(--gold); }
+  .cover-stat .label { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.7; margin-top: 4px; }
+  .cover-footer { margin-top: 60px; font-size: 13px; opacity: 0.5; }
+
+  /* SECTIONS */
+  .section {
+    padding: 80px 60px;
+    max-width: 1100px;
+    margin: 0 auto;
+    page-break-inside: avoid;
+  }
+  .section-dark {
+    background: var(--navy);
+    color: var(--white);
+    max-width: 100%;
+    padding: 80px 60px;
+  }
+  .section-dark h2 { color: var(--gold); }
+  .section-gold {
+    background: var(--light-gold);
+    max-width: 100%;
+    padding: 80px 60px;
+  }
+  .section h2 { font-size: 36px; margin-bottom: 12px; }
+  .section .section-sub { font-size: 16px; color: var(--text-light); margin-bottom: 40px; font-weight: 300; }
+  .section-dark .section-sub { color: rgba(255,255,255,0.7); }
+
+  /* THESIS BOX */
+  .thesis-box {
+    background: var(--light-gold);
+    border-left: 5px solid var(--gold);
+    padding: 32px 36px;
+    border-radius: 0 12px 12px 0;
+    margin: 40px 0;
+    font-size: 18px;
+    line-height: 1.7;
+    color: var(--navy);
+    font-weight: 400;
+  }
+  .thesis-box strong { color: var(--gold); }
+
+  /* TWO COLUMN PROPERTIES */
+  .prop-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin: 40px 0; }
+  .prop-card {
+    border: 2px solid #e0e0e0;
+    border-radius: 16px;
+    padding: 32px;
+    position: relative;
+  }
+  .prop-card.highlight { border-color: var(--gold); background: var(--light-gold); }
+  .prop-card .prop-badge {
+    position: absolute;
+    top: -14px;
+    left: 24px;
+    background: var(--navy);
+    color: var(--gold);
+    padding: 4px 16px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .prop-card.highlight .prop-badge { background: var(--gold); color: var(--navy); }
+  .prop-card h3 { font-size: 22px; margin-bottom: 6px; }
+  .prop-card .prop-addr { font-size: 13px; color: var(--text-light); margin-bottom: 20px; }
+  .prop-card table { width: 100%; font-size: 14px; }
+  .prop-card table td { padding: 6px 0; border-bottom: 1px solid #eee; }
+  .prop-card table td:last-child { text-align: right; font-weight: 600; color: var(--navy); }
+
+  /* COMBINED BOX */
+  .combined-box {
+    background: var(--navy);
+    color: var(--white);
+    border-radius: 16px;
+    padding: 40px;
+    margin: 40px 0;
+    text-align: center;
+  }
+  .combined-box h3 { color: var(--gold); font-size: 28px; margin-bottom: 24px; }
+  .combined-stats { display: flex; justify-content: center; gap: 48px; flex-wrap: wrap; }
+  .combined-stat .val { font-size: 32px; font-weight: 700; color: var(--gold); }
+  .combined-stat .label { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.7; margin-top: 4px; }
+
+  /* TIMELINE */
+  .timeline { display: flex; gap: 0; margin: 40px 0; }
+  .timeline-step {
+    flex: 1;
+    text-align: center;
+    padding: 24px 16px;
+    position: relative;
+    border-top: 4px solid var(--gold);
+  }
+  .timeline-step::before {
+    content: '';
+    width: 16px; height: 16px;
+    background: var(--gold);
+    border-radius: 50%;
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  .timeline-step .step-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--gold); font-weight: 700; margin-bottom: 8px; }
+  .timeline-step .step-title { font-size: 15px; font-weight: 600; color: var(--navy); margin-bottom: 4px; }
+  .timeline-step .step-desc { font-size: 12px; color: var(--text-light); }
+
+  /* EXIT SCENARIOS */
+  .exit-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; margin: 40px 0; }
+  .exit-card {
+    background: var(--white);
+    border-radius: 12px;
+    padding: 28px;
+    border: 1px solid #e0e0e0;
+  }
+  .section-dark .exit-card { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.15); }
+  .exit-card .exit-num { font-size: 48px; font-weight: 700; color: var(--gold); opacity: 0.3; margin-bottom: 8px; }
+  .exit-card h4 { font-size: 16px; color: var(--navy); margin-bottom: 8px; }
+  .section-dark .exit-card h4 { color: var(--gold); }
+  .exit-card p { font-size: 13px; color: var(--text-light); line-height: 1.6; }
+  .section-dark .exit-card p { color: rgba(255,255,255,0.7); }
+  .exit-card .exit-metric { margin-top: 12px; padding-top: 12px; border-top: 1px solid #eee; font-size: 14px; font-weight: 600; color: var(--navy); }
+  .section-dark .exit-card .exit-metric { border-color: rgba(255,255,255,0.15); color: var(--gold); }
+
+  /* BULLET LIST */
+  .check-list { list-style: none; padding: 0; }
+  .check-list li { padding: 16px 0; font-size: 15px; border-bottom: 1px solid #eee; line-height: 1.7; padding-left: 36px; position: relative; }
+  .check-list li::before { content: ''; display: none; }
+  .check-icon { color: var(--gold); font-size: 18px; position: absolute; left: 0; top: 18px; }
+
+  /* FINANCIALS TABLE */
+  .fin-table { width: 100%; border-collapse: collapse; margin: 30px 0; font-size: 14px; }
+  .fin-table thead th { background: var(--navy); color: var(--white); padding: 14px 16px; text-align: left; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .fin-table thead th:not(:first-child) { text-align: right; }
+  .fin-table tbody td { padding: 12px 16px; border-bottom: 1px solid #eee; }
+  .fin-table tbody td:not(:first-child) { text-align: right; font-weight: 500; }
+  .fin-table tbody tr.total-row { background: var(--light-gold); font-weight: 700; }
+  .fin-table tbody tr.total-row td { border-bottom: 2px solid var(--gold); }
+
+  /* CTA */
+  .cta-section {
+    background: linear-gradient(135deg, var(--navy) 0%, var(--dark) 100%);
+    color: var(--white);
+    text-align: center;
+    padding: 80px 60px;
+  }
+  .cta-section h2 { color: var(--gold); font-size: 36px; margin-bottom: 16px; }
+  .cta-section p { font-size: 18px; opacity: 0.8; margin-bottom: 40px; max-width: 600px; margin-left: auto; margin-right: auto; }
+  .cta-contacts { display: flex; justify-content: center; gap: 48px; flex-wrap: wrap; }
+  .cta-contact { text-align: center; }
+  .cta-contact .name { font-size: 18px; font-weight: 600; color: var(--gold); }
+  .cta-contact .title { font-size: 13px; opacity: 0.6; margin: 4px 0; }
+  .cta-contact .info { font-size: 14px; }
+  .cta-contact .info a { color: var(--gold); text-decoration: none; }
+
+  /* COMPARISON TABLE */
+  .compare-table { width: 100%; border-collapse: collapse; margin: 30px 0; font-size: 14px; }
+  .compare-table thead th { padding: 14px 16px; text-align: left; font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid var(--gold); color: var(--navy); }
+  .compare-table thead th:not(:first-child) { text-align: right; }
+  .compare-table thead th.actual-col { color: var(--gold); }
+  .compare-table tbody td { padding: 12px 16px; border-bottom: 1px solid #eee; }
+  .compare-table tbody td:not(:first-child) { text-align: right; font-weight: 500; }
+  .compare-table tbody tr.total-row { background: var(--light-gold); font-weight: 700; }
+  .compare-table tbody tr.total-row td { border-bottom: 2px solid var(--gold); }
+  .badge-live { display: inline-block; background: #22c55e; color: white; padding: 2px 8px; border-radius: 999px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-left: 6px; vertical-align: middle; }
+  .badge-proj { display: inline-block; background: var(--navy); color: var(--gold); padding: 2px 8px; border-radius: 999px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-left: 6px; vertical-align: middle; }
+  .kpi-row { display: flex; gap: 20px; flex-wrap: wrap; margin: 32px 0; }
+  .kpi-card { flex: 1; min-width: 140px; background: var(--white); border: 1px solid #e0e0e0; border-radius: 12px; padding: 20px; text-align: center; }
+  .kpi-card .kpi-val { font-size: 28px; font-weight: 700; color: var(--navy); }
+  .kpi-card .kpi-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-light); margin-top: 4px; }
+  .kpi-card .kpi-source { font-size: 10px; color: #22c55e; font-weight: 600; margin-top: 6px; }
+  .section-compare { background: #f0f7f4; max-width: 100%; padding: 80px 60px; }
+  .section-compare h2 { color: var(--navy); font-size: 36px; margin-bottom: 12px; }
+  .section-compare .section-sub { color: var(--text-light); margin-bottom: 40px; font-size: 16px; font-weight: 300; }
+  .cf-table { width: 100%; border-collapse: collapse; margin: 30px 0; font-size: 14px; }
+  .cf-table thead th { background: var(--navy); color: var(--white); padding: 12px 14px; text-align: right; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+  .cf-table thead th:first-child { text-align: left; }
+  .cf-table tbody td { padding: 10px 14px; border-bottom: 1px solid #ddd; text-align: right; }
+  .cf-table tbody td:first-child { text-align: left; font-weight: 500; }
+  .cf-table tbody tr.cf-total { background: var(--light-gold); font-weight: 700; border-top: 2px solid var(--gold); }
+  .cf-table tbody tr.cf-exit { color: var(--gold); font-weight: 700; }
+
+  /* SENSITIVITY TABLE */
+  .section-path { background: #f9f6ef; max-width: 100%; padding: 80px 60px; }
+  .section-path h2 { color: var(--navy); font-size: 36px; margin-bottom: 12px; }
+  .section-path .section-sub { color: var(--text-light); margin-bottom: 40px; font-size: 16px; font-weight: 300; }
+  .sens-table { width: 100%; border-collapse: collapse; margin: 24px 0; font-size: 14px; }
+  .sens-table thead th { background: var(--navy); color: var(--white); padding: 12px 16px; text-align: center; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+  .sens-table thead th:first-child { text-align: left; }
+  .sens-table tbody td { padding: 11px 16px; border-bottom: 1px solid #e0ddd4; text-align: center; font-weight: 500; }
+  .sens-table tbody td:first-child { text-align: left; font-weight: 600; color: var(--navy); }
+  .sens-table tbody tr:hover { background: #f0ebe0; }
+  .sens-table .cell-hit { background: #d1fae5; color: #065f46; font-weight: 700; border-radius: 4px; }
+  .sens-table .cell-close { background: #fef3c7; color: #92400e; font-weight: 600; }
+  .sens-table .cell-miss { color: #6b7280; }
+  .sens-table .row-actual { background: #fffbeb; }
+  .lever-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin: 32px 0; }
+  .lever-card { border-radius: 14px; padding: 28px 32px; }
+  .lever-card.lever-price { background: var(--navy); color: white; }
+  .lever-card.lever-rev { background: var(--gold); color: var(--navy); }
+  .lever-card h4 { font-size: 18px; font-family: 'Playfair Display', serif; margin-bottom: 12px; }
+  .lever-card .lever-num { font-size: 38px; font-weight: 700; margin-bottom: 4px; }
+  .lever-card .lever-label { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.75; margin-bottom: 16px; }
+  .lever-card ul { list-style: none; padding: 0; font-size: 14px; line-height: 1.8; }
+  .lever-card.lever-price ul li::before { content: '→ '; opacity: 0.6; }
+  .lever-card.lever-rev ul li::before { content: '→ '; opacity: 0.6; }
+  .sens-note { font-size: 12px; color: var(--text-light); margin-top: 8px; }
+  .target-badge { display: inline-block; background: #065f46; color: white; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; margin-left: 8px; }
+
+  @media print {
+    .cover { min-height: auto; padding: 40px; }
+    .section, .section-dark, .section-gold, .section-compare { padding: 40px; }
+    body { font-size: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- COVER -->
+<div class="cover">
+  <div class="tag">Investment Opportunity</div>
+  <h1>The Lauderdale<br>Boutique Expansion</h1>
+  <div class="subtitle">505 + 506 SE 16th Street, Fort Lauderdale, FL<br>From 17 to 41 Keys — One Integrated Operation</div>
+  <div class="cover-stats">
+    <div class="cover-stat"><div class="val">41</div><div class="label">Combined Keys</div></div>
+    <div class="cover-stat"><div class="val">$9.7M</div><div class="label">Combined Price</div></div>
+    <div class="cover-stat"><div class="val">$743K</div><div class="label">505 Actual Revenue</div></div>
+    <div class="cover-stat"><div class="val">$1.06M</div><div class="label">506 Y1 Pro Forma</div></div>
+    <div class="cover-stat"><div class="val">8.6%</div><div class="label">Blended Cap Rate</div></div>
+  </div>
+  <div class="cover-footer">Confidential Offering Memorandum | The Poler Team | 2026</div>
+</div>
+
+<!-- INVESTMENT THESIS -->
+<div class="section">
+  <h2>Investment Thesis</h2>
+  <p class="section-sub">Two properties, one operation, exponential upside</p>
+
+  <div class="thesis-box">
+    The Lauderdale Boutique Hotel (505) is a <strong>stabilized, cash-flowing, 100% automated</strong> 17-unit hotel generating <strong>$743K actual 2025 revenue</strong> with 80% occupancy and $149 ADR — proven numbers from the Lauderdale OM. Directly across the street, 506 SE 16th St is a <strong>14-unit multifamily</strong> ready for conversion into 24 additional hotel keys projecting <strong>$1.06M Year 1 revenue at 11.53% cap</strong>. Combined, the two properties create a <strong>41-key boutique operation</strong> on 34,950 SF with shared technology, shared management, and dramatically improved economics through <strong>economies of scale</strong>.
+  </div>
+
+  <ul class="check-list">
+    <li><span class="check-icon">&#10003;</span> <strong>Proven Playbook:</strong> The 505 conversion from 13 outdated motel rooms to 17 tech-enabled boutique keys has already been executed — same concept, copy & paste to 506</li>
+    <li><span class="check-icon">&#10003;</span> <strong>Across-the-Street Synergy:</strong> Both properties share one operation, one tech stack (Guesty, Conduit AI, PricePoint), one part-time manager — doubling keys without doubling costs</li>
+    <li><span class="check-icon">&#10003;</span> <strong>Economies of Scale:</strong> Combined 41-key operation unlocks institutional-grade RevPAR, vendor pricing, and OTA positioning that 17 keys alone cannot achieve</li>
+    <li><span class="check-icon">&#10003;</span> <strong>Triple Lot Assemblage:</strong> 505 sits on 3 contiguous lots (21,450 SF) with 5-story zoning — the expansion lot is 70% vacant and already has design plans</li>
+    <li><span class="check-icon">&#10003;</span> <strong>Location Demand Drivers:</strong> 2 min from Broward Health (716 beds), walkable to $1.2B Convention Center, 10 min from FLL Airport & Port Everglades</li>
+  </ul>
+</div>
+
+<!-- THE TWO PROPERTIES -->
+<div class="section-gold">
+  <div style="max-width:1100px;margin:0 auto;">
+    <h2>The Two Properties</h2>
+    <p class="section-sub">Directly across the street from each other — one seamless operation</p>
+
+    <div style="margin: 0 0 40px 0; border-radius: 16px; overflow: hidden; border: 3px solid var(--gold); box-shadow: 0 8px 32px rgba(26,39,68,0.18);">
+      <div style="background: var(--navy); padding: 14px 24px; display: flex; align-items: center; justify-content: space-between;">
+        <span style="font-family: 'Playfair Display', serif; color: var(--gold); font-size: 16px; font-weight: 600; letter-spacing: 0.5px;">505 + 506 SE 16th Street — Fort Lauderdale, FL</span>
+        <span style="font-size: 12px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 1px;">Aerial View</span>
+      </div>
+      <img src="aerial-505-506.png" alt="Aerial view of 505 and 506 SE 16th Street" style="width: 100%; display: block; height: auto; max-height: 380px; object-fit: contain; background: #0f1729;">
+      <div style="background: var(--navy); padding: 12px 24px; display: flex; gap: 32px;">
+        <span style="font-size: 13px; color: rgba(255,255,255,0.8);"><span style="display: inline-block; width: 12px; height: 12px; border: 2px solid #ff6b6b; border-radius: 2px; margin-right: 6px; vertical-align: middle;"></span>505 SE 16th St — The Lauderdale (17 keys, stabilized)</span>
+        <span style="font-size: 13px; color: rgba(255,255,255,0.8);"><span style="display: inline-block; width: 12px; height: 12px; border: 2px solid #ff6b6b; border-radius: 2px; margin-right: 6px; vertical-align: middle;"></span>506 SE 16th St — Conversion Target (14 units → 24 keys)</span>
+      </div>
+    </div>
+
+    <div class="prop-grid">
+      <div class="prop-card">
+        <div class="prop-badge">Stabilized Asset</div>
+        <h3>505 SE 16th St</h3>
+        <p class="prop-addr">The Lauderdale Boutique Hotel & Suites</p>
+        <table>
+          <tr><td>Type</td><td>Boutique Hotel (STR)</td></tr>
+          <tr><td>Units</td><td>17 keys</td></tr>
+          <tr><td>Lot Size</td><td>21,450 SF (3 lots)</td></tr>
+          <tr><td>Building SF</td><td>6,869 SF</td></tr>
+          <tr><td>Revenue (2025 Actual)</td><td>$743,619</td></tr>
+          <tr><td>ADR (2025 Actual)</td><td>$149.25</td></tr>
+          <tr><td>RevPAR (2025 Actual)</td><td>$119.84</td></tr>
+          <tr><td>Occupancy (2025 Actual)</td><td>80.3%</td></tr>
+          <tr><td>NOI (2025 Actual)</td><td>$274,053</td></tr>
+          <tr><td>Revenue (2026 Budget)</td><td>$834,727</td></tr>
+          <tr><td>NOI (2026 Budget)</td><td>$374,587</td></tr>
+          <tr><td>Cap Rate (on 2026 budget NOI)</td><td>6.2%</td></tr>
+          <tr><td>Asking Price</td><td>$6,000,000</td></tr>
+        </table>
+      </div>
+
+      <div class="prop-card highlight">
+        <div class="prop-badge">Value-Add Opportunity</div>
+        <h3>506 SE 16th St</h3>
+        <p class="prop-addr">14-Unit Multifamily — Convert to 24 Hotel Keys</p>
+        <table>
+          <tr><td>Current Type</td><td>Multifamily (14 units)</td></tr>
+          <tr><td>Conversion To</td><td>24 hotel keys</td></tr>
+          <tr><td>Lot Size</td><td>13,500 SF</td></tr>
+          <tr><td>Building SF</td><td>8,377 SF</td></tr>
+          <tr><td>Year Built</td><td>1975</td></tr>
+          <tr><td>PIP Budget</td><td>$1,000,000</td></tr>
+          <tr><td>Total Investment</td><td>$5,011,000</td></tr>
+          <tr><td>Y1 Pro Forma Revenue</td><td>$1,061,493</td></tr>
+          <tr><td>Y1 Pro Forma NOI</td><td>$566,401</td></tr>
+          <tr><td>Cap Rate (on cost)</td><td>11.53%</td></tr>
+          <tr><td>Asking Price</td><td>$3,700,000</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="combined-box">
+      <h3>Combined 505 + 506 Operation</h3>
+      <div class="combined-stats">
+        <div class="combined-stat"><div class="val">41</div><div class="label">Total Keys</div></div>
+        <div class="combined-stat"><div class="val">34,950 SF</div><div class="label">Total Lot Size</div></div>
+        <div class="combined-stat"><div class="val">$1.786M</div><div class="label">Combined Revenue Y1</div></div>
+        <div class="combined-stat"><div class="val">$946K</div><div class="label">Combined NOI Y1</div></div>
+        <div class="combined-stat"><div class="val">$11M</div><div class="label">All-In Cost</div></div>
+        <div class="combined-stat"><div class="val">8.6%</div><div class="label">Blended Cap Rate</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FINANCIALS -->
+<div class="section">
+  <h2>Financial Summary</h2>
+  <p class="section-sub">Stabilized pro forma — combined 41-key operation</p>
+
+  <table class="fin-table">
+    <thead>
+      <tr><th>Metric</th><th>505 — 2025 Actual ✓</th><th>506 — Y1 Model</th><th>Combined Stabilized</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Units / Keys</td><td>17</td><td>24</td><td>41</td></tr>
+      <tr><td>ADR</td><td>$149.25 (actual)</td><td>~$140–$160</td><td>~$145–$155</td></tr>
+      <tr><td>RevPAR¹</td><td>$119.84 (actual)</td><td>$121.10 (modeled)</td><td>~$120</td></tr>
+      <tr><td>Occupancy</td><td>80.3% (actual)</td><td>80% (target)</td><td>~80%</td></tr>
+      <tr><td>Total Revenue</td><td>$743,619 (actual)</td><td>$1,061,493</td><td>$1,805,112</td></tr>
+      <tr><td>NOI</td><td>$274,053 (actual)</td><td>$566,401</td><td>$840,454</td></tr>
+      <tr><td>NOI %</td><td>36.9% (actual)</td><td>53.4% (model)</td><td>—</td></tr>
+      <tr class="total-row"><td>Cap Rate (on cost)</td><td>6.2% (2026 budget)</td><td>11.53%</td><td>8.6%</td></tr>
+    </tbody>
+  </table>
+
+  <p style="font-size:12px;color:var(--text-light);margin-top:-16px;margin-bottom:28px;">¹ RevPAR = ADR × Occupancy = $149.25 × 80.3% = $119.84. Verified against total income: $743,619 ÷ 17 ÷ 365 = $119.77. Source: Lauderdale OM 2025 actuals.</p>
+
+  <table class="fin-table">
+    <thead>
+      <tr><th>Cost Basis</th><th>505</th><th>506</th><th>Total</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Acquisition</td><td>$6,000,000</td><td>$3,700,000</td><td>$9,700,000</td></tr>
+      <tr><td>PIP / Renovation</td><td>Completed ($600K)</td><td>$1,000,000</td><td>$1,000,000</td></tr>
+      <tr><td>Closing / Soft Costs</td><td>—</td><td>$311,000</td><td>$311,000</td></tr>
+      <tr class="total-row"><td>Total Investment</td><td>$6,000,000</td><td>$5,011,000</td><td>$11,011,000</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- LIVE PERFORMANCE vs MODEL -->
+<div class="section-compare">
+  <div style="max-width:1100px;margin:0 auto;">
+    <h2>The Model Was Right</h2>
+    <p class="section-sub">In August 2024 we built a projection for 506. 505 just proved it real.</p>
+
+    <!-- VALIDATION HERO -->
+    <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:0;align-items:center;margin:40px 0;background:var(--white);border-radius:16px;border:2px solid #e0e0e0;overflow:hidden;">
+      <div style="padding:36px 40px;text-align:center;border-right:1px solid #e0e0e0;">
+        <div style="font-size:12px;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-light);margin-bottom:8px;">506 Model — Aug 2024</div>
+        <div style="font-size:56px;font-weight:700;color:var(--navy);font-family:'Playfair Display',serif;">$121.10</div>
+        <div style="font-size:14px;color:var(--text-light);margin-top:6px;">All-In RevPAR projected</div>
+        <div style="font-size:12px;color:var(--text-light);margin-top:4px;">$1,061,493 ÷ 24 units ÷ 365 days</div>
+      </div>
+      <div style="padding:24px 32px;text-align:center;background:var(--light-gold);">
+        <div style="font-size:28px;font-weight:700;color:var(--gold);">vs.</div>
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--navy);margin-top:6px;font-weight:600;">1.1% off</div>
+      </div>
+      <div style="padding:36px 40px;text-align:center;border-left:1px solid #e0e0e0;">
+        <div style="font-size:12px;text-transform:uppercase;letter-spacing:1.5px;color:#22c55e;margin-bottom:8px;font-weight:700;">✓ 505 Actual — 2025</div>
+        <div style="font-size:56px;font-weight:700;color:var(--navy);font-family:'Playfair Display',serif;">$119.84</div>
+        <div style="font-size:14px;color:var(--text-light);margin-top:6px;">RevPAR delivered</div>
+        <div style="font-size:12px;color:var(--text-light);margin-top:4px;">$149.25 ADR × 80.3% occ. — Lauderdale OM</div>
+      </div>
+    </div>
+
+    <div style="background:var(--navy);border-radius:12px;padding:28px 36px;margin-bottom:40px;color:white;">
+      <p style="font-size:15px;line-height:1.9;">Before buying a single unit at 506, we underwrote the hotel conversion and projected <strong style="color:var(--gold);">$121.10 RevPAR</strong>. In 2025, 505 running the exact same playbook (same tech stack, same OTAs, same management) delivered <strong style="color:var(--gold);">$119.84 RevPAR</strong> — a $149.25 ADR at 80.3% occupancy. That's a <strong style="color:var(--gold);">$1.26 variance on a $121 projection — 1.1% off</strong>. The 506 model isn't a guess. It's a blueprint that has already been validated by 12 months of live operations across the street.</p>
+    </div>
+
+    <!-- KPI CARDS -->
+    <div class="kpi-row">
+      <div class="kpi-card">
+        <div class="kpi-val">$743K</div>
+        <div class="kpi-label">505 Total Revenue</div>
+        <div class="kpi-source">✓ Lauderdale OM 2025 Actual</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-val">$119.84</div>
+        <div class="kpi-label">RevPAR (actual)</div>
+        <div class="kpi-source">✓ $149.25 ADR × 80.3% occ.</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-val">80.3%</div>
+        <div class="kpi-label">Occupancy Rate</div>
+        <div class="kpi-source">✓ Lauderdale OM 2025 Actual</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-val">$274K</div>
+        <div class="kpi-label">NOI (2025 Actual)</div>
+        <div class="kpi-source">✓ 36.9% margin</div>
+      </div>
+      <div class="kpi-card" style="border-color:var(--gold);background:var(--light-gold);">
+        <div class="kpi-val" style="color:var(--gold);">$121.10</div>
+        <div class="kpi-label">RevPAR (modeled)</div>
+        <div class="kpi-source" style="color:var(--navy);">506 Aug 2024 Projection</div>
+      </div>
+      <div class="kpi-card" style="border-color:var(--gold);background:var(--light-gold);">
+        <div class="kpi-val" style="color:var(--gold);">$1.06M</div>
+        <div class="kpi-label">506 Y1 Revenue Model</div>
+        <div class="kpi-source" style="color:var(--navy);">506 Aug 2024 Projection</div>
+      </div>
+      <div class="kpi-card" style="border-color:var(--gold);background:var(--light-gold);">
+        <div class="kpi-val" style="color:var(--gold);">11.53%</div>
+        <div class="kpi-label">506 Cap Rate on Cost</div>
+        <div class="kpi-source" style="color:var(--navy);">506 Aug 2024 Projection</div>
+      </div>
+    </div>
+
+    <!-- COMPARISON TABLE -->
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th>KPI</th>
+          <th class="actual-col">505 Actual (2025) ✓</th>
+          <th>506 Model (Y1)</th>
+          <th>506 Model (Y3)</th>
+          <th>506 Model (Y5)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Keys</td><td>17</td><td>24</td><td>24</td><td>24</td></tr>
+        <tr><td>ADR</td><td>$149.25</td><td>~$149</td><td>~$153</td><td>~$157</td></tr>
+        <tr style="background:#fffbeb;"><td><strong>RevPAR</strong></td><td><strong>$119.84 ✓</strong></td><td><strong>$121.10</strong></td><td>$127.22</td><td>$133.72</td></tr>
+        <tr><td>Occupancy</td><td>80.3%</td><td>80%</td><td>80%</td><td>80%</td></tr>
+        <tr><td>Total Revenue</td><td>$743,619</td><td>$1,061,493</td><td>$1,115,231</td><td>$1,171,640</td></tr>
+        <tr><td>NOI</td><td>$274,053 (36.9%)</td><td>$566,401 (53.4%)</td><td>$595,075</td><td>$625,201</td></tr>
+        <tr class="total-row"><td>Cap Rate (on cost)</td><td>6.2% (2026 budget)</td><td>11.53%</td><td>12.11%</td><td>12.73%</td></tr>
+      </tbody>
+    </table>
+
+    <!-- 5-YEAR CASH FLOW -->
+    <h3 style="margin-top:48px;margin-bottom:8px;font-size:22px;">Combined Portfolio — 5-Year Forecast</h3>
+    <p style="font-size:14px;color:var(--text-light);margin-bottom:16px;">41 keys, $11M all-in. 2.5% annual growth. 505 base = 2026 budget. 506 base = Aug 2024 model (validated).</p>
+
+    <table class="cf-table">
+      <thead>
+        <tr>
+          <th>Metric</th>
+          <th>Year 1</th>
+          <th>Year 2</th>
+          <th>Year 3</th>
+          <th>Year 4</th>
+          <th>Year 5</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Combined Revenue</td><td>$1,896,220</td><td>$1,943,626</td><td>$1,992,216</td><td>$2,042,022</td><td>$2,093,022</td></tr>
+        <tr><td>Combined NOI</td><td>$940,988</td><td>$964,513</td><td>$988,626</td><td>$1,013,342</td><td>$1,038,675</td></tr>
+        <tr class="cf-total"><td>Cap Rate (on $11M)</td><td>8.55%</td><td>8.77%</td><td>8.99%</td><td>9.21%</td><td>9.44%</td></tr>
+        <tr class="cf-exit"><td>Portfolio Exit Value @ 8% cap</td><td>—</td><td>—</td><td>—</td><td>~$12,667,000</td><td>~$12,983,000</td></tr>
+      </tbody>
+    </table>
+    <p style="font-size:12px;color:var(--text-light);margin-top:8px;">Y4 exit at ~$12.7M vs. $11M invested — $1.7M gain on principal plus ~$3.9M cumulative NOI collected over the hold period.</p>
+  </div>
+</div>
+
+<!-- WHY IT WORKS -->
+<div class="section-dark">
+  <div style="max-width:1100px;margin:0 auto;">
+    <h2>Why This Works</h2>
+    <p class="section-sub">The playbook has already been proven at 505 — this is copy & paste</p>
+
+    <div class="exit-grid">
+      <div class="exit-card">
+        <div class="exit-num">01</div>
+        <h4>Proven Conversion</h4>
+        <p>We already converted 505 from a 13-unit outdated motel into a 17-unit tech-enabled boutique hotel with a $600K PIP. Revenue went from ~$590K to $835K. Same architect, same tech stack, same management — applied to 506.</p>
+      </div>
+      <div class="exit-card">
+        <div class="exit-num">02</div>
+        <h4>Shared Infrastructure</h4>
+        <p>One Guesty PMS, one Conduit AI system, one PricePoint engine, one part-time manager — handling 41 keys instead of 17. Technology costs are nearly flat. Labor scales minimally. NOI margin expands.</p>
+      </div>
+      <div class="exit-card">
+        <div class="exit-num">03</div>
+        <h4>Market Positioning</h4>
+        <p>At 41 keys, the combined property enters institutional buyer territory. A 17-key hotel is a small deal. A 41-key hotel on 35,000 SF with $1M+ NOI attracts REITs, hospitality funds, and 1031 buyers at premium multiples.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TIMELINE -->
+<div class="section">
+  <h2>Execution Timeline</h2>
+  <p class="section-sub">From acquisition to stabilized 41-key operation</p>
+
+  <div class="timeline">
+    <div class="timeline-step">
+      <div class="step-label">Phase 1</div>
+      <div class="step-title">Acquire 505 + 506</div>
+      <div class="step-desc">Close both properties. 505 continues operating and cash-flowing from day one.</div>
+    </div>
+    <div class="timeline-step">
+      <div class="step-label">Phase 2</div>
+      <div class="step-title">506 PIP</div>
+      <div class="step-desc">Convert 14 multifamily units into 24 hotel keys. ~$1M renovation budget. ~6 months.</div>
+    </div>
+    <div class="timeline-step">
+      <div class="step-label">Phase 3</div>
+      <div class="step-title">Integration</div>
+      <div class="step-desc">Plug 506 into existing Guesty/Conduit/PricePoint stack. One dashboard, one operation.</div>
+    </div>
+    <div class="timeline-step">
+      <div class="step-label">Phase 4</div>
+      <div class="step-title">Stabilize</div>
+      <div class="step-desc">41-key operation at $150+ RevPAR. Target $2M+ revenue, $1M+ NOI by Year 2.</div>
+    </div>
+    <div class="timeline-step">
+      <div class="step-label">Phase 5</div>
+      <div class="step-title">Exit or Refi</div>
+      <div class="step-desc">Refinance at 70% LTV for cash-out, or sell combined asset at $17M+ (8% exit cap).</div>
+    </div>
+  </div>
+</div>
+
+<!-- EXIT SCENARIOS -->
+<div class="section-dark">
+  <div style="max-width:1100px;margin:0 auto;">
+    <h2>Exit Scenarios</h2>
+    <p class="section-sub">Multiple paths to exceptional returns</p>
+
+    <div class="exit-grid">
+      <div class="exit-card">
+        <div class="exit-num">A</div>
+        <h4>Hold & Cash Flow</h4>
+        <p>Operate the 41-key hotel passively. $1M+ NOI provides ~9%+ yield on cost. Refinance Year 2 at 70% LTV for partial cash-out while retaining ownership.</p>
+        <div class="exit-metric">~30% IRR (5-year hold)</div>
+      </div>
+      <div class="exit-card">
+        <div class="exit-num">B</div>
+        <h4>Sell Combined Asset</h4>
+        <p>Stabilize and sell as a 41-key boutique hotel with $1M+ NOI. At an 8% exit cap, the combined property values at ~$13M-$17M depending on NOI at exit.</p>
+        <div class="exit-metric">~50%+ IRR (4-year hold)</div>
+      </div>
+      <div class="exit-card">
+        <div class="exit-num">C</div>
+        <h4>Developer Sale</h4>
+        <p>Sell the entire 35,000 SF assemblage to a developer. RO zoning allows 5-story, 55ft. Avalon (243 units, same block) validates dense multifamily. Premium land value.</p>
+        <div class="exit-metric">Maximum exit value</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TECH STACK -->
+<div class="section">
+  <h2>Technology-Enabled Operation</h2>
+  <p class="section-sub">The same stack that runs 17 keys will run 41 — at nearly the same cost</p>
+
+  <ul class="check-list">
+    <li><span class="check-icon">&#10003;</span> <strong>Guesty PMS</strong> — Centralizes all units, OTAs, rates, messaging in one dashboard. Scales to 41 keys with no additional license cost.</li>
+    <li><span class="check-icon">&#10003;</span> <strong>Conduit AI</strong> — 90% of guest inquiries resolved instantly via AI across SMS, email, WhatsApp. 5.2 min avg response time. No additional headcount needed.</li>
+    <li><span class="check-icon">&#10003;</span> <strong>PricePoint + SiteMinder</strong> — Dynamic pricing and OTA distribution engine. Already delivering +12% RevPAR lift. Scales linearly to additional keys.</li>
+    <li><span class="check-icon">&#10003;</span> <strong>Smart Locks + Self Check-In</strong> — No front desk required. Automated code generation, fraud detection (Zesty), and security (Ring).</li>
+    <li><span class="check-icon">&#10003;</span> <strong>Real-Time Dashboard</strong> — Live P&L, occupancy, and revenue metrics accessible remotely. <a href="https://the-lauderdale-dashboard.netlify.app/" style="color:var(--gold);">View live dashboard</a></li>
+  </ul>
+</div>
+
+<!-- CTA -->
+<div class="cta-section">
+  <h2>Let's Talk</h2>
+  <p>This is a rare opportunity to acquire a stabilized, tech-enabled boutique hotel with a built-in expansion play directly across the street.</p>
+  <div class="cta-contacts">
+    <div class="cta-contact">
+      <div class="name">Dylan Poler</div>
+      <div class="title">M&A Lead</div>
+      <div class="info"><a href="tel:9546106975">954.610.6975</a></div>
+      <div class="info"><a href="mailto:dylan@poler.org">dylan@poler.org</a></div>
+    </div>
+    <div class="cta-contact">
+      <div class="name">Rosa Poler</div>
+      <div class="title">Lead Agent</div>
+      <div class="info"><a href="tel:9542354046">954.235.4046</a></div>
+      <div class="info"><a href="mailto:rosapoler@hotmail.com">rosapoler@hotmail.com</a></div>
+    </div>
+    <div class="cta-contact">
+      <div class="name">Kevin Poler</div>
+      <div class="title">Commercial RE</div>
+      <div class="info"><a href="tel:9542354046">954.235.4046</a></div>
+      <div class="info"><a href="mailto:kevinpolermiami@gmail.com">kevinpolermiami@gmail.com</a></div>
+    </div>
+  </div>
+  <div style="margin-top:40px;font-size:13px;opacity:0.4;">thepolerteam.com | Confidential</div>
+</div>
+
+</body>
+</html>
