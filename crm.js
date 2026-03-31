@@ -1304,7 +1304,7 @@ function initAlertMap(lead) {
   if (oldOverlay) oldOverlay.remove();
   const drawOverlay = document.createElement('div');
   drawOverlay.id = 'alert-map-draw-overlay';
-  drawOverlay.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;z-index:10;cursor:crosshair;display:none;';
+  drawOverlay.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;z-index:999;cursor:crosshair;display:none;touch-action:none;';
   container.style.position = 'relative';
   container.appendChild(drawOverlay);
 
@@ -1421,9 +1421,11 @@ function enterDrawMode(mode) {
   // Highlight active button
   document.getElementById('alert-map-draw-circle').classList.toggle('active', mode === 'circle');
   document.getElementById('alert-map-draw-freehand').classList.toggle('active', mode === 'freehand');
-  // Show overlay
+  // Show overlay and prevent panel scroll during drawing
   const overlay = document.getElementById('alert-map-draw-overlay');
   if (overlay) overlay.style.display = 'block';
+  const panel = document.getElementById('lead-panel');
+  if (panel) panel.style.overflow = 'hidden';
   alertMap.doubleClickZoom.disable();
 }
 
@@ -1433,6 +1435,9 @@ function exitDrawMode() {
   document.getElementById('alert-map-hint').style.display = 'none';
   document.getElementById('alert-map-draw-circle').classList.remove('active');
   document.getElementById('alert-map-draw-freehand').classList.remove('active');
+  // Restore panel scroll
+  const panel = document.getElementById('lead-panel');
+  if (panel) panel.style.overflow = '';
   const overlay = document.getElementById('alert-map-draw-overlay');
   if (overlay) overlay.style.display = 'none';
   alertMap.doubleClickZoom.enable();
@@ -1468,6 +1473,9 @@ function clearPolygon() {
   document.getElementById('alert-map-hint').style.display = 'none';
   document.getElementById('alert-map-draw-circle').classList.remove('active');
   document.getElementById('alert-map-draw-freehand').classList.remove('active');
+  // Restore panel scroll
+  const panel = document.getElementById('lead-panel');
+  if (panel) panel.style.overflow = '';
 }
 
 // ── Geometry helpers ──
