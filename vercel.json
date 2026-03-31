@@ -2,5 +2,8 @@
   "framework": null,
   "buildCommand": null,
   "outputDirectory": null,
-  "cleanUrls": true
+  "cleanUrls": true,
+  "routes": [
+    { "src": "/lauderdaleexpansion", "dest": "/lauderdaleexpansion.html" }
+  ]
 }
