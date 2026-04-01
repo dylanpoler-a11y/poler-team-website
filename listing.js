@@ -150,8 +150,8 @@ function initLeadCapture() {
         emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
     }
 
-    // 10-second countdown — persists across page refreshes
-    const DURATION    = 10000;
+    // 30-second countdown — persists across page refreshes
+    const DURATION    = 30000;
     const TIMER_KEY   = 'poler_lead_timer_start';
     let storedStart   = sessionStorage.getItem(TIMER_KEY);
     if (!storedStart) {
@@ -175,6 +175,21 @@ function initLeadCapture() {
             }
         }, 80);
     }
+
+    // Scroll trigger: show modal if user scrolls past 3rd property card
+    function checkScrollTrigger() {
+        const cards = document.querySelectorAll('.listing-card:not(.is-skeleton)');
+        if (cards.length >= 3) {
+            const third = cards[2];
+            const rect = third.getBoundingClientRect();
+            if (rect.top < window.innerHeight) {
+                window.removeEventListener('scroll', checkScrollTrigger);
+                clearInterval(timerInterval);
+                showLeadModal(overlay, pageWrap);
+            }
+        }
+    }
+    window.addEventListener('scroll', checkScrollTrigger, { passive: true });
 
     // ── Timeline pills (single-select) ────────────────────────
     document.querySelectorAll('#timeline-pills .timeline-pill').forEach(pill => {
@@ -585,6 +600,9 @@ async function initHeroProperty() {
         if (!listing) { renderDefaultHero(container); return; }
         heroListing = listing;
         renderHero(container, listing);
+
+        // Load similar properties below the listing
+        loadSimilarProperties(listing);
 
         // Track property view for returning leads (from alert emails)
         const alertToken = new URLSearchParams(window.location.search).get('t');
@@ -1319,6 +1337,7 @@ async function fetchCuratedListings() {
             return;
         }
 
+        window._currentListings = all;
         all.forEach(l => grid.insertAdjacentHTML('beforeend', renderCard(l)));
         countEl.textContent = `Showing ${all.length} featured propert${all.length === 1 ? 'y' : 'ies'}`;
     } catch (err) {
@@ -1395,6 +1414,19 @@ function renderCard(listing) {
 
     const statusClass = status === 'Active' ? 'status-active' : status === 'Pending' ? 'status-pending' : 'status-other';
 
+    // NEW badge for listings <= 7 days on market
+    const dom = listing.DaysOnMarket;
+    const isNew = dom != null && dom <= 7;
+
+    // Price per sqft
+    const sqft = listing.LivingArea;
+    const ppsfVal = (listing.ListPrice && sqft) ? Math.round(listing.ListPrice / sqft) : 0;
+
+    // Heart/save state
+    let savedHomes = [];
+    try { savedHomes = JSON.parse(localStorage.getItem('poler_saved_homes') || '[]'); } catch (e) {}
+    const isSaved = savedHomes.includes(lid);
+
     // Quick cap rate badge for investor scanning
     let capBadge = '';
     if (typeof computeInvestmentMetrics === 'function') {
@@ -1403,9 +1435,13 @@ function renderCard(listing) {
     }
 
     return `
-    <div class="listing-card" onclick="window.location.href='listing.html?mls=${lid}'">
+    <div class="listing-card" data-lid="${lid}" onclick="window.location.href='listing?mls=${lid}'">
         <div class="listing-image" style="position:relative">
             ${imgHtml}
+            ${isNew ? '<span class="listing-new-badge">NEW</span>' : ''}
+            <button class="listing-save-btn ${isSaved ? 'saved' : ''}" onclick="event.stopPropagation();toggleSaveHome('${lid}',this)" aria-label="Save property">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="${isSaved ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+            </button>
             <div class="listing-overlay">
                 <span class="listing-area">${city}</span>
                 <span class="listing-status-badge ${statusClass}">${status}</span>
@@ -1416,6 +1452,7 @@ function renderCard(listing) {
             <div class="listing-price">${price}</div>
             <div class="listing-address">${address}</div>
             ${stats ? `<div class="listing-stats">${stats}</div>` : ''}
+            ${ppsfVal ? `<div class="listing-ppsf">$${ppsfVal.toLocaleString()} / sq ft</div>` : ''}
             <div class="listing-agent-row">
                 <img src="team-rosa.jpg" alt="${agent}" class="listing-agent-avatar">
                 <span class="listing-agent-name">${agent}</span>
@@ -1474,6 +1511,9 @@ async function runSearch(append = false) {
             return;
         }
 
+        if (!append) window._currentListings = listings;
+        else window._currentListings = (window._currentListings || []).concat(listings);
+
         listings.forEach(l => {
             grid.insertAdjacentHTML('beforeend', renderCard(l));
         });
@@ -1483,6 +1523,15 @@ async function runSearch(append = false) {
 
         countEl.textContent = `Showing ${searchOffset} propert${searchOffset === 1 ? 'y' : 'ies'}`;
         loadMore.style.display = listings.length === PAGE_SIZE ? 'block' : 'none';
+
+        // Show save search CTA after explicit search
+        if (!append && hasActiveSearch) {
+            const cta = document.getElementById('save-search-cta');
+            if (cta) cta.style.display = 'block';
+        }
+
+        // Update map if in map view
+        if (document.getElementById('map-view')?.style.display === 'block') renderMapView();
 
         // Log search activity to CRM (non-blocking)
         if (!append) {
@@ -1582,6 +1631,318 @@ function initTabs() {
             }
         });
     });
+}
+
+// ============================================================
+// SEARCH BAR AUTOCOMPLETE + GO BUTTON
+// ============================================================
+function initSearchBar() {
+    const input    = document.getElementById('search-autocomplete');
+    const dropdown = document.getElementById('search-ac-dropdown');
+    const goBtn    = document.getElementById('search-bar-go');
+    if (!input) return;
+
+    function doSearch() {
+        const val = input.value.trim();
+        if (!val) return;
+        if (dropdown) dropdown.style.display = 'none';
+        const locInput = document.getElementById('f-location');
+        if (locInput) locInput.value = val;
+        hasActiveSearch = true;
+        runSearch(false);
+        // Scroll to results
+        const browse = document.getElementById('browse-section');
+        if (browse) browse.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    // Go button click
+    if (goBtn) goBtn.addEventListener('click', doSearch);
+
+    // Enter key in search bar
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); doSearch(); }
+    });
+
+    // Simple autocomplete from city list
+    let debounce;
+    input.addEventListener('input', () => {
+        clearTimeout(debounce);
+        debounce = setTimeout(() => {
+            const q = input.value.toLowerCase().trim();
+            if (!q || !dropdown) { if (dropdown) dropdown.style.display = 'none'; return; }
+
+            const matches = [];
+            // ZIP check
+            if (/^\d{3,5}$/.test(q)) {
+                matches.push({ label: `Search ZIP: ${q}`, value: q, type: 'zip' });
+            }
+            // City matches
+            SOUTH_FL_CITIES.filter(c => c.toLowerCase().includes(q)).slice(0, 6).forEach(city => {
+                matches.push({ label: city, sub: 'South Florida', value: city, type: 'city' });
+            });
+            if (!matches.length) {
+                matches.push({ label: `Search for "${input.value.trim()}"`, value: input.value.trim(), type: 'text' });
+            }
+
+            dropdown.innerHTML = matches.map((m, i) => `
+                <div class="search-ac-item" data-idx="${i}">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                    <div><div>${m.label}</div>${m.sub ? `<div class="search-ac-item-sub">${m.sub}</div>` : ''}</div>
+                </div>`).join('');
+            dropdown.style.display = 'block';
+
+            dropdown.querySelectorAll('.search-ac-item').forEach(el => {
+                el.addEventListener('click', () => {
+                    const m = matches[parseInt(el.dataset.idx)];
+                    input.value = m.value;
+                    dropdown.style.display = 'none';
+                    doSearch();
+                });
+            });
+        }, 150);
+    });
+
+    // Close dropdown on outside click
+    document.addEventListener('click', (e) => {
+        if (dropdown && !e.target.closest('.search-bar-wrap')) dropdown.style.display = 'none';
+    });
+}
+
+// ============================================================
+// AREA CHIP BUTTONS (Quick city search)
+// ============================================================
+function initAreaChips() {
+    document.querySelectorAll('.area-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+            const city = chip.dataset.city;
+            const locInput = document.getElementById('f-location');
+            const searchInput = document.getElementById('search-autocomplete');
+            if (locInput) locInput.value = city;
+            if (searchInput) searchInput.value = city;
+            hasActiveSearch = true;
+            runSearch(false);
+            const browse = document.getElementById('browse-section');
+            if (browse) browse.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+    });
+}
+
+// ============================================================
+// SAVE HOME (heart icon on cards)
+// ============================================================
+function toggleSaveHome(lid, btn) {
+    if (!lid) return;
+    let saved = [];
+    try { saved = JSON.parse(localStorage.getItem('poler_saved_homes') || '[]'); } catch (e) {}
+    const idx = saved.indexOf(lid);
+    if (idx >= 0) { saved.splice(idx, 1); btn.classList.remove('saved'); }
+    else { saved.push(lid); btn.classList.add('saved'); }
+    localStorage.setItem('poler_saved_homes', JSON.stringify(saved));
+}
+
+// ============================================================
+// SAVE SEARCH / GET ALERTS
+// ============================================================
+function initSaveSearch() {
+    const form = document.getElementById('save-search-form');
+    if (!form) return;
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const emailInput = document.getElementById('save-search-email');
+        const email = emailInput ? emailInput.value.trim() : '';
+        if (!email) return;
+        const btn = form.querySelector('button');
+        btn.disabled = true;
+        btn.textContent = '...';
+        try {
+            await fetch(`${OTP_BASE}/api/save-lead`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ first: '', last: '', email, phone: '', sourceUrl: window.location.href, utm_source: 'save-search', timeline: 'Save Search Alert' }),
+            });
+        } catch (err) { console.warn('Save search error:', err); }
+        form.style.display = 'none';
+        const success = document.getElementById('save-search-success');
+        if (success) success.style.display = 'block';
+    });
+}
+
+// ============================================================
+// SIMILAR PROPERTIES (on detail listing pages)
+// ============================================================
+async function loadSimilarProperties(listing) {
+    if (!listing || !listing.City) return;
+    const price = listing.ListPrice || 0;
+    const pMin = Math.round(price * 0.7);
+    const pMax = Math.round(price * 1.3);
+    const subType = listing.PropertySubType || '';
+
+    const params = {
+        City: listing.City,
+        'ListPrice.gte': pMin,
+        'ListPrice.lte': pMax,
+        StandardStatus: 'Active',
+        PropertyType: 'Residential',
+        limit: 7,
+    };
+    if (subType) params.PropertySubType = subType;
+
+    try {
+        const data = await apiFetch(params);
+        let similar = (data.success && Array.isArray(data.bundle)) ? data.bundle : [];
+        // Filter out the current listing
+        similar = similar.filter(l => l.ListingId !== listing.ListingId).slice(0, 6);
+        if (!similar.length) return;
+
+        const section = document.createElement('section');
+        section.className = 'similar-section';
+        section.innerHTML = `
+            <div class="similar-inner">
+                <h2 class="similar-title">${t('similarProperties') || 'Similar Properties Nearby'}</h2>
+                <div class="similar-grid">${similar.map(l => renderCard(l)).join('')}</div>
+            </div>`;
+        const hero = document.getElementById('hero-property');
+        if (hero) hero.after(section);
+
+        // Wire up card clicks
+        section.querySelectorAll('.listing-card[data-lid]').forEach(card => {
+            card.addEventListener('click', () => {
+                window.location.href = `listing?id=${card.dataset.lid}`;
+            });
+        });
+    } catch (err) {
+        console.warn('Similar properties error:', err);
+    }
+}
+
+// ============================================================
+// MAP VIEW TOGGLE
+// ============================================================
+let mapInstance = null;
+let mapMarkers = [];
+
+function initViewToggle() {
+    const listBtn = document.getElementById('view-list-btn');
+    const mapBtn  = document.getElementById('view-map-btn');
+    const grid    = document.getElementById('results-grid');
+    const mapDiv  = document.getElementById('map-view');
+    if (!listBtn || !mapBtn || !grid || !mapDiv) return;
+
+    listBtn.addEventListener('click', () => {
+        listBtn.classList.add('active');
+        mapBtn.classList.remove('active');
+        grid.style.display = '';
+        mapDiv.style.display = 'none';
+    });
+
+    mapBtn.addEventListener('click', () => {
+        mapBtn.classList.add('active');
+        listBtn.classList.remove('active');
+        grid.style.display = 'none';
+        mapDiv.style.display = 'block';
+        renderMapView();
+    });
+}
+
+function renderMapView() {
+    const mapDiv = document.getElementById('map-view');
+    if (!mapDiv || typeof maplibregl === 'undefined') return;
+    const listings = window._currentListings || [];
+
+    if (!mapInstance) {
+        mapInstance = new maplibregl.Map({
+            container: 'map-view',
+            style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
+            center: [-80.15, 25.95],
+            zoom: 10,
+        });
+        mapInstance.addControl(new maplibregl.NavigationControl(), 'top-left');
+    }
+
+    // Clear old markers
+    mapMarkers.forEach(m => m.remove());
+    mapMarkers = [];
+
+    const bounds = new maplibregl.LngLatBounds();
+    let hasPoints = false;
+
+    listings.forEach(l => {
+        const lat = l.Latitude;
+        const lng = l.Longitude;
+        if (!lat || !lng) return;
+        hasPoints = true;
+        bounds.extend([lng, lat]);
+
+        const price = l.ListPrice ? '$' + (l.ListPrice >= 1000000 ? (l.ListPrice / 1000000).toFixed(1) + 'M' : Math.round(l.ListPrice / 1000) + 'K') : '';
+        const el = document.createElement('div');
+        el.className = 'map-price-marker';
+        el.textContent = price;
+
+        const photo = (l.Media && l.Media[0]) ? l.Media[0].MediaURL : '';
+        const addr = l.UnparsedAddress || l.City || '';
+        const popup = new maplibregl.Popup({ offset: 25, maxWidth: '280px' }).setHTML(`
+            ${photo ? `<img src="${photo}" style="width:100%;height:120px;object-fit:cover;border-radius:6px 6px 0 0;">` : ''}
+            <div style="padding:8px 10px;">
+                <div style="font-weight:700;font-size:1rem;">${price}</div>
+                <div style="font-size:0.8rem;color:#666;">${addr}</div>
+                <div style="font-size:0.78rem;color:#999;">${l.BedroomsTotal || '—'} bd · ${l.BathroomsTotalInteger || '—'} ba${l.LivingArea ? ' · ' + Number(l.LivingArea).toLocaleString() + ' sf' : ''}</div>
+                <a href="listing?id=${l.ListingId}" style="display:inline-block;margin-top:6px;color:#1a2744;font-weight:600;font-size:0.8rem;">View Details →</a>
+            </div>
+        `);
+
+        const marker = new maplibregl.Marker({ element: el }).setLngLat([lng, lat]).setPopup(popup).addTo(mapInstance);
+        mapMarkers.push(marker);
+    });
+
+    if (hasPoints) {
+        mapInstance.fitBounds(bounds, { padding: 50, maxZoom: 14 });
+    }
+}
+
+// ============================================================
+// FOOTER ALERT FORM
+// ============================================================
+function initFooterAlert() {
+    const form = document.getElementById('footer-alert-form');
+    if (!form) return;
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const emailInput = document.getElementById('footer-alert-email');
+        const email = emailInput ? emailInput.value.trim() : '';
+        if (!email) return;
+        const btn = form.querySelector('button');
+        btn.disabled = true;
+        btn.textContent = '...';
+        try {
+            await fetch(`${OTP_BASE}/api/save-lead`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ first: '', last: '', email, phone: '', sourceUrl: window.location.href, utm_source: 'footer-alert', timeline: 'Footer Alert Signup' }),
+            });
+        } catch (err) { console.warn('Footer alert error:', err); }
+        form.innerHTML = '<span style="color:#16a34a;font-size:0.85rem;">✓ Subscribed!</span>';
+    });
+}
+
+// ============================================================
+// DRONE VIDEO FALLBACK
+// ============================================================
+function enhanceDroneVideo() {
+    const video = document.querySelector('.hero-bg-video');
+    if (!video) return;
+    video.setAttribute('poster', 'images/cover-lauderdale.png');
+    video.addEventListener('error', () => {
+        const wrap = video.closest('.hero-video-wrap');
+        if (wrap) {
+            wrap.style.backgroundImage = 'url(images/cover-lauderdale.png)';
+            wrap.style.backgroundSize = 'cover';
+            wrap.style.backgroundPosition = 'center';
+        }
+        video.style.display = 'none';
+    });
+    // Handle autoplay block
+    const playPromise = video.play();
+    if (playPromise) playPromise.catch(() => {});
 }
 
 function initSearch() {
@@ -2062,5 +2423,11 @@ document.addEventListener('DOMContentLoaded', () => {
     initYearSlider();
     initWaterfrontToggle();
     initFilterToggle();
+    initSearchBar();
+    initAreaChips();
     initSearch();
+    initSaveSearch();
+    initFooterAlert();
+    initViewToggle();
+    setTimeout(enhanceDroneVideo, 500);
 });

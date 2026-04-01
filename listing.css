@@ -2002,3 +2002,210 @@ a { color: inherit; text-decoration: none; }
     .ai-chat-toggle-label { display: none; }
     .ai-chat-widget.open .ai-chat-toggle { display: none; }
 }
+
+/* ============================================================
+   AREA CHIPS — Quick city search pills
+   ============================================================ */
+.area-chips {
+    display: flex; flex-wrap: wrap; justify-content: center;
+    gap: 0.5rem; margin-top: 1rem;
+}
+.area-chip {
+    padding: 0.4rem 1rem; border-radius: 20px;
+    background: var(--navy); color: #fff;
+    font-size: 0.8rem; font-weight: 600;
+    border: none; cursor: pointer;
+    transition: background 0.2s, transform 0.15s;
+}
+.area-chip:hover { background: #2a3d62; transform: translateY(-1px); }
+
+/* ============================================================
+   ENHANCED CARD BADGES
+   ============================================================ */
+.listing-new-badge {
+    position: absolute; top: 10px; left: 10px; z-index: 2;
+    background: #16a34a; color: #fff;
+    padding: 0.2rem 0.6rem; border-radius: 4px;
+    font-size: 0.68rem; font-weight: 800;
+    letter-spacing: 0.05em; text-transform: uppercase;
+}
+.listing-save-btn {
+    position: absolute; top: 10px; right: 10px; z-index: 2;
+    width: 34px; height: 34px; border-radius: 50%;
+    background: rgba(0,0,0,0.4); color: #fff;
+    border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.2s, transform 0.15s;
+}
+.listing-save-btn:hover { background: rgba(0,0,0,0.6); transform: scale(1.1); }
+.listing-save-btn.saved { color: #ef4444; background: rgba(255,255,255,0.9); }
+.listing-ppsf {
+    font-size: 0.75rem; color: var(--text-muted, #6b7280);
+    margin-top: 0.15rem;
+}
+
+/* ============================================================
+   SOCIAL PROOF STRIP
+   ============================================================ */
+.social-proof-strip {
+    background: #fff; border-bottom: 1px solid var(--border);
+    padding: 1rem 0;
+}
+.social-proof-inner {
+    max-width: 1200px; margin: 0 auto; padding: 0 1.5rem;
+    display: flex; align-items: center; justify-content: center;
+    gap: 1.5rem; flex-wrap: wrap;
+}
+.social-proof-stat { text-align: center; white-space: nowrap; }
+.social-proof-number {
+    font-family: var(--font-heading); font-size: 1.6rem;
+    font-weight: 700; color: var(--navy);
+}
+.social-proof-label { font-size: 0.78rem; color: var(--text-muted); display: block; }
+.social-proof-divider { width: 1px; height: 40px; background: var(--border); flex-shrink: 0; }
+.social-proof-quotes { display: flex; gap: 1.5rem; overflow-x: auto; }
+.social-proof-quote {
+    font-size: 0.8rem; color: var(--text); font-style: italic;
+    max-width: 260px; min-width: 200px; line-height: 1.4;
+}
+.social-proof-quote span { display: block; font-style: normal; font-size: 0.72rem; color: var(--text-muted); margin-top: 0.25rem; }
+.social-proof-flags { font-size: 1.1rem; letter-spacing: 0.15em; white-space: nowrap; }
+@media (max-width: 768px) {
+    .social-proof-quotes { display: none; }
+    .social-proof-inner { justify-content: center; gap: 1rem; }
+}
+
+/* ============================================================
+   SAVE SEARCH CTA
+   ============================================================ */
+.save-search-cta {
+    background: linear-gradient(135deg, #1a2744 0%, #2a3d62 100%);
+    border-radius: 12px; padding: 2rem; margin-top: 1.5rem;
+    text-align: center; color: #fff;
+}
+.save-search-inner h3 { font-size: 1.2rem; font-weight: 700; margin-bottom: 0.3rem; }
+.save-search-inner p { font-size: 0.88rem; color: rgba(255,255,255,0.7); margin-bottom: 1rem; }
+.save-search-form {
+    display: flex; gap: 0.5rem; max-width: 420px; margin: 0 auto;
+}
+.save-search-form input {
+    flex: 1; padding: 0.7rem 1rem; border-radius: 8px;
+    border: 1.5px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.1);
+    color: #fff; font-size: 0.9rem; outline: none;
+}
+.save-search-form input::placeholder { color: rgba(255,255,255,0.5); }
+.save-search-form input:focus { border-color: var(--orange); }
+.save-search-form button {
+    padding: 0.7rem 1.5rem; background: var(--orange); color: #fff;
+    border: none; border-radius: 8px; font-weight: 700; font-size: 0.88rem;
+    cursor: pointer; white-space: nowrap; transition: background 0.2s;
+}
+.save-search-form button:hover { background: var(--orange-dark); }
+#save-search-success { color: #a7f3d0; font-weight: 600; margin-top: 0.75rem; }
+@media (max-width: 520px) { .save-search-form { flex-direction: column; } }
+
+/* ============================================================
+   VIEW TOGGLE (List / Map)
+   ============================================================ */
+.results-header { display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 0 1rem; border-bottom: 1px solid var(--border); margin-bottom: 1.25rem; }
+.view-toggle { display: flex; gap: 0; border: 1.5px solid var(--border); border-radius: 8px; overflow: hidden; }
+.view-toggle-btn {
+    display: flex; align-items: center; gap: 0.35rem;
+    padding: 0.4rem 0.85rem; font-size: 0.78rem; font-weight: 600;
+    color: var(--text-muted); background: #fff; border: none;
+    cursor: pointer; transition: all 0.15s;
+}
+.view-toggle-btn.active { background: var(--navy); color: #fff; }
+.view-toggle-btn:not(.active):hover { background: var(--bg); }
+
+/* Map view container */
+.map-view-container {
+    height: 550px; border-radius: 12px; overflow: hidden;
+    border: 1px solid var(--border);
+}
+.map-price-marker {
+    background: var(--navy); color: #fff;
+    padding: 3px 8px; border-radius: 12px;
+    font-size: 0.72rem; font-weight: 700;
+    white-space: nowrap; cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+    border: 2px solid #fff;
+}
+.maplibregl-popup-content { padding: 0 !important; border-radius: 10px !important; overflow: hidden; min-width: 220px; }
+
+/* ============================================================
+   SIMILAR PROPERTIES SECTION
+   ============================================================ */
+.similar-section { background: var(--bg); padding: 3rem 0; }
+.similar-inner { max-width: 1200px; margin: 0 auto; padding: 0 1.5rem; }
+.similar-title { font-family: var(--font-heading); font-size: 1.3rem; font-weight: 700; margin-bottom: 1.25rem; }
+.similar-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; }
+@media (max-width: 900px) { .similar-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 520px) { .similar-grid { grid-template-columns: 1fr; } }
+
+/* ============================================================
+   NEIGHBORHOOD CARDS
+   ============================================================ */
+.neighborhood-section { padding: 3rem 0; background: #fff; }
+.neighborhood-inner { max-width: 1200px; margin: 0 auto; padding: 0 1.5rem; }
+.neighborhood-title { font-family: var(--font-heading); font-size: 1.3rem; font-weight: 700; text-align: center; margin-bottom: 1.5rem; }
+.neighborhood-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+.neighborhood-card {
+    display: block; height: 200px; border-radius: 12px;
+    background-size: cover; background-position: center;
+    position: relative; overflow: hidden;
+    transition: transform 0.3s; text-decoration: none;
+}
+.neighborhood-card:hover { transform: scale(1.02); }
+.neighborhood-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(transparent 40%, rgba(0,0,0,0.7));
+    display: flex; align-items: flex-end; padding: 1.25rem;
+}
+.neighborhood-overlay span {
+    color: #fff; font-size: 1.1rem; font-weight: 700;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.4);
+}
+@media (max-width: 768px) { .neighborhood-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 480px) { .neighborhood-grid { grid-template-columns: 1fr; } }
+
+/* ============================================================
+   ENHANCED FOOTER
+   ============================================================ */
+.footer-columns {
+    max-width: 1200px; margin: 0 auto; padding: 2rem 2rem 1.5rem;
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 2rem;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+.footer-col { display: flex; flex-direction: column; gap: 0.4rem; }
+.footer-col-title {
+    font-size: 0.8rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.06em; color: rgba(255,255,255,0.9); margin-bottom: 0.5rem;
+}
+.footer-link {
+    font-size: 0.82rem; color: rgba(255,255,255,0.55);
+    text-decoration: none; transition: color 0.2s;
+}
+.footer-link:hover { color: #fff; }
+.footer-contact-name { font-size: 0.85rem; color: rgba(255,255,255,0.8); font-weight: 600; }
+.footer-brokerage { font-size: 0.75rem; color: rgba(255,255,255,0.4); margin-top: 0.3rem; }
+.footer-social { display: flex; gap: 0.75rem; }
+.footer-social-link { color: rgba(255,255,255,0.55); transition: color 0.2s; }
+.footer-social-link:hover { color: #fff; }
+.footer-alert-form { display: flex; gap: 0.4rem; }
+.footer-alert-form input {
+    flex: 1; padding: 0.5rem 0.75rem; border-radius: 6px;
+    border: 1px solid rgba(255,255,255,0.2);
+    background: rgba(255,255,255,0.08); color: #fff;
+    font-size: 0.82rem; outline: none;
+}
+.footer-alert-form input::placeholder { color: rgba(255,255,255,0.4); }
+.footer-alert-form input:focus { border-color: var(--orange); }
+.footer-alert-form button {
+    padding: 0.5rem 1rem; background: var(--orange); color: #fff;
+    border: none; border-radius: 6px; font-weight: 700; font-size: 0.8rem;
+    cursor: pointer; transition: background 0.2s;
+}
+.footer-alert-form button:hover { background: var(--orange-dark); }
+@media (max-width: 768px) { .footer-columns { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 480px) { .footer-columns { grid-template-columns: 1fr; } }

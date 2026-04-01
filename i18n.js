@@ -20,6 +20,19 @@ const I18N = {
     anyBeds: { en: 'Beds', es: 'Habitaciones', pt: 'Quartos' },
     anyBaths: { en: 'Baths', es: 'Baños', pt: 'Banheiros' },
 
+    // ── New Features ──────────────────────────────────────────
+    proofBuyers: { en: 'Buyers Served from 15+ Countries', es: 'Compradores Atendidos de 15+ Países', pt: 'Compradores Atendidos de 15+ Países' },
+    saveSearchTitle: { en: 'Like what you see?', es: '¿Te gusta lo que ves?', pt: 'Gostou do que viu?' },
+    saveSearchSubtitle: { en: 'Get new listings matching your search delivered to your inbox.', es: 'Reciba nuevas propiedades que coincidan con su búsqueda en su correo.', pt: 'Receba novas propriedades que correspondam à sua busca no seu e-mail.' },
+    getAlerts: { en: 'Get Alerts', es: 'Recibir Alertas', pt: 'Receber Alertas' },
+    alertsSuccess: { en: "You're subscribed! We'll send you matching properties.", es: '¡Suscrito! Le enviaremos propiedades que coincidan.', pt: 'Inscrito! Enviaremos propriedades correspondentes.' },
+    similarProperties: { en: 'Similar Properties Nearby', es: 'Propiedades Similares Cercanas', pt: 'Propriedades Semelhantes Próximas' },
+    exploreNeighborhoods: { en: 'Explore South Florida Neighborhoods', es: 'Explora los Vecindarios del Sur de Florida', pt: 'Explore os Bairros do Sul da Flórida' },
+    popularSearches: { en: 'Popular Searches', es: 'Búsquedas Populares', pt: 'Buscas Populares' },
+    contactUs: { en: 'Contact Us', es: 'Contáctenos', pt: 'Contato' },
+    followUs: { en: 'Follow Us', es: 'Síguenos', pt: 'Siga-nos' },
+    footerAlerts: { en: 'Get Property Alerts', es: 'Recibir Alertas', pt: 'Receber Alertas' },
+
     // ── Sell Tab ──────────────────────────────────────────────
     sellTitle: {
         en: "What's Your Home Worth?",

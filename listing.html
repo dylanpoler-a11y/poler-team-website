@@ -12,6 +12,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="listing.css">
+    <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.1.2/dist/maplibre-gl.css" />
 
     <!-- Meta Pixel Code -->
     <script>
@@ -294,6 +295,17 @@
                     </button>
                 </div>
                 <div class="search-ac-dropdown" id="search-ac-dropdown" style="display:none"></div>
+                <!-- AREA CHIPS — Quick city search -->
+                <div class="area-chips">
+                    <button class="area-chip" data-city="Miami Beach">Miami Beach</button>
+                    <button class="area-chip" data-city="Sunny Isles Beach">Sunny Isles</button>
+                    <button class="area-chip" data-city="Fort Lauderdale">Fort Lauderdale</button>
+                    <button class="area-chip" data-city="Miami">Brickell</button>
+                    <button class="area-chip" data-city="Aventura">Aventura</button>
+                    <button class="area-chip" data-city="Coral Gables">Coral Gables</button>
+                    <button class="area-chip" data-city="Key Biscayne">Key Biscayne</button>
+                    <button class="area-chip" data-city="Hollywood">Hollywood</button>
+                </div>
             </div>
 
             <!-- SELL FORM (Sell mode — hidden by default) -->
@@ -312,6 +324,26 @@
                 <div id="sell-success" class="sell-success" style="display:none" data-i18n="sellSuccess">Thank you! Rosa will contact you shortly with your valuation.</div>
             </div>
 
+        </div>
+    </section>
+
+    <!-- ============================================================
+         SOCIAL PROOF STRIP
+         ============================================================ -->
+    <section class="social-proof-strip">
+        <div class="social-proof-inner">
+            <div class="social-proof-stat">
+                <span class="social-proof-number">80+</span>
+                <span class="social-proof-label" data-i18n="proofBuyers">Buyers Served from 15+ Countries</span>
+            </div>
+            <div class="social-proof-divider"></div>
+            <div class="social-proof-quotes">
+                <div class="social-proof-quote">"Found our dream condo in Sunny Isles in two weeks." <span>— Carlos R., Colombia</span></div>
+                <div class="social-proof-quote">"Rosa made the whole process easy from Brazil." <span>— Luiz F., Brazil</span></div>
+                <div class="social-proof-quote">"Best experience buying property in Miami." <span>— Ivan C., New York</span></div>
+            </div>
+            <div class="social-proof-divider"></div>
+            <div class="social-proof-flags">🇺🇸 🇧🇷 🇨🇴 🇻🇪 🇦🇷 🇨🇷 🇪🇨 🇵🇪 🇲🇽 🇩🇪 🇪🇸 🇵🇹 🇬🇧 🇨🇦 🇳🇮</div>
         </div>
     </section>
 
@@ -438,8 +470,19 @@
             <div class="results-area">
                 <div class="results-header">
                     <p class="results-count" id="results-count" data-i18n="showingFeatured">Showing featured South Florida properties</p>
+                    <div class="view-toggle">
+                        <button class="view-toggle-btn active" id="view-list-btn">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+                            List
+                        </button>
+                        <button class="view-toggle-btn" id="view-map-btn">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                            Map
+                        </button>
+                    </div>
                 </div>
                 <div class="results-grid" id="results-grid"></div>
+                <div id="map-view" class="map-view-container" style="display:none"></div>
                 <div id="load-more-wrap" class="load-more-wrap" style="display:none">
                     <button class="load-more-btn" id="load-more-btn" data-i18n="loadMore">Load More Properties</button>
                 </div>
@@ -447,6 +490,19 @@
                     <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
                     <p data-i18n="noResults">No properties found matching your filters.</p>
                     <p class="no-results-hint" data-i18n="noResultsHint">Try broadening your search — adjust price range, location, or remove some filters.</p>
+                </div>
+            </div>
+
+            <!-- SAVE SEARCH CTA (shown after user searches) -->
+            <div id="save-search-cta" class="save-search-cta" style="display:none">
+                <div class="save-search-inner">
+                    <h3 data-i18n="saveSearchTitle">Like what you see?</h3>
+                    <p data-i18n="saveSearchSubtitle">Get new listings matching your search delivered to your inbox.</p>
+                    <form id="save-search-form" class="save-search-form">
+                        <input type="email" id="save-search-email" placeholder="Your email address" required>
+                        <button type="submit" data-i18n="getAlerts">Get Alerts</button>
+                    </form>
+                    <div id="save-search-success" style="display:none" data-i18n="alertsSuccess">You're subscribed! We'll send you matching properties.</div>
                 </div>
             </div>
 
@@ -467,8 +523,76 @@
         </div>
     </section>
 
+    <!-- ============================================================
+         EXPLORE NEIGHBORHOODS
+         ============================================================ -->
+    <section class="neighborhood-section">
+        <div class="neighborhood-inner">
+            <h2 class="neighborhood-title" data-i18n="exploreNeighborhoods">Explore South Florida Neighborhoods</h2>
+            <div class="neighborhood-grid">
+                <a href="listing?city=Miami Beach" class="neighborhood-card" style="background-image:url('https://images.unsplash.com/photo-1535498730771-e735b998cd64?w=600&q=80')">
+                    <div class="neighborhood-overlay"><span>Miami Beach</span></div>
+                </a>
+                <a href="listing?city=Sunny Isles Beach" class="neighborhood-card" style="background-image:url('https://images.unsplash.com/photo-1545153996-e01b9adb5c07?w=600&q=80')">
+                    <div class="neighborhood-overlay"><span>Sunny Isles Beach</span></div>
+                </a>
+                <a href="listing?city=Fort Lauderdale" class="neighborhood-card" style="background-image:url('https://images.unsplash.com/photo-1570129477492-45c003edd2be?w=600&q=80')">
+                    <div class="neighborhood-overlay"><span>Fort Lauderdale</span></div>
+                </a>
+                <a href="listing?city=Aventura" class="neighborhood-card" style="background-image:url('https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=600&q=80')">
+                    <div class="neighborhood-overlay"><span>Aventura</span></div>
+                </a>
+                <a href="listing?city=Coral Gables" class="neighborhood-card" style="background-image:url('https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=600&q=80')">
+                    <div class="neighborhood-overlay"><span>Coral Gables</span></div>
+                </a>
+                <a href="listing?city=Key Biscayne" class="neighborhood-card" style="background-image:url('https://images.unsplash.com/photo-1580587771525-78b9dba3b914?w=600&q=80')">
+                    <div class="neighborhood-overlay"><span>Key Biscayne</span></div>
+                </a>
+            </div>
+        </div>
+    </section>
+
     <!-- FOOTER -->
     <footer class="lp-footer">
+        <div class="footer-columns">
+            <div class="footer-col">
+                <h4 class="footer-col-title" data-i18n="popularSearches">Popular Searches</h4>
+                <a href="listing?city=Miami Beach" class="footer-link">Miami Beach Condos</a>
+                <a href="listing?city=Sunny Isles Beach" class="footer-link">Sunny Isles Oceanfront</a>
+                <a href="listing?city=Fort Lauderdale" class="footer-link">Fort Lauderdale Homes</a>
+                <a href="listing?city=Aventura" class="footer-link">Aventura Properties</a>
+                <a href="listing?city=Coral Gables" class="footer-link">Coral Gables Luxury</a>
+                <a href="listing?city=Hollywood" class="footer-link">Hollywood Waterfront</a>
+            </div>
+            <div class="footer-col">
+                <h4 class="footer-col-title" data-i18n="contactUs">Contact Us</h4>
+                <p class="footer-contact-name">Rosa Poler, REALTOR®</p>
+                <a href="tel:+19542354046" class="footer-link">📞 (954) 235-4046</a>
+                <a href="mailto:rosa@homesinsoflorida.com" class="footer-link">✉️ rosa@homesinsoflorida.com</a>
+                <p class="footer-brokerage">Optimar International Realty</p>
+            </div>
+            <div class="footer-col">
+                <h4 class="footer-col-title" data-i18n="followUs">Follow Us</h4>
+                <div class="footer-social">
+                    <a href="https://instagram.com/thepolerteam" target="_blank" rel="noopener" class="footer-social-link" aria-label="Instagram">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+                    </a>
+                    <a href="https://facebook.com/thepolerteam" target="_blank" rel="noopener" class="footer-social-link" aria-label="Facebook">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385h-3.047v-3.47h3.047v-2.642c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953h-1.514c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385c5.737-.9 10.125-5.864 10.125-11.854z"/></svg>
+                    </a>
+                    <a href="https://wa.me/19542354046" target="_blank" rel="noopener" class="footer-social-link" aria-label="WhatsApp">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                    </a>
+                </div>
+            </div>
+            <div class="footer-col">
+                <h4 class="footer-col-title" data-i18n="footerAlerts">Get Property Alerts</h4>
+                <form id="footer-alert-form" class="footer-alert-form">
+                    <input type="email" id="footer-alert-email" placeholder="Your email" required>
+                    <button type="submit">Subscribe</button>
+                </form>
+            </div>
+        </div>
         <div class="lp-footer-inner">
             <img src="logo-white.png" alt="The Poler Team" class="lp-footer-logo">
             <p class="lp-footer-copy" data-i18n="footerCopy">&copy; 2025 The Poler Team &mdash; Optimar International Realty. All rights reserved.</p>
@@ -535,6 +659,7 @@
 
 <!-- EmailJS SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script src="https://unpkg.com/maplibre-gl@4.1.2/dist/maplibre-gl.js"></script>
 <script src="i18n.js"></script>
 <script src="listing.js"></script>
 </body>
