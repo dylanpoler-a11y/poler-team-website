@@ -1202,7 +1202,7 @@ function initFilterToggle() {
 // ============================================================
 function buildSearchParams() {
     const isRent = activeTab === 'rent';
-    const params = { limit: PAGE_SIZE, sortBy: 'ListPrice', order: 'desc', StandardStatus: 'Active' };
+    const params = { limit: PAGE_SIZE, sortBy: 'ModificationTimestamp', order: 'desc', StandardStatus: 'Active' };
 
     // Location (comma-separated cities → multiple City params handled below)
     const loc = document.getElementById('f-location').value.trim();
@@ -1642,15 +1642,56 @@ function initSearchBar() {
     const goBtn    = document.getElementById('search-bar-go');
     if (!input) return;
 
-    function doSearch() {
+    async function doSearch() {
         const val = input.value.trim();
         if (!val) return;
         if (dropdown) dropdown.style.display = 'none';
+
+        // Check if input looks like an address (starts with a number)
+        const addressMatch = val.match(/^(\d+)\s+(.+)/);
+        if (addressMatch) {
+            // Try Bridge API address lookup first
+            const streetNum = addressMatch[1];
+            const streetRest = addressMatch[2].replace(/,.*/, '').trim();
+            try {
+                const data = await apiFetch({ StreetNumber: streetNum, StreetName: streetRest, limit: 5 });
+                const listing = data.success && data.bundle && data.bundle[0];
+                if (listing) {
+                    window.location.href = `listing?id=${listing.ListingId}`;
+                    return;
+                }
+            } catch (err) { console.warn('Address lookup failed:', err); }
+        }
+
+        // Check if input is a ZIP code
+        if (/^\d{5}$/.test(val)) {
+            const locInput = document.getElementById('f-location');
+            if (locInput) locInput.value = '';
+            hasActiveSearch = true;
+            const grid = document.getElementById('results-grid');
+            const countEl = document.getElementById('results-count');
+            grid.innerHTML = renderSkeletons();
+            countEl.textContent = 'Searching...';
+            const isRent = activeTab === 'rent';
+            const params = { limit: PAGE_SIZE, sortBy: 'ModificationTimestamp', order: 'desc', StandardStatus: 'Active', PropertyType: isRent ? 'Residential Lease' : 'Residential', PostalCode: val };
+            lastQuery = { ...params };
+            const listings = await fetchListings(params);
+            grid.innerHTML = '';
+            window._currentListings = listings;
+            if (!listings.length) { document.getElementById('no-results').style.display = 'block'; countEl.textContent = 'No results found'; return; }
+            document.getElementById('no-results').style.display = 'none';
+            listings.forEach(l => grid.insertAdjacentHTML('beforeend', renderCard(l)));
+            countEl.textContent = `Showing ${listings.length} properties`;
+            const browse = document.getElementById('browse-section');
+            if (browse) browse.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            return;
+        }
+
+        // Default: treat as city name search
         const locInput = document.getElementById('f-location');
         if (locInput) locInput.value = val;
         hasActiveSearch = true;
         runSearch(false);
-        // Scroll to results
         const browse = document.getElementById('browse-section');
         if (browse) browse.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
