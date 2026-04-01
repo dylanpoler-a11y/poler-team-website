@@ -1843,7 +1843,7 @@ async function loadActivity(email) {
 function openPropertyModal(address, sourceUrl) {
   const modal = document.getElementById('property-modal');
   const body  = document.getElementById('property-modal-body');
-  modal.style.display = 'flex';
+  modal.classList.add('open');
   body.innerHTML = '<div class="property-modal-loading">Loading property details...</div>';
   document.body.style.overflow = 'hidden';
 
@@ -1872,7 +1872,7 @@ function openPropertyModal(address, sourceUrl) {
 }
 
 function closePropertyModal() {
-  document.getElementById('property-modal').style.display = 'none';
+  document.getElementById('property-modal').classList.remove('open');
   document.body.style.overflow = '';
 }
 
