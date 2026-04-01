@@ -151,7 +151,7 @@ function initLeadCapture() {
     }
 
     // 30-second countdown — persists across page refreshes
-    const DURATION    = 30000;
+    const DURATION    = 10000;
     const TIMER_KEY   = 'poler_lead_timer_start';
     let storedStart   = sessionStorage.getItem(TIMER_KEY);
     if (!storedStart) {
