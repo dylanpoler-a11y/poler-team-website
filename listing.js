@@ -1650,11 +1650,21 @@ function initSearchBar() {
         // Check if input looks like an address (starts with a number)
         const addressMatch = val.match(/^(\d+)\s+(.+)/);
         if (addressMatch) {
-            // Try Bridge API address lookup first
             const streetNum = addressMatch[1];
-            const streetRest = addressMatch[2].replace(/,.*/, '').trim();
+            let streetRest = addressMatch[2].replace(/,.*/, '').trim();
+
+            // Parse direction prefix (N, S, E, W, NE, NW, SE, SW)
+            const dirMatch = streetRest.match(/^(NE|NW|SE|SW|N|S|E|W)\s+(.+)/i);
+            const params = { StreetNumber: streetNum, limit: 5 };
+            if (dirMatch) {
+                params.StreetDirPrefix = dirMatch[1].toUpperCase();
+                params.StreetName = dirMatch[2].trim();
+            } else {
+                params.StreetName = streetRest;
+            }
+
             try {
-                const data = await apiFetch({ StreetNumber: streetNum, StreetName: streetRest, limit: 5 });
+                const data = await apiFetch(params);
                 const listing = data.success && data.bundle && data.bundle[0];
                 if (listing) {
                     window.location.href = `listing?id=${listing.ListingId}`;
