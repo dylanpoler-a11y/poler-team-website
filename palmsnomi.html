@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Palms at NoMi &mdash; An&aacute;lisis Completo de Inversi&oacute;n</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Helvetica Neue', Arial, sans-serif; color: #1a2744; line-height: 1.6; background: #0d1421; padding: 40px 20px; }
+  .container { max-width: 1100px; margin: 0 auto; }
+  .header { background: #1a2744; padding: 40px 48px; border-radius: 12px 12px 0 0; border-bottom: 4px solid #C9A84C; }
+  .header h1 { color: #fff; font-size: 28px; font-weight: 700; margin-bottom: 6px; }
+  .header p { color: #C9A84C; font-size: 14px; font-weight: 500; }
+  .body-content { background: #fff; padding: 40px 48px; border-radius: 0 0 12px 12px; }
+  .section { margin-bottom: 48px; }
+  .section h2 { font-size: 18px; font-weight: 700; color: #1a2744; border-bottom: 3px solid #C9A84C; padding-bottom: 8px; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .section h3 { font-size: 13px; font-weight: 700; color: #C9A84C; margin: 20px 0 10px 0; text-transform: uppercase; letter-spacing: 0.3px; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 13px; }
+  table th { background: #1a2744; color: #fff; text-align: left; padding: 10px 14px; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+  table td { padding: 9px 14px; border-bottom: 1px solid #e8e8e8; }
+  table tr:nth-child(even) { background: #f9f9f9; }
+  .r { text-align: right; }
+  .c { text-align: center; }
+  .total-row td { background: #1a2744 !important; color: #fff !important; font-weight: 700; }
+  .total-row-red td { background: #991b1b !important; color: #fff !important; font-weight: 700; }
+  .total-row-green td { background: #14532d !important; color: #fff !important; font-weight: 700; }
+  .highlight-row { background: #fffbeb !important; }
+  .highlight-row td { background: #fffbeb !important; }
+  .red { color: #dc2626; font-weight: 700; }
+  .green { color: #16a34a; font-weight: 700; }
+  .gold { color: #C9A84C; font-weight: 700; }
+  .muted { color: #888; font-size: 12px; }
+  .highlight { background: #C9A84C; color: #1a2744; font-weight: 700; padding: 2px 8px; border-radius: 3px; font-size: 11px; }
+  .red-flag { background: #fef2f2; border-left: 4px solid #dc2626; padding: 14px 18px; border-radius: 0 6px 6px 0; margin: 14px 0; font-size: 13px; }
+  .green-note { background: #f0fdf4; border-left: 4px solid #16a34a; padding: 14px 18px; border-radius: 0 6px 6px 0; margin: 14px 0; font-size: 13px; }
+  .yellow-note { background: #fffbeb; border-left: 4px solid #C9A84C; padding: 14px 18px; border-radius: 0 6px 6px 0; margin: 14px 0; font-size: 13px; }
+  .path-card { border: 1px solid #ddd; border-radius: 8px; overflow: hidden; margin-bottom: 20px; }
+  .path-header { padding: 12px 18px; font-weight: 700; font-size: 14px; color: #fff; background: #1a2744; }
+  .path-body table { margin: 0; }
+  .path-body th { background: #C9A84C !important; color: #1a2744 !important; }
+  .path-total-red td { background: #991b1b !important; color: #fff !important; font-weight: 700; font-size: 14px; }
+  .path-total-green td { background: #14532d !important; color: #fff !important; font-weight: 700; font-size: 14px; }
+  .side-by-side { display: flex; gap: 20px; }
+  .side-by-side .path-card { flex: 1; }
+  .step-box { background: #f8f8f8; border-left: 3px solid #C9A84C; padding: 14px 18px; margin: 10px 0; border-radius: 0 6px 6px 0; }
+  .step-box table { margin-top: 8px; }
+  .verdict-box { background: #1a2744; color: #fff; padding: 32px 36px; border-radius: 8px; margin: 32px 0; }
+  .verdict-box h2 { color: #C9A84C; border-bottom: 2px solid #C9A84C; padding-bottom: 8px; margin-bottom: 20px; font-size: 16px; }
+  .verdict-box p { color: #d1d5db; font-size: 13px; margin: 8px 0; }
+  .big-number { font-size: 42px; font-weight: 800; text-align: center; color: #C9A84C; padding: 16px 0 4px 0; }
+  .big-subtitle { text-align: center; color: #C9A84C; font-weight: 600; font-size: 14px; margin-bottom: 20px; }
+  .scenario-tabs { display: flex; gap: 12px; margin-bottom: 20px; }
+  .scenario-tab { flex: 1; border-radius: 8px; padding: 16px; text-align: center; }
+  .scenario-low { background: #f0fdf4; border: 2px solid #16a34a; }
+  .scenario-mid { background: #fffbeb; border: 2px solid #C9A84C; }
+  .scenario-high { background: #fef2f2; border: 2px solid #dc2626; }
+  .scenario-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700; margin-bottom: 4px; }
+  .scenario-number { font-size: 22px; font-weight: 800; }
+  .scenario-detail { font-size: 11px; color: #666; margin-top: 2px; }
+  .divider { border: 0; border-top: 1px solid #e5e7eb; margin: 40px 0; }
+  .footer { text-align: center; padding: 20px; font-size: 11px; color: #666; margin-top: 8px; }
+  @media print { body { background: #fff; padding: 0; } .container { max-width: 100%; } .header { border-radius: 0; } .body-content { border-radius: 0; } .section { page-break-inside: avoid; } }
+  @media (max-width: 700px) { .side-by-side, .scenario-tabs { flex-direction: column; } .header, .body-content { padding: 24px; } .big-number { font-size: 32px; } }
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="header">
+  <h1>The Palms at NoMi &mdash; An&aacute;lisis Completo de Inversi&oacute;n</h1>
+  <p>12116 NE 5th Ave, North Miami &nbsp;|&nbsp; 9 Unidades &nbsp;|&nbsp; Precio: $1.6M &nbsp;|&nbsp; vs. Comparable MLS: 555 NE 127th St ($1.175M) &nbsp;|&nbsp; 3 Escenarios de Construcci&oacute;n</p>
+</div>
+
+<div class="body-content">
+
+<!-- SECCI&Oacute;N 1 -->
+<div class="section">
+  <h2>1. Supuestos &mdash; Pro Forma de Pirola + Nuestras Estimaciones de Construcci&oacute;n</h2>
+  <p class="muted">Ingresos y gastos del OM de Pirola. Los costos de construcci&oacute;n son nuestras estimaciones en tres escenarios ya que el OM de Pirola los omite por completo.</p>
+
+  <h3>Ingresos y Gastos (del OM de Pirola &mdash; Usado en Todos los Escenarios)</h3>
+  <table>
+    <tr><th style="width:58%;">Ingresos</th><th class="r">Monto</th></tr>
+    <tr><td>Unidades</td><td class="r">9 apartamentos (todos 2BR/2BA, 824&ndash;1,012 sqft)</td></tr>
+    <tr><td>&Aacute;rea Bruta del Edificio</td><td class="r">10,525 sqft</td></tr>
+    <tr><td>Renta Mensual Promedio por Unidad</td><td class="r">$2,900</td></tr>
+    <tr><td>Renta Potencial Bruta (9 &times; $2,900 &times; 12)</td><td class="r">$313,200</td></tr>
+    <tr><td>Vacancia (5%)</td><td class="r">($15,660)</td></tr>
+    <tr><td><strong>Ingreso Bruto Efectivo</strong></td><td class="r"><strong>$297,540</strong></td></tr>
+  </table>
+  <table>
+    <tr><th style="width:58%;">Gastos Operativos</th><th class="r">Monto</th></tr>
+    <tr><td>Impuestos de Propiedad</td><td class="r">($18,000)</td></tr>
+    <tr><td>Seguro</td><td class="r">($9,500)</td></tr>
+    <tr><td>Administraci&oacute;n (8% del IGE)</td><td class="r">($23,803)</td></tr>
+    <tr><td>Mantenimiento y Reparaciones</td><td class="r">($9,500)</td></tr>
+    <tr><td>Servicios P&uacute;blicos (&Aacute;reas Comunes)</td><td class="r">($4,800)</td></tr>
+    <tr><td>Reservas</td><td class="r">($5,000)</td></tr>
+    <tr><td><strong>Total Gastos Operativos</strong></td><td class="r"><strong>($70,603)</strong></td></tr>
+    <tr class="total-row"><td><strong>NOI Estabilizado (A&ntilde;o 1)</strong></td><td class="r"><strong>$226,937</strong></td></tr>
+  </table>
+
+  <h3>Escenarios de Costos de Construcci&oacute;n (Nuestras Estimaciones)</h3>
+  <p class="muted" style="margin-bottom:14px;">El OM de Pirola no incluye ning&uacute;n presupuesto de construcci&oacute;n. Modelamos tres escenarios basados en precios actuales de Miami-Dade para un edificio multifamiliar de 3 pisos, 10,525 sqft con estacionamiento en superficie.</p>
+
+  <div class="scenario-tabs">
+    <div class="scenario-tab scenario-low">
+      <div class="scenario-label green">Bajo / Mejor Caso</div>
+      <div class="scenario-number green">$250/sqft</div>
+      <div class="scenario-detail">Costos Duros: $2,631,000</div>
+      <div class="scenario-detail">Acabados sencillos, ofertas favorables, sin demoras</div>
+    </div>
+    <div class="scenario-tab scenario-mid">
+      <div class="scenario-label gold">Medio / Caso Base</div>
+      <div class="scenario-number gold">$335/sqft</div>
+      <div class="scenario-detail">Costos Duros: $3,500,000</div>
+      <div class="scenario-detail">Acabados est&aacute;ndar, cronograma t&iacute;pico</div>
+    </div>
+    <div class="scenario-tab scenario-high">
+      <div class="scenario-label red">Alto / Caso de Estr&eacute;s</div>
+      <div class="scenario-number red">$400/sqft</div>
+      <div class="scenario-detail">Costos Duros: $4,210,000</div>
+      <div class="scenario-detail">Acabados premium, demoras, sobrecostos</div>
+    </div>
+  </div>
+
+  <table>
+    <tr><th style="width:40%;">Componente de Costo</th><th class="c">Bajo ($250/sqft)</th><th class="c">Medio ($335/sqft)</th><th class="c">Alto ($400/sqft)</th></tr>
+    <tr><td>Costos Duros de Construcci&oacute;n</td><td class="c">$2,631,000</td><td class="c">$3,500,000</td><td class="c">$4,210,000</td></tr>
+    <tr><td>Costos Blandos (permisos, inspecciones, legal)</td><td class="c">$250,000</td><td class="c">$300,000</td><td class="c">$375,000</td></tr>
+    <tr class="total-row"><td><strong>Total Construcci&oacute;n</strong></td><td class="c"><strong>$2,881,000</strong></td><td class="c"><strong>$3,800,000</strong></td><td class="c"><strong>$4,585,000</strong></td></tr>
+    <tr><td>Pr&eacute;stamo de Construcci&oacute;n (65% del costo total)</td><td class="c" colspan="3">9% inter&eacute;s simple, 18 meses</td></tr>
+  </table>
+
+  <h3>Valuaci&oacute;n de Salida (Igual en Todos los Escenarios)</h3>
+  <table>
+    <tr><th>Cap Rate de Salida</th><th class="r">Valor Estabilizado</th><th class="r">Notas</th></tr>
+    <tr><td>4.5%</td><td class="r green">$5,043,000</td><td class="r muted">Agresivo para NoMi</td></tr>
+    <tr><td>5.0%</td><td class="r green">$4,539,000</td><td class="r muted">Optimista</td></tr>
+    <tr class="highlight-row"><td><strong>5.5%</strong></td><td class="r"><strong>$4,126,000</strong></td><td class="r"><span class="highlight">CASO BASE</span></td></tr>
+    <tr><td>6.0%</td><td class="r red">$3,782,000</td><td class="r muted">Conservador</td></tr>
+    <tr><td>6.5%</td><td class="r red">$3,491,000</td><td class="r muted">Negativo</td></tr>
+  </table>
+
+  <div class="red-flag">
+    <strong>El techo es ~$4.13M.</strong> Cualquier ruta de desarrollo que cueste m&aacute;s de $4.13M all-in resulta en p&eacute;rdida con un cap rate de salida de 5.5%. Todos los escenarios se miden contra este l&iacute;mite.
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- SECCI&Oacute;N 2 -->
+<div class="section">
+  <h2>2. Flujo de Caja del Desarrollo &mdash; Ambas Rutas &times; Tres Escenarios</h2>
+  <p class="muted">Pirola tiene planos aprobados &mdash; construir de inmediato. 555 NE 127th tiene un 4-plex generando ingresos durante la fase de planificaci&oacute;n de 12 meses. Mismo costo de construcci&oacute;n aplicado a ambas rutas.</p>
+
+  <!-- ESCENARIO BAJO -->
+  <h3 style="font-size:15px; margin-top:28px; padding:10px 14px; background:#f0fdf4; border-radius:6px; border-left:4px solid #16a34a;">
+    Escenario 1: Costo de Construcci&oacute;n Bajo &mdash; $250/sqft ($2,881,000 total)
+  </h3>
+  <div class="side-by-side" style="margin-top:12px;">
+    <div class="path-card">
+      <div class="path-header"><span style="color:#C9A84C;">RUTA A:</span> &nbsp;Pirola &mdash; <span class="red">$1,600,000</span></div>
+      <div class="path-body"><table>
+        <tr><th colspan="2">Adquisici&oacute;n (Mes 0)</th></tr>
+        <tr><td>Terreno + Planos Aprobados</td><td class="r">$1,600,000</td></tr>
+        <tr><th colspan="2">Construcci&oacute;n (Meses 1&ndash;18)</th></tr>
+        <tr><td>Costos Duros ($250/sqft)</td><td class="r">$2,631,000</td></tr>
+        <tr><td>Costos Blandos</td><td class="r">$250,000</td></tr>
+        <tr><td>Pr&eacute;st. Const. (65% de $4.48M)</td><td class="r">$2,913,000</td></tr>
+        <tr><td>Costo Financiero (18m @ 9%)</td><td class="r red">$393,255</td></tr>
+        <tr><td>Ingresos Durante Construcci&oacute;n</td><td class="r red">$0</td></tr>
+        <tr class="path-total-red"><td><strong>COSTO TOTAL ALL-IN</strong></td><td class="r"><strong>$4,874,255</strong></td></tr>
+        <tr><td>Equity Requerido</td><td class="r">~$1,568,000</td></tr>
+        <tr><td>Plazo</td><td class="r">24 meses</td></tr>
+      </table></div>
+    </div>
+    <div class="path-card">
+      <div class="path-header"><span style="color:#C9A84C;">RUTA B:</span> &nbsp;555 NE 127th &mdash; <span class="green">$1,175,000</span></div>
+      <div class="path-body"><table>
+        <tr><th colspan="2">Adquisici&oacute;n + Planificaci&oacute;n (Mes 0&ndash;12)</th></tr>
+        <tr><td>Compra (4-plex existente)</td><td class="r">$1,175,000</td></tr>
+        <tr><td>Planos y Permisos</td><td class="r">$175,000</td></tr>
+        <tr><td>Costos de Mantenci&oacute;n (12m)</td><td class="r">$30,000</td></tr>
+        <tr><td>Ingreso Neto del 4-Plex (12m)</td><td class="r green">&ndash;$60,000</td></tr>
+        <tr><td><em>Costo Neto Pre-Construcci&oacute;n</em></td><td class="r"><em>$1,320,000</em></td></tr>
+        <tr><th colspan="2">Construcci&oacute;n (Mes 13&ndash;30)</th></tr>
+        <tr><td>Costos Duros ($250/sqft)</td><td class="r">$2,631,000</td></tr>
+        <tr><td>Costos Blandos</td><td class="r">$250,000</td></tr>
+        <tr><td>Pr&eacute;st. Const. (65% de $4.20M)</td><td class="r">$2,731,000</td></tr>
+        <tr><td>Costo Financiero (18m @ 9%)</td><td class="r red">$368,685</td></tr>
+        <tr class="path-total-green"><td><strong>COSTO TOTAL ALL-IN</strong></td><td class="r"><strong>$4,569,685</strong></td></tr>
+        <tr><td>Equity Requerido</td><td class="r">~$1,470,000</td></tr>
+        <tr><td>Plazo</td><td class="r">36 meses</td></tr>
+      </table></div>
+    </div>
+  </div>
+
+  <!-- ESCENARIO MEDIO -->
+  <h3 style="font-size:15px; margin-top:28px; padding:10px 14px; background:#fffbeb; border-radius:6px; border-left:4px solid #C9A84C;">
+    Escenario 2: Costo de Construcci&oacute;n Medio &mdash; $335/sqft ($3,800,000 total) &nbsp;<span class="highlight">CASO BASE</span>
+  </h3>
+  <div class="side-by-side" style="margin-top:12px;">
+    <div class="path-card">
+      <div class="path-header"><span style="color:#C9A84C;">RUTA A:</span> &nbsp;Pirola &mdash; <span class="red">$1,600,000</span></div>
+      <div class="path-body"><table>
+        <tr><th colspan="2">Adquisici&oacute;n (Mes 0)</th></tr>
+        <tr><td>Terreno + Planos Aprobados</td><td class="r">$1,600,000</td></tr>
+        <tr><th colspan="2">Construcci&oacute;n (Meses 1&ndash;18)</th></tr>
+        <tr><td>Costos Duros ($335/sqft)</td><td class="r">$3,500,000</td></tr>
+        <tr><td>Costos Blandos</td><td class="r">$300,000</td></tr>
+        <tr><td>Pr&eacute;st. Const. (65% de $5.40M)</td><td class="r">$3,510,000</td></tr>
+        <tr><td>Costo Financiero (18m @ 9%)</td><td class="r red">$473,850</td></tr>
+        <tr><td>Ingresos Durante Construcci&oacute;n</td><td class="r red">$0</td></tr>
+        <tr class="path-total-red"><td><strong>COSTO TOTAL ALL-IN</strong></td><td class="r"><strong>$5,873,850</strong></td></tr>
+        <tr><td>Equity Requerido</td><td class="r">~$1,890,000</td></tr>
+        <tr><td>Plazo</td><td class="r">24 meses</td></tr>
+      </table></div>
+    </div>
+    <div class="path-card">
+      <div class="path-header"><span style="color:#C9A84C;">RUTA B:</span> &nbsp;555 NE 127th &mdash; <span class="green">$1,175,000</span></div>
+      <div class="path-body"><table>
+        <tr><th colspan="2">Adquisici&oacute;n + Planificaci&oacute;n (Mes 0&ndash;12)</th></tr>
+        <tr><td>Compra (4-plex existente)</td><td class="r">$1,175,000</td></tr>
+        <tr><td>Planos y Permisos</td><td class="r">$175,000</td></tr>
+        <tr><td>Costos de Mantenci&oacute;n (12m)</td><td class="r">$30,000</td></tr>
+        <tr><td>Ingreso Neto del 4-Plex (12m)</td><td class="r green">&ndash;$60,000</td></tr>
+        <tr><td><em>Costo Neto Pre-Construcci&oacute;n</em></td><td class="r"><em>$1,320,000</em></td></tr>
+        <tr><th colspan="2">Construcci&oacute;n (Mes 13&ndash;30)</th></tr>
+        <tr><td>Costos Duros ($335/sqft)</td><td class="r">$3,500,000</td></tr>
+        <tr><td>Costos Blandos</td><td class="r">$300,000</td></tr>
+        <tr><td>Pr&eacute;st. Const. (65% de $5.12M)</td><td class="r">$3,328,000</td></tr>
+        <tr><td>Costo Financiero (18m @ 9%)</td><td class="r red">$449,280</td></tr>
+        <tr class="path-total-green"><td><strong>COSTO TOTAL ALL-IN</strong></td><td class="r"><strong>$5,569,280</strong></td></tr>
+        <tr><td>Equity Requerido</td><td class="r">~$1,792,000</td></tr>
+        <tr><td>Plazo</td><td class="r">36 meses</td></tr>
+      </table></div>
+    </div>
+  </div>
+
+  <!-- ESCENARIO ALTO -->
+  <h3 style="font-size:15px; margin-top:28px; padding:10px 14px; background:#fef2f2; border-radius:6px; border-left:4px solid #dc2626;">
+    Escenario 3: Costo de Construcci&oacute;n Alto &mdash; $400/sqft ($4,585,000 total)
+  </h3>
+  <div class="side-by-side" style="margin-top:12px;">
+    <div class="path-card">
+      <div class="path-header"><span style="color:#C9A84C;">RUTA A:</span> &nbsp;Pirola &mdash; <span class="red">$1,600,000</span></div>
+      <div class="path-body"><table>
+        <tr><th colspan="2">Adquisici&oacute;n (Mes 0)</th></tr>
+        <tr><td>Terreno + Planos Aprobados</td><td class="r">$1,600,000</td></tr>
+        <tr><th colspan="2">Construcci&oacute;n (Meses 1&ndash;18)</th></tr>
+        <tr><td>Costos Duros ($400/sqft)</td><td class="r">$4,210,000</td></tr>
+        <tr><td>Costos Blandos</td><td class="r">$375,000</td></tr>
+        <tr><td>Pr&eacute;st. Const. (65% de $6.19M)</td><td class="r">$4,020,000</td></tr>
+        <tr><td>Costo Financiero (18m @ 9%)</td><td class="r red">$542,700</td></tr>
+        <tr><td>Ingresos Durante Construcci&oacute;n</td><td class="r red">$0</td></tr>
+        <tr class="path-total-red"><td><strong>COSTO TOTAL ALL-IN</strong></td><td class="r"><strong>$6,727,700</strong></td></tr>
+        <tr><td>Equity Requerido</td><td class="r">~$2,165,000</td></tr>
+        <tr><td>Plazo</td><td class="r">24 meses</td></tr>
+      </table></div>
+    </div>
+    <div class="path-card">
+      <div class="path-header"><span style="color:#C9A84C;">RUTA B:</span> &nbsp;555 NE 127th &mdash; <span class="green">$1,175,000</span></div>
+      <div class="path-body"><table>
+        <tr><th colspan="2">Adquisici&oacute;n + Planificaci&oacute;n (Mes 0&ndash;12)</th></tr>
+        <tr><td>Compra (4-plex existente)</td><td class="r">$1,175,000</td></tr>
+        <tr><td>Planos y Permisos</td><td class="r">$175,000</td></tr>
+        <tr><td>Costos de Mantenci&oacute;n (12m)</td><td class="r">$30,000</td></tr>
+        <tr><td>Ingreso Neto del 4-Plex (12m)</td><td class="r green">&ndash;$60,000</td></tr>
+        <tr><td><em>Costo Neto Pre-Construcci&oacute;n</em></td><td class="r"><em>$1,320,000</em></td></tr>
+        <tr><th colspan="2">Construcci&oacute;n (Mes 13&ndash;30)</th></tr>
+        <tr><td>Costos Duros ($400/sqft)</td><td class="r">$4,210,000</td></tr>
+        <tr><td>Costos Blandos</td><td class="r">$375,000</td></tr>
+        <tr><td>Pr&eacute;st. Const. (65% de $5.91M)</td><td class="r">$3,838,000</td></tr>
+        <tr><td>Costo Financiero (18m @ 9%)</td><td class="r red">$518,130</td></tr>
+        <tr class="path-total-green"><td><strong>COSTO TOTAL ALL-IN</strong></td><td class="r"><strong>$6,423,130</strong></td></tr>
+        <tr><td>Equity Requerido</td><td class="r">~$2,067,000</td></tr>
+        <tr><td>Plazo</td><td class="r">36 meses</td></tr>
+      </table></div>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- SECCI&Oacute;N 3 -->
+<div class="section">
+  <h2>3. Comparaci&oacute;n de Retornos &mdash; Todos los Escenarios a Precios de Lista</h2>
+  <p class="muted">Mismo edificio de 9 unidades, mismo mercado, misma salida. Rojo = p&eacute;rdida.</p>
+
+  <table>
+    <tr>
+      <th style="width:28%;" rowspan="2">M&eacute;trica</th>
+      <th class="c" colspan="2" style="background:#374151;">Bajo ($250/sqft)</th>
+      <th class="c" colspan="2" style="background:#C9A84C; color:#1a2744;">Medio ($335/sqft)</th>
+      <th class="c" colspan="2" style="background:#7f1d1d;">Alto ($400/sqft)</th>
+    </tr>
+    <tr>
+      <th class="c" style="background:#4b5563; font-size:10px;">Pirola</th>
+      <th class="c" style="background:#4b5563; font-size:10px;">555 NE 127th</th>
+      <th class="c" style="background:#92710f; color:#1a2744; font-size:10px;">Pirola</th>
+      <th class="c" style="background:#92710f; color:#1a2744; font-size:10px;">555 NE 127th</th>
+      <th class="c" style="background:#991b1b; font-size:10px;">Pirola</th>
+      <th class="c" style="background:#991b1b; font-size:10px;">555 NE 127th</th>
+    </tr>
+    <tr><td>Precio de Compra</td><td class="c red">$1,600,000</td><td class="c green">$1,175,000</td><td class="c red">$1,600,000</td><td class="c green">$1,175,000</td><td class="c red">$1,600,000</td><td class="c green">$1,175,000</td></tr>
+    <tr><td>Construcci&oacute;n + Blandos</td><td class="c">$2,881,000</td><td class="c">$2,881,000</td><td class="c">$3,800,000</td><td class="c">$3,800,000</td><td class="c">$4,585,000</td><td class="c">$4,585,000</td></tr>
+    <tr><td>Planos y Permisos</td><td class="c green">$0</td><td class="c">$175,000</td><td class="c green">$0</td><td class="c">$175,000</td><td class="c green">$0</td><td class="c">$175,000</td></tr>
+    <tr><td>Ingreso del 4-Plex</td><td class="c red">$0</td><td class="c green">&ndash;$60,000</td><td class="c red">$0</td><td class="c green">&ndash;$60,000</td><td class="c red">$0</td><td class="c green">&ndash;$60,000</td></tr>
+    <tr><td>Costo Financiero</td><td class="c">$393,255</td><td class="c">$368,685</td><td class="c">$473,850</td><td class="c">$449,280</td><td class="c">$542,700</td><td class="c">$518,130</td></tr>
+    <tr class="total-row"><td style="color:#C9A84C;"><strong>Costo Total All-In</strong></td><td class="c" style="color:#ff6b6b;"><strong>$4,874,255</strong></td><td class="c" style="color:#4ade80;"><strong>$4,569,685</strong></td><td class="c" style="color:#ff6b6b;"><strong>$5,873,850</strong></td><td class="c" style="color:#4ade80;"><strong>$5,569,280</strong></td><td class="c" style="color:#ff6b6b;"><strong>$6,727,700</strong></td><td class="c" style="color:#4ade80;"><strong>$6,423,130</strong></td></tr>
+    <tr><td colspan="7" style="border:0; height:6px; background:#fff;"></td></tr>
+    <tr><td>Costo Extra de Pirola vs. 555</td><td class="c red" colspan="2"><strong>+$304,570</strong></td><td class="c red" colspan="2"><strong>+$304,570</strong></td><td class="c red" colspan="2"><strong>+$304,570</strong></td></tr>
+  </table>
+
+  <div class="yellow-note">
+    En cada escenario, Pirola cuesta <strong>$304,570 m&aacute;s</strong> que la ruta de 555 NE 127th. Su &uacute;nica ventaja &mdash; 12 meses de tiempo &mdash; vale ~$119K, no la prima de $425K que est&aacute; cobrando.
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- SECCI&Oacute;N 4 -->
+<div class="section">
+  <h2>4. Una Vez Construido &mdash; &iquest;Cu&aacute;nto Genera?</h2>
+  <p class="muted">NOI del pro forma de Pirola y lo que significa para retornos anuales una vez estabilizado el edificio.</p>
+
+  <table>
+    <tr>
+      <th rowspan="2" style="width:34%;">M&eacute;trica de Flujo de Caja</th>
+      <th class="c" colspan="2" style="background:#374151;">Bajo ($250/sqft)</th>
+      <th class="c" colspan="2" style="background:#C9A84C; color:#1a2744;">Medio ($335/sqft)</th>
+      <th class="c" colspan="2" style="background:#7f1d1d;">Alto ($400/sqft)</th>
+    </tr>
+    <tr>
+      <th class="c" style="background:#4b5563; font-size:9px;">Pirola</th>
+      <th class="c" style="background:#4b5563; font-size:9px;">555 NE 127th</th>
+      <th class="c" style="background:#92710f; color:#1a2744; font-size:9px;">Pirola</th>
+      <th class="c" style="background:#92710f; color:#1a2744; font-size:9px;">555 NE 127th</th>
+      <th class="c" style="background:#991b1b; font-size:9px;">Pirola</th>
+      <th class="c" style="background:#991b1b; font-size:9px;">555 NE 127th</th>
+    </tr>
+    <tr><td>Costo Total All-In</td><td class="c">$4,874,255</td><td class="c">$4,569,685</td><td class="c">$5,873,850</td><td class="c">$5,569,280</td><td class="c">$6,727,700</td><td class="c">$6,423,130</td></tr>
+    <tr><td colspan="7" style="border:0; height:4px; background:#fff;"></td></tr>
+    <tr><td>NOI Estabilizado (pro forma Pirola)</td><td class="c" colspan="6"><strong>$226,937 / a&ntilde;o &nbsp;&nbsp;|&nbsp;&nbsp; $18,911 / mes</strong></td></tr>
+    <tr><td colspan="7" style="border:0; height:4px; background:#fff;"></td></tr>
+    <tr class="total-row"><td style="color:#C9A84C;"><strong>Cap Rate sobre Costo (NOI &divide; All-In, sin pr&eacute;stamo)</strong></td><td class="c" style="color:#ff6b6b;"><strong>4.66%</strong></td><td class="c" style="color:#4ade80;"><strong>4.97%</strong></td><td class="c" style="color:#ff6b6b;"><strong>3.86%</strong></td><td class="c" style="color:#4ade80;"><strong>4.07%</strong></td><td class="c" style="color:#ff6b6b;"><strong>3.37%</strong></td><td class="c" style="color:#4ade80;"><strong>3.53%</strong></td></tr>
+    <tr><td colspan="7" style="border:0; height:4px; background:#fff;"></td></tr>
+    <tr><td>Pr&eacute;st. Permanente (70% de valor de salida $3.15M)</td><td class="c" colspan="6">$2,205,000</td></tr>
+    <tr><td>Servicio de Deuda Anual (7%, 30 a&ntilde;os)</td><td class="c" colspan="6">($176,000)</td></tr>
+    <tr><td><strong>Flujo de Caja Anual Despu&eacute;s de Deuda</strong></td><td class="c" colspan="6"><strong>$50,937 / a&ntilde;o &nbsp;&nbsp;|&nbsp;&nbsp; $4,245 / mes</strong></td></tr>
+    <tr><td>Equity Atrapado (All-In &ndash; Pr&eacute;stamo Perm.)</td><td class="c">$2,669,000</td><td class="c">$2,365,000</td><td class="c">$3,669,000</td><td class="c">$3,364,000</td><td class="c">$4,523,000</td><td class="c">$4,218,000</td></tr>
+    <tr><td colspan="7" style="border:0; height:4px; background:#fff;"></td></tr>
+    <tr class="total-row"><td style="color:#C9A84C;"><strong>Retorno Cash-on-Cash (Flujo &divide; Equity)</strong></td><td class="c" style="color:#ff6b6b;"><strong>1.91%</strong></td><td class="c" style="color:#ff6b6b;"><strong>2.15%</strong></td><td class="c" style="color:#ff6b6b;"><strong>1.39%</strong></td><td class="c" style="color:#ff6b6b;"><strong>1.51%</strong></td><td class="c" style="color:#ff6b6b;"><strong>1.13%</strong></td><td class="c" style="color:#ff6b6b;"><strong>1.21%</strong></td></tr>
+  </table>
+
+  <div class="red-flag">
+    <strong>Retornos cash-on-cash de 1.1% a 2.2% &mdash; peor que una cuenta de ahorros o T-bills (~4.5%).</strong> En cada escenario, 555 NE 127th entrega mayor retorno que Pirola porque el menor precio de compra significa menos equity atrapado. El cap rate sobre costo nunca supera 5%. Estos n&uacute;meros usan la renta optimista de $2,900/mes de Pirola.
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- SECCI&Oacute;N 5 -->
+<div class="section">
+  <h2>5. ROI de Salida &mdash; Vendiendo a los Comparables de Pirola</h2>
+  <p class="muted">Usando los comparables de venta del OM de Pirola para proyectar el valor de salida, calculando el retorno total incluyendo flujo de caja durante 2 a&ntilde;os de tenencia despu&eacute;s de estabilizaci&oacute;n.</p>
+
+  <h3>Comparables de Venta de Pirola (del OM)</h3>
+  <table>
+    <tr><th>Propiedad</th><th class="c">Unidades</th><th class="c">Precio de Venta</th><th class="c">$/Unidad</th><th>Notas</th></tr>
+    <tr><td>NE 2nd Ave Multifamiliar, NoMi</td><td class="c">8</td><td class="c">$2,800,000</td><td class="c">$350,000</td><td>Escala boutique similar</td></tr>
+    <tr><td>Biscayne Corridor Uso Mixto</td><td class="c">10</td><td class="c">$3,500,000</td><td class="c">$350,000</td><td>Comercio en planta baja + residencial</td></tr>
+    <tr><td>Portafolio NE 125th St</td><td class="c">6</td><td class="c">$1,900,000</td><td class="c">$317,000</td><td>Adquisici&oacute;n value-add</td></tr>
+    <tr><td>Wynwood Micro-Units</td><td class="c">14</td><td class="c">$6,100,000</td><td class="c">$436,000</td><td>Submercado premium</td></tr>
+  </table>
+
+  <h3>Valor de Salida para The Palms (9 unidades) a Comparables de Pirola</h3>
+  <div class="scenario-tabs">
+    <div class="scenario-tab scenario-low">
+      <div class="scenario-label" style="color:#1a2744;">Conservador</div>
+      <div class="scenario-number" style="color:#1a2744;">$317K/unidad</div>
+      <div class="scenario-detail"><strong>Salida: $2,853,000</strong></div>
+      <div class="scenario-detail">Basado en comp NE 125th St</div>
+    </div>
+    <div class="scenario-tab scenario-mid">
+      <div class="scenario-label" style="color:#1a2744;">Rango Medio</div>
+      <div class="scenario-number" style="color:#1a2744;">$350K/unidad</div>
+      <div class="scenario-detail"><strong>Salida: $3,150,000</strong></div>
+      <div class="scenario-detail">Basado en comps NE 2nd Ave y Biscayne</div>
+    </div>
+    <div class="scenario-tab scenario-high" style="background:#f0fdf4; border-color:#16a34a;">
+      <div class="scenario-label" style="color:#1a2744;">Optimista</div>
+      <div class="scenario-number" style="color:#1a2744;">$436K/unidad</div>
+      <div class="scenario-detail"><strong>Salida: $3,924,000</strong></div>
+      <div class="scenario-detail">Premium de Wynwood (no aplica a NoMi)</div>
+    </div>
+  </div>
+
+  <h3>Matriz Completa de ROI &mdash; Ruta Pirola a $1.6M</h3>
+  <p class="muted">Asume 2 a&ntilde;os de tenencia despu&eacute;s de estabilizaci&oacute;n, luego venta. Retorno total = flujo de caja + ingresos de venta &ndash; costo all-in &ndash; costos de venta (6%).</p>
+
+  <table>
+    <tr>
+      <th rowspan="2" style="width:24%;">M&eacute;trica</th>
+      <th class="c" colspan="3" style="background:#374151;">Salida $317K/u ($2.85M)</th>
+      <th class="c" colspan="3" style="background:#374151;">Salida $350K/u ($3.15M)</th>
+      <th class="c" colspan="3" style="background:#374151;">Salida $436K/u ($3.92M)</th>
+    </tr>
+    <tr>
+      <th class="c" style="background:#4b5563; font-size:9px;">$250</th><th class="c" style="background:#4b5563; font-size:9px;">$335</th><th class="c" style="background:#4b5563; font-size:9px;">$400</th>
+      <th class="c" style="background:#4b5563; font-size:9px;">$250</th><th class="c" style="background:#4b5563; font-size:9px;">$335</th><th class="c" style="background:#4b5563; font-size:9px;">$400</th>
+      <th class="c" style="background:#4b5563; font-size:9px;">$250</th><th class="c" style="background:#4b5563; font-size:9px;">$335</th><th class="c" style="background:#4b5563; font-size:9px;">$400</th>
+    </tr>
+    <tr><td>Costo All-In</td><td class="c">$4.87M</td><td class="c">$5.87M</td><td class="c">$6.73M</td><td class="c">$4.87M</td><td class="c">$5.87M</td><td class="c">$6.73M</td><td class="c">$4.87M</td><td class="c">$5.87M</td><td class="c">$6.73M</td></tr>
+    <tr><td>Precio Bruto de Venta</td><td class="c" colspan="3">$2,853,000</td><td class="c" colspan="3">$3,150,000</td><td class="c" colspan="3">$3,924,000</td></tr>
+    <tr><td>Costos de Venta (6%)</td><td class="c" colspan="3">($171,180)</td><td class="c" colspan="3">($189,000)</td><td class="c" colspan="3">($235,440)</td></tr>
+    <tr><td>Ingresos Netos de Venta</td><td class="c" colspan="3"><strong>$2,681,820</strong></td><td class="c" colspan="3"><strong>$2,961,000</strong></td><td class="c" colspan="3"><strong>$3,688,560</strong></td></tr>
+    <tr><td>Flujo de Caja (2 a&ntilde;os)</td><td class="c" colspan="9">$453,874 (2 &times; $226,937 NOI)</td></tr>
+    <tr><td><strong>Retornos Totales</strong></td><td class="c" colspan="3"><strong>$3,135,694</strong></td><td class="c" colspan="3"><strong>$3,414,874</strong></td><td class="c" colspan="3"><strong>$4,142,434</strong></td></tr>
+    <tr><td colspan="10" style="border:0; height:6px; background:#fff;"></td></tr>
+    <tr style="background:#fef2f2;"><td><strong>Ganancia / (P&eacute;rdida)</strong></td><td class="c red"><strong>($1.74M)</strong></td><td class="c red"><strong>($2.74M)</strong></td><td class="c red"><strong>($3.59M)</strong></td><td class="c red"><strong>($1.46M)</strong></td><td class="c red"><strong>($2.46M)</strong></td><td class="c red"><strong>($3.31M)</strong></td><td class="c red"><strong>($732K)</strong></td><td class="c red"><strong>($1.73M)</strong></td><td class="c red"><strong>($2.59M)</strong></td></tr>
+    <tr><td><strong>ROI sobre Costo Total</strong></td><td class="c red"><strong>&ndash;36%</strong></td><td class="c red"><strong>&ndash;47%</strong></td><td class="c red"><strong>&ndash;53%</strong></td><td class="c red"><strong>&ndash;30%</strong></td><td class="c red"><strong>&ndash;42%</strong></td><td class="c red"><strong>&ndash;49%</strong></td><td class="c red"><strong>&ndash;15%</strong></td><td class="c red"><strong>&ndash;30%</strong></td><td class="c red"><strong>&ndash;38%</strong></td></tr>
+  </table>
+
+  <div class="red-flag">
+    <strong>Todas las combinaciones pierden dinero.</strong> Incluso en el mejor caso absoluto &mdash; construcci&oacute;n m&aacute;s barata ($250/sqft) Y vendiendo al premium de Wynwood ($436K/unidad, no realista para North Miami) &mdash; a&uacute;n se pierde $732K. En el escenario m&aacute;s probable ($335/sqft, $350K/unidad de salida), <strong>se pierde $2.46M y el ROI es &ndash;42%.</strong>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- SECCI&Oacute;N 6 -->
+<div class="section">
+  <h2>6. La Prueba Real &mdash; &iquest;Qu&eacute; Pasa si el Terreno Fuera Gratis?</h2>
+  <p class="muted">Si el negocio no funciona a $0 por el terreno, no funciona a ning&uacute;n precio.</p>
+
+  <table>
+    <tr><th style="width:55%;">Componente de Costo (Escenario Medio, $335/sqft)</th><th class="r">Monto</th></tr>
+    <tr><td>Terreno</td><td class="r green"><strong>$0 (gratis)</strong></td></tr>
+    <tr><td>Construcci&oacute;n Dura ($335/sqft)</td><td class="r">$3,500,000</td></tr>
+    <tr><td>Costos Blandos</td><td class="r">$300,000</td></tr>
+    <tr><td>Costo Financiero (18m @ 9%, 65% LTC)</td><td class="r">$370,000</td></tr>
+    <tr class="total-row"><td><strong>Costo Total All-In (Terreno Gratis)</strong></td><td class="r"><strong>$4,170,000</strong></td></tr>
+    <tr><td colspan="2" style="border:0; height:6px; background:#fff;"></td></tr>
+    <tr><td>Salida al Comp Medio de Pirola ($350K/u &times; 9)</td><td class="r">$3,150,000</td></tr>
+    <tr><td>Costos de Venta (6%)</td><td class="r">($189,000)</td></tr>
+    <tr><td><strong>Ingresos Netos de Venta</strong></td><td class="r"><strong>$2,961,000</strong></td></tr>
+    <tr><td>Flujo de Caja Durante 2 A&ntilde;os de Tenencia</td><td class="r">$453,874</td></tr>
+    <tr><td><strong>Retornos Totales</strong></td><td class="r"><strong>$3,414,874</strong></td></tr>
+    <tr style="background:#fef2f2;"><td><strong>Ganancia / (P&eacute;rdida)</strong></td><td class="r red"><strong>($755,126)</strong></td></tr>
+  </table>
+
+  <div class="red-flag">
+    <strong>Incluso si Pirola regalara el terreno, a&uacute;n se pierde $755K.</strong> La construcci&oacute;n sola cuesta m&aacute;s que el valor del edificio terminado a los propios comparables de Pirola. Este es el problema fundamental: el proyecto es econ&oacute;micamente inviable sin importar el costo del terreno.
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- CONCLUSI&Oacute;N -->
+<div class="verdict-box">
+  <h2>Conclusi&oacute;n</h2>
+
+  <p style="color:#C9A84C; font-weight:700; font-size:16px; margin-bottom:16px;">Usando 100% de los supuestos de Pirola &mdash; sus rentas, sus gastos, sus comparables:</p>
+
+  <table style="margin:12px 0; font-size:13px;">
+    <tr>
+      <th style="background:#374151; width:45%;">Pregunta</th>
+      <th style="background:#374151;">Respuesta Caso Base ($335/sqft, $350K/u salida)</th>
+    </tr>
+    <tr><td style="color:#C9A84C; font-weight:700;">&iquest;Cu&aacute;l es mi costo total all-in?</td><td style="color:#ff6b6b; font-weight:700; font-size:15px;">$5,873,850</td></tr>
+    <tr><td style="color:#C9A84C; font-weight:700;">&iquest;Cu&aacute;nto genero una vez construido?</td><td style="color:#ccc;">$226,937/a&ntilde;o NOI &nbsp;|&nbsp; $50,937/a&ntilde;o despu&eacute;s de deuda &nbsp;|&nbsp; $4,245/mes</td></tr>
+    <tr><td style="color:#C9A84C; font-weight:700;">&iquest;Cu&aacute;l es mi cap rate sobre costo?</td><td style="color:#ff6b6b; font-weight:700; font-size:15px;">3.86%</td></tr>
+    <tr><td style="color:#C9A84C; font-weight:700;">&iquest;Cu&aacute;l es mi cash-on-cash?</td><td style="color:#ff6b6b; font-weight:700; font-size:15px;">1.39%</td></tr>
+    <tr><td style="color:#C9A84C; font-weight:700;">&iquest;Cu&aacute;l es mi ROI vendiendo a los comps de Pirola?</td><td style="color:#ff6b6b; font-weight:700; font-size:15px;">&ndash;42% &nbsp;|&nbsp; P&eacute;rdida de $2,459,000</td></tr>
+    <tr><td style="color:#C9A84C; font-weight:700;">&iquest;Funciona con terreno gratis?</td><td style="color:#ff6b6b; font-weight:700; font-size:15px;">No &nbsp;|&nbsp; A&uacute;n se pierde $755,000</td></tr>
+  </table>
+
+  <div class="big-number" style="margin-top:24px; color:#ff6b6b;">Este proyecto no funciona a ning&uacute;n precio de terreno.</div>
+  <p class="big-subtitle" style="color:#ff6b6b;">Los costos de construcci&oacute;n solos superan el valor del edificio terminado a los propios comparables de Pirola.</p>
+
+  <p style="margin-top:20px;">Un cap rate sobre costo de 3.86% y un retorno cash-on-cash de 1.39% no compensan el riesgo de un desarrollo desde cero &mdash; 18 meses de construcci&oacute;n, incertidumbre de arrendamiento, y el entorno de seguros y permisos de South Florida. Una cuenta de ahorros paga m&aacute;s con cero riesgo.</p>
+
+  <p style="margin-top:16px;">Es notable que el OM de Pirola no incluye cap rate, presupuesto de construcci&oacute;n, ni c&aacute;lculo de yield-on-cost en sus 20 p&aacute;ginas. Los n&uacute;meros arriba muestran por qu&eacute;: <strong style="color:#ff6b6b;">incluirlos revelar&iacute;a que el proyecto destruye capital.</strong></p>
+
+  <p style="margin-top:16px;">El comparable en 555 NE 127th St &mdash; una mejor propiedad con un 4-plex generando ingresos, aprobada para 12 unidades (vs. 9 de Pirola), en la zona de redesarrollo P3 cerca del futuro corredor de tr&aacute;nsito &mdash; lleva <strong>163 d&iacute;as en el MLS a $1.175M sin comprador.</strong> Eso es el mercado dici&eacute;ndote lo que vale un terreno con permisos en North Miami.</p>
+
+  <p style="color:#C9A84C; font-weight:700; font-size:16px; margin-top:24px; padding-top:16px; border-top:2px solid #C9A84C;">
+    Recomendaci&oacute;n: No proceder con este negocio.
+  </p>
+  <p style="color:#d1d5db;">La econom&iacute;a no soporta el desarrollo a ning&uacute;n precio de terreno usando los propios supuestos de Pirola. Si el grupo de Boris quiere proceder a pesar de este an&aacute;lisis, deber&iacute;an obtener una cotizaci&oacute;n de construcci&oacute;n independiente y comparables de venta verificados antes de comprometer capital.</p>
+</div>
+
+</div><!-- /body-content -->
+
+<div class="footer">
+  Preparado por The Poler Team &nbsp;|&nbsp; Abril 2026 &nbsp;|&nbsp; Solo para uso interno<br>
+  Fuentes: OM de Pirola (Marzo 2026), Zillow MLS #A11898183, estimaciones internas de costos de construcci&oacute;n
+</div>
+
+</div><!-- /container -->
+</body>
+</html>
