@@ -474,6 +474,21 @@ function matchesFeature(listing, feature) {
             return arrContains(listing.PatioAndPorchFeatures, 'balcony', 'terrace', 'deck', 'lanai');
         case 'Pool':
             return Array.isArray(listing.PoolFeatures) && listing.PoolFeatures.length > 0;
+        case 'Short-Term Rental Allowed': {
+            const restrictions = listing.MIAMIRE_Restrictions || [];
+            const hasDaily = arrContains(restrictions, 'Daily Rentals Allowed');
+            const noRestrictions = arrContains(restrictions, 'No Restrictions');
+            const noDaily = arrContains(restrictions, 'No Daily Rentals');
+            const strInRemarks = remarks.includes('short term') || remarks.includes('short-term') || remarks.includes('airbnb') || remarks.includes('vrbo') || remarks.includes('daily rental') || remarks.includes('hotel program');
+            if (hasDaily || noRestrictions || strInRemarks) return !noDaily;
+            const subType = (listing.PropertySubType || '').toLowerCase();
+            const isSF = subType.includes('single family') || subType.includes('detached');
+            const isGated = arrContains(listing.CommunityFeatures || listing.AssociationAmenities, 'gated', 'guard', 'security') || remarks.includes('gated');
+            const city = (listing.City || '').toLowerCase();
+            const isMiamiBeach = city === 'miami beach' || city === 'south beach';
+            if (isSF && !isGated && !isMiamiBeach && !noDaily) return true;
+            return false;
+        }
         case 'Gated Community':
             return arrContains(listing.CommunityFeatures || listing.AssociationAmenities, 'gated', 'guard', 'security')
                 || remarks.includes('gated') || remarks.includes('guard gate') || remarks.includes('private community');
