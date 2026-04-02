@@ -449,6 +449,7 @@ function setupEvents() {
   document.getElementById('search-input').addEventListener('input', applyFilters);
   document.getElementById('status-filter').addEventListener('change', applyFilters);
   document.getElementById('date-filter').addEventListener('change', applyFilters);
+  document.getElementById('agent-filter').addEventListener('change', applyFilters);
 
   // Sidebar nav items
   document.querySelectorAll('.nav-item[data-action]').forEach(el => {
@@ -537,10 +538,12 @@ function applyFilters() {
   const searchEl  = document.getElementById('search-input');
   const statusEl  = document.getElementById('status-filter');
   const dateEl    = document.getElementById('date-filter');
+  const agentEl   = document.getElementById('agent-filter');
 
   const search    = (searchEl ? searchEl.value : '').toLowerCase().trim();
   const status    = statusEl ? statusEl.value : '';
   const dateRange = dateEl ? dateEl.value : '';
+  const agent     = agentEl ? agentEl.value : '';
 
   const now    = Date.now();
   const dayMs  = 86400000;
@@ -556,6 +559,9 @@ function applyFilters() {
 
     // Status filter
     if (status && lead.status !== status) return false;
+
+    // Agent filter
+    if (agent && lead.assignedTo !== agent) return false;
 
     // Date range filter
     if (dateRange && rangeDays[dateRange]) {
