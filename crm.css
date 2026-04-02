@@ -1219,6 +1219,55 @@ body {
   display: block;
 }
 
+/* ── SQ FT RANGE ROW ─────────────────────────────────────── */
+.panel-input-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.panel-input-half {
+  flex: 1;
+  min-width: 0;
+}
+.panel-input-dash {
+  color: #9ca3af;
+  font-size: 0.9rem;
+}
+
+/* ── PROPERTY COUNT PREVIEW ──────────────────────────────── */
+.alert-count-btn {
+  width: 100%;
+  padding: 0.6rem;
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1.5px solid #bfdbfe;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  margin-bottom: 0.75rem;
+}
+.alert-count-btn:hover {
+  background: #dbeafe;
+  border-color: #93c5fd;
+}
+.alert-count-preview {
+  text-align: center;
+  padding: 0.6rem;
+  background: #f0fdf4;
+  border: 1.5px solid #bbf7d0;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  color: #166534;
+  font-weight: 500;
+  margin-bottom: 0.75rem;
+}
+#alert-count-number {
+  font-weight: 800;
+  font-size: 1.1rem;
+}
+
 /* ── MOBILE RESPONSIVE ────────────────────────────────────── */
 @media (max-width: 1024px) {
   .stats-row {

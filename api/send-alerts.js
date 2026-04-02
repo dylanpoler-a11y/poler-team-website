@@ -131,6 +131,8 @@ export default async function handler(req) {
                     bathsMin: profile.bathsMin || lead.bathsMin,
                     polygon: profile.polygon || '',
                     features: profile.features || [],
+                    sqftMin: profile.sqftMin || 0,
+                    sqftMax: profile.sqftMax || 0,
                     lotSizeMin: profile.lotSizeMin || 0,
                     yearBuiltMin: profile.yearBuiltMin || 0,
                     keywords: profile.keywords || '',
@@ -348,6 +350,8 @@ async function fetchBridgeListings(token, lead) {
     if (lead.priceMax > 0) baseParams.set('ListPrice.lte', String(lead.priceMax));
     if (lead.bedsMin > 0) baseParams.set('BedroomsTotal.gte', String(lead.bedsMin));
     if (lead.bathsMin > 0) baseParams.set('BathroomsTotalInteger.gte', String(lead.bathsMin));
+    if (lead.sqftMin > 0) baseParams.set('LivingArea.gte', String(lead.sqftMin));
+    if (lead.sqftMax > 0) baseParams.set('LivingArea.lte', String(lead.sqftMax));
     if (lead.lotSizeMin > 0) baseParams.set('LotSizeSquareFeet.gte', String(lead.lotSizeMin));
     if (lead.yearBuiltMin > 0) baseParams.set('YearBuilt.gte', String(lead.yearBuiltMin));
 

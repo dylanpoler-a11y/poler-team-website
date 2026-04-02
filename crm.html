@@ -390,6 +390,15 @@
           </div>
 
           <div class="panel-field">
+            <div class="panel-field-label">House Sq Ft</div>
+            <div class="panel-input-row">
+              <input type="number" id="panel-alert-sqft-min" class="panel-input panel-input-half" placeholder="Min sqft" />
+              <span class="panel-input-dash">–</span>
+              <input type="number" id="panel-alert-sqft-max" class="panel-input panel-input-half" placeholder="Max sqft" />
+            </div>
+          </div>
+
+          <div class="panel-field">
             <div class="panel-field-label">Lot Size (min sqft)</div>
             <input type="number" id="panel-alert-lot-size" class="panel-input" placeholder="e.g. 10000 (= ~0.23 acres)" />
           </div>
@@ -414,6 +423,11 @@
             </div>
             <div id="alert-map-hint" class="alert-map-hint" style="display:none;"></div>
           </div>
+
+          <div class="alert-count-preview" id="alert-count-preview" style="display:none;">
+            <span id="alert-count-number">—</span> properties match these filters
+          </div>
+          <button id="alert-count-btn" class="alert-count-btn" type="button">📊 Check Available Properties</button>
 
           <div class="alert-action-row">
             <button id="alert-profile-save-btn" class="alert-action-btn" type="button">Save Profile</button>

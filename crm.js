@@ -1114,8 +1114,12 @@ function showProfileForm(profile) {
   document.querySelectorAll('#panel-alert-waterfront input').forEach(cb => {
     cb.checked = features.includes(cb.value);
   });
+  document.getElementById('panel-alert-sqft-min').value = profile ? profile.sqftMin || '' : '';
+  document.getElementById('panel-alert-sqft-max').value = profile ? profile.sqftMax || '' : '';
   document.getElementById('panel-alert-lot-size').value = profile ? profile.lotSizeMin || '' : '';
   document.getElementById('panel-alert-year-built').value = profile ? profile.yearBuiltMin || '' : '';
+  // Reset count preview
+  document.getElementById('alert-count-preview').style.display = 'none';
   document.getElementById('panel-alert-keywords').value = profile ? profile.keywords || '' : '';
   // Scroll form into view first, then init map after container is visible
   setTimeout(() => {
@@ -1147,6 +1151,8 @@ function getProfileFromForm() {
     bathsMin: Number(document.getElementById('panel-alert-baths').value) || 0,
     polygon: alertMapPolygons.length > 0 ? JSON.stringify(alertMapPolygons) : '',
     features,
+    sqftMin: Number(document.getElementById('panel-alert-sqft-min').value) || 0,
+    sqftMax: Number(document.getElementById('panel-alert-sqft-max').value) || 0,
     lotSizeMin: Number(document.getElementById('panel-alert-lot-size').value) || 0,
     yearBuiltMin: Number(document.getElementById('panel-alert-year-built').value) || 0,
     keywords: document.getElementById('panel-alert-keywords').value.trim(),
@@ -1183,6 +1189,80 @@ function initProfileButtons() {
   document.getElementById('alert-profile-cancel-btn').addEventListener('click', () => {
     hideProfileForm();
   });
+  document.getElementById('alert-count-btn').addEventListener('click', checkPropertyCount);
+}
+
+// ── CHECK PROPERTY COUNT — preview how many listings match current filters ──
+async function checkPropertyCount() {
+  const btn = document.getElementById('alert-count-btn');
+  const preview = document.getElementById('alert-count-preview');
+  const countNum = document.getElementById('alert-count-number');
+  btn.textContent = '⏳ Checking...';
+  btn.disabled = true;
+
+  try {
+    const profile = getProfileFromForm();
+    const params = new URLSearchParams({
+      access_token: BRIDGE_TOKEN,
+      limit: '200',
+      PropertyType: 'Residential',
+      StandardStatus: 'Active',
+    });
+
+    // Cities
+    const cities = (profile.cities || '').split(',').map(s => s.trim()).filter(Boolean);
+    if (cities.length === 1) params.set('City', cities[0]);
+
+    // Property type
+    const typeMap = { 'Single Family': 'Single Family Residence', 'Condo': 'Condominium', 'Townhouse': 'Townhouse', 'Multi Family': 'Multi Family' };
+    if (profile.types && profile.types.length === 1) {
+      params.set('PropertySubType', typeMap[profile.types[0]] || profile.types[0]);
+    }
+
+    // Price
+    if (profile.priceMin > 0) params.set('ListPrice.gte', String(profile.priceMin));
+    if (profile.priceMax > 0) params.set('ListPrice.lte', String(profile.priceMax));
+
+    // Beds / Baths
+    if (profile.bedsMin > 0) params.set('BedroomsTotal.gte', String(profile.bedsMin));
+    if (profile.bathsMin > 0) params.set('BathroomsTotalInteger.gte', String(profile.bathsMin));
+
+    // Sqft
+    if (profile.sqftMin > 0) params.set('LivingArea.gte', String(profile.sqftMin));
+    if (profile.sqftMax > 0) params.set('LivingArea.lte', String(profile.sqftMax));
+
+    // Lot size
+    if (profile.lotSizeMin > 0) params.set('LotSizeSquareFeet.gte', String(profile.lotSizeMin));
+
+    // Year built
+    if (profile.yearBuiltMin > 0) params.set('YearBuilt.gte', String(profile.yearBuiltMin));
+
+    // Multi-city: fetch each and sum
+    let total = 0;
+    if (cities.length > 1) {
+      const fetches = cities.map(city => {
+        const p = new URLSearchParams(params);
+        p.set('City', city);
+        return fetch(`${BRIDGE_BASE}/listings?${p}`).then(r => r.json()).then(d => d.success && d.bundle ? d.bundle.length : 0).catch(() => 0);
+      });
+      const counts = await Promise.all(fetches);
+      total = counts.reduce((a, b) => a + b, 0);
+    } else {
+      const res = await fetch(`${BRIDGE_BASE}/listings?${params}`);
+      const data = await res.json();
+      total = data.success && data.bundle ? data.bundle.length : 0;
+    }
+
+    countNum.textContent = total;
+    preview.style.display = 'block';
+  } catch (err) {
+    console.error('Count check error:', err);
+    countNum.textContent = 'Error';
+    preview.style.display = 'block';
+  } finally {
+    btn.textContent = '📊 Check Available Properties';
+    btn.disabled = false;
+  }
 }
 
 function getAlertPrefsFromPanel() {
