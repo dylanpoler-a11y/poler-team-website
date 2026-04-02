@@ -7,7 +7,7 @@
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Helvetica Neue', Arial, sans-serif; color: #1a2744; line-height: 1.6; background: #0d1421; padding: 40px 20px; }
-  .container { max-width: 1000px; margin: 0 auto; }
+  .container { max-width: 1100px; margin: 0 auto; }
   .header { background: #1a2744; padding: 36px 40px; border-radius: 12px 12px 0 0; border-bottom: 4px solid #C9A84C; }
   .header h1 { color: #fff; font-size: 24px; font-weight: 700; margin-bottom: 4px; }
   .header p { color: #C9A84C; font-size: 13px; }
@@ -27,34 +27,23 @@
   .muted { color: #888; font-size: 11px; }
   .red-flag { background: #fef2f2; border-left: 4px solid #dc2626; padding: 12px 16px; border-radius: 0 6px 6px 0; margin: 12px 0; font-size: 13px; }
   .green-note { background: #f0fdf4; border-left: 4px solid #16a34a; padding: 12px 16px; border-radius: 0 6px 6px 0; margin: 12px 0; font-size: 13px; }
-  .side-by-side { display: flex; gap: 16px; }
-  .card { flex: 1; border: 1px solid #ddd; border-radius: 8px; overflow: hidden; }
-  .card-head { padding: 10px 14px; font-weight: 700; font-size: 13px; color: #fff; background: #1a2744; text-align: center; }
-  .card-body { padding: 0; }
-  .card-body table { margin: 0; }
-  .card-body th { background: #C9A84C !important; color: #1a2744 !important; }
-  .card-total-red td { background: #991b1b !important; color: #fff !important; font-weight: 700; }
-  .card-total-green td { background: #14532d !important; color: #fff !important; font-weight: 700; }
   .verdict-box { background: #1a2744; color: #fff; padding: 28px 32px; border-radius: 8px; margin: 24px 0; }
   .verdict-box h2 { color: #C9A84C; border-bottom: 2px solid #C9A84C; padding-bottom: 6px; margin-bottom: 16px; font-size: 15px; }
   .verdict-box p { color: #d1d5db; font-size: 13px; margin: 6px 0; }
-  .big-number { font-size: 36px; font-weight: 800; text-align: center; padding: 12px 0 2px 0; }
-  .big-sub { text-align: center; font-weight: 600; font-size: 13px; margin-bottom: 16px; }
   .divider { border: 0; border-top: 1px solid #e5e7eb; margin: 32px 0; }
   .footer { text-align: center; padding: 16px; font-size: 10px; color: #666; }
+  .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
   @media print { body { background: #fff; padding: 0; } .container { max-width: 100%; } .header, .body-content { border-radius: 0; } }
   @media (max-width: 700px) {
-    .side-by-side { flex-direction: column; }
     .header, .body-content { padding: 20px 16px; }
     .header h1 { font-size: 18px; }
-    .big-number { font-size: 28px; }
     table { font-size: 11px; }
     table th { font-size: 9px; padding: 6px 8px; }
     table td { padding: 5px 8px; }
+    .table-scroll table { min-width: 650px; }
     .red-flag, .green-note { font-size: 11px; }
     .verdict-box { padding: 20px; }
     .verdict-box p { font-size: 11px; }
-    .card-head { font-size: 11px; }
   }
 </style>
 </head>
@@ -63,7 +52,7 @@
 
 <div class="header">
   <h1>The Palms at NoMi &mdash; An&aacute;lisis Comparativo</h1>
-  <p>Pirola ($1.6M) vs. 555 NE 127th St ($1.175M) &nbsp;|&nbsp; Construcci&oacute;n $200/sqft &nbsp;|&nbsp; Venta $400K/apartamento</p>
+  <p>3 Opciones de Compra &nbsp;|&nbsp; Construcci&oacute;n $200/sqft &nbsp;|&nbsp; Venta $425K/apartamento &nbsp;|&nbsp; Pro Forma de Pirola</p>
 </div>
 
 <div class="body-content">
@@ -74,93 +63,96 @@
   <table>
     <tr><th style="width:55%;">Variable</th><th class="r">Valor</th></tr>
     <tr><td>Producto Final</td><td class="r">9 apartamentos 2BR/2BA (10,525 sqft brutos)</td></tr>
-    <tr><td>Renta Mensual Promedio (pro forma Pirola)</td><td class="r">$2,900/mes por unidad</td></tr>
     <tr><td>NOI Estabilizado (pro forma Pirola)</td><td class="r gold"><strong>$226,937/a&ntilde;o</strong></td></tr>
-    <tr><td>Costos Duros de Construcci&oacute;n</td><td class="r">$200/sqft &rarr; $2,105,000</td></tr>
+    <tr><td>Costos Duros ($200/sqft &times; 10,525 sqft)</td><td class="r">$2,105,000</td></tr>
     <tr><td>Costos Blandos</td><td class="r">$200,000</td></tr>
     <tr><td>Pr&eacute;stamo de Construcci&oacute;n</td><td class="r">65% LTC, 9% I/O, 18 meses</td></tr>
-    <tr><td>Precio de Venta por Apartamento</td><td class="r">$400,000/unidad &rarr; $3,600,000 total</td></tr>
-    <tr><td>Costos de Venta</td><td class="r">6%</td></tr>
-    <tr><td>Tenencia Post-Estabilizaci&oacute;n</td><td class="r">2 a&ntilde;os</td></tr>
+    <tr><td>Venta por Apartamento</td><td class="r">$425,000/u &rarr; $3,825,000 total</td></tr>
   </table>
 </div>
 
 <hr class="divider">
 
-<!-- COMPARACION LADO A LADO -->
+<!-- COSTOS -->
 <div class="section">
-  <h2>Comparaci&oacute;n Lado a Lado</h2>
+  <h2>Costos de Desarrollo</h2>
+  <div class="table-scroll"><table>
+    <tr>
+      <th style="width:34%;"></th>
+      <th class="c" style="background:#7f1d1d;">Pirola<br><span style="font-size:9px; font-weight:400;">Precio: $1,600,000</span></th>
+      <th class="c" style="background:#374151;">555 NE 127th<br><span style="font-size:9px; font-weight:400;">Precio: $1,175,000</span></th>
+      <th class="c" style="background:#14532d;">Valor Justo<br><span style="font-size:9px; font-weight:400;">Precio: $800,000</span></th>
+    </tr>
+    <tr><td>Precio de Compra</td><td class="c red">$1,600,000</td><td class="c">$1,175,000</td><td class="c green">$800,000</td></tr>
+    <tr><td>Planos y Permisos</td><td class="c green">$0 (incluido)</td><td class="c">$175,000</td><td class="c green">$0 (incluido)</td></tr>
+    <tr><td>Mantenci&oacute;n &ndash; Ingreso 4-Plex</td><td class="c red">$0</td><td class="c green">&ndash;$30,000 neto</td><td class="c red">$0</td></tr>
+    <tr><td>Construcci&oacute;n Dura ($200/sqft)</td><td class="c">$2,105,000</td><td class="c">$2,105,000</td><td class="c">$2,105,000</td></tr>
+    <tr><td>Costos Blandos</td><td class="c">$200,000</td><td class="c">$200,000</td><td class="c">$200,000</td></tr>
+    <tr><td>Costo Financiero (18m @ 9%)</td><td class="c">$342,664</td><td class="c">$318,094</td><td class="c">$290,273</td></tr>
+    <tr class="total-row">
+      <td style="color:#C9A84C;"><strong>Costo Total All-In</strong></td>
+      <td class="c" style="color:#ff6b6b;"><strong>$4,247,664</strong></td>
+      <td class="c"><strong>$3,943,094</strong></td>
+      <td class="c" style="color:#4ade80;"><strong>$3,395,273</strong></td>
+    </tr>
+  </table></div>
+</div>
 
-  <div class="side-by-side">
+<hr class="divider">
 
-    <!-- PIROLA -->
-    <div class="card">
-      <div class="card-head">
-        <span style="color:#C9A84C;">RUTA A:</span> &nbsp;PIROLA &mdash; <span style="color:#ff6b6b;">$1,600,000</span>
-      </div>
-      <div class="card-body"><table>
-        <tr><th colspan="2">Costos de Desarrollo</th></tr>
-        <tr><td>Terreno + Planos</td><td class="r">$1,600,000</td></tr>
-        <tr><td>Construcci&oacute;n ($200/sqft)</td><td class="r">$2,105,000</td></tr>
-        <tr><td>Costos Blandos</td><td class="r">$200,000</td></tr>
-        <tr><td>Costo Financiero (18m)</td><td class="r">$342,664</td></tr>
-        <tr class="card-total-red"><td><strong>Costo Total All-In</strong></td><td class="r"><strong>$4,247,664</strong></td></tr>
+<!-- CAP RATE -->
+<div class="section">
+  <h2>Cap Rate sobre Costo (NOI &divide; All-In)</h2>
+  <div class="table-scroll"><table>
+    <tr>
+      <th style="width:34%;"></th>
+      <th class="c" style="background:#7f1d1d;">Pirola ($1.6M)</th>
+      <th class="c" style="background:#374151;">555 NE 127th ($1.175M)</th>
+      <th class="c" style="background:#14532d;">Valor Justo ($800K)</th>
+    </tr>
+    <tr>
+      <td><strong>Cap Rate sobre Costo</strong></td>
+      <td class="c red" style="font-size:20px; padding:14px;"><strong>5.34%</strong></td>
+      <td class="c gold" style="font-size:20px; padding:14px;"><strong>5.75%</strong></td>
+      <td class="c green" style="font-size:20px; padding:14px;"><strong>6.68%</strong></td>
+    </tr>
+  </table></div>
+</div>
 
-        <tr><th colspan="2">Cap Rate</th></tr>
-        <tr><td>NOI / Costo All-In</td><td class="r" style="font-size:18px; padding:12px;" class="red"><strong style="color:#dc2626;">5.34%</strong></td></tr>
+<hr class="divider">
 
-        <tr><th colspan="2">Cash-on-Cash</th></tr>
-        <tr><td>Pr&eacute;st. Perm. (70% de $3.6M)</td><td class="r">$2,520,000</td></tr>
-        <tr><td>Servicio de Deuda (7%, 30a)</td><td class="r">($201,600)</td></tr>
-        <tr><td>Flujo Anual Neto</td><td class="r">$25,337</td></tr>
-        <tr><td>Equity Atrapado</td><td class="r">$1,727,664</td></tr>
-        <tr><td><strong>Cash-on-Cash</strong></td><td class="r red"><strong>1.47%</strong></td></tr>
+<!-- SALIDA -->
+<div class="section">
+  <h2>Salida &mdash; Venta a $425K/Apartamento</h2>
+  <div class="table-scroll"><table>
+    <tr>
+      <th style="width:34%;"></th>
+      <th class="c" style="background:#7f1d1d;">Pirola ($1.6M)</th>
+      <th class="c" style="background:#374151;">555 NE 127th ($1.175M)</th>
+      <th class="c" style="background:#14532d;">Valor Justo ($800K)</th>
+    </tr>
+    <tr><td>Precio de Venta (9 &times; $425K)</td><td class="c" colspan="3">$3,825,000</td></tr>
+    <tr><td>Costos de Venta (6%)</td><td class="c" colspan="3">($229,500)</td></tr>
+    <tr><td><strong>Neto de Venta</strong></td><td class="c" colspan="3"><strong>$3,595,500</strong></td></tr>
+    <tr><td>+ Flujo de Caja 2 A&ntilde;os</td><td class="c" colspan="3">$453,874</td></tr>
+    <tr class="total-row"><td style="color:#C9A84C;"><strong>Retornos Totales</strong></td><td class="c" colspan="3"><strong>$4,049,374</strong></td></tr>
+    <tr><td colspan="4" style="border:0; height:6px; background:#fff;"></td></tr>
+    <tr style="background:#fef2f2;">
+      <td><strong>Ganancia / (P&eacute;rdida)</strong></td>
+      <td class="c red" style="font-size:15px;"><strong>($198,290)</strong></td>
+      <td class="c green" style="font-size:15px;"><strong>+$106,280</strong></td>
+      <td class="c green" style="font-size:15px;"><strong>+$654,101</strong></td>
+    </tr>
+    <tr>
+      <td><strong>ROI</strong></td>
+      <td class="c red" style="font-size:15px;"><strong>&ndash;5%</strong></td>
+      <td class="c green" style="font-size:15px;"><strong>+3%</strong></td>
+      <td class="c green" style="font-size:15px;"><strong>+19%</strong></td>
+    </tr>
+  </table></div>
 
-        <tr><th colspan="2">Salida ($400K/u &times; 9 = $3.6M)</th></tr>
-        <tr><td>Neto de Venta (menos 6%)</td><td class="r">$3,384,000</td></tr>
-        <tr><td>+ Flujo 2 A&ntilde;os</td><td class="r">$453,874</td></tr>
-        <tr><td><strong>Retornos Totales</strong></td><td class="r"><strong>$3,837,874</strong></td></tr>
-        <tr class="card-total-red"><td><strong>Ganancia / (P&eacute;rdida)</strong></td><td class="r"><strong>($409,790)</strong></td></tr>
-        <tr><td><strong>ROI</strong></td><td class="r red"><strong>&ndash;10%</strong></td></tr>
-        <tr><td>Plazo</td><td class="r">24 meses</td></tr>
-      </table></div>
-    </div>
-
-    <!-- 555 -->
-    <div class="card">
-      <div class="card-head">
-        <span style="color:#C9A84C;">RUTA B:</span> &nbsp;555 NE 127TH &mdash; <span style="color:#4ade80;">$1,175,000</span>
-      </div>
-      <div class="card-body"><table>
-        <tr><th colspan="2">Costos de Desarrollo</th></tr>
-        <tr><td>Compra (4-plex existente)</td><td class="r">$1,175,000</td></tr>
-        <tr><td>Planos + Mantenci&oacute;n &ndash; Ingreso</td><td class="r">$145,000 neto</td></tr>
-        <tr><td>Construcci&oacute;n ($200/sqft)</td><td class="r">$2,105,000</td></tr>
-        <tr><td>Costos Blandos</td><td class="r">$200,000</td></tr>
-        <tr><td>Costo Financiero (18m)</td><td class="r">$318,094</td></tr>
-        <tr class="card-total-green"><td><strong>Costo Total All-In</strong></td><td class="r"><strong>$3,943,094</strong></td></tr>
-
-        <tr><th colspan="2">Cap Rate</th></tr>
-        <tr><td>NOI / Costo All-In</td><td class="r" style="font-size:18px; padding:12px;"><strong style="color:#C9A84C;">5.75%</strong></td></tr>
-
-        <tr><th colspan="2">Cash-on-Cash</th></tr>
-        <tr><td>Pr&eacute;st. Perm. (70% de $3.6M)</td><td class="r">$2,520,000</td></tr>
-        <tr><td>Servicio de Deuda (7%, 30a)</td><td class="r">($201,600)</td></tr>
-        <tr><td>Flujo Anual Neto</td><td class="r">$25,337</td></tr>
-        <tr><td>Equity Atrapado</td><td class="r">$1,423,094</td></tr>
-        <tr><td><strong>Cash-on-Cash</strong></td><td class="r red"><strong>1.78%</strong></td></tr>
-
-        <tr><th colspan="2">Salida ($400K/u &times; 9 = $3.6M)</th></tr>
-        <tr><td>Neto de Venta (menos 6%)</td><td class="r">$3,384,000</td></tr>
-        <tr><td>+ Flujo 2 A&ntilde;os</td><td class="r">$453,874</td></tr>
-        <tr><td><strong>Retornos Totales</strong></td><td class="r"><strong>$3,837,874</strong></td></tr>
-        <tr class="card-total-red"><td><strong>Ganancia / (P&eacute;rdida)</strong></td><td class="r"><strong>($105,220)</strong></td></tr>
-        <tr><td><strong>ROI</strong></td><td class="r red"><strong>&ndash;3%</strong></td></tr>
-        <tr><td>Plazo</td><td class="r">36 meses</td></tr>
-        <tr><td>Ingreso 4-Plex (Fase 1)</td><td class="r green">~$60,000</td></tr>
-      </table></div>
-    </div>
-
+  <div class="green-note">
+    <strong>A $800K (valor justo) el proyecto funciona:</strong> 6.68% cap sobre costo, ROI +19%, y ganancia de $654K. A $1.175M apenas se logra breakeven (+3%). A $1.6M se pierde dinero.
   </div>
 </div>
 
@@ -172,27 +164,25 @@
     <tr>
       <th style="background:#374151;"></th>
       <th class="c" style="background:#7f1d1d;">Pirola ($1.6M)</th>
-      <th class="c" style="background:#14532d;">555 NE 127th ($1.175M)</th>
+      <th class="c" style="background:#374151;">555 NE 127th ($1.175M)</th>
+      <th class="c" style="background:#14532d;">Valor Justo ($800K)</th>
     </tr>
-    <tr><td style="color:#C9A84C;">Costo All-In</td><td class="c" style="color:#ff6b6b;">$4,247,664</td><td class="c" style="color:#4ade80;">$3,943,094</td></tr>
-    <tr><td style="color:#C9A84C;"><strong>Cap Rate sobre Costo</strong></td><td class="c" style="color:#ff6b6b; font-size:16px;"><strong>5.34%</strong></td><td class="c" style="color:#C9A84C; font-size:16px;"><strong>5.75%</strong></td></tr>
-    <tr><td style="color:#C9A84C;">Cash-on-Cash</td><td class="c" style="color:#ff6b6b;">1.47%</td><td class="c" style="color:#ff6b6b;">1.78%</td></tr>
-    <tr><td style="color:#C9A84C;">P&eacute;rdida a Venta ($400K/u)</td><td class="c" style="color:#ff6b6b;">($409,790)</td><td class="c" style="color:#ff6b6b;">($105,220)</td></tr>
-    <tr><td style="color:#C9A84C;">ROI</td><td class="c" style="color:#ff6b6b;">&ndash;10%</td><td class="c" style="color:#ff6b6b;">&ndash;3%</td></tr>
-    <tr><td style="color:#C9A84C;">Diferencia Pirola vs. 555</td><td class="c" style="color:#ff6b6b;" colspan="2">Pirola pierde $304,570 m&aacute;s</td></tr>
+    <tr><td style="color:#C9A84C;">Costo All-In</td><td class="c" style="color:#ff6b6b;">$4,247,664</td><td class="c" style="color:#ccc;">$3,943,094</td><td class="c" style="color:#4ade80;">$3,395,273</td></tr>
+    <tr><td style="color:#C9A84C;"><strong>Cap Rate</strong></td><td class="c" style="color:#ff6b6b; font-size:15px;"><strong>5.34%</strong></td><td class="c" style="color:#C9A84C; font-size:15px;"><strong>5.75%</strong></td><td class="c" style="color:#4ade80; font-size:15px;"><strong>6.68%</strong></td></tr>
+    <tr><td style="color:#C9A84C;">Ganancia / P&eacute;rdida</td><td class="c" style="color:#ff6b6b;">($198,290)</td><td class="c" style="color:#4ade80;">+$106,280</td><td class="c" style="color:#4ade80;">+$654,101</td></tr>
+    <tr><td style="color:#C9A84C;">ROI</td><td class="c" style="color:#ff6b6b;">&ndash;5%</td><td class="c" style="color:#4ade80;">+3%</td><td class="c" style="color:#4ade80;">+19%</td></tr>
   </table>
 
-  <p style="margin-top:16px;">Incluso con el escenario m&aacute;s optimista &mdash; $200/sqft de construcci&oacute;n (muy agresivo para Miami-Dade 2026) y vendiendo a $400K/apartamento &mdash; <strong style="color:#ff6b6b;">ambas rutas pierden dinero.</strong></p>
+  <p style="margin-top:16px;">Usando los supuestos m&aacute;s optimistas posibles &mdash; $200/sqft de construcci&oacute;n y $425K/apartamento de venta:</p>
 
-  <p>&bull; &nbsp;Pirola a $1.6M: cap de 5.34%, pierde $410K a la venta</p>
-  <p>&bull; &nbsp;555 NE 127th a $1.175M: cap de 5.75%, pierde $105K a la venta &mdash; casi breakeven</p>
-  <p>&bull; &nbsp;Pirola cuesta $305K m&aacute;s por una ventaja de 12 meses que vale ~$119K</p>
-  <p>&bull; &nbsp;Cash-on-cash de ~1.5% no justifica el riesgo de un desarrollo desde cero</p>
+  <p>&bull; &nbsp;<strong style="color:#ff6b6b;">Pirola a $1.6M:</strong> A&uacute;n pierde $198K. Cap de 5.34% no justifica el riesgo.</p>
+  <p>&bull; &nbsp;<strong style="color:#C9A84C;">555 NE 127th a $1.175M:</strong> Gana $106K &mdash; apenas breakeven. Pero lleva 163 d&iacute;as sin comprador.</p>
+  <p>&bull; &nbsp;<strong style="color:#4ade80;">Valor justo a $800K:</strong> Cap de 6.68%, ganancia de $654K, ROI +19%. Este es el precio donde el proyecto tiene sentido.</p>
 
-  <p style="margin-top:12px;">555 NE 127th &mdash; mejor propiedad, mejor precio, 4-plex generando ingresos &mdash; lleva <strong>163 d&iacute;as sin comprador a $1.175M.</strong></p>
+  <p style="margin-top:12px;">La diferencia entre $800K y $1.6M es $800K &mdash; que Pirola quiere cobrar por planos aprobados y la conveniencia de no esperar. Ese premium no se justifica cuando una propiedad superior (555 NE 127th) no puede venderse a $1.175M despu&eacute;s de 5 meses en el mercado.</p>
 
   <p style="color:#C9A84C; font-weight:700; font-size:15px; margin-top:16px; padding-top:12px; border-top:2px solid #C9A84C;">
-    Recomendaci&oacute;n: No proceder. Los n&uacute;meros no funcionan ni en el mejor escenario.
+    Recomendaci&oacute;n: Contraoferta a $800K. A ese precio el deal funciona.
   </p>
 </div>
 
