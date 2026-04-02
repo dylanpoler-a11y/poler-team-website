@@ -101,6 +101,7 @@ export default async function handler(req) {
             bathsMin: profile.bathsMin || lead.bathsMin,
             polygon: profile.polygon || '',
             features: profile.features || [],
+            lotSizeMin: profile.lotSizeMin || 0,
             yearBuiltMin: profile.yearBuiltMin || 0,
             keywords: profile.keywords || '',
         };
@@ -265,6 +266,7 @@ async function fetchBridgeListings(token, lead) {
     if (lead.priceMax > 0) baseParams.set('ListPrice.lte', String(lead.priceMax));
     if (lead.bedsMin > 0) baseParams.set('BedroomsTotal.gte', String(lead.bedsMin));
     if (lead.bathsMin > 0) baseParams.set('BathroomsTotalInteger.gte', String(lead.bathsMin));
+    if (lead.lotSizeMin > 0) baseParams.set('LotSizeSquareFeet.gte', String(lead.lotSizeMin));
     if (lead.yearBuiltMin > 0) baseParams.set('YearBuilt.gte', String(lead.yearBuiltMin));
 
     // When polygon exists but no cities, derive cities from polygon bounding box center
@@ -369,19 +371,42 @@ function matchesFeature(listing, feature) {
         const lower = arr.map(s => (s || '').toLowerCase());
         return terms.some(t => lower.some(v => v.includes(t.toLowerCase())));
     };
+    const remarks = (listing.PublicRemarks || '').toLowerCase();
     switch (feature) {
         case 'Waterfront / Ocean View':
-            return arrContains(listing.View, 'ocean', 'water', 'bay', 'intracoastal')
-                || arrContains(listing.WaterfrontFeatures, 'ocean', 'water', 'bay');
+            return listing.WaterfrontYN === true
+                || arrContains(listing.View, 'ocean', 'water', 'bay', 'intracoastal', 'lake')
+                || arrContains(listing.WaterfrontFeatures, 'ocean', 'water', 'bay', 'lake', 'canal');
+        case 'Waterfront / Beach':
+            return arrContains(listing.WaterfrontFeatures, 'ocean', 'beach')
+                || arrContains(listing.View, 'ocean', 'beach', 'direct ocean');
+        case 'Waterfront / Bay':
+            return arrContains(listing.WaterfrontFeatures, 'bay', 'intracoastal')
+                || arrContains(listing.View, 'bay', 'intracoastal');
+        case 'Waterfront / Lake':
+            return arrContains(listing.WaterfrontFeatures, 'lake')
+                || arrContains(listing.View, 'lake')
+                || remarks.includes('lake');
+        case 'Waterfront / Canal':
+            return arrContains(listing.WaterfrontFeatures, 'canal')
+                || arrContains(listing.View, 'canal');
         case 'Balcony / Terrace':
             return arrContains(listing.PatioAndPorchFeatures, 'balcony', 'terrace', 'deck', 'lanai');
         case 'Pool':
             return Array.isArray(listing.PoolFeatures) && listing.PoolFeatures.length > 0;
+        case 'Gated Community':
+            return arrContains(listing.CommunityFeatures || listing.AssociationAmenities, 'gated', 'guard', 'security')
+                || remarks.includes('gated') || remarks.includes('guard gate') || remarks.includes('private community');
+        case 'Golf Course':
+            return arrContains(listing.CommunityFeatures || listing.AssociationAmenities, 'golf')
+                || remarks.includes('golf');
+        case 'Large Lot':
+            return (listing.LotSizeSquareFeet && listing.LotSizeSquareFeet >= 21780);
         case 'High Rise':
             return arrContains(listing.ArchitecturalStyle, 'high rise', 'highrise');
         case 'Penthouse':
             return arrContains(listing.ArchitecturalStyle, 'penthouse')
-                || (listing.PublicRemarks || '').toLowerCase().includes('penthouse');
+                || remarks.includes('penthouse');
         default:
             return true;
     }

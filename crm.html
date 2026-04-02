@@ -368,12 +368,30 @@
           <div class="panel-field">
             <div class="panel-field-label">Features</div>
             <div class="alert-checkbox-group" id="panel-alert-features">
-              <label><input type="checkbox" value="Waterfront / Ocean View"> Waterfront / Ocean View</label>
-              <label><input type="checkbox" value="Balcony / Terrace"> Balcony / Terrace</label>
               <label><input type="checkbox" value="Pool"> Pool</label>
+              <label><input type="checkbox" value="Balcony / Terrace"> Balcony / Terrace</label>
+              <label><input type="checkbox" value="Gated Community"> Gated Community</label>
+              <label><input type="checkbox" value="Golf Course"> Golf Course</label>
+              <label><input type="checkbox" value="Large Lot"> Large Lot (0.5+ acres)</label>
               <label><input type="checkbox" value="High Rise"> High Rise</label>
               <label><input type="checkbox" value="Penthouse"> Penthouse</label>
             </div>
+          </div>
+
+          <div class="panel-field">
+            <div class="panel-field-label">Waterfront</div>
+            <div class="alert-checkbox-group" id="panel-alert-waterfront">
+              <label><input type="checkbox" value="Waterfront / Ocean View"> Any Waterfront</label>
+              <label><input type="checkbox" value="Waterfront / Beach"> Beach / Oceanfront</label>
+              <label><input type="checkbox" value="Waterfront / Bay"> Bayfront</label>
+              <label><input type="checkbox" value="Waterfront / Lake"> Lakefront</label>
+              <label><input type="checkbox" value="Waterfront / Canal"> Canalfront</label>
+            </div>
+          </div>
+
+          <div class="panel-field">
+            <div class="panel-field-label">Lot Size (min sqft)</div>
+            <input type="number" id="panel-alert-lot-size" class="panel-input" placeholder="e.g. 10000 (= ~0.23 acres)" />
           </div>
 
           <div class="panel-field">
@@ -383,7 +401,7 @@
 
           <div class="panel-field">
             <div class="panel-field-label">Keywords</div>
-            <input type="text" id="panel-alert-keywords" class="panel-input" placeholder="e.g. modern, renovated, ocean view" />
+            <input type="text" id="panel-alert-keywords" class="panel-input" placeholder="e.g. modern, renovated, private, golf" />
           </div>
 
           <div class="panel-field">

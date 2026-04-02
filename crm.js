@@ -1111,6 +1111,10 @@ function showProfileForm(profile) {
   document.querySelectorAll('#panel-alert-features input').forEach(cb => {
     cb.checked = features.includes(cb.value);
   });
+  document.querySelectorAll('#panel-alert-waterfront input').forEach(cb => {
+    cb.checked = features.includes(cb.value);
+  });
+  document.getElementById('panel-alert-lot-size').value = profile ? profile.lotSizeMin || '' : '';
   document.getElementById('panel-alert-year-built').value = profile ? profile.yearBuiltMin || '' : '';
   document.getElementById('panel-alert-keywords').value = profile ? profile.keywords || '' : '';
   // Scroll form into view first, then init map after container is visible
@@ -1132,6 +1136,7 @@ function getProfileFromForm() {
   document.querySelectorAll('#panel-alert-types input:checked').forEach(cb => types.push(cb.value));
   const features = [];
   document.querySelectorAll('#panel-alert-features input:checked').forEach(cb => features.push(cb.value));
+  document.querySelectorAll('#panel-alert-waterfront input:checked').forEach(cb => features.push(cb.value));
   return {
     name: document.getElementById('panel-alert-profile-name').value.trim() || 'Untitled',
     types,
@@ -1142,6 +1147,7 @@ function getProfileFromForm() {
     bathsMin: Number(document.getElementById('panel-alert-baths').value) || 0,
     polygon: alertMapPolygons.length > 0 ? JSON.stringify(alertMapPolygons) : '',
     features,
+    lotSizeMin: Number(document.getElementById('panel-alert-lot-size').value) || 0,
     yearBuiltMin: Number(document.getElementById('panel-alert-year-built').value) || 0,
     keywords: document.getElementById('panel-alert-keywords').value.trim(),
   };
