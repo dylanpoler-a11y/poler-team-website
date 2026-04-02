@@ -1287,6 +1287,73 @@ body {
   z-index: 10;
 }
 
+/* ── PANEL REMINDER CARDS ────────────────────────────────── */
+.panel-reminder-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0.65rem 0.75rem;
+  margin-bottom: 0.5rem;
+}
+.panel-reminder-card.overdue {
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+.panel-reminder-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.25rem;
+}
+.panel-reminder-type {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--navy);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.panel-reminder-due {
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+.panel-reminder-due.overdue {
+  color: #dc2626;
+  font-weight: 600;
+}
+.panel-reminder-note-text {
+  font-size: 0.8rem;
+  color: #475569;
+  margin-bottom: 0.4rem;
+  line-height: 1.4;
+}
+.panel-reminder-edit-row {
+  margin-bottom: 0.4rem;
+}
+.panel-reminder-actions {
+  display: flex;
+  gap: 0.4rem;
+}
+.panel-r-btn {
+  padding: 0.25rem 0.6rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  border-radius: 5px;
+  border: 1px solid #e2e8f0;
+  cursor: pointer;
+  background: #fff;
+  color: var(--text);
+  transition: all 0.15s;
+}
+.panel-r-btn.edit { color: #1d4ed8; border-color: #bfdbfe; background: #eff6ff; }
+.panel-r-btn.edit:hover { background: #dbeafe; }
+.panel-r-btn.save { color: #fff; background: #16a34a; border-color: #16a34a; }
+.panel-r-btn.save:hover { background: #15803d; }
+.panel-r-btn.done { color: #16a34a; border-color: #bbf7d0; background: #f0fdf4; }
+.panel-r-btn.done:hover { background: #dcfce7; }
+.panel-r-btn.cancel { color: #dc2626; border-color: #fecaca; background: #fef2f2; }
+.panel-r-btn.cancel:hover { background: #fee2e2; }
+
 /* ── MOBILE RESPONSIVE ────────────────────────────────────── */
 @media (max-width: 1024px) {
   .stats-row {

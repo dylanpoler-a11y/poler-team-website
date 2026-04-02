@@ -786,6 +786,7 @@ function openPanel(id) {
     loadActivity(lead.email);
   }
   renderPropertiesViewed(lead);
+  renderLeadReminders(lead);
 
   // Open panel
   document.getElementById('lead-panel').classList.add('open');
@@ -797,6 +798,94 @@ function closePanel() {
   document.getElementById('lead-panel').classList.remove('open');
   document.getElementById('panel-overlay').classList.remove('show');
   activeLead = null;
+}
+
+// ── RENDER EXISTING REMINDERS FOR A LEAD IN THE PANEL ────────────────────
+function renderLeadReminders(lead) {
+  const section = document.getElementById('panel-existing-reminders-section');
+  const container = document.getElementById('panel-existing-reminders');
+  if (!section || !container) return;
+
+  // Find reminders for this lead
+  const leadReminders = allReminders.filter(r =>
+    r.leadRecordId === lead.id && r.status === 'Pending'
+  );
+
+  if (leadReminders.length === 0) {
+    section.style.display = 'none';
+    return;
+  }
+
+  section.style.display = 'block';
+  container.innerHTML = leadReminders.map(r => {
+    const dueDate = new Date(r.dueAt);
+    const now = new Date();
+    const isOverdue = dueDate < now;
+    const dueStr = dueDate.toLocaleDateString([], { month: 'short', day: 'numeric' })
+      + ' ' + dueDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const dtLocal = dueDate.getTime() ? `${dueDate.getFullYear()}-${String(dueDate.getMonth()+1).padStart(2,'0')}-${String(dueDate.getDate()).padStart(2,'0')}T${String(dueDate.getHours()).padStart(2,'0')}:${String(dueDate.getMinutes()).padStart(2,'0')}` : '';
+
+    return `
+    <div class="panel-reminder-card ${isOverdue ? 'overdue' : ''}">
+      <div class="panel-reminder-top">
+        <span class="panel-reminder-type">${escHtml(r.actionType || 'Follow Up')}</span>
+        <span class="panel-reminder-due ${isOverdue ? 'overdue' : ''}">${isOverdue ? '⚠️ ' : ''}${dueStr}</span>
+      </div>
+      ${r.note ? `<div class="panel-reminder-note-text">${escHtml(r.note)}</div>` : ''}
+      <div class="panel-reminder-edit-row" id="panel-r-edit-${r.id}" style="display:none;">
+        <input type="datetime-local" id="panel-r-dt-${r.id}" class="panel-input" value="${dtLocal}" style="font-size:0.8rem;">
+        <input type="text" id="panel-r-note-${r.id}" class="panel-input" value="${escHtml(r.note || '')}" placeholder="Note..." style="font-size:0.8rem;margin-top:4px;">
+      </div>
+      <div class="panel-reminder-actions">
+        <button class="panel-r-btn edit" onclick="togglePanelReminderEdit('${r.id}')">Edit</button>
+        <button class="panel-r-btn save" id="panel-r-save-${r.id}" style="display:none;" onclick="savePanelReminder('${r.id}')">Save</button>
+        <button class="panel-r-btn done" onclick="completeReminder('${r.id}');renderLeadReminders(activeLead);">Done</button>
+        <button class="panel-r-btn cancel" onclick="cancelReminder('${r.id}');renderLeadReminders(activeLead);">Cancel</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function togglePanelReminderEdit(id) {
+  const editRow = document.getElementById(`panel-r-edit-${id}`);
+  const saveBtn = document.getElementById(`panel-r-save-${id}`);
+  if (editRow) {
+    const showing = editRow.style.display !== 'none';
+    editRow.style.display = showing ? 'none' : 'block';
+    if (saveBtn) saveBtn.style.display = showing ? 'none' : 'inline-block';
+  }
+}
+
+async function savePanelReminder(id) {
+  const dtInput = document.getElementById(`panel-r-dt-${id}`);
+  const noteInput = document.getElementById(`panel-r-note-${id}`);
+  if (!dtInput || !dtInput.value) return;
+
+  try {
+    const newDate = new Date(dtInput.value).toISOString();
+    const res = await fetch(`${CRM_API_BASE}/api/update-reminder`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id,
+        dueAt: newDate,
+        note: noteInput ? noteInput.value : undefined,
+        password: currentPassword,
+      }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      const reminder = allReminders.find(r => r.id === id);
+      if (reminder) {
+        reminder.dueAt = newDate;
+        if (noteInput) reminder.note = noteInput.value;
+      }
+      updateReminderBadge();
+      if (activeLead) renderLeadReminders(activeLead);
+    }
+  } catch (err) {
+    console.error('Failed to update reminder:', err);
+  }
 }
 
 // ── NOTES HISTORY ──────────────────────────────────────────────────────────
