@@ -1190,15 +1190,77 @@ function initProfileButtons() {
     hideProfileForm();
   });
   document.getElementById('alert-count-btn').addEventListener('click', checkPropertyCount);
+
+  // Auto-update count when any filter changes
+  const formEl = document.getElementById('alert-profile-form');
+  if (formEl) {
+    let autoDebounce;
+    formEl.addEventListener('input', () => { clearTimeout(autoDebounce); autoDebounce = setTimeout(checkPropertyCount, 800); });
+    formEl.addEventListener('change', () => { clearTimeout(autoDebounce); autoDebounce = setTimeout(checkPropertyCount, 300); });
+  }
 }
 
-// ── CHECK PROPERTY COUNT — preview how many listings match current filters ──
+// ── Property preview markers on the map ──
+let previewMarkers = [];
+
+function clearPreviewMarkers() {
+  previewMarkers.forEach(m => m.remove());
+  previewMarkers = [];
+}
+
+function plotPreviewMarkers(listings) {
+  clearPreviewMarkers();
+  if (!alertMap || !listings.length) return;
+
+  const bounds = new maplibregl.LngLatBounds();
+  let hasBounds = false;
+
+  listings.forEach(l => {
+    const lat = l.Latitude;
+    const lng = l.Longitude;
+    if (lat == null || lng == null) return;
+
+    const price = l.ListPrice ? '$' + (l.ListPrice >= 1000000
+      ? (l.ListPrice / 1000000).toFixed(1) + 'M'
+      : Math.round(l.ListPrice / 1000) + 'K') : '';
+
+    const el = document.createElement('div');
+    el.className = 'preview-marker';
+    el.innerHTML = price;
+
+    const marker = new maplibregl.Marker({ element: el })
+      .setLngLat([lng, lat])
+      .setPopup(new maplibregl.Popup({ offset: 20, maxWidth: '240px' }).setHTML(
+        `<div style="font-size:0.8rem;">
+          <b style="color:#1a2744;">${price}</b><br>
+          <span style="color:#475569;">${escHtml(l.UnparsedAddress || l.City || '')}</span><br>
+          <span style="color:#6b7280;font-size:0.72rem;">${l.BedroomsTotal || '—'} bd · ${l.BathroomsTotalInteger || '—'} ba · ${l.LivingArea ? l.LivingArea.toLocaleString() + ' sf' : ''}</span><br>
+          <a href="https://homesinsoflorida.com/listing?id=${l.ListingId}" target="_blank" style="color:#2563eb;font-size:0.72rem;">View listing →</a>
+        </div>`
+      ))
+      .addTo(alertMap);
+
+    previewMarkers.push(marker);
+    bounds.extend([lng, lat]);
+    hasBounds = true;
+  });
+
+  if (hasBounds) {
+    alertMap.fitBounds(bounds, { padding: 50, maxZoom: 13 });
+  }
+}
+
+// ── CHECK PROPERTY COUNT + PLOT ON MAP ──
+let countFetchId = 0;
 async function checkPropertyCount() {
-  const btn = document.getElementById('alert-count-btn');
   const preview = document.getElementById('alert-count-preview');
   const countNum = document.getElementById('alert-count-number');
-  btn.textContent = '⏳ Checking...';
-  btn.disabled = true;
+  const btn = document.getElementById('alert-count-btn');
+  const fetchId = ++countFetchId;
+
+  preview.style.display = 'block';
+  countNum.textContent = '...';
+  if (btn) btn.textContent = '⏳ Checking...';
 
   try {
     const profile = getProfileFromForm();
@@ -1209,59 +1271,49 @@ async function checkPropertyCount() {
       StandardStatus: 'Active',
     });
 
-    // Cities
     const cities = (profile.cities || '').split(',').map(s => s.trim()).filter(Boolean);
     if (cities.length === 1) params.set('City', cities[0]);
 
-    // Property type
     const typeMap = { 'Single Family': 'Single Family Residence', 'Condo': 'Condominium', 'Townhouse': 'Townhouse', 'Multi Family': 'Multi Family' };
     if (profile.types && profile.types.length === 1) {
       params.set('PropertySubType', typeMap[profile.types[0]] || profile.types[0]);
     }
 
-    // Price
     if (profile.priceMin > 0) params.set('ListPrice.gte', String(profile.priceMin));
     if (profile.priceMax > 0) params.set('ListPrice.lte', String(profile.priceMax));
-
-    // Beds / Baths
     if (profile.bedsMin > 0) params.set('BedroomsTotal.gte', String(profile.bedsMin));
     if (profile.bathsMin > 0) params.set('BathroomsTotalInteger.gte', String(profile.bathsMin));
-
-    // Sqft
     if (profile.sqftMin > 0) params.set('LivingArea.gte', String(profile.sqftMin));
     if (profile.sqftMax > 0) params.set('LivingArea.lte', String(profile.sqftMax));
-
-    // Lot size
     if (profile.lotSizeMin > 0) params.set('LotSizeSquareFeet.gte', String(profile.lotSizeMin));
-
-    // Year built
     if (profile.yearBuiltMin > 0) params.set('YearBuilt.gte', String(profile.yearBuiltMin));
 
-    // Multi-city: fetch each and sum
-    let total = 0;
+    let allListings = [];
     if (cities.length > 1) {
       const fetches = cities.map(city => {
         const p = new URLSearchParams(params);
         p.set('City', city);
-        return fetch(`${BRIDGE_BASE}/listings?${p}`).then(r => r.json()).then(d => d.success && d.bundle ? d.bundle.length : 0).catch(() => 0);
+        return fetch(`${BRIDGE_BASE}/listings?${p}`).then(r => r.json()).then(d => d.success && d.bundle ? d.bundle : []).catch(() => []);
       });
-      const counts = await Promise.all(fetches);
-      total = counts.reduce((a, b) => a + b, 0);
+      const results = await Promise.all(fetches);
+      allListings = results.flat();
     } else {
       const res = await fetch(`${BRIDGE_BASE}/listings?${params}`);
       const data = await res.json();
-      total = data.success && data.bundle ? data.bundle.length : 0;
+      allListings = data.success && data.bundle ? data.bundle : [];
     }
 
-    countNum.textContent = total;
-    preview.style.display = 'block';
+    // Abort if a newer fetch started
+    if (fetchId !== countFetchId) return;
+
+    countNum.textContent = allListings.length;
+    plotPreviewMarkers(allListings);
+
   } catch (err) {
     console.error('Count check error:', err);
-    countNum.textContent = 'Error';
-    preview.style.display = 'block';
+    if (fetchId === countFetchId) countNum.textContent = 'Error';
   } finally {
-    btn.textContent = '📊 Check Available Properties';
-    btn.disabled = false;
+    if (fetchId === countFetchId && btn) btn.textContent = '📊 Check Available Properties';
   }
 }
 

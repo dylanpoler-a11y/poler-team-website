@@ -1268,6 +1268,25 @@ body {
   font-size: 1.1rem;
 }
 
+/* ── MAP PREVIEW MARKERS ─────────────────────────────────── */
+.preview-marker {
+  background: #1a2744;
+  color: #fff;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  cursor: pointer;
+  border: 2px solid #fff;
+  transition: transform 0.15s;
+}
+.preview-marker:hover {
+  transform: scale(1.15);
+  z-index: 10;
+}
+
 /* ── MOBILE RESPONSIVE ────────────────────────────────────── */
 @media (max-width: 1024px) {
   .stats-row {
