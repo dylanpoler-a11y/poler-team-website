@@ -1250,6 +1250,54 @@ function plotPreviewMarkers(listings) {
   }
 }
 
+// ── CLIENT-SIDE FEATURE MATCHING (mirrors send-alerts.js matchesFeature) ──
+function matchesFeatureLocal(listing, feature) {
+  const arrContains = (arr, ...terms) => {
+    if (!Array.isArray(arr)) return false;
+    const lower = arr.map(s => (s || '').toLowerCase());
+    return terms.some(t => lower.some(v => v.includes(t.toLowerCase())));
+  };
+  const remarks = (listing.PublicRemarks || '').toLowerCase();
+  switch (feature) {
+    case 'Waterfront / Ocean View':
+      return listing.WaterfrontYN === true
+        || arrContains(listing.View, 'ocean', 'water', 'bay', 'intracoastal', 'lake')
+        || arrContains(listing.WaterfrontFeatures, 'ocean', 'water', 'bay', 'lake', 'canal');
+    case 'Waterfront / Beach':
+      return arrContains(listing.WaterfrontFeatures, 'ocean', 'beach')
+        || arrContains(listing.View, 'ocean', 'beach', 'direct ocean');
+    case 'Waterfront / Bay':
+      return arrContains(listing.WaterfrontFeatures, 'bay', 'intracoastal')
+        || arrContains(listing.View, 'bay', 'intracoastal');
+    case 'Waterfront / Lake':
+      return arrContains(listing.WaterfrontFeatures, 'lake')
+        || arrContains(listing.View, 'lake')
+        || remarks.includes('lake');
+    case 'Waterfront / Canal':
+      return arrContains(listing.WaterfrontFeatures, 'canal')
+        || arrContains(listing.View, 'canal');
+    case 'Balcony / Terrace':
+      return arrContains(listing.PatioAndPorchFeatures, 'balcony', 'terrace', 'deck', 'lanai');
+    case 'Pool':
+      return Array.isArray(listing.PoolFeatures) && listing.PoolFeatures.length > 0;
+    case 'Gated Community':
+      return arrContains(listing.CommunityFeatures || listing.AssociationAmenities, 'gated', 'guard', 'security')
+        || remarks.includes('gated') || remarks.includes('guard gate') || remarks.includes('private community');
+    case 'Golf Course':
+      return arrContains(listing.CommunityFeatures || listing.AssociationAmenities, 'golf')
+        || remarks.includes('golf');
+    case 'Large Lot':
+      return (listing.LotSizeSquareFeet && listing.LotSizeSquareFeet >= 21780);
+    case 'High Rise':
+      return arrContains(listing.ArchitecturalStyle, 'high rise', 'highrise');
+    case 'Penthouse':
+      return arrContains(listing.ArchitecturalStyle, 'penthouse')
+        || remarks.includes('penthouse');
+    default:
+      return true;
+  }
+}
+
 // ── CHECK PROPERTY COUNT + PLOT ON MAP ──
 let countFetchId = 0;
 async function checkPropertyCount() {
@@ -1305,6 +1353,23 @@ async function checkPropertyCount() {
 
     // Abort if a newer fetch started
     if (fetchId !== countFetchId) return;
+
+    // Apply client-side feature filters (same logic as send-alerts.js)
+    const features = profile.features || [];
+    if (features.length > 0) {
+      allListings = allListings.filter(l => features.every(feat => matchesFeatureLocal(l, feat)));
+    }
+
+    // Apply keyword filter
+    if (profile.keywords) {
+      const kws = profile.keywords.toLowerCase().split(',').map(s => s.trim()).filter(Boolean);
+      if (kws.length > 0) {
+        allListings = allListings.filter(l => {
+          const remarks = (l.PublicRemarks || '').toLowerCase();
+          return kws.some(kw => remarks.includes(kw));
+        });
+      }
+    }
 
     countNum.textContent = allListings.length;
     plotPreviewMarkers(allListings);
