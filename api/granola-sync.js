@@ -7,8 +7,7 @@
  * Required env vars:
  *   AIRTABLE_API_KEY, AIRTABLE_BASE_ID, ANTHROPIC_API_KEY, GRANOLA_API_KEY
  *
- * Add to vercel.json crons:
- *   { "path": "/api/granola-sync", "schedule": "*/15 * * * *" }
+ * Runs daily at 8pm EST via Vercel cron.
  */
 
 export const config = { runtime: 'edge' };
