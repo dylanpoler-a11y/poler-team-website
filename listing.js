@@ -1623,6 +1623,13 @@ async function runSearch(append = false) {
             return;
         }
 
+        // Sort by newest first (days on market ascending)
+        listings.sort((a, b) => {
+            const domA = a.DaysOnMarket != null ? a.DaysOnMarket : 9999;
+            const domB = b.DaysOnMarket != null ? b.DaysOnMarket : 9999;
+            return domA - domB;
+        });
+
         if (!append) window._currentListings = listings;
         else window._currentListings = (window._currentListings || []).concat(listings);
 
@@ -1800,6 +1807,12 @@ function initSearchBar() {
             const params = { limit: PAGE_SIZE, sortBy: 'ModificationTimestamp', order: 'desc', StandardStatus: 'Active', PropertyType: isRent ? 'Residential Lease' : 'Residential', PostalCode: val };
             lastQuery = { ...params };
             const listings = await fetchListings(params);
+            // Sort newest first
+            listings.sort((a, b) => {
+                const domA = a.DaysOnMarket != null ? a.DaysOnMarket : 9999;
+                const domB = b.DaysOnMarket != null ? b.DaysOnMarket : 9999;
+                return domA - domB;
+            });
             grid.innerHTML = '';
             window._currentListings = listings;
             if (!listings.length) { document.getElementById('no-results').style.display = 'block'; countEl.textContent = 'No results found'; return; }
