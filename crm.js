@@ -495,6 +495,9 @@ function setupEvents() {
   const reminderSubmit = document.getElementById('panel-reminder-submit');
   if (reminderSubmit) reminderSubmit.addEventListener('click', createReminderFromPanel);
 
+  const syncCallBtn = document.getElementById('panel-sync-call-btn');
+  if (syncCallBtn) syncCallBtn.addEventListener('click', syncCallNotes);
+
   // Alert preference controls
   document.getElementById('panel-alert-active').addEventListener('change', function () {
     toggleAlertFields(this.checked);
@@ -891,6 +894,72 @@ async function savePanelReminder(id) {
     }
   } catch (err) {
     console.error('Failed to update reminder:', err);
+  }
+}
+
+// ── SYNC CALL NOTES WITH AI ───────────────────────────────────────────────
+async function syncCallNotes() {
+  if (!activeLead) return;
+  const textarea = document.getElementById('panel-call-transcript');
+  const btn = document.getElementById('panel-sync-call-btn');
+  const status = document.getElementById('panel-sync-status');
+  const transcript = textarea.value.trim();
+
+  if (!transcript) {
+    status.style.display = 'block';
+    status.style.color = '#dc2626';
+    status.textContent = 'Please paste a call transcript or notes first.';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = '🤖 Processing with AI...';
+  status.style.display = 'block';
+  status.style.color = '#6b7280';
+  status.textContent = 'Sending to AI for analysis...';
+
+  try {
+    const res = await fetch(`${CRM_API_BASE}/api/sync-call-notes`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: activeLead.email,
+        leadRecordId: activeLead.id,
+        transcript,
+        meetingTitle: 'Call with ' + (activeLead.name || 'lead'),
+      }),
+    });
+
+    const data = await res.json();
+
+    if (data.success) {
+      status.style.color = '#16a34a';
+      status.textContent = '✅ Synced! ' +
+        (data.extracted.hasPropertyPreferences ? 'Alert profile created. ' : '') +
+        (data.extracted.followUp ? 'Reminder set. ' : '') +
+        'Notes updated.';
+      textarea.value = '';
+
+      // Refresh the lead data
+      await loadLeads();
+      const refreshedLead = allLeads.find(l => l.id === activeLead.id);
+      if (refreshedLead) {
+        activeLead = refreshedLead;
+        renderNotesHistory(refreshedLead.notes || '');
+        loadAlertProfiles(refreshedLead);
+        renderLeadReminders(refreshedLead);
+      }
+    } else {
+      status.style.color = '#dc2626';
+      status.textContent = '❌ ' + (data.error || 'Failed to sync');
+    }
+  } catch (err) {
+    console.error('Sync call notes error:', err);
+    status.style.color = '#dc2626';
+    status.textContent = '❌ Connection error — please try again';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '🤖 Sync with AI';
   }
 }
 

@@ -1,6 +1,13 @@
 {
-  "framework": null,
-  "buildCommand": null,
-  "outputDirectory": null,
-  "cleanUrls": true
+  "cleanUrls": true,
+  "crons": [
+    {
+      "path": "/api/send-alerts",
+      "schedule": "0 14 * * *"
+    },
+    {
+      "path": "/api/granola-sync",
+      "schedule": "*/15 * * * *"
+    }
+  ]
 }
