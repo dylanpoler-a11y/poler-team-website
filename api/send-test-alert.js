@@ -142,7 +142,15 @@ export default async function handler(req) {
         if (seen.has(id)) return false;
         seen.add(id);
         return true;
-    }).slice(0, lead.count || 5);
+    });
+
+    // Shuffle so leads get different properties each alert
+    for (let i = listings.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [listings[i], listings[j]] = [listings[j], listings[i]];
+    }
+
+    listings = listings.slice(0, lead.count || 5);
 
     if (listings.length === 0) {
         return json({ error: 'No matching properties found for this lead\'s preferences' }, 404);

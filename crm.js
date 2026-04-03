@@ -1410,6 +1410,19 @@ function matchesFeatureLocal(listing, feature) {
   }
 }
 
+// ── Point-in-polygon test (ray-casting) ──
+function pointInPolygonLocal(lat, lng, ring) {
+  let inside = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const xi = ring[i][1], yi = ring[i][0];
+    const xj = ring[j][1], yj = ring[j][0];
+    if ((yi > lng) !== (yj > lng) && lat < (xj - xi) * (lng - yi) / (yj - yi) + xi) {
+      inside = !inside;
+    }
+  }
+  return inside;
+}
+
 // ── CHECK PROPERTY COUNT + PLOT ON MAP ──
 let countFetchId = 0;
 async function checkPropertyCount() {
@@ -1432,6 +1445,42 @@ async function checkPropertyCount() {
     });
 
     const cities = (profile.cities || '').split(',').map(s => s.trim()).filter(Boolean);
+
+    // If polygon is drawn but no cities specified, derive cities from polygon center
+    const hasPolygon = alertMapPolygons && alertMapPolygons.length > 0;
+    if (hasPolygon && cities.length === 0) {
+      // Get all coords from drawn polygons to find center
+      const allCoords = alertMapPolygons.flatMap(g => g.coordinates ? g.coordinates[0] : []);
+      if (allCoords.length > 0) {
+        const lats = allCoords.map(c => c[1]);
+        const lngs = allCoords.map(c => c[0]);
+        const centerLat = (Math.min(...lats) + Math.max(...lats)) / 2;
+        const centerLng = (Math.min(...lngs) + Math.max(...lngs)) / 2;
+        // Find nearby South FL cities based on center point (within ~30km)
+        const CITY_COORDS = [
+          {name:'Miami Beach',lat:25.79,lng:-80.13},{name:'Sunny Isles Beach',lat:25.95,lng:-80.12},
+          {name:'Aventura',lat:25.96,lng:-80.14},{name:'Hallandale Beach',lat:25.98,lng:-80.15},
+          {name:'Hollywood',lat:26.01,lng:-80.15},{name:'Fort Lauderdale',lat:26.12,lng:-80.14},
+          {name:'Pompano Beach',lat:26.24,lng:-80.12},{name:'Boca Raton',lat:26.36,lng:-80.08},
+          {name:'Deerfield Beach',lat:26.32,lng:-80.10},{name:'Miami',lat:25.76,lng:-80.19},
+          {name:'Coral Gables',lat:25.72,lng:-80.27},{name:'North Miami',lat:25.89,lng:-80.19},
+          {name:'North Miami Beach',lat:25.93,lng:-80.16},{name:'Doral',lat:25.82,lng:-80.36},
+          {name:'Homestead',lat:25.47,lng:-80.48},{name:'Key Biscayne',lat:25.69,lng:-80.16},
+          {name:'Oakland Park',lat:26.17,lng:-80.13},{name:'Wilton Manors',lat:26.16,lng:-80.14},
+          {name:'Dania Beach',lat:26.05,lng:-80.14},{name:'Delray Beach',lat:26.46,lng:-80.07},
+          {name:'West Palm Beach',lat:26.72,lng:-80.05},{name:'Palm Beach',lat:26.71,lng:-80.04},
+          {name:'Boynton Beach',lat:26.53,lng:-80.07},{name:'Lake Worth Beach',lat:26.62,lng:-80.06},
+        ];
+        const nearbyCities = CITY_COORDS
+          .map(c => ({ name: c.name, dist: Math.sqrt(Math.pow((c.lat-centerLat)*111,2) + Math.pow((c.lng-centerLng)*111*Math.cos(centerLat*Math.PI/180),2)) }))
+          .filter(c => c.dist < 30)
+          .sort((a,b) => a.dist - b.dist)
+          .slice(0, 10)
+          .map(c => c.name);
+        if (nearbyCities.length > 0) cities.push(...nearbyCities);
+      }
+    }
+
     if (cities.length === 1) params.set('City', cities[0]);
 
     const typeMap = { 'Single Family': 'Single Family Residence', 'Condo': 'Condominium', 'Townhouse': 'Townhouse', 'Multi Family': 'Multi Family' };
@@ -1448,7 +1497,15 @@ async function checkPropertyCount() {
     if (profile.lotSizeMin > 0) params.set('LotSizeSquareFeet.gte', String(profile.lotSizeMin));
     if (profile.yearBuiltMin > 0) params.set('YearBuilt.gte', String(profile.yearBuiltMin));
 
+    // Fetch with pagination (up to 3 pages of 200 = 600 max)
     let allListings = [];
+    async function fetchPage(p, offset) {
+      p.set('offset', String(offset));
+      const res = await fetch(`${BRIDGE_BASE}/listings?${p}`);
+      const data = await res.json();
+      return data.success && data.bundle ? data.bundle : [];
+    }
+
     if (cities.length > 1) {
       const fetches = cities.map(city => {
         const p = new URLSearchParams(params);
@@ -1458,15 +1515,40 @@ async function checkPropertyCount() {
       const results = await Promise.all(fetches);
       allListings = results.flat();
     } else {
-      const res = await fetch(`${BRIDGE_BASE}/listings?${params}`);
-      const data = await res.json();
-      allListings = data.success && data.bundle ? data.bundle : [];
+      // Page 1
+      let page1 = await fetchPage(new URLSearchParams(params), 0);
+      allListings = page1;
+      // Page 2 if first page was full
+      if (page1.length >= 200) {
+        let page2 = await fetchPage(new URLSearchParams(params), 200);
+        allListings = allListings.concat(page2);
+        // Page 3
+        if (page2.length >= 200) {
+          let page3 = await fetchPage(new URLSearchParams(params), 400);
+          allListings = allListings.concat(page3);
+        }
+      }
     }
 
     // Abort if a newer fetch started
     if (fetchId !== countFetchId) return;
 
-    // Apply client-side feature filters (same logic as send-alerts.js)
+    // Apply polygon filter — only show properties INSIDE drawn area
+    if (hasPolygon) {
+      const rings = alertMapPolygons
+        .filter(g => g && g.type === 'Polygon' && g.coordinates)
+        .map(g => g.coordinates[0]);
+      if (rings.length > 0) {
+        allListings = allListings.filter(l => {
+          const lat = l.Latitude;
+          const lng = l.Longitude;
+          if (lat == null || lng == null) return false; // Exclude if no coords when polygon is active
+          return rings.some(ring => pointInPolygonLocal(lat, lng, ring));
+        });
+      }
+    }
+
+    // Apply client-side feature filters
     const features = profile.features || [];
     if (features.length > 0) {
       allListings = allListings.filter(l => features.every(feat => matchesFeatureLocal(l, feat)));
@@ -1482,6 +1564,14 @@ async function checkPropertyCount() {
         });
       }
     }
+
+    // Deduplicate
+    const seen = new Set();
+    allListings = allListings.filter(l => {
+      if (seen.has(l.ListingId)) return false;
+      seen.add(l.ListingId);
+      return true;
+    });
 
     countNum.textContent = allListings.length;
     plotPreviewMarkers(allListings);

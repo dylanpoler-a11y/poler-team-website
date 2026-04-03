@@ -176,6 +176,12 @@ export default async function handler(req) {
                 return true;
             });
 
+            // Shuffle so leads get different properties each alert (not always the same top N)
+            for (let i = listings.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [listings[i], listings[j]] = [listings[j], listings[i]];
+            }
+
             // Limit to requested count
             listings = listings.slice(0, lead.count || 5);
 
