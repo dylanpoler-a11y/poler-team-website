@@ -1323,11 +1323,12 @@ async function fetchCuratedListings() {
         // Filter to South Florida cities only
         all = all.filter(l => l.City && SOUTH_FL_CITIES.includes(l.City));
 
-        // Fisher-Yates shuffle
-        for (let i = all.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [all[i], all[j]] = [all[j], all[i]];
-        }
+        // Sort by newest first (days on market ascending, or by modification date descending)
+        all.sort((a, b) => {
+            const domA = a.DaysOnMarket != null ? a.DaysOnMarket : 9999;
+            const domB = b.DaysOnMarket != null ? b.DaysOnMarket : 9999;
+            return domA - domB;
+        });
 
         grid.innerHTML = '';
 
@@ -1519,50 +1520,57 @@ function renderListItem(listing) {
     </div>`;
 }
 
-let currentViewMode = 'grid'; // 'grid', 'list', or 'map'
+let currentViewMode = 'list'; // 'grid', 'list', or 'map' — default to list
 
-function initViewToggle() {
+function switchView(mode) {
     const btns = document.querySelectorAll('.view-toggle-btn[data-view]');
     const grid = document.getElementById('results-grid');
     const mapView = document.getElementById('map-view');
 
-    btns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            const mode = btn.dataset.view;
-            currentViewMode = mode;
-            btns.forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
+    currentViewMode = mode;
+    btns.forEach(b => b.classList.toggle('active', b.dataset.view === mode));
 
-            if (mode === 'grid') {
-                grid.style.display = '';
-                grid.classList.remove('results-list-view');
-                if (mapView) mapView.style.display = 'none';
-                // Re-render as grid cards
-                if (window._currentListings) {
-                    grid.innerHTML = '';
-                    window._currentListings.forEach(l => grid.insertAdjacentHTML('beforeend', renderCard(l)));
-                }
-            } else if (mode === 'list') {
-                grid.style.display = '';
-                grid.classList.add('results-list-view');
-                if (mapView) mapView.style.display = 'none';
-                // Re-render as list items
-                if (window._currentListings) {
-                    grid.innerHTML = '';
-                    window._currentListings.forEach(l => grid.insertAdjacentHTML('beforeend', renderListItem(l)));
-                }
-            } else if (mode === 'map') {
-                grid.style.display = 'none';
-                if (mapView) mapView.style.display = 'block';
-            }
-        });
+    const listings = window._currentListings || [];
+
+    if (mode === 'grid') {
+        grid.style.display = '';
+        grid.classList.remove('results-list-view');
+        if (mapView) mapView.style.display = 'none';
+        if (listings.length) {
+            grid.innerHTML = '';
+            listings.forEach(l => grid.insertAdjacentHTML('beforeend', renderCard(l)));
+        }
+    } else if (mode === 'list') {
+        grid.style.display = '';
+        grid.classList.add('results-list-view');
+        if (mapView) mapView.style.display = 'none';
+        if (listings.length) {
+            grid.innerHTML = '';
+            listings.forEach(l => grid.insertAdjacentHTML('beforeend', renderListItem(l)));
+        }
+    } else if (mode === 'map') {
+        grid.style.display = 'none';
+        if (mapView) mapView.style.display = 'block';
+    }
+}
+
+function initViewToggle() {
+    document.querySelectorAll('.view-toggle-btn[data-view]').forEach(btn => {
+        btn.addEventListener('click', () => switchView(btn.dataset.view));
     });
 
-    // Support ?view=list URL param
+    // Set default active button to list
+    const listBtn = document.getElementById('view-list-btn');
+    const gridBtn = document.getElementById('view-grid-btn');
+    if (listBtn && gridBtn) {
+        gridBtn.classList.remove('active');
+        listBtn.classList.add('active');
+    }
+
+    // Support ?view=grid URL param override
     const viewParam = new URLSearchParams(window.location.search).get('view');
-    if (viewParam === 'list') {
-        const listBtn = document.getElementById('view-list-btn');
-        if (listBtn) listBtn.click();
+    if (viewParam === 'grid') {
+        if (gridBtn) gridBtn.click();
     }
 }
 
