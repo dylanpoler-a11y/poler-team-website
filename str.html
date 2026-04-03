@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Short-Term Rental Buildings — South Florida | The Poler Team</title>
+    <meta name="description" content="Find buildings that allow Airbnb and short-term rentals in South Florida. Browse available units in STR-allowed condos.">
+    <link rel="icon" href="favicon.ico">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="listing.css">
+    <style>
+        .str-hero {
+            background: linear-gradient(135deg, #1a2744 0%, #243656 60%, #2d4a6f 100%);
+            padding: 3rem 0 2rem; text-align: center; color: #fff;
+        }
+        .str-hero h1 { font-family: var(--font-heading); font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem; }
+        .str-hero p { font-size: 1rem; color: rgba(255,255,255,0.7); max-width: 600px; margin: 0 auto; }
+        .str-stats { display: flex; justify-content: center; gap: 2.5rem; margin-top: 1.5rem; }
+        .str-stat { text-align: center; }
+        .str-stat-num { font-size: 1.8rem; font-weight: 800; color: var(--orange); }
+        .str-stat-label { font-size: 0.75rem; color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: 0.05em; }
+        .str-filters {
+            max-width: 1200px; margin: 1.5rem auto 0; padding: 0 1.5rem;
+            display: flex; flex-wrap: wrap; gap: 0.75rem; justify-content: center;
+        }
+        .str-filter-select {
+            padding: 0.5rem 0.9rem; border: 1.5px solid rgba(255,255,255,0.2);
+            border-radius: 8px; background: rgba(255,255,255,0.1); color: #fff;
+            font-size: 0.84rem; cursor: pointer; outline: none;
+        }
+        .str-filter-select option { background: var(--navy); color: #fff; }
+        .str-content { max-width: 1200px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+        .str-loading { text-align: center; padding: 3rem; color: var(--text-muted); }
+        .str-building-card {
+            background: #fff; border: 1px solid var(--border); border-radius: 12px;
+            overflow: hidden; margin-bottom: 1.25rem; transition: box-shadow 0.2s;
+        }
+        .str-building-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
+        .str-building-header {
+            display: flex; align-items: center; padding: 1rem 1.25rem; cursor: pointer;
+            gap: 1rem; background: #fafbfc;
+        }
+        .str-building-header:hover { background: #f1f5f9; }
+        .str-building-photo {
+            width: 100px; height: 70px; border-radius: 8px; object-fit: cover; flex-shrink: 0;
+            background: var(--border-light, #e5e7eb);
+        }
+        .str-building-info { flex: 1; min-width: 0; }
+        .str-building-name { font-size: 1.05rem; font-weight: 700; color: var(--text); }
+        .str-building-city { font-size: 0.82rem; color: var(--text-muted); }
+        .str-building-meta { display: flex; gap: 1rem; margin-top: 0.3rem; flex-wrap: wrap; }
+        .str-building-meta span { font-size: 0.75rem; color: var(--text-muted); }
+        .str-building-meta strong { color: var(--text); font-weight: 700; }
+        .str-units-count {
+            font-size: 0.78rem; font-weight: 700; color: #fff;
+            background: var(--orange); padding: 0.3rem 0.7rem; border-radius: 6px;
+            white-space: nowrap;
+        }
+        .str-chevron { transition: transform 0.2s; color: var(--text-muted); flex-shrink: 0; }
+        .str-chevron.open { transform: rotate(180deg); }
+        .str-units { display: none; border-top: 1px solid var(--border); }
+        .str-units.open { display: block; }
+        .str-unit {
+            display: flex; align-items: center; padding: 0.75rem 1.25rem;
+            border-bottom: 1px solid #f1f5f9; gap: 1rem; cursor: pointer;
+            transition: background 0.1s;
+        }
+        .str-unit:last-child { border-bottom: none; }
+        .str-unit:hover { background: #f7f8fa; }
+        .str-unit-photo {
+            width: 80px; height: 55px; border-radius: 6px; object-fit: cover; flex-shrink: 0;
+            background: #e5e7eb;
+        }
+        .str-unit-info { flex: 1; min-width: 0; }
+        .str-unit-price { font-weight: 700; color: var(--text); font-size: 1rem; }
+        .str-unit-addr { font-size: 0.82rem; color: var(--text-muted); }
+        .str-unit-stats { font-size: 0.78rem; color: var(--text-light); }
+        .str-unit-dom {
+            font-size: 0.72rem; font-weight: 600; white-space: nowrap;
+            padding: 0.2rem 0.5rem; border-radius: 4px;
+        }
+        .str-unit-dom.new { background: #dcfce7; color: #16a34a; }
+        .str-unit-dom.normal { background: #f1f5f9; color: #6b7280; }
+        .str-no-results { text-align: center; padding: 3rem; color: var(--text-muted); }
+        @media (max-width: 768px) {
+            .str-hero h1 { font-size: 1.5rem; }
+            .str-stats { gap: 1.5rem; }
+            .str-building-header { flex-wrap: wrap; }
+            .str-unit { flex-wrap: wrap; }
+        }
+    </style>
+
+    <!-- Meta Pixel -->
+    <script>
+    !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+    fbq('init', '1221841166090741');
+    fbq('track', 'PageView');
+    </script>
+    <!-- Google Ads -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=AW-17910762846"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'AW-17910762846');
+    </script>
+</head>
+<body>
+    <header class="lp-header">
+        <div class="lp-header-inner">
+            <a href="listing" class="lp-logo-link">
+                <img src="logo.png" alt="The Poler Team" class="lp-logo">
+            </a>
+            <div class="lp-header-right">
+                <span class="lp-tagline">South Florida Luxury Real Estate</span>
+                <a href="tel:+19542354046" class="lp-call-btn">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 014.68 11.6 19.79 19.79 0 011.61 3a2 2 0 012-2.18h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L7.91 8.09a16 16 0 006 6l.91-.91a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+                    Call Us
+                </a>
+            </div>
+        </div>
+        <nav class="lp-nav">
+            <div class="lp-nav-inner">
+                <a href="listing" class="lp-nav-link">Home</a>
+                <a href="listing" class="lp-nav-link">Buy</a>
+                <a href="listing" class="lp-nav-link">Rent</a>
+                <a href="str" class="lp-nav-link active">Short-Term Rentals</a>
+                <a href="listing" class="lp-nav-link">Home Valuation</a>
+                <a href="index.html#about" class="lp-nav-link">About</a>
+                <a href="https://wa.me/19542354046" class="lp-nav-link" target="_blank">Contact</a>
+            </div>
+        </nav>
+    </header>
+
+    <section class="str-hero">
+        <h1>Short-Term Rental Buildings</h1>
+        <p>Find buildings in South Florida that allow Airbnb & short-term rentals. Click any building to see available units.</p>
+        <div class="str-stats">
+            <div class="str-stat">
+                <div class="str-stat-num" id="str-building-count">—</div>
+                <div class="str-stat-label">Buildings</div>
+            </div>
+            <div class="str-stat">
+                <div class="str-stat-num" id="str-unit-count">—</div>
+                <div class="str-stat-label">Available Units</div>
+            </div>
+            <div class="str-stat">
+                <div class="str-stat-num" id="str-price-range">—</div>
+                <div class="str-stat-label">Price Range</div>
+            </div>
+        </div>
+        <div class="str-filters">
+            <select class="str-filter-select" id="str-city-filter">
+                <option value="">All Cities</option>
+                <option value="Miami">Miami</option>
+                <option value="Miami Beach">Miami Beach</option>
+                <option value="Sunny Isles Beach">Sunny Isles Beach</option>
+                <option value="Hallandale Beach">Hallandale Beach</option>
+                <option value="Hollywood">Hollywood</option>
+                <option value="Fort Lauderdale">Fort Lauderdale</option>
+                <option value="Aventura">Aventura</option>
+                <option value="Doral">Doral</option>
+            </select>
+            <select class="str-filter-select" id="str-price-filter">
+                <option value="">Any Price</option>
+                <option value="0-500000">Under $500K</option>
+                <option value="500000-1000000">$500K - $1M</option>
+                <option value="1000000-2000000">$1M - $2M</option>
+                <option value="2000000-99999999">$2M+</option>
+            </select>
+            <select class="str-filter-select" id="str-beds-filter">
+                <option value="">Any Beds</option>
+                <option value="1">1+ Beds</option>
+                <option value="2">2+ Beds</option>
+                <option value="3">3+ Beds</option>
+            </select>
+        </div>
+    </section>
+
+    <div class="str-content">
+        <div id="str-loading" class="str-loading">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation:spin 1s linear infinite"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4"/></svg>
+            <p>Loading short-term rental buildings...</p>
+        </div>
+        <div id="str-buildings"></div>
+        <div id="str-no-results" class="str-no-results" style="display:none">
+            <p>No buildings found matching your filters.</p>
+        </div>
+    </div>
+
+    <footer class="lp-footer">
+        <div class="lp-footer-inner">
+            <img src="logo-white.png" alt="The Poler Team" class="lp-footer-logo">
+            <p class="lp-footer-copy">&copy; 2025 The Poler Team — Optimar International Realty. All rights reserved.</p>
+            <a href="listing" class="lp-footer-back">&larr; Back to Properties</a>
+        </div>
+    </footer>
+
+    <script>
+    'use strict';
+
+    const API_TOKEN = 'fceef76441eaf7579daff17411bffca2';
+    const API_BASE  = 'https://api.bridgedataoutput.com/api/v2/miamire';
+
+    let allStrListings = [];
+    let buildings = {};
+
+    async function loadSTRListings() {
+        const loading = document.getElementById('str-loading');
+        const container = document.getElementById('str-buildings');
+
+        try {
+            // Fetch STR-allowed listings (paginate up to 600)
+            let all = [];
+            for (let offset = 0; offset < 600; offset += 200) {
+                const params = new URLSearchParams({
+                    access_token: API_TOKEN,
+                    limit: '200',
+                    offset: String(offset),
+                    PropertyType: 'Residential',
+                    StandardStatus: 'Active',
+                    'MIAMIRE_Restrictions': 'Daily Rentals Allowed',
+                    sortBy: 'ModificationTimestamp',
+                    order: 'desc',
+                });
+                const res = await fetch(`${API_BASE}/listings?${params}`);
+                const data = await res.json();
+                const batch = (data.success && data.bundle) ? data.bundle : [];
+                all = all.concat(batch);
+                if (batch.length < 200) break;
+            }
+
+            allStrListings = all;
+            loading.style.display = 'none';
+            renderBuildings();
+
+            // Wire up filters
+            document.getElementById('str-city-filter').addEventListener('change', renderBuildings);
+            document.getElementById('str-price-filter').addEventListener('change', renderBuildings);
+            document.getElementById('str-beds-filter').addEventListener('change', renderBuildings);
+
+        } catch (err) {
+            console.error('STR load error:', err);
+            loading.innerHTML = '<p>Error loading listings. Please try again.</p>';
+        }
+    }
+
+    function renderBuildings() {
+        const container = document.getElementById('str-buildings');
+        const noResults = document.getElementById('str-no-results');
+        const cityFilter = document.getElementById('str-city-filter').value;
+        const priceFilter = document.getElementById('str-price-filter').value;
+        const bedsFilter = parseInt(document.getElementById('str-beds-filter').value) || 0;
+
+        // Filter listings
+        let filtered = allStrListings.filter(l => {
+            if (cityFilter && l.City !== cityFilter) return false;
+            if (priceFilter) {
+                const [min, max] = priceFilter.split('-').map(Number);
+                if (l.ListPrice < min || l.ListPrice > max) return false;
+            }
+            if (bedsFilter && (l.BedroomsTotal || 0) < bedsFilter) return false;
+            return true;
+        });
+
+        // Group by building
+        buildings = {};
+        filtered.forEach(l => {
+            const name = l.SubdivisionName || l.BuildingName || 'Other';
+            const key = name + '|' + (l.City || '');
+            if (!buildings[key]) {
+                buildings[key] = {
+                    name,
+                    city: l.City || '',
+                    units: [],
+                    photo: null,
+                };
+            }
+            buildings[key].units.push(l);
+            if (!buildings[key].photo && l.Media && l.Media.length) {
+                buildings[key].photo = l.Media[0].MediaURL;
+            }
+        });
+
+        // Sort by unit count descending
+        const sorted = Object.values(buildings).sort((a, b) => b.units.length - a.units.length);
+
+        // Update stats
+        document.getElementById('str-building-count').textContent = sorted.length;
+        document.getElementById('str-unit-count').textContent = filtered.length;
+        if (filtered.length) {
+            const prices = filtered.map(l => l.ListPrice).filter(Boolean).sort((a, b) => a - b);
+            const low = prices[0] >= 1000000 ? '$' + (prices[0] / 1000000).toFixed(1) + 'M' : '$' + Math.round(prices[0] / 1000) + 'K';
+            const high = prices[prices.length - 1] >= 1000000 ? '$' + (prices[prices.length - 1] / 1000000).toFixed(1) + 'M' : '$' + Math.round(prices[prices.length - 1] / 1000) + 'K';
+            document.getElementById('str-price-range').textContent = low + ' — ' + high;
+        } else {
+            document.getElementById('str-price-range').textContent = '—';
+        }
+
+        if (!sorted.length) {
+            container.innerHTML = '';
+            noResults.style.display = 'block';
+            return;
+        }
+        noResults.style.display = 'none';
+
+        container.innerHTML = sorted.map((bldg, i) => {
+            const minPrice = Math.min(...bldg.units.map(u => u.ListPrice || Infinity));
+            const maxPrice = Math.max(...bldg.units.map(u => u.ListPrice || 0));
+            const priceStr = minPrice === maxPrice
+                ? formatPrice(minPrice)
+                : formatPrice(minPrice) + ' — ' + formatPrice(maxPrice);
+            const beds = [...new Set(bldg.units.map(u => u.BedroomsTotal).filter(Boolean))].sort((a,b) => a-b);
+            const bedsStr = beds.length ? beds.join(', ') + ' bed' : '';
+
+            const photoHtml = bldg.photo
+                ? `<img class="str-building-photo" src="${bldg.photo}" alt="${esc(bldg.name)}" loading="lazy">`
+                : `<div class="str-building-photo" style="display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:0.7rem;">No photo</div>`;
+
+            const unitsHtml = bldg.units
+                .sort((a, b) => (a.DaysOnMarket || 9999) - (b.DaysOnMarket || 9999))
+                .map(u => {
+                    const uPhoto = (u.Media && u.Media[0]) ? u.Media[0].MediaURL : '';
+                    const dom = u.DaysOnMarket;
+                    const isNew = dom != null && dom <= 7;
+                    const domStr = dom != null ? dom + ' days' : '';
+                    return `
+                    <div class="str-unit" onclick="window.location.href='listing?id=${u.ListingId}'">
+                        ${uPhoto ? `<img class="str-unit-photo" src="${uPhoto}" alt="" loading="lazy">` : '<div class="str-unit-photo"></div>'}
+                        <div class="str-unit-info">
+                            <div class="str-unit-price">${formatPrice(u.ListPrice)}</div>
+                            <div class="str-unit-addr">${esc(u.UnparsedAddress || '')}</div>
+                            <div class="str-unit-stats">${u.BedroomsTotal || '—'} bd · ${u.BathroomsTotalInteger || '—'} ba · ${u.LivingArea ? Number(u.LivingArea).toLocaleString() + ' sqft' : ''}</div>
+                        </div>
+                        ${domStr ? `<span class="str-unit-dom ${isNew ? 'new' : 'normal'}">${isNew ? 'NEW · ' : ''}${domStr}</span>` : ''}
+                    </div>`;
+                }).join('');
+
+            return `
+            <div class="str-building-card">
+                <div class="str-building-header" onclick="toggleBuilding(${i})">
+                    ${photoHtml}
+                    <div class="str-building-info">
+                        <div class="str-building-name">${esc(bldg.name)}</div>
+                        <div class="str-building-city">${esc(bldg.city)}</div>
+                        <div class="str-building-meta">
+                            <span><strong>${priceStr}</strong></span>
+                            ${bedsStr ? `<span>${bedsStr}</span>` : ''}
+                        </div>
+                    </div>
+                    <span class="str-units-count">${bldg.units.length} unit${bldg.units.length === 1 ? '' : 's'}</span>
+                    <svg class="str-chevron" id="str-chev-${i}" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+                <div class="str-units" id="str-units-${i}">
+                    ${unitsHtml}
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    function toggleBuilding(i) {
+        const units = document.getElementById('str-units-' + i);
+        const chev = document.getElementById('str-chev-' + i);
+        if (units) {
+            units.classList.toggle('open');
+            if (chev) chev.classList.toggle('open');
+        }
+    }
+
+    function formatPrice(p) {
+        if (!p) return '—';
+        return '$' + Number(p).toLocaleString('en-US');
+    }
+
+    function esc(str) {
+        const d = document.createElement('div');
+        d.textContent = str || '';
+        return d.innerHTML;
+    }
+
+    document.addEventListener('DOMContentLoaded', loadSTRListings);
+    </script>
+
+    <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
+</body>
+</html>

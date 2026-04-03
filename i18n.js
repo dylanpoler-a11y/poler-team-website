@@ -7,6 +7,15 @@
 
 const I18N = {
 
+    // ── Navigation ────────────────────────────────────────────
+    navHome: { en: 'Home', es: 'Inicio', pt: 'Início' },
+    navBuy: { en: 'Buy', es: 'Comprar', pt: 'Comprar' },
+    navRent: { en: 'Rent', es: 'Alquilar', pt: 'Alugar' },
+    navSTR: { en: 'Short-Term Rentals', es: 'Alquileres Cortos', pt: 'Aluguéis Curtos' },
+    navValuation: { en: 'Home Valuation', es: 'Valoración', pt: 'Avaliação' },
+    navAbout: { en: 'About', es: 'Nosotros', pt: 'Sobre' },
+    navContact: { en: 'Contact', es: 'Contacto', pt: 'Contato' },
+
     // ── Search Tabs ──────────────────────────────────────────
     tabBuy: { en: 'Buy', es: 'Comprar', pt: 'Comprar' },
     tabRent: { en: 'Rent', es: 'Alquilar', pt: 'Alugar' },
