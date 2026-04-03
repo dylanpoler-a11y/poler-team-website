@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Palms at NoMi &mdash; An&aacute;lisis de Inversi&oacute;n</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Helvetica Neue', Arial, sans-serif; color: #1a2744; line-height: 1.6; background: #0d1421; }
+  /* COVER */
+  .cover { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(160deg, #0d1421 0%, #1a2744 50%, #0d1421 100%); padding: 40px 20px; text-align: center; }
+  .cover-inner { max-width: 700px; }
+  .cover-tag { color: #C9A84C; font-size: 12px; font-weight: 600; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 16px; }
+  .cover-title { color: #fff; font-size: 52px; font-weight: 800; line-height: 1.1; margin-bottom: 10px; }
+  .cover-sub { color: #9ca3af; font-size: 15px; margin-bottom: 16px; }
+  .cover-meta { display: flex; justify-content: center; gap: 32px; flex-wrap: wrap; margin: 32px 0; }
+  .cover-meta-item { text-align: center; }
+  .cover-meta-label { color: #6b7280; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+  .cover-meta-value { color: #fff; font-size: 18px; font-weight: 700; }
+  .cover-divider { border-top: 1px solid #2d3a5a; margin: 32px auto; max-width: 400px; }
+  .cover-footer { color: #4b5563; font-size: 11px; margin-top: 32px; }
+  .cover-arrow { color: #C9A84C; font-size: 20px; margin-top: 12px; }
+  /* SECTIONS */
+  .section-wrap { max-width: 1100px; margin: 0 auto; padding: 60px 20px; }
+  .section-divider { border: 0; border-top: 1px solid #e5e7eb; margin: 40px 0; }
+  .section-title { font-size: 13px; font-weight: 700; color: #C9A84C; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 6px; }
+  .section-h2 { font-size: 28px; font-weight: 800; color: #1a2744; margin-bottom: 6px; }
+  .section-sub { font-size: 13px; color: #6b7280; margin-bottom: 32px; }
+  /* CARDS */
+  .card { background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+  .card-header { padding: 14px 20px; font-weight: 700; font-size: 13px; }
+  .card-body { padding: 20px; }
+  .card-header-red { background: #7f1d1d; color: #fff; }
+  .card-header-gray { background: #374151; color: #fff; }
+  .card-header-green { background: #14532d; color: #fff; }
+  .card-header-navy { background: #1a2744; color: #fff; }
+  .card-header-gold { background: #C9A84C; color: #1a2744; }
+  /* TABLES */
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table th { background: #1a2744; color: #fff; text-align: left; padding: 9px 13px; font-weight: 600; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+  table td { padding: 8px 13px; border-bottom: 1px solid #e8e8e8; }
+  table tr:nth-child(even) { background: #f9f9f9; }
+  .r { text-align: right; }
+  .c { text-align: center; }
+  .total-row td { background: #1a2744 !important; color: #fff !important; font-weight: 700; }
+  .subtotal-row td { background: #f3f4f6 !important; font-weight: 600; }
+  /* COLORS */
+  .red { color: #dc2626; font-weight: 700; }
+  .green { color: #16a34a; font-weight: 700; }
+  .gold { color: #C9A84C; font-weight: 700; }
+  .muted { color: #888; font-size: 11px; }
+  /* CALLOUTS */
+  .callout-red { background: #fef2f2; border-left: 4px solid #dc2626; padding: 14px 18px; border-radius: 0 6px 6px 0; margin: 16px 0; font-size: 13px; }
+  .callout-green { background: #f0fdf4; border-left: 4px solid #16a34a; padding: 14px 18px; border-radius: 0 6px 6px 0; margin: 16px 0; font-size: 13px; }
+  .callout-gold { background: #fffbeb; border-left: 4px solid #C9A84C; padding: 14px 18px; border-radius: 0 6px 6px 0; margin: 16px 0; font-size: 13px; }
+  /* VERDICT */
+  .verdict { background: #1a2744; color: #fff; padding: 32px 36px; border-radius: 10px; margin: 24px 0; }
+  .verdict h3 { color: #C9A84C; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; border-bottom: 2px solid #C9A84C; padding-bottom: 8px; margin-bottom: 16px; }
+  .verdict p { color: #d1d5db; font-size: 13px; margin: 8px 0; }
+  /* GRID */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  .grid-split { display: grid; grid-template-columns: 1.2fr 1fr; gap: 24px; align-items: start; }
+  /* STAT BOX */
+  .stat-box { background: #fff; border-radius: 8px; padding: 20px; text-align: center; border: 1px solid #e5e7eb; }
+  .stat-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: #6b7280; margin-bottom: 4px; }
+  .stat-value { font-size: 28px; font-weight: 800; line-height: 1; }
+  .stat-sub { font-size: 11px; color: #888; margin-top: 4px; }
+  /* BIG NUMBER */
+  .big-num { font-size: 38px; font-weight: 800; }
+  /* BADGE */
+  .badge { display: inline-block; padding: 2px 10px; border-radius: 100px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+  .badge-red { background: #fef2f2; color: #dc2626; }
+  .badge-green { background: #f0fdf4; color: #16a34a; }
+  .badge-gold { background: #fffbeb; color: #92400e; }
+  .badge-gray { background: #f3f4f6; color: #374151; }
+  /* COMPARISON CARD */
+  .comp-card { background: #fff; border-radius: 10px; overflow: hidden; border: 2px solid #e5e7eb; }
+  .comp-card.subject { border-color: #dc2626; }
+  .comp-card.active { border-color: #374151; }
+  .comp-card.sold { border-color: #C9A84C; }
+  .comp-card-head { padding: 16px 20px; }
+  .comp-card-body { padding: 16px 20px; }
+  .comp-row { display: flex; justify-content: space-between; align-items: baseline; padding: 5px 0; border-bottom: 1px solid #f3f4f6; font-size: 13px; }
+  .comp-row:last-child { border-bottom: 0; }
+  .comp-row-label { color: #6b7280; }
+  .comp-row-value { font-weight: 600; }
+  .pros-cons { margin-top: 12px; }
+  .pros-cons-item { display: flex; gap: 8px; font-size: 12px; padding: 4px 0; }
+  .pros-cons-item .icon { flex-shrink: 0; }
+  /* SCENARIO TABS */
+  .scenario-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+  .scenario-tab { border-radius: 8px; padding: 16px; text-align: center; border: 2px solid; }
+  .scenario-tab.low { background: #f0fdf4; border-color: #16a34a; }
+  .scenario-tab.mid { background: #fffbeb; border-color: #C9A84C; }
+  .scenario-tab.high { background: #fef2f2; border-color: #dc2626; }
+  .scenario-tab .s-label { font-size: 10px; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; margin-bottom: 4px; }
+  .scenario-tab .s-value { font-size: 22px; font-weight: 800; }
+  .scenario-tab .s-sub { font-size: 10px; color: #888; margin-top: 2px; }
+  /* SCROLL */
+  .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  /* FOOTER */
+  .doc-footer { text-align: center; padding: 24px; font-size: 10px; color: #6b7280; background: #f9f9f9; }
+  /* SEPARATOR SECTION */
+  .sep-section { background: #1a2744; padding: 40px 20px; }
+  .sep-section .section-wrap { padding: 0; }
+  /* PRINT */
+  @media print {
+    body { background: #fff; }
+    .cover { min-height: auto; padding: 40px; }
+    .sep-section { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+  /* MOBILE */
+  @media (max-width: 768px) {
+    .grid-2, .grid-3, .grid-split, .scenario-grid { grid-template-columns: 1fr; }
+    .cover-title { font-size: 36px; }
+    .section-wrap { padding: 40px 16px; }
+    .cover-meta { gap: 20px; }
+    .big-num { font-size: 28px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===================== COVER ===================== -->
+<div class="cover">
+  <div class="cover-inner">
+    <div class="cover-tag">An&aacute;lisis de Inversi&oacute;n &nbsp;&bull;&nbsp; Confidencial</div>
+    <div class="cover-title">The Palms at NoMi</div>
+    <div class="cover-sub">12116 NE 5th Ave &nbsp;&bull;&nbsp; North Miami, FL</div>
+    <div class="cover-divider"></div>
+    <div class="cover-meta">
+      <div class="cover-meta-item">
+        <div class="cover-meta-label">Precio de Lista</div>
+        <div class="cover-meta-value" style="color:#dc2626;">$1,600,000</div>
+      </div>
+      <div class="cover-meta-item">
+        <div class="cover-meta-label">Unidades</div>
+        <div class="cover-meta-value">9 Townhouses</div>
+      </div>
+      <div class="cover-meta-item">
+        <div class="cover-meta-label">Construcci&oacute;n Bruta</div>
+        <div class="cover-meta-value">10,525 sqft</div>
+      </div>
+      <div class="cover-meta-item">
+        <div class="cover-meta-label">Zoning</div>
+        <div class="cover-meta-value">MU-2</div>
+      </div>
+    </div>
+    <div class="cover-footer">
+      The Poler Team &nbsp;&bull;&nbsp; Preparado para: Familia Pirola &nbsp;&bull;&nbsp; Abril 2026
+    </div>
+    <div class="cover-arrow">&#8595;</div>
+  </div>
+</div>
+
+<!-- ===================== SECCIÓN 1: TERRENO ===================== -->
+<div style="background:#fff; padding: 60px 20px;">
+<div class="section-wrap" style="padding-top:0; padding-bottom:0;">
+
+  <div class="section-title">Secci&oacute;n 1</div>
+  <div class="section-h2">El Terreno &mdash; Comparaci&oacute;n de Mercado</div>
+  <div class="section-sub">¿Qu&eacute; se puede comprar hoy con ese dinero? Anlizamos el activo vs. comparables activos y transacciones cerradas.</div>
+
+  <!-- PROPERTY vs COMPS -->
+  <div class="grid-split" style="align-items:start; margin-bottom:32px;">
+
+    <!-- Subject -->
+    <div>
+      <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:#dc2626; margin-bottom:8px;">Propiedad Sujeto &mdash; En Venta</div>
+      <div class="comp-card subject">
+        <div class="comp-card-head" style="background:#7f1d1d; color:#fff;">
+          <div style="font-size:16px; font-weight:800;">The Palms at NoMi</div>
+          <div style="font-size:12px; opacity:0.8;">12116 NE 5th Ave, North Miami</div>
+        </div>
+        <div class="comp-card-body">
+          <div class="comp-row"><span class="comp-row-label">Precio</span><span class="comp-row-value red">$1,600,000</span></div>
+          <div class="comp-row"><span class="comp-row-label">Lote</span><span class="comp-row-value">16,875 sqft</span></div>
+          <div class="comp-row"><span class="comp-row-label">Zoning</span><span class="comp-row-value">MU-2</span></div>
+          <div class="comp-row"><span class="comp-row-label">Estado</span><span class="comp-row-value green">Planos aprobados (9 units)</span></div>
+          <div class="comp-row"><span class="comp-row-label">$/sqft de lote</span><span class="comp-row-value red">$94.8/sqft</span></div>
+          <div class="comp-row"><span class="comp-row-label">D&iacute;as en mercado</span><span class="comp-row-value">Activo</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Active Comp -->
+    <div>
+      <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:#374151; margin-bottom:8px;">Comparable Activo &mdash; En Venta</div>
+      <div class="comp-card active">
+        <div class="comp-card-head" style="background:#374151; color:#fff;">
+          <div style="font-size:15px; font-weight:800;">555 NE 127th St</div>
+          <div style="font-size:12px; opacity:0.8;">North Miami, FL &mdash; MLS #A11898183</div>
+        </div>
+        <div class="comp-card-body">
+          <div class="comp-row"><span class="comp-row-label">Precio</span><span class="comp-row-value">$1,175,000</span></div>
+          <div class="comp-row"><span class="comp-row-label">Estructura actual</span><span class="comp-row-value">4-plex (tear down)</span></div>
+          <div class="comp-row"><span class="comp-row-label">Zoning</span><span class="comp-row-value">MU-2 / P3</span></div>
+          <div class="comp-row"><span class="comp-row-label">Estado</span><span class="comp-row-value gold">Aprobado 12 unidades</span></div>
+          <div class="comp-row"><span class="comp-row-label">Ingreso actual</span><span class="comp-row-value green">&ndash;$30,000 neto/a&ntilde;o</span></div>
+          <div class="comp-row"><span class="comp-row-label">D&iacute;as en mercado</span><span class="comp-row-value red">163 d&iacute;as sin comprador</span></div>
+        </div>
+        <div class="comp-card-body" style="border-top:1px solid #e5e7eb; background:#f9f9f9;">
+          <div style="font-size:10px; font-weight:700; text-transform:uppercase; color:#374151; margin-bottom:8px;">Comparaci&oacute;n vs. Pirola</div>
+          <div class="pros-cons">
+            <div class="pros-cons-item"><span class="icon" style="color:#16a34a;">&#x2714;</span><span>Precio $425K menor &mdash; $425K m&aacute;s de margen desde el inicio</span></div>
+            <div class="pros-cons-item"><span class="icon" style="color:#16a34a;">&#x2714;</span><span>3 unidades m&aacute;s aprobadas (12 vs 9) &mdash; mayor densidad</span></div>
+            <div class="pros-cons-item"><span class="icon" style="color:#16a34a;">&#x2714;</span><span>4-plex genera $30K neto mientras se planifica</span></div>
+            <div class="pros-cons-item"><span class="icon" style="color:#16a34a;">&#x2714;</span><span>Zona P3 &mdash; corredor de redesarrollo prioritario</span></div>
+            <div class="pros-cons-item"><span class="icon" style="color:#dc2626;">&#x2716;</span><span>Requiere &sim;12 meses de planificaci&oacute;n y permisos</span></div>
+            <div class="pros-cons-item"><span class="icon" style="color:#dc2626;">&#x2716;</span><span>163 d&iacute;as en mercado &mdash; liquidez limitada en esta zona</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Resumen comparativo -->
+  <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:#C9A84C; margin-bottom:12px;">Resumen Comparativo &mdash; Terrenos Activos en Zona</div>
+  <div class="table-scroll">
+  <table>
+    <tr>
+      <th>Propiedad</th>
+      <th class="c">Precio</th>
+      <th class="c">Lote (sqft)</th>
+      <th class="c">$/sqft Lote</th>
+      <th class="c">Estado</th>
+      <th>Notas</th>
+    </tr>
+    <tr class="total-row">
+      <td style="color:#C9A84C;"><strong>Pirola &mdash; 12116 NE 5th Ave</strong></td>
+      <td class="c" style="color:#ff6b6b;"><strong>$1,600,000</strong></td>
+      <td class="c">16,875</td>
+      <td class="c" style="color:#ff6b6b;"><strong>$94.8/sqft</strong></td>
+      <td class="c">9 unidades aprobadas</td>
+      <td>Shovel-ready, planos aprobados</td>
+    </tr>
+    <tr>
+      <td><strong>555 NE 127th St</strong></td>
+      <td class="c">$1,175,000</td>
+      <td class="c">&mdash;</td>
+      <td class="c">&mdash;</td>
+      <td class="c gold">12 unidades aprobadas</td>
+      <td>4-plex existente, 163 d&iacute;as sin comprador</td>
+    </tr>
+  </table>
+  </div>
+
+  <div class="callout-gold" style="margin-top:20px;">
+    <strong>Nota:</strong> El OM de Pirola no incluye comparables de terreno. El &uacute;nico comparable activo verificable en la zona es 555 NE 127th St a $1,175,000 &mdash; una propiedad con m&aacute;s unidades aprobadas, ingreso existente, y lleva 163 d&iacute;as sin comprador. Eso es el mercado indic&aacute;ndonos el techo de valor para terrenos con permisos en North Miami.
+  </div>
+
+</div>
+</div>
+
+<!-- ===================== SECCIÓN 2: EL PROYECTO ===================== -->
+<div style="background:#f9fafb; padding: 60px 20px;">
+<div class="section-wrap" style="padding-top:0; padding-bottom:0;">
+
+  <div class="section-title">Secci&oacute;n 2</div>
+  <div class="section-h2">El Proyecto &mdash; Costos de Construcci&oacute;n</div>
+  <div class="section-sub">Tres escenarios de costo de construcci&oacute;n. El OM de Pirola no incluye presupuesto de construcci&oacute;n; estas son estimaciones de mercado para North Miami-Dade.</div>
+
+  <!-- Project Specs -->
+  <div class="card" style="margin-bottom:28px;">
+    <div class="card-header card-header-navy">Especificaciones del Proyecto</div>
+    <div class="card-body">
+      <div class="grid-3">
+        <div>
+          <table>
+            <tr><th colspan="2">Producto Final</th></tr>
+            <tr><td>Unidades</td><td class="r"><strong>9 Townhouses / Apartamentos</strong></td></tr>
+            <tr><td>Construcci&oacute;n Bruta</td><td class="r"><strong>10,525 sqft</strong></td></tr>
+            <tr><td>Bajo A/C (seg&uacute;n OM)</td><td class="r"><strong>7,669 sqft</strong></td></tr>
+            <tr><td>Promedio bajo A/C / unidad</td><td class="r"><strong>&sim;852 sqft</strong></td></tr>
+          </table>
+        </div>
+        <div>
+          <table>
+            <tr><th colspan="2">Configuraci&oacute;n</th></tr>
+            <tr><td>Tipo</td><td class="r"><strong>2BR / 2BA</strong></td></tr>
+            <tr><td>Zoning</td><td class="r"><strong>MU-2</strong></td></tr>
+            <tr><td>Planos</td><td class="r green"><strong>Aprobados</strong></td></tr>
+            <tr><td>Construcci&oacute;n estimada</td><td class="r"><strong>12&ndash;18 meses</strong></td></tr>
+          </table>
+        </div>
+        <div>
+          <table>
+            <tr><th colspan="2">Referencia OM</th></tr>
+            <tr><td>NOI proyectado (alquiler)</td><td class="r gold"><strong>$226,937/a&ntilde;o</strong></td></tr>
+            <tr><td>Renta por unidad</td><td class="r"><strong>$2,900/mes</strong></td></tr>
+            <tr><td>Precio de venta / unidad</td><td class="r"><strong>$425,000</strong></td></tr>
+            <tr><td>Costo construcci&oacute;n (OM)</td><td class="r red"><strong>No indicado</strong></td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Construction Scenarios -->
+  <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:#1a2744; margin-bottom:12px;">Escenarios de Costo de Construcci&oacute;n (10,525 sqft brutos)</div>
+
+  <div class="scenario-grid" style="margin-bottom:20px;">
+    <div class="scenario-tab low">
+      <div class="s-label" style="color:#166534;">Bajo &mdash; $250/sqft</div>
+      <div class="s-value" style="color:#15803d;">$2,631,250</div>
+      <div class="s-sub">Wood frame / Primer belt<br>Construcci&oacute;n liviana</div>
+    </div>
+    <div class="scenario-tab mid">
+      <div class="s-label" style="color:#92400e;">Medio &mdash; $350/sqft</div>
+      <div class="s-value" style="color:#C9A84C;">$3,683,750</div>
+      <div class="s-sub">Concreto est&aacute;ndar<br>Miami-Dade t&iacute;pico</div>
+    </div>
+    <div class="scenario-tab high">
+      <div class="s-label" style="color:#991b1b;">Alto &mdash; $450/sqft</div>
+      <div class="s-value" style="color:#dc2626;">$4,736,250</div>
+      <div class="s-sub">Premium / Acabados altos<br>Inflaci&oacute;n materiales</div>
+    </div>
+  </div>
+
+  <div class="table-scroll">
+  <table>
+    <tr>
+      <th style="width:30%;">Concepto</th>
+      <th class="c" style="background:#166534;">$250/sqft<br><span style="font-size:9px; font-weight:400;">(Wood Frame)</span></th>
+      <th class="c" style="background:#92400e;">$350/sqft<br><span style="font-size:9px; font-weight:400;">(Est&aacute;ndar)</span></th>
+      <th class="c" style="background:#991b1b;">$450/sqft<br><span style="font-size:9px; font-weight:400;">(Premium)</span></th>
+    </tr>
+    <tr><td>Precio del Terreno</td><td class="c">$1,600,000</td><td class="c">$1,600,000</td><td class="c">$1,600,000</td></tr>
+    <tr><td>Costos Duros (10,525 sqft)</td><td class="c">$2,631,250</td><td class="c">$3,683,750</td><td class="c">$4,736,250</td></tr>
+    <tr><td>Soft Costs (+15%)</td><td class="c">$394,688</td><td class="c">$552,563</td><td class="c">$710,438</td></tr>
+    <tr class="subtotal-row">
+      <td><strong>Subtotal (sin financiamiento)</strong></td>
+      <td class="c"><strong>$4,625,938</strong></td>
+      <td class="c"><strong>$5,836,313</strong></td>
+      <td class="c"><strong>$7,046,688</strong></td>
+    </tr>
+  </table>
+  </div>
+
+  <div class="callout-gold" style="margin-top:16px;">
+    <strong>Nota:</strong> El escenario de $250/sqft podr&iacute;a lograrse con construcci&oacute;n wood frame (primer belt). El est&aacute;ndar en Miami-Dade para multifamiliar de concreto es actualmente $350&ndash;$400/sqft. El escenario alto refleja potencial de inflaci&oacute;n de materiales e imprevistos.
+  </div>
+
+</div>
+</div>
+
+<!-- ===================== SECCIÓN 3: FINANCIAMIENTO ===================== -->
+<div style="background:#1a2744; padding: 60px 20px;">
+<div class="section-wrap" style="padding-top:0; padding-bottom:0;">
+
+  <div class="section-title" style="color:#C9A84C;">Secci&oacute;n 3</div>
+  <div class="section-h2" style="color:#fff;">Financiamiento &mdash; Costo del Capital</div>
+  <div class="section-sub" style="color:#9ca3af;">Dos escenarios: pr&eacute;stamo familiar a tasa preferencial vs. institucional. Asumiendo 12 meses de construcci&oacute;n (proyecto shovel-ready con planos aprobados).</div>
+
+  <!-- Two Financing Scenarios -->
+  <div class="grid-2" style="margin-bottom:28px;">
+
+    <div class="card">
+      <div class="card-header card-header-gold">Escenario A &mdash; Pr&eacute;stamo Familiar &nbsp;|&nbsp; 6.5% anual</div>
+      <div class="card-body">
+        <div class="comp-row"><span class="comp-row-label">Tasa</span><span class="comp-row-value green">6.5% I/O anual</span></div>
+        <div class="comp-row"><span class="comp-row-label">Prestamista</span><span class="comp-row-value">Familia Pirola</span></div>
+        <div class="comp-row"><span class="comp-row-label">Plazo</span><span class="comp-row-value">12 meses (construcci&oacute;n)</span></div>
+        <div class="comp-row"><span class="comp-row-label">Base de c&aacute;lculo</span><span class="comp-row-value muted">Construcci&oacute;n + Soft Costs</span></div>
+        <br>
+        <table>
+          <tr><th></th><th class="c">$250/sqft</th><th class="c">$350/sqft</th><th class="c">$450/sqft</th></tr>
+          <tr><td>Base financiada</td><td class="c">$3,025,938</td><td class="c">$4,236,313</td><td class="c">$5,446,688</td></tr>
+          <tr class="total-row"><td style="color:#C9A84C;">Costo intereses (1 a&ntilde;o)</td><td class="c" style="color:#4ade80;"><strong>$196,686</strong></td><td class="c" style="color:#fde047;"><strong>$275,360</strong></td><td class="c" style="color:#ff6b6b;"><strong>$354,035</strong></td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header card-header-navy">Escenario B &mdash; Institucional / RBI &nbsp;|&nbsp; 8.5% anual</div>
+      <div class="card-body">
+        <div class="comp-row"><span class="comp-row-label">Tasa</span><span class="comp-row-value red">8.5% I/O anual</span></div>
+        <div class="comp-row"><span class="comp-row-label">Prestamista</span><span class="comp-row-value">RBI / Banco institucional</span></div>
+        <div class="comp-row"><span class="comp-row-label">Plazo</span><span class="comp-row-value">12 meses (construcci&oacute;n)</span></div>
+        <div class="comp-row"><span class="comp-row-label">Base de c&aacute;lculo</span><span class="comp-row-value muted">Construcci&oacute;n + Soft Costs</span></div>
+        <br>
+        <table>
+          <tr><th></th><th class="c">$250/sqft</th><th class="c">$350/sqft</th><th class="c">$450/sqft</th></tr>
+          <tr><td>Base financiada</td><td class="c">$3,025,938</td><td class="c">$4,236,313</td><td class="c">$5,446,688</td></tr>
+          <tr class="total-row"><td style="color:#C9A84C;">Costo intereses (1 a&ntilde;o)</td><td class="c" style="color:#fde047;"><strong>$257,205</strong></td><td class="c" style="color:#fca5a5;"><strong>$360,087</strong></td><td class="c" style="color:#ff6b6b;"><strong>$463,168</strong></td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Total All-In Cost -->
+  <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:#C9A84C; margin-bottom:12px;">Costo Total All-In del Proyecto (Terreno + Construcci&oacute;n + Soft + Financiamiento)</div>
+  <div class="table-scroll">
+  <table>
+    <tr>
+      <th>Escenario</th>
+      <th class="c">Construcci&oacute;n</th>
+      <th class="c">Financiamiento 6.5%</th>
+      <th class="c">Total All-In (6.5%)</th>
+      <th class="c">Financiamiento 8.5%</th>
+      <th class="c">Total All-In (8.5%)</th>
+    </tr>
+    <tr>
+      <td><strong style="color:#16a34a;">Bajo &mdash; $250/sqft</strong></td>
+      <td class="c">$3,025,938</td>
+      <td class="c">$196,686</td>
+      <td class="c" style="background:#f0fdf4;"><strong>$4,822,624</strong></td>
+      <td class="c">$257,205</td>
+      <td class="c" style="background:#f0fdf4;"><strong>$4,883,143</strong></td>
+    </tr>
+    <tr>
+      <td><strong style="color:#C9A84C;">Medio &mdash; $350/sqft</strong></td>
+      <td class="c">$4,236,313</td>
+      <td class="c">$275,360</td>
+      <td class="c" style="background:#fffbeb;"><strong>$6,111,673</strong></td>
+      <td class="c">$360,087</td>
+      <td class="c" style="background:#fffbeb;"><strong>$6,196,400</strong></td>
+    </tr>
+    <tr>
+      <td><strong style="color:#dc2626;">Alto &mdash; $450/sqft</strong></td>
+      <td class="c">$5,446,688</td>
+      <td class="c">$354,035</td>
+      <td class="c" style="background:#fef2f2;"><strong>$7,400,723</strong></td>
+      <td class="c">$463,168</td>
+      <td class="c" style="background:#fef2f2;"><strong>$7,509,856</strong></td>
+    </tr>
+  </table>
+  </div>
+
+</div>
+</div>
+
+<!-- ===================== SECCIÓN 4: COMPARABLES DE VENTA + ROI ===================== -->
+<div style="background:#fff; padding: 60px 20px;">
+<div class="section-wrap" style="padding-top:0; padding-bottom:0;">
+
+  <div class="section-title">Secci&oacute;n 4</div>
+  <div class="section-h2">Comparables de Venta &mdash; Producto Final</div>
+  <div class="section-sub">¿A cu&aacute;nto se venden hoy unidades similares en North Miami? Analizamos el precio de salida y calculamos ROI/IRR para cada escenario.</div>
+
+  <div class="grid-split" style="margin-bottom:28px;">
+
+    <!-- Project summary -->
+    <div>
+      <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:#1a2744; margin-bottom:8px;">El Producto a Vender</div>
+      <div class="card">
+        <div class="card-header card-header-navy">9 Apartamentos 2BR/2BA &mdash; 806&ndash;912 sqft bajo A/C</div>
+        <div class="card-body">
+          <div class="comp-row"><span class="comp-row-label">Ubicaci&oacute;n</span><span class="comp-row-value">North Miami (NoMi)</span></div>
+          <div class="comp-row"><span class="comp-row-label">Bajo A/C total (OM)</span><span class="comp-row-value">7,669 sqft</span></div>
+          <div class="comp-row"><span class="comp-row-label">Rango bajo A/C / unidad</span><span class="comp-row-value">806 &ndash; 912 sqft</span></div>
+          <div class="comp-row"><span class="comp-row-label">Precio OM Pirola</span><span class="comp-row-value">$425,000 / unidad</span></div>
+          <div class="comp-row"><span class="comp-row-label">Total 9 unidades</span><span class="comp-row-value">$3,825,000</span></div>
+          <div class="comp-row"><span class="comp-row-label">$/sqft bajo A/C</span><span class="comp-row-value">$499/sqft</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sales comps -->
+    <div>
+      <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:#C9A84C; margin-bottom:8px;">Comparables seg&uacute;n OM de Pirola</div>
+      <div class="table-scroll">
+      <table>
+        <tr><th>Propiedad</th><th class="c">A&ntilde;o</th><th class="c">Precio Total</th><th class="c">Unidades</th><th class="c">Precio/Unidad</th><th>Notas</th></tr>
+        <tr><td>NE 2nd Ave Multifamily</td><td class="c">2022</td><td class="c">$2,800,000</td><td class="c">8</td><td class="c">$350,000</td><td>Escala boutique similar</td></tr>
+        <tr><td>Biscayne Corridor Mixed-Use</td><td class="c">2023</td><td class="c">$3,500,000</td><td class="c">10</td><td class="c">$350,000</td><td>Retail en planta baja</td></tr>
+        <tr><td>NE 125th St Portfolio</td><td class="c">2021</td><td class="c">$1,900,000</td><td class="c">6</td><td class="c">$317,000</td><td>Value-add acquisition</td></tr>
+        <tr><td>Wynwood Micro-Units</td><td class="c">2023</td><td class="c">$6,100,000</td><td class="c">14</td><td class="c">$436,000</td><td>Submercado premium</td></tr>
+        <tr class="subtotal-row"><td><strong>Promedio North Miami (excl. Wynwood)</strong></td><td class="c">&mdash;</td><td class="c">&mdash;</td><td class="c">&mdash;</td><td class="c"><strong>$339,000</strong></td><td>Base de referencia</td></tr>
+        <tr class="total-row"><td style="color:#C9A84C;"><strong>Pirola pide (The Palms)</strong></td><td class="c">&mdash;</td><td class="c" style="color:#ff6b6b;">$3,825,000</td><td class="c">9</td><td class="c" style="color:#ff6b6b;"><strong>$425,000</strong></td><td>25% sobre promedio de mercado</td></tr>
+      </table>
+      </div>
+      <div class="muted" style="margin-top:6px; font-size:10px;">Fuente: OM de Pirola, Marzo 2026. Nota: los comparables de Pirola son de propiedades ya construidas y vendidas, no de desarrollo nuevo.</div>
+    </div>
+  </div>
+
+  <!-- Sensitivity Analysis -->
+  <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:#1a2744; margin-bottom:12px;">An&aacute;lisis de Sensibilidad &mdash; Precio de Venta (&plusmn;10%)</div>
+
+  <div class="scenario-grid" style="margin-bottom:20px;">
+    <div class="scenario-tab" style="background:#fef2f2; border-color:#dc2626;">
+      <div class="s-label" style="color:#991b1b;">Precio &minus;10%</div>
+      <div class="s-value" style="color:#dc2626;">$382,500/u</div>
+      <div class="s-sub">Total: $3,442,500<br>Neto venta: $3,235,950</div>
+    </div>
+    <div class="scenario-tab" style="background:#fffbeb; border-color:#C9A84C;">
+      <div class="s-label" style="color:#92400e;">Precio Base (OM)</div>
+      <div class="s-value" style="color:#C9A84C;">$425,000/u</div>
+      <div class="s-sub">Total: $3,825,000<br>Neto venta: $3,595,500</div>
+    </div>
+    <div class="scenario-tab" style="background:#f0fdf4; border-color:#16a34a;">
+      <div class="s-label" style="color:#166534;">Precio +10%</div>
+      <div class="s-value" style="color:#16a34a;">$467,500/u</div>
+      <div class="s-sub">Total: $4,207,500<br>Neto venta: $3,955,050</div>
+    </div>
+  </div>
+
+  <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:#1a2744; margin-bottom:8px;">ROI por Escenario de Construcci&oacute;n &times; Precio de Venta (Financiamiento 6.5%)</div>
+  <div class="table-scroll">
+  <table>
+    <tr>
+      <th>Costo All-In (6.5%)</th>
+      <th class="c" style="background:#991b1b;">Venta &minus;10%<br><span style="font-size:9px; font-weight:400;">Neto: $3,235,950</span></th>
+      <th class="c" style="background:#92400e;">Precio Base<br><span style="font-size:9px; font-weight:400;">Neto: $3,595,500</span></th>
+      <th class="c" style="background:#166534;">Venta +10%<br><span style="font-size:9px; font-weight:400;">Neto: $3,955,050</span></th>
+    </tr>
+    <tr>
+      <td><strong style="color:#16a34a;">Bajo $250/sqft &mdash; $4,822,624</strong></td>
+      <td class="c red"><strong>($1,586,674)</strong><br><span class="muted">&ndash;33% ROI</span></td>
+      <td class="c red"><strong>($1,227,124)</strong><br><span class="muted">&ndash;25% ROI</span></td>
+      <td class="c red"><strong>($867,574)</strong><br><span class="muted">&ndash;18% ROI</span></td>
+    </tr>
+    <tr>
+      <td><strong style="color:#C9A84C;">Medio $350/sqft &mdash; $6,111,673</strong></td>
+      <td class="c red"><strong>($2,875,723)</strong><br><span class="muted">&ndash;47% ROI</span></td>
+      <td class="c red"><strong>($2,516,173)</strong><br><span class="muted">&ndash;41% ROI</span></td>
+      <td class="c red"><strong>($2,156,623)</strong><br><span class="muted">&ndash;35% ROI</span></td>
+    </tr>
+    <tr>
+      <td><strong style="color:#dc2626;">Alto $450/sqft &mdash; $7,400,723</strong></td>
+      <td class="c red"><strong>($4,164,773)</strong><br><span class="muted">&ndash;56% ROI</span></td>
+      <td class="c red"><strong>($3,805,223)</strong><br><span class="muted">&ndash;51% ROI</span></td>
+      <td class="c red"><strong>($3,445,673)</strong><br><span class="muted">&ndash;47% ROI</span></td>
+    </tr>
+  </table>
+  </div>
+
+  <div class="callout-red" style="margin-top:20px;">
+    <strong>Resultado:</strong> En <em>todos</em> los escenarios &mdash; incluso con construcci&oacute;n m&aacute;s barata ($250/sqft) y precio de venta 10% mayor al OM &mdash; el proyecto <strong>pierde dinero</strong> a un precio de terreno de $1,600,000. El retorno es negativo antes de considerar impuestos, holding costs o imprevistos.
+  </div>
+
+</div>
+</div>
+
+<!-- ===================== SECCIÓN 5: ESCENARIO ALQUILER ===================== -->
+<div style="background:#f9fafb; padding: 60px 20px;">
+<div class="section-wrap" style="padding-top:0; padding-bottom:0;">
+
+  <div class="section-title">Secci&oacute;n 5</div>
+  <div class="section-h2">Escenario Alternativo &mdash; Alquiler + Refinanciamiento</div>
+  <div class="section-sub">¿Y si en vez de vender, se mantiene el proyecto como alquiler y se refinancia? Analizamos el retorno usando el NOI del OM de Pirola.</div>
+
+  <!-- Assumptions -->
+  <div class="card" style="margin-bottom:24px;">
+    <div class="card-header card-header-navy">Supuestos del Escenario de Alquiler</div>
+    <div class="card-body">
+      <div class="grid-3">
+        <table>
+          <tr><th colspan="2">Ingresos</th></tr>
+          <tr><td>NOI Estabilizado (OM Pirola)</td><td class="r gold"><strong>$226,937/a&ntilde;o</strong></td></tr>
+          <tr><td>Renta / unidad</td><td class="r">$2,900/mes</td></tr>
+          <tr><td>Cap Rate de valuaci&oacute;n</td><td class="r">5.0%</td></tr>
+          <tr><td>Valor estabilizado</td><td class="r"><strong>$4,538,740</strong></td></tr>
+        </table>
+        <table>
+          <tr><th colspan="2">Refinanciamiento</th></tr>
+          <tr><td>LTV</td><td class="r">70%</td></tr>
+          <tr><td>Proceeds del refi</td><td class="r gold"><strong>$3,177,118</strong></td></tr>
+          <tr><td>Tasa hipoteca</td><td class="r">5.0% a 30 a&ntilde;os</td></tr>
+          <tr><td>Pago mensual</td><td class="r">$17,057/mes</td></tr>
+          <tr><td>Pago anual</td><td class="r red"><strong>$204,684/a&ntilde;o</strong></td></tr>
+        </table>
+        <table>
+          <tr><th colspan="2">Flujo de Caja</th></tr>
+          <tr><td>NOI</td><td class="r">$226,937</td></tr>
+          <tr><td>Servicio de deuda</td><td class="r red">($204,684)</td></tr>
+          <tr class="subtotal-row"><td><strong>FCF anual</strong></td><td class="r"><strong>$22,253</strong></td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cash on Cash by Scenario -->
+  <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:#1a2744; margin-bottom:12px;">Cash-on-Cash: Equity Atrapado vs. Retorno Anual</div>
+  <div class="table-scroll">
+  <table>
+    <tr>
+      <th>Escenario Construcci&oacute;n</th>
+      <th class="c">Costo All-In (6.5%)</th>
+      <th class="c">Proceeds Refi (70% LTV)</th>
+      <th class="c">Equity restante en deal</th>
+      <th class="c">FCF Anual</th>
+      <th class="c">Cash-on-Cash</th>
+      <th class="c">vs. T-Bills (4.5%)</th>
+    </tr>
+    <tr>
+      <td><strong style="color:#16a34a;">$250/sqft</strong></td>
+      <td class="c">$4,822,624</td>
+      <td class="c">$3,177,118</td>
+      <td class="c"><strong>$1,645,506</strong></td>
+      <td class="c">$22,253</td>
+      <td class="c red"><strong>1.35%</strong></td>
+      <td class="c red"><strong>&ndash;3.15 pts</strong></td>
+    </tr>
+    <tr>
+      <td><strong style="color:#C9A84C;">$350/sqft</strong></td>
+      <td class="c">$6,111,673</td>
+      <td class="c">$3,177,118</td>
+      <td class="c"><strong>$2,934,555</strong></td>
+      <td class="c">$22,253</td>
+      <td class="c red"><strong>0.76%</strong></td>
+      <td class="c red"><strong>&ndash;3.74 pts</strong></td>
+    </tr>
+    <tr>
+      <td><strong style="color:#dc2626;">$450/sqft</strong></td>
+      <td class="c">$7,400,723</td>
+      <td class="c">$3,177,118</td>
+      <td class="c"><strong>$4,223,605</strong></td>
+      <td class="c">$22,253</td>
+      <td class="c red"><strong>0.53%</strong></td>
+      <td class="c red"><strong>&ndash;3.97 pts</strong></td>
+    </tr>
+    <tr class="total-row">
+      <td colspan="5" style="color:#d1d5db;">Alternativa libre de riesgo &mdash; T-Bills / Money Market</td>
+      <td class="c" style="color:#4ade80; font-size:16px;"><strong>4.5%</strong></td>
+      <td class="c" style="color:#4ade80;"><strong>Benchmark</strong></td>
+    </tr>
+  </table>
+  </div>
+
+  <div class="callout-red" style="margin-top:20px;">
+    <strong>Conclusi&oacute;n del escenario alquiler:</strong> Incluso con el escenario m&aacute;s optimista ($250/sqft construccion), el cash-on-cash del proyecto es <strong>1.35%</strong> &mdash; muy por debajo de lo que rinde un simple instrumento de renta fija (~4.5%). Adem&aacute;s, el refinanciamiento al 70% LTV <strong>NO recupera la inversi&oacute;n</strong> en ning&uacute;n escenario: quedan atrapados entre $1.6M y $4.2M en equity sin retorno adecuado. <strong>El proyecto no funciona a $1,600,000, ni vendiendo ni alquilando.</strong>
+  </div>
+
+</div>
+</div>
+
+<!-- ===================== SECCIÓN 6: CONCLUSIONES ===================== -->
+<div style="background:#1a2744; padding: 60px 20px;">
+<div class="section-wrap" style="padding-top:0; padding-bottom:0;">
+
+  <div class="section-title" style="color:#C9A84C;">Secci&oacute;n 6</div>
+  <div class="section-h2" style="color:#fff;">Conclusiones &amp; Resumen</div>
+  <div class="section-sub" style="color:#9ca3af;">Usando los supuestos m&aacute;s optimistas posibles en cada variable.</div>
+
+  <!-- Summary Table -->
+  <div class="table-scroll" style="margin-bottom:28px;">
+  <table style="margin-bottom:0;">
+    <tr>
+      <th>Variable</th>
+      <th class="c" style="background:#374151;">Escenario Bajo<br><span style="font-size:9px; font-weight:400;">$250/sqft &bull; Venta +10%</span></th>
+      <th class="c" style="background:#4b5563;">Escenario Medio<br><span style="font-size:9px; font-weight:400;">$350/sqft &bull; Precio base</span></th>
+      <th class="c" style="background:#6b7280;">Escenario Alto<br><span style="font-size:9px; font-weight:400;">$450/sqft &bull; Venta &minus;10%</span></th>
+    </tr>
+    <tr><td style="color:#C9A84C;">Costo All-In</td><td class="c" style="color:#ccc;">$4,822,624</td><td class="c" style="color:#ccc;">$6,111,673</td><td class="c" style="color:#ccc;">$7,400,723</td></tr>
+    <tr><td style="color:#C9A84C;">Ingresos netos venta</td><td class="c" style="color:#ccc;">$3,955,050</td><td class="c" style="color:#ccc;">$3,595,500</td><td class="c" style="color:#ccc;">$3,235,950</td></tr>
+    <tr><td style="color:#C9A84C;"><strong>P&eacute;rdida / (Ganancia)</strong></td><td class="c" style="color:#ff6b6b; font-size:16px;"><strong>($867,574)</strong></td><td class="c" style="color:#ff6b6b; font-size:16px;"><strong>($2,516,173)</strong></td><td class="c" style="color:#ff6b6b; font-size:16px;"><strong>($4,164,773)</strong></td></tr>
+    <tr><td style="color:#C9A84C;">ROI</td><td class="c" style="color:#ff6b6b;"><strong>&ndash;18%</strong></td><td class="c" style="color:#ff6b6b;"><strong>&ndash;41%</strong></td><td class="c" style="color:#ff6b6b;"><strong>&ndash;56%</strong></td></tr>
+    <tr><td style="color:#C9A84C;">Cash-on-Cash (alquiler)</td><td class="c" style="color:#ff6b6b;">1.35%</td><td class="c" style="color:#ff6b6b;">0.76%</td><td class="c" style="color:#ff6b6b;">0.53%</td></tr>
+    <tr><td style="color:#C9A84C;">Funciona el deal?</td><td class="c" style="color:#ff6b6b; font-size:15px;"><strong>NO</strong></td><td class="c" style="color:#ff6b6b; font-size:15px;"><strong>NO</strong></td><td class="c" style="color:#ff6b6b; font-size:15px;"><strong>NO</strong></td></tr>
+  </table>
+  </div>
+
+  <!-- Key Points -->
+  <div class="grid-3" style="margin-bottom:28px;">
+    <div style="background:#1e3a5f; border-radius:8px; padding:20px; border-top:3px solid #dc2626;">
+      <div style="color:#dc2626; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px;">Terreno Sobrevalorado</div>
+      <div style="color:#d1d5db; font-size:13px;">El mercado de terrenos MU-2 en North Miami vale $125&ndash;$146/sqft. Pirola pide $213/sqft. Los planos aprobados justifican un premium, pero no de esa magnitud. La referencia m&aacute;s directa (555 NE 127th, mejor propiedad) lleva 163 d&iacute;as sin comprador a $1.175M.</div>
+    </div>
+    <div style="background:#1e3a5f; border-radius:8px; padding:20px; border-top:3px solid #C9A84C;">
+      <div style="color:#C9A84C; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px;">Construcci&oacute;n Insalvable</div>
+      <div style="color:#d1d5db; font-size:13px;">Incluso con construcci&oacute;n wood frame a $250/sqft (el escenario m&aacute;s optimista) el costo total supera los ingresos posibles de venta. El mercado de unidades terminadas no soporta el costo all-in del proyecto a este precio de terreno.</div>
+    </div>
+    <div style="background:#1e3a5f; border-radius:8px; padding:20px; border-top:3px solid #dc2626;">
+      <div style="color:#dc2626; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px;">No Funciona ni como Rental</div>
+      <div style="color:#d1d5db; font-size:13px;">A $1.6M, el cash-on-cash de alquiler es de 0.53&ndash;1.35% &mdash; inferior a cualquier instrumento de renta fija. El refinanciamiento al 70% LTV no devuelve el capital invertido en ningún escenario.</div>
+    </div>
+  </div>
+
+  <!-- Final Recommendation -->
+  <div style="background:#0d1421; border-radius:10px; padding:28px 32px; border: 2px solid #C9A84C;">
+    <div style="color:#C9A84C; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:2px; margin-bottom:12px;">Recomendaci&oacute;n</div>
+    <div style="color:#fff; font-size:18px; font-weight:800; line-height:1.4; margin-bottom:16px;">
+      A $1,600,000, este proyecto no genera retorno positivo bajo ning&uacute;n supuesto razonable.
+    </div>
+    <div style="color:#9ca3af; font-size:13px; line-height:1.7;">
+      &bull; &nbsp;Si el objetivo es desarrollar, la contraoferta debe anclar en un precio que genere IRR de mercado (15%).<br>
+      &bull; &nbsp;Si Pirola valora sus planos aprobados, esa prima tiene un l&iacute;mite de lo que el mercado puede absorber.<br>
+      &bull; &nbsp;La alternativa m&aacute;s l&oacute;gica (555 NE 127th, $1.175M, 12 unidades aprobadas) tampoco ha encontrado comprador tras 163 d&iacute;as &mdash; lo que dice mucho del mercado de terrenos en esta zona.
+    </div>
+    <div style="color:#C9A84C; font-weight:700; font-size:15px; margin-top:20px; padding-top:16px; border-top:1px solid #2d3a5a;">
+      Preparado por The Poler Team &nbsp;&bull;&nbsp; Abril 2026 &nbsp;&bull;&nbsp; Fuentes: OM Pirola (Marzo 2026), MLS #A11898183, estimaciones de mercado Miami-Dade
+    </div>
+  </div>
+
+</div>
+</div>
+
+<div class="doc-footer">
+  Uso interno &mdash; Confidencial &nbsp;|&nbsp; The Poler Team &nbsp;|&nbsp; info@thepolerteam.com
+</div>
+
+</body>
+</html>
