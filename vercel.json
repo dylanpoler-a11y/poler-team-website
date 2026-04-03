@@ -7,7 +7,7 @@
     },
     {
       "path": "/api/granola-sync",
-      "schedule": "*/15 * * * *"
+      "schedule": "0 20 * * *"
     }
   ]
 }
