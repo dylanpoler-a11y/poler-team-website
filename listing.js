@@ -1338,7 +1338,9 @@ async function fetchCuratedListings() {
         }
 
         window._currentListings = all;
-        all.forEach(l => grid.insertAdjacentHTML('beforeend', renderCard(l)));
+        const renderFn = currentViewMode === 'list' ? renderListItem : renderCard;
+        if (currentViewMode === 'list') grid.classList.add('results-list-view');
+        all.forEach(l => grid.insertAdjacentHTML('beforeend', renderFn(l)));
         countEl.textContent = `Showing ${all.length} featured propert${all.length === 1 ? 'y' : 'ies'}`;
     } catch (err) {
         console.error('Curated listings error:', err);
@@ -1462,6 +1464,108 @@ function renderCard(listing) {
     </div>`;
 }
 
+function renderListItem(listing) {
+    const photos = getAllPhotos(listing);
+    const photo = photos[0] || '';
+    const price = formatPrice(listing.ListPrice);
+    const address = listing.UnparsedAddress || listing.City || 'South Florida';
+    const city = listing.City || '';
+    const lid = listing.ListingId || '';
+    const beds = listing.BedroomsTotal || '—';
+    const baths = listing.BathroomsTotalInteger || '—';
+    const sqft = listing.LivingArea ? Number(listing.LivingArea).toLocaleString() : '—';
+    const dom = listing.DaysOnMarket != null ? listing.DaysOnMarket : '—';
+    const isNew = listing.DaysOnMarket != null && listing.DaysOnMarket <= 7;
+    const ppsfVal = (listing.ListPrice && listing.LivingArea) ? '$' + Math.round(listing.ListPrice / listing.LivingArea).toLocaleString() : '';
+    const status = listing.StandardStatus || 'Active';
+    const statusClass = status === 'Active' ? 'status-active' : status === 'Pending' ? 'status-pending' : 'status-other';
+    const propType = listing.PropertySubType || listing.PropertyType || '';
+    const yearBuilt = listing.YearBuilt || '';
+    const lot = listing.LotSizeSquareFeet ? Number(listing.LotSizeSquareFeet).toLocaleString() + ' sqft lot' : '';
+    const hoa = listing.AssociationFee ? '$' + Number(listing.AssociationFee).toLocaleString() + '/mo HOA' : '';
+    const listDate = listing.ListingContractDate || listing.OnMarketDate || '';
+    const listDateStr = listDate ? new Date(listDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+
+    const imgHtml = photo
+        ? `<img class="lv-photo" src="${photo}" alt="${address}" loading="lazy">`
+        : `<div class="lv-photo-placeholder"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M3 21h18M5 21V7l8-4v18M13 21V3l6 4v14"/></svg></div>`;
+
+    return `
+    <div class="lv-item" onclick="window.location.href='listing?mls=${lid}'">
+        <div class="lv-image">
+            ${imgHtml}
+            ${isNew ? '<span class="lv-new-badge">NEW</span>' : ''}
+            <span class="lv-status ${statusClass}">${status}</span>
+        </div>
+        <div class="lv-info">
+            <div class="lv-top-row">
+                <div class="lv-price">${price}</div>
+                <div class="lv-dom">${dom !== '—' ? dom + ' days on market' : ''}${listDateStr ? ' · Listed ' + listDateStr : ''}</div>
+            </div>
+            <div class="lv-address">${address}</div>
+            <div class="lv-stats-row">
+                <span class="lv-stat"><strong>${beds}</strong> beds</span>
+                <span class="lv-stat"><strong>${baths}</strong> baths</span>
+                <span class="lv-stat"><strong>${sqft}</strong> sqft</span>
+                ${ppsfVal ? `<span class="lv-stat">${ppsfVal}/sqft</span>` : ''}
+            </div>
+            <div class="lv-details-row">
+                ${propType ? `<span class="lv-tag">${propType}</span>` : ''}
+                ${yearBuilt ? `<span class="lv-tag">Built ${yearBuilt}</span>` : ''}
+                ${lot ? `<span class="lv-tag">${lot}</span>` : ''}
+                ${hoa ? `<span class="lv-tag">${hoa}</span>` : ''}
+            </div>
+        </div>
+    </div>`;
+}
+
+let currentViewMode = 'grid'; // 'grid', 'list', or 'map'
+
+function initViewToggle() {
+    const btns = document.querySelectorAll('.view-toggle-btn[data-view]');
+    const grid = document.getElementById('results-grid');
+    const mapView = document.getElementById('map-view');
+
+    btns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const mode = btn.dataset.view;
+            currentViewMode = mode;
+            btns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            if (mode === 'grid') {
+                grid.style.display = '';
+                grid.classList.remove('results-list-view');
+                if (mapView) mapView.style.display = 'none';
+                // Re-render as grid cards
+                if (window._currentListings) {
+                    grid.innerHTML = '';
+                    window._currentListings.forEach(l => grid.insertAdjacentHTML('beforeend', renderCard(l)));
+                }
+            } else if (mode === 'list') {
+                grid.style.display = '';
+                grid.classList.add('results-list-view');
+                if (mapView) mapView.style.display = 'none';
+                // Re-render as list items
+                if (window._currentListings) {
+                    grid.innerHTML = '';
+                    window._currentListings.forEach(l => grid.insertAdjacentHTML('beforeend', renderListItem(l)));
+                }
+            } else if (mode === 'map') {
+                grid.style.display = 'none';
+                if (mapView) mapView.style.display = 'block';
+            }
+        });
+    });
+
+    // Support ?view=list URL param
+    const viewParam = new URLSearchParams(window.location.search).get('view');
+    if (viewParam === 'list') {
+        const listBtn = document.getElementById('view-list-btn');
+        if (listBtn) listBtn.click();
+    }
+}
+
 function renderSkeletons(n = 6) {
     return Array(n).fill(0).map(() => `
     <div class="listing-card is-skeleton">
@@ -1514,8 +1618,10 @@ async function runSearch(append = false) {
         if (!append) window._currentListings = listings;
         else window._currentListings = (window._currentListings || []).concat(listings);
 
+        const renderFn = currentViewMode === 'list' ? renderListItem : renderCard;
+        if (currentViewMode === 'list' && !append) grid.classList.add('results-list-view');
         listings.forEach(l => {
-            grid.insertAdjacentHTML('beforeend', renderCard(l));
+            grid.insertAdjacentHTML('beforeend', renderFn(l));
         });
 
         searchOffset += listings.length;
@@ -1690,7 +1796,9 @@ function initSearchBar() {
             window._currentListings = listings;
             if (!listings.length) { document.getElementById('no-results').style.display = 'block'; countEl.textContent = 'No results found'; return; }
             document.getElementById('no-results').style.display = 'none';
-            listings.forEach(l => grid.insertAdjacentHTML('beforeend', renderCard(l)));
+            const renderFn2 = currentViewMode === 'list' ? renderListItem : renderCard;
+            if (currentViewMode === 'list') grid.classList.add('results-list-view');
+            listings.forEach(l => grid.insertAdjacentHTML('beforeend', renderFn2(l)));
             countEl.textContent = `Showing ${listings.length} properties`;
             const browse = document.getElementById('browse-section');
             if (browse) browse.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -2477,6 +2585,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initSearchBar();
     initAreaChips();
     initSearch();
+    initViewToggle();
     initSaveSearch();
     initFooterAlert();
     initViewToggle();
