@@ -1530,24 +1530,33 @@ function switchView(mode) {
     currentViewMode = mode;
     btns.forEach(b => b.classList.toggle('active', b.dataset.view === mode));
 
-    const listings = window._currentListings || [];
+    // If no stored listings, grab them from the existing DOM cards
+    if (!window._currentListings || !window._currentListings.length) {
+        // Can't re-render without data — just toggle the CSS class
+        if (mode === 'list') {
+            grid.classList.add('results-list-view');
+        } else {
+            grid.classList.remove('results-list-view');
+        }
+        if (mode === 'map') { grid.style.display = 'none'; if (mapView) mapView.style.display = 'block'; }
+        else { grid.style.display = ''; if (mapView) mapView.style.display = 'none'; }
+        return;
+    }
+
+    const listings = window._currentListings;
 
     if (mode === 'grid') {
         grid.style.display = '';
         grid.classList.remove('results-list-view');
         if (mapView) mapView.style.display = 'none';
-        if (listings.length) {
-            grid.innerHTML = '';
-            listings.forEach(l => grid.insertAdjacentHTML('beforeend', renderCard(l)));
-        }
+        grid.innerHTML = '';
+        listings.forEach(l => grid.insertAdjacentHTML('beforeend', renderCard(l)));
     } else if (mode === 'list') {
         grid.style.display = '';
         grid.classList.add('results-list-view');
         if (mapView) mapView.style.display = 'none';
-        if (listings.length) {
-            grid.innerHTML = '';
-            listings.forEach(l => grid.insertAdjacentHTML('beforeend', renderListItem(l)));
-        }
+        grid.innerHTML = '';
+        listings.forEach(l => grid.insertAdjacentHTML('beforeend', renderListItem(l)));
     } else if (mode === 'map') {
         grid.style.display = 'none';
         if (mapView) mapView.style.display = 'block';

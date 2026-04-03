@@ -13,6 +13,7 @@ const I18N = {
     navRent: { en: 'Rent', es: 'Alquilar', pt: 'Alugar' },
     navSTR: { en: 'Short-Term Rentals', es: 'Alquileres Cortos', pt: 'Aluguéis Curtos' },
     navValuation: { en: 'Home Valuation', es: 'Valoración', pt: 'Avaliação' },
+    navAdvSearch: { en: 'Advanced Search', es: 'Búsqueda Avanzada', pt: 'Busca Avançada' },
     navAbout: { en: 'About', es: 'Nosotros', pt: 'Sobre' },
     navContact: { en: 'Contact', es: 'Contacto', pt: 'Contato' },
 
