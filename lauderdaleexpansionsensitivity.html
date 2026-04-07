@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>505 + 506 Expansion — Sensitivity Analysis</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --navy: #1a2744;
+    --gold: #C9A84C;
+    --light-gold: #f5f0e1;
+    --green: #16a34a;
+    --red: #dc2626;
+    --bg: #f8f9fa;
+  }
+  body { font-family: 'Inter', sans-serif; color: #333; background: var(--bg); }
+  h1, h2, h3 { font-family: 'Playfair Display', serif; color: var(--navy); }
+
+  .header {
+    background: linear-gradient(135deg, var(--navy) 0%, #0f1729 100%);
+    color: #fff;
+    padding: 40px 32px;
+    text-align: center;
+  }
+  .header h1 { color: var(--gold); font-size: 32px; margin-bottom: 8px; }
+  .header p { opacity: 0.7; font-size: 14px; }
+
+  .container { max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
+
+  /* INPUTS PANEL */
+  .inputs-panel {
+    background: #fff;
+    border-radius: 12px;
+    padding: 28px;
+    margin-bottom: 24px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+  .inputs-panel h2 { font-size: 20px; margin-bottom: 20px; }
+  .inputs-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 20px;
+  }
+  .input-group { display: flex; flex-direction: column; gap: 6px; }
+  .input-group label {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #666;
+  }
+  .input-group input[type="range"] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 6px;
+    border-radius: 3px;
+    background: #e0e0e0;
+    outline: none;
+  }
+  .input-group input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--navy);
+    cursor: pointer;
+    border: 3px solid var(--gold);
+  }
+  .input-group .val-display {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--navy);
+  }
+  .input-group .val-sub {
+    font-size: 11px;
+    color: #999;
+  }
+
+  /* RESULTS */
+  .results-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .result-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+  .result-card .rc-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #888;
+    margin-bottom: 6px;
+  }
+  .result-card .rc-val {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--navy);
+  }
+  .result-card .rc-sub {
+    font-size: 12px;
+    color: #999;
+    margin-top: 4px;
+  }
+  .result-card.highlight { border: 2px solid var(--gold); background: var(--light-gold); }
+  .result-card.green .rc-val { color: var(--green); }
+  .result-card.red .rc-val { color: var(--red); }
+
+  /* TABLES */
+  .table-panel {
+    background: #fff;
+    border-radius: 12px;
+    padding: 28px;
+    margin-bottom: 24px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    overflow-x: auto;
+  }
+  .table-panel h3 { font-size: 18px; margin-bottom: 16px; }
+  table.sens { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table.sens thead th {
+    background: var(--navy);
+    color: #fff;
+    padding: 10px 14px;
+    text-align: right;
+    font-weight: 600;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  table.sens thead th:first-child { text-align: left; }
+  table.sens tbody td {
+    padding: 10px 14px;
+    border-bottom: 1px solid #eee;
+    text-align: right;
+  }
+  table.sens tbody td:first-child { text-align: left; font-weight: 600; color: var(--navy); }
+  table.sens tbody tr.current { background: var(--light-gold); }
+  table.sens tbody td.positive { color: var(--green); font-weight: 600; }
+  table.sens tbody td.negative { color: var(--red); font-weight: 600; }
+
+  /* SCENARIO COMPARISON */
+  .scenario-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .scenario-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    border-top: 4px solid #ddd;
+  }
+  .scenario-card.bear { border-top-color: var(--red); }
+  .scenario-card.base { border-top-color: var(--gold); }
+  .scenario-card.bull { border-top-color: var(--green); }
+  .scenario-card h4 { font-size: 14px; margin-bottom: 12px; }
+  .scenario-card .sc-row { display: flex; justify-content: space-between; font-size: 13px; padding: 4px 0; border-bottom: 1px solid #f0f0f0; }
+  .scenario-card .sc-row .sc-val { font-weight: 600; }
+
+  /* ACTUAL MARKER ON SLIDERS */
+  .slider-with-marker {
+    position: relative;
+    width: 100%;
+  }
+  .slider-with-marker input[type="range"] {
+    width: 100%;
+  }
+  .actual-marker {
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #16a34a;
+    border: 3px solid #fff;
+    box-shadow: 0 0 0 2px #16a34a;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  @media (max-width: 768px) {
+    .header { padding: 24px 16px; }
+    .header h1 { font-size: 24px; }
+    .container { padding: 16px; }
+    .inputs-grid { grid-template-columns: 1fr; }
+    .results-grid { grid-template-columns: repeat(3, 1fr); }
+    .scenario-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>505 + 506 Sensitivity Analysis</h1>
+  <p>The Lauderdale Boutique Expansion — Toggle scenarios to model returns</p>
+</div>
+
+<div class="container">
+
+  <!-- INPUTS -->
+  <div class="inputs-panel">
+    <h2>Assumptions — Drag to Adjust</h2>
+    <div class="inputs-grid">
+      <div class="input-group">
+        <label>506 Converted Keys</label>
+        <div class="val-display"><span id="valKeys">24</span> keys</div>
+        <input type="range" id="sliderKeys" min="14" max="26" value="24" step="2">
+        <div class="val-sub">14 (no conversion) → 26 (max feasible)</div>
+      </div>
+      <div class="input-group">
+        <label>506 Acquisition Price</label>
+        <div class="val-display">$<span id="valAcq">3.7</span>M</div>
+        <input type="range" id="sliderAcq" min="2.5" max="5.0" value="3.7" step="0.1">
+        <div class="val-sub" id="acqPerKey"></div>
+      </div>
+      <div class="input-group">
+        <label>506 Renovation Cost</label>
+        <div class="val-display">$<span id="valReno">1.0</span>M</div>
+        <input type="range" id="sliderReno" min="0.5" max="2.0" value="1.0" step="0.1">
+        <div class="val-sub"></div>
+      </div>
+      <div class="input-group">
+        <label>ADR (Avg Daily Rate)</label>
+        <div class="val-display">$<span id="valAdr">175</span></div>
+        <div class="slider-with-marker">
+          <input type="range" id="sliderAdr" min="120" max="250" value="175" step="5">
+          <div class="actual-marker" data-min="120" data-max="250" data-actual="175" title="Actual Lauderdale ADR: $175"></div>
+        </div>
+        <div class="val-sub"><span style="color:#16a34a;font-weight:600;">● Actual: $175</span></div>
+      </div>
+      <div class="input-group">
+        <label>Occupancy</label>
+        <div class="val-display"><span id="valOcc">80</span>%</div>
+        <div class="slider-with-marker">
+          <input type="range" id="sliderOcc" min="60" max="90" value="80" step="5">
+          <div class="actual-marker" data-min="60" data-max="90" data-actual="80" title="Actual Lauderdale Occupancy: 80%"></div>
+        </div>
+        <div class="val-sub"><span style="color:#16a34a;font-weight:600;">● Actual: 80%</span></div>
+      </div>
+      <div class="input-group">
+        <label>Expense Ratio</label>
+        <div class="val-display"><span id="valExp">55</span>%</div>
+        <div class="slider-with-marker">
+          <input type="range" id="sliderExp" min="45" max="70" value="55" step="5">
+          <div class="actual-marker" data-min="45" data-max="70" data-actual="55" title="Actual Lauderdale Expense Ratio: 55%"></div>
+        </div>
+        <div class="val-sub"><span style="color:#16a34a;font-weight:600;">● Actual: 55%</span></div>
+      </div>
+      <div class="input-group">
+        <label>Annual NOI Growth</label>
+        <div class="val-display"><span id="valGrowth">2</span>%</div>
+        <div class="slider-with-marker">
+          <input type="range" id="sliderGrowth" min="0" max="5" value="2" step="1">
+          <div class="actual-marker" data-min="0" data-max="5" data-actual="2" title="Actual Lauderdale NOI Growth: ~2%"></div>
+        </div>
+        <div class="val-sub"><span style="color:#16a34a;font-weight:600;">● Actual: ~2%</span></div>
+      </div>
+      <div class="input-group">
+        <label>Exit Cap Rate</label>
+        <div class="val-display"><span id="valExitCap">8</span>%</div>
+        <input type="range" id="sliderExitCap" min="5" max="10" value="8" step="0.5">
+        <div class="val-sub">5% (premium) → 10% (distressed)</div>
+      </div>
+      <div class="input-group">
+        <label>Exit Year</label>
+        <div class="val-display">Year <span id="valExitYr">5</span></div>
+        <input type="range" id="sliderExitYr" min="3" max="10" value="5" step="1">
+        <div class="val-sub">3 years (quick flip) → 10 years (long hold)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- KEY METRICS -->
+  <div class="results-grid" id="resultsGrid"></div>
+
+  <!-- SCENARIOS -->
+  <div class="scenario-grid" id="scenarioGrid"></div>
+
+  <!-- ROOM COUNT SENSITIVITY -->
+  <div class="table-panel">
+    <h3>Room Count Sensitivity — What if 506 converts to fewer keys?</h3>
+    <table class="sens" id="roomTable"></table>
+  </div>
+
+  <!-- YEAR-BY-YEAR CASH FLOW -->
+  <div class="table-panel">
+    <h3>Year-by-Year Cash Flow & Exit Value</h3>
+    <table class="sens" id="cashflowTable"></table>
+  </div>
+
+  <!-- EXIT CAP SENSITIVITY -->
+  <div class="table-panel">
+    <h3>Exit Valuation — Cap Rate vs NOI at Exit</h3>
+    <table class="sens" id="exitTable"></table>
+  </div>
+
+</div>
+
+<script>
+// 505 constants
+const HOTEL_505_PRICE = 6000000;
+const HOTEL_505_KEYS = 17;
+const HOTEL_505_NOI = 374000;
+const HOTEL_505_REVENUE = 835000;
+
+// Sliders
+const sliders = {
+  keys: document.getElementById('sliderKeys'),
+  acq: document.getElementById('sliderAcq'),
+  reno: document.getElementById('sliderReno'),
+  adr: document.getElementById('sliderAdr'),
+  occ: document.getElementById('sliderOcc'),
+  exp: document.getElementById('sliderExp'),
+  growth: document.getElementById('sliderGrowth'),
+  exitCap: document.getElementById('sliderExitCap'),
+  exitYr: document.getElementById('sliderExitYr'),
+};
+
+const valDisplays = {
+  keys: document.getElementById('valKeys'),
+  acq: document.getElementById('valAcq'),
+  reno: document.getElementById('valReno'),
+  adr: document.getElementById('valAdr'),
+  occ: document.getElementById('valOcc'),
+  exp: document.getElementById('valExp'),
+  growth: document.getElementById('valGrowth'),
+  exitCap: document.getElementById('valExitCap'),
+  exitYr: document.getElementById('valExitYr'),
+};
+
+function getInputs() {
+  return {
+    keys506: parseInt(sliders.keys.value),
+    acq506: parseFloat(sliders.acq.value) * 1000000,
+    reno506: parseFloat(sliders.reno.value) * 1000000,
+    adr: parseFloat(sliders.adr.value),
+    occ: parseFloat(sliders.occ.value) / 100,
+    expRatio: parseFloat(sliders.exp.value) / 100,
+    growth: parseFloat(sliders.growth.value) / 100,
+    exitCap: parseFloat(sliders.exitCap.value) / 100,
+    exitYr: parseInt(sliders.exitYr.value),
+  };
+}
+
+function fmt(n) { return n.toLocaleString('en-US', { maximumFractionDigits: 0 }); }
+function fmtM(n) { return '$' + (n / 1000000).toFixed(1) + 'M'; }
+function fmtK(n) { return '$' + (n / 1000).toFixed(0) + 'K'; }
+function fmtPct(n) { return (n * 100).toFixed(1) + '%'; }
+
+function calcDeal(inp) {
+  const totalKeys = HOTEL_505_KEYS + inp.keys506;
+  const totalCost = HOTEL_505_PRICE + inp.acq506 + inp.reno506;
+
+  // RevPAR = ADR * Occupancy
+  const revpar = inp.adr * inp.occ;
+
+  // 505 revenue: use actual proven per-key revenue scaled by ADR/Occ changes
+  // Base case: 17 keys × $175 ADR × 80% occ × 365 = $876K (close to actual $835K)
+  // We anchor to actual $835K and scale proportionally
+  const baseRevPAR = 175 * 0.80; // $140 = base RevPAR assumption
+  const rev505 = HOTEL_505_REVENUE * (revpar / baseRevPAR);
+
+  // 506 revenue: same RevPAR applied to new keys
+  const rev506 = inp.keys506 * revpar * 365;
+  const totalRev = rev505 + rev506;
+
+  // NOI: 505 uses actual expense structure, 506 uses input expense ratio
+  // 505 actual expense ratio is ~55% (NOI $374K on $835K rev = 44.8% margin)
+  const noi505 = rev505 * 0.448; // 505 proven NOI margin
+  const noi506 = rev506 * (1 - inp.expRatio);
+  const totalNOI = noi505 + noi506;
+
+  // Cap on cost
+  const capOnCost = totalNOI / totalCost;
+
+  // Cash flow by year (Year 0 = reno, Year 1 = first stabilized)
+  const cashFlows = [-totalCost]; // Year 0: total investment
+  for (let y = 1; y <= inp.exitYr; y++) {
+    if (y === 1) {
+      // First year: 505 full NOI + 506 ramp at 50%
+      cashFlows.push(noi505 + (noi506 * 0.5));
+    } else {
+      const noiYear = totalNOI * Math.pow(1 + inp.growth, y - 1);
+      cashFlows.push(noiYear);
+    }
+  }
+
+  // Exit value
+  const noiAtExit = totalNOI * Math.pow(1 + inp.growth, inp.exitYr - 1);
+  const exitValue = noiAtExit / inp.exitCap;
+
+  // Add exit to last year
+  cashFlows[cashFlows.length - 1] += exitValue;
+
+  // IRR calculation (Newton's method)
+  let irr = 0.15;
+  for (let iter = 0; iter < 100; iter++) {
+    let npv = 0, dnpv = 0;
+    for (let i = 0; i < cashFlows.length; i++) {
+      npv += cashFlows[i] / Math.pow(1 + irr, i);
+      dnpv -= i * cashFlows[i] / Math.pow(1 + irr, i + 1);
+    }
+    const newIrr = irr - npv / dnpv;
+    if (Math.abs(newIrr - irr) < 0.0001) break;
+    irr = newIrr;
+  }
+
+  // Equity multiple
+  const totalCashIn = cashFlows.reduce((s, v) => s + (v > 0 ? v : 0), 0);
+  const equityMultiple = totalCashIn / totalCost;
+
+  // Per key
+  const pricePerKey = totalCost / totalKeys;
+
+  return {
+    totalKeys, totalCost, totalRev, totalNOI, capOnCost,
+    rev505, rev506, noi505, noi506, noiAtExit, exitValue, irr, equityMultiple,
+    pricePerKey, cashFlows, revpar
+  };
+}
+
+function renderResults(d) {
+  const grid = document.getElementById('resultsGrid');
+  const cards = [
+    { label: 'Total Keys', val: d.totalKeys, sub: `505: ${HOTEL_505_KEYS} + 506: ${d.totalKeys - HOTEL_505_KEYS}` },
+    { label: 'Total Investment', val: fmtM(d.totalCost), sub: fmtK(d.pricePerKey) + '/key' },
+    { label: 'RevPAR', val: '$' + Math.round(d.revpar), sub: `ADR $${getInputs().adr} × ${Math.round(getInputs().occ*100)}% occ` },
+    { label: 'Combined Revenue', val: fmtK(d.totalRev), sub: `505: ${fmtK(d.rev505)} + 506: ${fmtK(d.rev506)}` },
+    { label: 'Combined NOI (Stab.)', val: fmtK(d.totalNOI), sub: `505: ${fmtK(d.noi505)} + 506: ${fmtK(d.noi506)}`, cls: 'highlight' },
+    { label: 'Cap on Cost', val: fmtPct(d.capOnCost), sub: d.capOnCost > 0.08 ? 'Strong' : d.capOnCost > 0.06 ? 'Moderate' : 'Thin', cls: d.capOnCost > 0.08 ? 'green' : '' },
+    { label: 'Exit Value (Yr ' + getInputs().exitYr + ')', val: fmtM(d.exitValue), sub: 'at ' + fmtPct(getInputs().exitCap) + ' cap', cls: 'highlight' },
+    { label: 'Projected IRR', val: fmtPct(d.irr), sub: getInputs().exitYr + '-year hold', cls: d.irr > 0.15 ? 'green' : d.irr > 0.08 ? '' : 'red' },
+    { label: 'Equity Multiple', val: d.equityMultiple.toFixed(2) + 'x', sub: 'on ' + fmtM(d.totalCost) + ' invested' },
+  ];
+  grid.innerHTML = cards.map(c => `
+    <div class="result-card ${c.cls || ''}">
+      <div class="rc-label">${c.label}</div>
+      <div class="rc-val">${c.val}</div>
+      <div class="rc-sub">${c.sub}</div>
+    </div>
+  `).join('');
+}
+
+function renderScenarios() {
+  const inp = getInputs();
+  const bear = calcDeal({ ...inp, keys506: 14, occ: 0.65, adr: 150, growth: 0 });
+  const base = calcDeal(inp);
+  const bull = calcDeal({ ...inp, keys506: 26, occ: 0.85, adr: 200, growth: 0.03 });
+
+  const grid = document.getElementById('scenarioGrid');
+  const scenarios = [
+    { title: 'Bear Case', cls: 'bear', d: bear, desc: '14 keys, 65% occ, $150 ADR, flat NOI' },
+    { title: 'Base Case', cls: 'base', d: base, desc: 'Your current assumptions' },
+    { title: 'Bull Case', cls: 'bull', d: bull, desc: '26 keys, 85% occ, $200 ADR, 3% growth' },
+  ];
+
+  grid.innerHTML = scenarios.map(s => `
+    <div class="scenario-card ${s.cls}">
+      <h4>${s.title}</h4>
+      <div style="font-size:11px;color:#888;margin-bottom:12px;">${s.desc}</div>
+      <div class="sc-row"><span>Total Keys</span><span class="sc-val">${HOTEL_505_KEYS + (s.cls === 'bear' ? 14 : s.cls === 'bull' ? 26 : inp.keys506)}</span></div>
+      <div class="sc-row"><span>Revenue</span><span class="sc-val">${fmtK(s.d.totalRev)}</span></div>
+      <div class="sc-row"><span>NOI</span><span class="sc-val">${fmtK(s.d.totalNOI)}</span></div>
+      <div class="sc-row"><span>Cap on Cost</span><span class="sc-val">${fmtPct(s.d.capOnCost)}</span></div>
+      <div class="sc-row"><span>Exit Value</span><span class="sc-val">${fmtM(s.d.exitValue)}</span></div>
+      <div class="sc-row"><span>IRR</span><span class="sc-val" style="color:${s.d.irr > 0.15 ? 'var(--green)' : s.d.irr > 0.08 ? 'var(--navy)' : 'var(--red)'}">${fmtPct(s.d.irr)}</span></div>
+      <div class="sc-row"><span>Equity Multiple</span><span class="sc-val">${s.d.equityMultiple.toFixed(2)}x</span></div>
+    </div>
+  `).join('');
+}
+
+function renderRoomTable() {
+  const inp = getInputs();
+  const roomCounts = [14, 16, 18, 20, 22, 24, 26];
+  let html = '<thead><tr><th>506 Keys</th><th>Total Keys</th><th>Revenue</th><th>NOI</th><th>Cap on Cost</th><th>Exit Value</th><th>IRR</th></tr></thead><tbody>';
+
+  roomCounts.forEach(k => {
+    const d = calcDeal({ ...inp, keys506: k });
+    const isCurrent = k === inp.keys506;
+    html += `<tr class="${isCurrent ? 'current' : ''}">
+      <td>${k} keys</td>
+      <td>${HOTEL_505_KEYS + k}</td>
+      <td>${fmtK(d.totalRev)}</td>
+      <td>${fmtK(d.totalNOI)}</td>
+      <td>${fmtPct(d.capOnCost)}</td>
+      <td>${fmtM(d.exitValue)}</td>
+      <td class="${d.irr > 0.15 ? 'positive' : d.irr < 0.08 ? 'negative' : ''}">${fmtPct(d.irr)}</td>
+    </tr>`;
+  });
+  html += '</tbody>';
+  document.getElementById('roomTable').innerHTML = html;
+}
+
+function renderCashflowTable(deal) {
+  const inp = getInputs();
+  const d = deal || calcDeal(inp);
+  let html = '<thead><tr><th>Year</th><th>NOI</th><th>Cumulative CF</th><th>NOI at Exit</th><th>Exit Value</th><th>Total Return</th></tr></thead><tbody>';
+
+  let cumCF = 0;
+  for (let y = 1; y <= 10; y++) {
+    const noi = y === 1
+      ? d.noi505 + (d.noi506 * 0.5)
+      : d.totalNOI * Math.pow(1 + inp.growth, y - 1);
+    cumCF += noi;
+    const noiExit = d.totalNOI * Math.pow(1 + inp.growth, y - 1);
+    const exitVal = noiExit / inp.exitCap;
+    const totalReturn = cumCF + exitVal;
+    const isCurrent = y === inp.exitYr;
+
+    html += `<tr class="${isCurrent ? 'current' : ''}">
+      <td>Year ${y}</td>
+      <td>${fmtK(noi)}</td>
+      <td>${fmtK(cumCF)}</td>
+      <td>${fmtK(noiExit)}</td>
+      <td>${fmtM(exitVal)}</td>
+      <td class="${totalReturn > d.totalCost ? 'positive' : 'negative'}">${fmtM(totalReturn)} (${((totalReturn / d.totalCost - 1) * 100).toFixed(0)}%)</td>
+    </tr>`;
+  }
+  html += '</tbody>';
+  document.getElementById('cashflowTable').innerHTML = html;
+}
+
+function renderExitTable(deal) {
+  const inp = getInputs();
+  const caps = [0.055, 0.06, 0.065, 0.07, 0.075, 0.08, 0.085, 0.09, 0.10];
+  const years = [3, 5, 7, 10];
+
+  let html = '<thead><tr><th>Exit Cap</th>';
+  years.forEach(y => html += `<th>Year ${y}</th>`);
+  html += '</tr></thead><tbody>';
+
+  caps.forEach(cap => {
+    const isCurrent = Math.abs(cap - inp.exitCap) < 0.001;
+    html += `<tr class="${isCurrent ? 'current' : ''}"><td>${fmtPct(cap)} cap</td>`;
+    years.forEach(y => {
+      const noiAtExit = deal.totalNOI * Math.pow(1 + inp.growth, y - 1);
+      const exitVal = noiAtExit / cap;
+      const profit = exitVal - deal.totalCost;
+      html += `<td class="${profit > 0 ? 'positive' : 'negative'}">${fmtM(exitVal)}</td>`;
+    });
+    html += '</tr>';
+  });
+  html += '</tbody>';
+  document.getElementById('exitTable').innerHTML = html;
+}
+
+function updateAll() {
+  // Update displays
+  valDisplays.keys.textContent = sliders.keys.value;
+  valDisplays.acq.textContent = parseFloat(sliders.acq.value).toFixed(1);
+  valDisplays.reno.textContent = parseFloat(sliders.reno.value).toFixed(1);
+  valDisplays.adr.textContent = sliders.adr.value;
+  // Update cost per key on acquisition slider
+  const acqPrice = parseFloat(sliders.acq.value) * 1000000;
+  const perKey14 = Math.round(acqPrice / 14);
+  document.getElementById('acqPerKey').innerHTML = '$' + perKey14.toLocaleString() + '/key (on current 14 units)';
+  valDisplays.occ.textContent = sliders.occ.value;
+  valDisplays.exp.textContent = sliders.exp.value;
+  valDisplays.growth.textContent = sliders.growth.value;
+  valDisplays.exitCap.textContent = parseFloat(sliders.exitCap.value).toFixed(1);
+  valDisplays.exitYr.textContent = sliders.exitYr.value;
+
+  const inp = getInputs();
+  const d = calcDeal(inp);
+
+  renderResults(d);
+  renderScenarios();
+  renderRoomTable();
+  renderCashflowTable(d);
+  renderExitTable(d);
+}
+
+// Bind sliders
+Object.values(sliders).forEach(s => {
+  s.addEventListener('input', updateAll);
+});
+
+// Position actual markers on sliders
+function positionMarkers() {
+  document.querySelectorAll('.actual-marker').forEach(marker => {
+    const min = parseFloat(marker.dataset.min);
+    const max = parseFloat(marker.dataset.max);
+    const actual = parseFloat(marker.dataset.actual);
+    const pct = (actual - min) / (max - min);
+    // Range thumb has ~10px radius, track has padding
+    const trackPadding = 10;
+    const parent = marker.parentElement;
+    const trackWidth = parent.offsetWidth - (trackPadding * 2);
+    marker.style.left = (trackPadding + pct * trackWidth) + 'px';
+  });
+}
+
+// Initial render
+updateAll();
+positionMarkers();
+window.addEventListener('resize', positionMarkers);
+</script>
+
+</body>
+</html>
