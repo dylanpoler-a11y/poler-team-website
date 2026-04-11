@@ -3,14 +3,11 @@
   "buildCommand": null,
   "outputDirectory": null,
   "cleanUrls": true,
-  "rewrites": [
+  "redirects": [
     {
       "source": "/thelauderdalehotel",
-      "destination": "https://the-lauderdale-dashboard.netlify.app/"
-    },
-    {
-      "source": "/thelauderdalehotel/:path*",
-      "destination": "https://the-lauderdale-dashboard.netlify.app/:path*"
+      "destination": "https://the-lauderdale-dashboard.netlify.app/",
+      "statusCode": 308
     }
   ],
   "headers": [
