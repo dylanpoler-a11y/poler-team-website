@@ -3,6 +3,16 @@
   "buildCommand": null,
   "outputDirectory": null,
   "cleanUrls": true,
+  "rewrites": [
+    {
+      "source": "/thelauderdalehotel",
+      "destination": "https://the-lauderdale-dashboard.netlify.app/"
+    },
+    {
+      "source": "/thelauderdalehotel/:path*",
+      "destination": "https://the-lauderdale-dashboard.netlify.app/:path*"
+    }
+  ],
   "headers": [
     {
       "source": "/(.*)",
