@@ -10,6 +10,16 @@
       "statusCode": 308
     }
   ],
+  "crons": [
+    {
+      "path": "/api/send-alerts",
+      "schedule": "0 14 * * *"
+    },
+    {
+      "path": "/api/granola-sync",
+      "schedule": "0 20 * * *"
+    }
+  ],
   "headers": [
     {
       "source": "/(.*)",

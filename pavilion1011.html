@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Pavilion Unit 1011 | 5601 Collins Ave, Miami Beach</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #1a2744;
+    --navy-light: #243352;
+    --gold: #C9A84C;
+    --gold-light: #d4b86a;
+    --cream: #FAF8F5;
+    --white: #ffffff;
+    --gray-100: #f7f7f7;
+    --gray-200: #e8e8e8;
+    --gray-500: #777;
+    --gray-700: #444;
+    --text: #2c2c2c;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    color: var(--text);
+    background: var(--white);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    background: linear-gradient(rgba(26,39,68,0.7), rgba(15,26,48,0.85)), url('pavillion-primary.webp') center/cover no-repeat;
+    color: var(--white);
+    padding: 80px 40px 60px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero-badge {
+    display: inline-block;
+    background: rgba(201,168,76,0.15);
+    border: 1px solid var(--gold);
+    color: var(--gold);
+    padding: 6px 20px;
+    border-radius: 30px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 28px;
+  }
+  .hero h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 48px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    line-height: 1.15;
+    margin-bottom: 12px;
+  }
+  .hero .address {
+    font-size: 18px;
+    font-weight: 300;
+    color: rgba(255,255,255,0.7);
+    margin-bottom: 36px;
+    letter-spacing: 1px;
+  }
+  .hero-stats {
+    display: flex;
+    justify-content: center;
+    gap: 48px;
+    flex-wrap: wrap;
+  }
+  .hero-stat {
+    text-align: center;
+  }
+  .hero-stat .value {
+    font-family: 'Playfair Display', serif;
+    font-size: 36px;
+    font-weight: 700;
+    color: var(--gold);
+  }
+  .hero-stat .label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: rgba(255,255,255,0.5);
+    margin-top: 4px;
+  }
+
+  /* ── SECTION WRAPPER ── */
+  .container {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 0 40px;
+  }
+
+  /* ── PROPERTY HIGHLIGHTS ── */
+  .highlights {
+    padding: 64px 0;
+    background: var(--cream);
+  }
+  .highlights-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
+  .highlight-card {
+    background: var(--white);
+    border-radius: 12px;
+    padding: 28px 24px;
+    text-align: center;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+    transition: transform 0.2s;
+  }
+  .highlight-card:hover { transform: translateY(-2px); }
+  .highlight-card .icon {
+    font-size: 28px;
+    margin-bottom: 12px;
+  }
+  .highlight-card h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    color: var(--navy);
+    margin-bottom: 4px;
+  }
+  .highlight-card p {
+    font-size: 13px;
+    color: var(--gray-500);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  /* ── SECTION TITLES ── */
+  .section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 32px;
+    color: var(--navy);
+    margin-bottom: 8px;
+  }
+  .section-subtitle {
+    color: var(--gray-500);
+    font-size: 15px;
+    margin-bottom: 40px;
+    font-weight: 400;
+  }
+  .gold-line {
+    width: 48px;
+    height: 3px;
+    background: var(--gold);
+    margin-bottom: 20px;
+  }
+
+  /* ── DESCRIPTION SECTION ── */
+  .description {
+    padding: 64px 0;
+  }
+  .description-text {
+    font-size: 17px;
+    line-height: 1.8;
+    color: var(--gray-700);
+    max-width: 800px;
+  }
+
+  /* ── DETAILS GRID ── */
+  .details {
+    padding: 64px 0;
+    background: var(--cream);
+  }
+  .details-columns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 48px;
+  }
+  .detail-group h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    color: var(--navy);
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--gold);
+  }
+  .detail-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--gray-200);
+    font-size: 14px;
+  }
+  .detail-row .label {
+    color: var(--gray-500);
+    font-weight: 500;
+  }
+  .detail-row .value {
+    color: var(--navy);
+    font-weight: 600;
+    text-align: right;
+  }
+
+  /* ── FINANCIALS ── */
+  .financials {
+    padding: 64px 0;
+  }
+  .finance-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    margin-bottom: 48px;
+  }
+  .finance-card {
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: 16px;
+    padding: 36px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+  }
+  .finance-card.dark {
+    background: var(--navy);
+    border: none;
+    color: var(--white);
+  }
+  .finance-card h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px;
+    margin-bottom: 24px;
+    color: var(--navy);
+  }
+  .finance-card.dark h3 { color: var(--gold); }
+
+  .finance-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--gray-200);
+    font-size: 14px;
+  }
+  .finance-card.dark .finance-line { border-color: rgba(255,255,255,0.1); }
+
+  .finance-line .label { color: var(--gray-500); }
+  .finance-card.dark .finance-line .label { color: rgba(255,255,255,0.6); }
+
+  .finance-line .amount {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .finance-line.total {
+    border-bottom: none;
+    border-top: 2px solid var(--gold);
+    margin-top: 8px;
+    padding-top: 14px;
+    font-size: 16px;
+  }
+  .finance-line.total .label {
+    font-weight: 700;
+    color: var(--navy);
+  }
+  .finance-card.dark .finance-line.total .label { color: var(--white); }
+  .finance-line.total .amount {
+    color: var(--gold);
+    font-size: 20px;
+    font-family: 'Playfair Display', serif;
+  }
+  .finance-line .amount.positive { color: #2d8a4e; }
+  .finance-line .amount.negative { color: #c0392b; }
+  .finance-card.dark .finance-line .amount.positive { color: #5ddb7f; }
+
+  /* ── KEY METRICS BAR ── */
+  .metrics-bar {
+    background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%);
+    border-radius: 16px;
+    padding: 40px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 32px;
+    text-align: center;
+    color: var(--white);
+  }
+  .metric .metric-value {
+    font-family: 'Playfair Display', serif;
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--gold);
+    margin-bottom: 4px;
+  }
+  .metric .metric-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: rgba(255,255,255,0.5);
+  }
+
+  /* ── MONTHLY INCOME TABLE ── */
+  .monthly {
+    padding: 64px 0;
+    background: var(--cream);
+  }
+  .monthly-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--white);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+  }
+  .monthly-table thead {
+    background: var(--navy);
+    color: var(--white);
+  }
+  .monthly-table th {
+    padding: 14px 20px;
+    text-align: left;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+  }
+  .monthly-table th:last-child { text-align: right; }
+  .monthly-table td {
+    padding: 12px 20px;
+    font-size: 14px;
+    border-bottom: 1px solid var(--gray-200);
+  }
+  .monthly-table td:last-child {
+    text-align: right;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--navy);
+  }
+  .monthly-table tr:last-child td { border-bottom: none; }
+  .monthly-table .bar-cell {
+    width: 200px;
+  }
+  .income-bar {
+    height: 8px;
+    background: var(--gold);
+    border-radius: 4px;
+    opacity: 0.7;
+  }
+  .monthly-table tfoot {
+    background: var(--navy);
+    color: var(--white);
+  }
+  .monthly-table tfoot td {
+    padding: 14px 20px;
+    font-weight: 700;
+    border: none;
+    font-size: 15px;
+  }
+  .monthly-table tfoot td:last-child { color: var(--gold); }
+
+  /* ── AMENITIES ── */
+  .amenities {
+    padding: 64px 0;
+  }
+  .amenities-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 16px;
+  }
+  .amenity-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    background: var(--cream);
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--navy);
+  }
+  .amenity-item .check {
+    color: var(--gold);
+    font-weight: 700;
+    font-size: 16px;
+  }
+
+  /* ── INVESTMENT THESIS ── */
+  .thesis {
+    padding: 64px 0;
+    background: var(--navy);
+    color: var(--white);
+  }
+  .thesis .section-title { color: var(--white); }
+  .thesis-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 28px;
+    margin-top: 40px;
+  }
+  .thesis-card {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(201,168,76,0.2);
+    border-radius: 12px;
+    padding: 32px;
+  }
+  .thesis-card h4 {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px;
+    color: var(--gold);
+    margin-bottom: 12px;
+  }
+  .thesis-card p {
+    font-size: 14px;
+    line-height: 1.7;
+    color: rgba(255,255,255,0.7);
+  }
+
+  /* ── FOOTER / CTA ── */
+  .cta {
+    padding: 64px 0;
+    text-align: center;
+    background: var(--cream);
+  }
+  .cta h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 36px;
+    color: var(--navy);
+    margin-bottom: 12px;
+  }
+  .cta p {
+    font-size: 16px;
+    color: var(--gray-500);
+    margin-bottom: 32px;
+  }
+  .cta-contact {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+  .cta-headshot {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid var(--gold);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    margin-bottom: 8px;
+  }
+  .cta-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    color: var(--navy);
+    font-weight: 600;
+  }
+  .cta-info {
+    font-size: 14px;
+    color: var(--gray-500);
+  }
+  .cta-info a {
+    color: var(--gold);
+    text-decoration: none;
+    font-weight: 600;
+  }
+  .cta-brokerage {
+    font-size: 13px;
+    color: var(--gray-500);
+    margin-top: 4px;
+  }
+
+  .footer {
+    background: var(--navy);
+    color: rgba(255,255,255,0.4);
+    text-align: center;
+    padding: 24px;
+    font-size: 12px;
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 768px) {
+    .hero { padding: 60px 24px 40px; }
+    .hero h1 { font-size: 32px; }
+    .hero-stats { gap: 28px; }
+    .hero-stat .value { font-size: 28px; }
+    .container { padding: 0 24px; }
+    .highlights-grid { grid-template-columns: repeat(2, 1fr); }
+    .details-columns { grid-template-columns: 1fr; gap: 32px; }
+    .finance-grid { grid-template-columns: 1fr; }
+    .metrics-bar { grid-template-columns: 1fr 1fr; gap: 20px; padding: 28px; }
+    .metric .metric-value { font-size: 24px; }
+    .monthly-table .bar-cell { display: none; }
+    .monthly-table { table-layout: fixed; }
+    .monthly-table th:first-child,
+    .monthly-table td:first-child { width: 50%; }
+    .monthly-table tfoot td:last-child { text-align: right; }
+  }
+
+  @media print {
+    .hero { padding: 40px 24px 30px; }
+    .highlight-card, .finance-card, .thesis-card { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-badge">Exclusive Investment Opportunity</div>
+  <h1>The Pavilion &mdash; Unit 1011</h1>
+  <p class="address">5601 Collins Ave #1011, Miami Beach, FL 33140</p>
+  <div class="hero-stats">
+    <div class="hero-stat">
+      <div class="value">$890,000</div>
+      <div class="label">Asking Price</div>
+    </div>
+    <div class="hero-stat">
+      <div class="value">$83,420</div>
+      <div class="label">Annual Rental Revenue</div>
+    </div>
+    <div class="hero-stat">
+      <div class="value">$48,847</div>
+      <div class="label">Net Operating Income</div>
+    </div>
+    <div class="hero-stat">
+      <div class="value">5.5%</div>
+      <div class="label">Cap Rate</div>
+    </div>
+    <a href="https://www.thepolerteam.com/pavilion1011" style="display:none;"></a>
+  </div>
+</section>
+
+<!-- PROPERTY HIGHLIGHTS -->
+<section class="highlights">
+  <div class="container">
+    <div class="highlights-grid">
+      <div class="highlight-card">
+        <div class="icon">&#127754;</div>
+        <h3>Direct Ocean</h3>
+        <p>Oceanfront Views</p>
+      </div>
+      <div class="highlight-card">
+        <div class="icon">&#127968;</div>
+        <h3>2 Bed / 2 Bath</h3>
+        <p>930 Sq Ft Living</p>
+      </div>
+      <div class="highlight-card">
+        <div class="icon">&#128396;</div>
+        <h3>Fully Furnished</h3>
+        <p>Turnkey Ready</p>
+      </div>
+      <div class="highlight-card">
+        <div class="icon">&#127958;</div>
+        <h3>10th Floor</h3>
+        <p>150 Sq Ft Balcony</p>
+      </div>
+      <div class="highlight-card">
+        <div class="icon">&#128663;</div>
+        <h3>1-Car Garage</h3>
+        <p>Covered Parking</p>
+      </div>
+      <div class="highlight-card">
+        <div class="icon">&#9889;</div>
+        <h3>Fully Renovated</h3>
+        <p>City-Approved Permits</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DESCRIPTION -->
+<section class="description">
+  <div class="container">
+    <div class="gold-line"></div>
+    <h2 class="section-title">Property Overview</h2>
+    <p class="section-subtitle">MLS# A11877628</p>
+    <p class="description-text">
+      Stunning oceanfront residence at The Pavilion, fully renovated with city-approved permits. This spacious 2-bedroom, 2-bath home features an open-concept layout with modern finishes, a sleek kitchen, and porcelain wood-style floors throughout. Floor-to-ceiling glass doors open to a generous 150 sq ft balcony with breathtaking direct ocean views. Offered fully furnished &mdash; all furniture included in the price. The Pavilion has recently completed extensive building-wide upgrades including redesigned hallways, new elevators, and a spectacular oceanfront pool. Move-in ready for immediate Airbnb income generation.
+    </p>
+  </div>
+</section>
+
+<!-- PROPERTY DETAILS -->
+<section class="details">
+  <div class="container">
+    <div class="gold-line"></div>
+    <h2 class="section-title">Property Details</h2>
+    <p class="section-subtitle">Unit specifications and building information</p>
+    <div class="details-columns">
+      <div class="detail-group">
+        <h3>Unit Information</h3>
+        <div class="detail-row"><span class="label">Type</span><span class="value">Condo 5+ Stories</span></div>
+        <div class="detail-row"><span class="label">Living Area</span><span class="value">930 Sq Ft</span></div>
+        <div class="detail-row"><span class="label">Bedrooms</span><span class="value">2</span></div>
+        <div class="detail-row"><span class="label">Bathrooms</span><span class="value">2</span></div>
+        <div class="detail-row"><span class="label">Floor</span><span class="value">10 of 17</span></div>
+        <div class="detail-row"><span class="label">Balcony</span><span class="value">150 Sq Ft</span></div>
+        <div class="detail-row"><span class="label">Flooring</span><span class="value">Laminate / Porcelain Wood</span></div>
+        <div class="detail-row"><span class="label">Design</span><span class="value">Substantially Remodeled</span></div>
+        <div class="detail-row"><span class="label">Views</span><span class="value">Direct Ocean</span></div>
+        <div class="detail-row"><span class="label">Furnished</span><span class="value">Yes &mdash; All Included</span></div>
+        <div class="detail-row"><span class="label">Parking</span><span class="value">1 Detached Garage, Covered</span></div>
+        <div class="detail-row"><span class="label">Windows</span><span class="value">Complete Impact Glass</span></div>
+      </div>
+      <div class="detail-group">
+        <h3>Building &amp; Lease Info</h3>
+        <div class="detail-row"><span class="label">Complex</span><span class="value">The Pavilion</span></div>
+        <div class="detail-row"><span class="label">Total Units</span><span class="value">406</span></div>
+        <div class="detail-row"><span class="label">Year Built</span><span class="value">1968 (Renovated)</span></div>
+        <div class="detail-row"><span class="label">Waterfront</span><span class="value">Oceanfront</span></div>
+        <div class="detail-row"><span class="label">Min Lease Duration</span><span class="value">30 Days</span></div>
+        <div class="detail-row"><span class="label">Max Leases / Year</span><span class="value">12</span></div>
+        <div class="detail-row"><span class="label">OK to Lease 1st Year</span><span class="value">Yes</span></div>
+        <div class="detail-row"><span class="label">Corporate Buyer</span><span class="value">OK</span></div>
+        <div class="detail-row"><span class="label">Security</span><span class="value">Doorman, Elevator Secure</span></div>
+        <div class="detail-row"><span class="label">HOA Fee</span><span class="value">$1,146.30 / month</span></div>
+        <div class="detail-row"><span class="label">Special Assessment</span><span class="value">$803.05 / month</span></div>
+        <div class="detail-row"><span class="label">Property Tax (2024)</span><span class="value">$8,606 / year</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FINANCIAL PERFORMANCE -->
+<section class="financials">
+  <div class="container">
+    <div class="gold-line"></div>
+    <h2 class="section-title">2025 Financial Performance</h2>
+    <p class="section-subtitle">Actual operating results &mdash; January through December 2025</p>
+
+    <div class="finance-grid">
+      <!-- INCOME -->
+      <div class="finance-card">
+        <h3>Revenue</h3>
+        <div class="finance-line">
+          <span class="label">Airbnb &amp; Direct Rental Income</span>
+          <span class="amount positive">$83,420</span>
+        </div>
+        <div class="finance-line">
+          <span class="label">Other Reimbursements</span>
+          <span class="amount positive">$500</span>
+        </div>
+        <div class="finance-line total">
+          <span class="label">Total Gross Revenue</span>
+          <span class="amount">$83,920</span>
+        </div>
+      </div>
+
+      <!-- EXPENSES -->
+      <div class="finance-card dark">
+        <h3>Operating Expenses</h3>
+        <div class="finance-line">
+          <span class="label">HOA + Special Assessment</span>
+          <span class="amount">$23,392</span>
+        </div>
+        <div class="finance-line">
+          <span class="label">Maintenance &amp; Cleaning</span>
+          <span class="amount">$7,737</span>
+        </div>
+        <div class="finance-line">
+          <span class="label">Resort &amp; City Taxes</span>
+          <span class="amount">$3,395</span>
+        </div>
+        <div class="finance-line">
+          <span class="label">Electric (FPL)</span>
+          <span class="amount">$549</span>
+        </div>
+        <div class="finance-line total">
+          <span class="label">Total Operating Expenses</span>
+          <span class="amount">$35,073</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- KEY METRICS -->
+    <div class="metrics-bar">
+      <div class="metric">
+        <div class="metric-value">$83,420</div>
+        <div class="metric-label">Gross Rental Income</div>
+      </div>
+      <div class="metric">
+        <div class="metric-value">$48,847</div>
+        <div class="metric-label">Net Operating Income</div>
+      </div>
+      <div class="metric">
+        <div class="metric-value">5.5%</div>
+        <div class="metric-label">Cap Rate</div>
+      </div>
+      <div class="metric">
+        <div class="metric-value">$6,952</div>
+        <div class="metric-label">Avg Monthly Revenue</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MONTHLY BREAKDOWN -->
+<section class="monthly">
+  <div class="container">
+    <div class="gold-line"></div>
+    <h2 class="section-title">Monthly Rental Revenue</h2>
+    <p class="section-subtitle">Actual rental deposits received &mdash; 2025</p>
+    <table class="monthly-table">
+      <thead>
+        <tr>
+          <th>Month</th>
+          <th class="bar-cell"></th>
+          <th>Revenue</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>January</td><td class="bar-cell"><div class="income-bar" style="width:92%"></div></td><td>$9,453</td></tr>
+        <tr><td>February</td><td class="bar-cell"><div class="income-bar" style="width:81%"></div></td><td>$8,274</td></tr>
+        <tr><td>March</td><td class="bar-cell"><div class="income-bar" style="width:67%"></div></td><td>$6,831</td></tr>
+        <tr><td>April</td><td class="bar-cell"><div class="income-bar" style="width:100%"></div></td><td>$10,264</td></tr>
+        <tr><td>May</td><td class="bar-cell"><div class="income-bar" style="width:64%"></div></td><td>$6,557</td></tr>
+        <tr><td>June</td><td class="bar-cell"><div class="income-bar" style="width:78%"></div></td><td>$8,043</td></tr>
+        <tr><td>July</td><td class="bar-cell"><div class="income-bar" style="width:46%"></div></td><td>$4,685</td></tr>
+        <tr><td>August</td><td class="bar-cell"><div class="income-bar" style="width:56%"></div></td><td>$5,711</td></tr>
+        <tr><td>September</td><td class="bar-cell"><div class="income-bar" style="width:33%"></div></td><td>$3,354</td></tr>
+        <tr><td>October</td><td class="bar-cell"><div class="income-bar" style="width:57%"></div></td><td>$5,838</td></tr>
+        <tr><td>November</td><td class="bar-cell"><div class="income-bar" style="width:56%"></div></td><td>$5,704</td></tr>
+        <tr><td>December</td><td class="bar-cell"><div class="income-bar" style="width:85%"></div></td><td>$8,706</td></tr>
+      </tbody>
+      <tfoot>
+        <tr>
+          <td colspan="2">Annual Total</td>
+          <td>$83,420</td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+</section>
+
+<!-- AMENITIES -->
+<section class="amenities">
+  <div class="container">
+    <div class="gold-line"></div>
+    <h2 class="section-title">HOA Includes &amp; Amenities</h2>
+    <p class="section-subtitle">Comprehensive coverage included in monthly HOA</p>
+    <div class="amenities-grid">
+      <div class="amenity-item"><span class="check">&#10003;</span> Cable TV &amp; WiFi</div>
+      <div class="amenity-item"><span class="check">&#10003;</span> Water &amp; Sewer</div>
+      <div class="amenity-item"><span class="check">&#10003;</span> Pool Service</div>
+      <div class="amenity-item"><span class="check">&#10003;</span> Security / Doorman</div>
+      <div class="amenity-item"><span class="check">&#10003;</span> Trash Removal</div>
+      <div class="amenity-item"><span class="check">&#10003;</span> Roof Repairs</div>
+      <div class="amenity-item"><span class="check">&#10003;</span> Laundry Facilities</div>
+      <div class="amenity-item"><span class="check">&#10003;</span> Elevator Access</div>
+      <div class="amenity-item"><span class="check">&#10003;</span> Oceanfront Pool</div>
+      <div class="amenity-item"><span class="check">&#10003;</span> Deeded Beach Access</div>
+      <div class="amenity-item"><span class="check">&#10003;</span> Complete Impact Glass</div>
+      <div class="amenity-item"><span class="check">&#10003;</span> Smoke Detectors</div>
+    </div>
+  </div>
+</section>
+
+<!-- INVESTMENT THESIS -->
+<section class="thesis">
+  <div class="container">
+    <div class="gold-line"></div>
+    <h2 class="section-title">Why This Investment</h2>
+    <div class="thesis-grid">
+      <div class="thesis-card">
+        <h4>Proven Cash Flow</h4>
+        <p>$83K+ in verified rental revenue in 2025 with consistent bookings across all 12 months. Income includes Airbnb and direct bookings, demonstrating strong year-round demand for oceanfront short-term rentals in Miami Beach.</p>
+      </div>
+      <div class="thesis-card">
+        <h4>Turnkey Operation</h4>
+        <p>Fully furnished and renovated with city-approved permits. All furniture, appliances, and fixtures included. Active Airbnb listing with established reviews and booking history. New owner can generate income from day one.</p>
+      </div>
+      <div class="thesis-card">
+        <h4>Prime Oceanfront Location</h4>
+        <p>Direct ocean views from the 10th floor in the heart of Miami Beach. Steps from the beach with deeded access. 30-day minimum lease with 12 leases per year allowed &mdash; ideal for short-term rental strategy.</p>
+      </div>
+      <div class="thesis-card">
+        <h4>Building Improvements</h4>
+        <p>The Pavilion has recently completed major upgrades: new elevators, redesigned hallways, and a remodeled oceanfront pool area. Complete impact glass throughout. These capital improvements protect and enhance long-term value.</p>
+      </div>
+      <div class="thesis-card">
+        <h4>Corporate Buyer OK</h4>
+        <p>Building allows corporate ownership and leasing from year one. No restrictions on investor purchases. Ideal for LLC ownership structure to maximize tax advantages and liability protection.</p>
+      </div>
+      <div class="thesis-card">
+        <h4>Upside Potential</h4>
+        <p>At a 5.5% cap rate on verified actuals, this property outperforms most Miami Beach condos. Additional upside through rate optimization, direct booking channels, extended-stay pricing, and seasonal rate adjustments.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA / CONTACT -->
+<section class="cta">
+  <div class="container">
+    <h2>Schedule a Private Showing</h2>
+    <p>Easy to show with 24-hour notice via ShowingTime</p>
+    <div class="cta-contact">
+      <img src="rosa-poler-headshot.jpg" alt="Rosa Poler" class="cta-headshot">
+      <span class="cta-name">Rosa Poler</span>
+      <span class="cta-info"><a href="tel:9542354046">954-235-4046</a> &nbsp;|&nbsp; <a href="mailto:rosapoler@hotmail.com">rosapoler@hotmail.com</a></span>
+      <span class="cta-brokerage">Optimar International Realty &mdash; 18246 Collins Avenue, Sunny Isles Beach, FL 33160</span>
+      <span class="cta-brokerage">License #3268052</span>
+      <a href="https://www.homesinsoflorida.com/listing?mls=A11877628&fbclid=fbclid" target="_blank" style="display:inline-block;margin-top:20px;padding:14px 36px;background:var(--gold);color:var(--navy);font-weight:700;font-size:14px;text-decoration:none;border-radius:6px;letter-spacing:1px;text-transform:uppercase;transition:background 0.2s;">View Full MLS Listing</a>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <p>Information deemed reliable but not guaranteed. Buyer should verify all information independently. Financial data based on actual 2025 bank statements.</p>
+</footer>
+
+</body>
+</html>

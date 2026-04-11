@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Property Listings — The Poler Team</title>
+    <meta name="description" content="Search luxury South Florida real estate. Sunny Isles Beach, Aventura, North Miami Beach.">
+    <meta name="robots" content="index, follow">
+    <link rel="icon" href="favicon.ico">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="listing.css">
+    <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.1.2/dist/maplibre-gl.css" />
+
+    <!-- Meta Pixel Code -->
+    <script>
+    !function(f,b,e,v,n,t,s)
+    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+    n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];
+    s.parentNode.insertBefore(t,s)}(window, document,'script',
+    'https://connect.facebook.net/en_US/fbevents.js');
+    fbq('init', '1221841166090741');
+    fbq('track', 'PageView');
+    </script>
+    <noscript><img height="1" width="1" style="display:none"
+    src="https://www.facebook.com/tr?id=1221841166090741&ev=PageView&noscript=1"
+    /></noscript>
+    <!-- End Meta Pixel Code -->
+
+    <!-- Google Ads tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=AW-17910762846"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'AW-17910762846');
+    </script>
+    <!-- End Google Ads tag -->
+
+    <!-- Event snippet for Lead Form Submit - homesinsoflorida.com conversion page -->
+    <script>
+    function gtag_report_conversion(url) {
+      var callback = function () {
+        if (typeof(url) != 'undefined') {
+          window.location = url;
+        }
+      };
+      gtag('event', 'conversion', {
+          'send_to': 'AW-17910762846/E5E_CMfftJEcEN6awtxC',
+          'value': 1.0,
+          'currency': 'USD',
+          'event_callback': callback
+      });
+      return false;
+    }
+    </script>
+</head>
+<body>
+
+<!-- ============================================================
+     LEAD CAPTURE OVERLAY (fires after 10s, blocks dismissal)
+     ============================================================ -->
+<div id="lead-overlay" class="lead-overlay" aria-modal="true" role="dialog" aria-labelledby="lead-title">
+    <div class="lead-modal">
+        <div class="lead-modal-brand">
+            <img src="logo-white.png" alt="The Poler Team" class="lead-logo">
+        </div>
+        <div class="lead-modal-body">
+
+            <!-- ── Step 1: Info form ── -->
+            <div id="lead-step-1">
+                <h2 class="lead-title" id="lead-title" data-i18n="leadTitle">View Full Property Details</h2>
+                <p class="lead-subtitle" data-i18n="leadSubtitle">Create your free account to unlock photos, pricing history, neighborhood stats, and schedule a private showing.</p>
+                <div class="lead-timer-wrap">
+                    <div class="lead-timer-bar" id="lead-timer-bar"></div>
+                </div>
+                <form id="lead-form" class="lead-form" novalidate>
+                    <div class="lead-form-row">
+                        <div class="lead-field">
+                            <input type="text" id="lead-first" placeholder="First Name" data-i18n="firstName" required autocomplete="given-name">
+                        </div>
+                        <div class="lead-field">
+                            <input type="text" id="lead-last" placeholder="Last Name" data-i18n="lastName" required autocomplete="family-name">
+                        </div>
+                    </div>
+                    <div class="lead-field">
+                        <input type="email" id="lead-email" placeholder="Email Address" data-i18n="emailAddress" required autocomplete="email">
+                    </div>
+                    <div class="lead-field lead-phone-wrap">
+                        <select id="country-code" aria-label="Country code">
+                            <option value="+1" selected>🇺🇸 +1 (US)</option>
+                            <option value="+355">🇦🇱 +355 (AL)</option>
+                            <option value="+1AG">🇦🇬 +1 (AG)</option>
+                            <option value="+54">🇦🇷 +54 (AR)</option>
+                            <option value="+297">🇦🇼 +297 (AW)</option>
+                            <option value="+43">🇦🇹 +43 (AT)</option>
+                            <option value="+1BS">🇧🇸 +1 (BS)</option>
+                            <option value="+1BB">🇧🇧 +1 (BB)</option>
+                            <option value="+32">🇧🇪 +32 (BE)</option>
+                            <option value="+501">🇧🇿 +501 (BZ)</option>
+                            <option value="+591">🇧🇴 +591 (BO)</option>
+                            <option value="+55">🇧🇷 +55 (BR)</option>
+                            <option value="+359">🇧🇬 +359 (BG)</option>
+                            <option value="+1CA">🇨🇦 +1 (CA)</option>
+                            <option value="+1KY">🇰🇾 +1 (KY)</option>
+                            <option value="+56">🇨🇱 +56 (CL)</option>
+                            <option value="+57">🇨🇴 +57 (CO)</option>
+                            <option value="+506">🇨🇷 +506 (CR)</option>
+                            <option value="+385">🇭🇷 +385 (HR)</option>
+                            <option value="+53">🇨🇺 +53 (CU)</option>
+                            <option value="+599">🇨🇼 +599 (CW)</option>
+                            <option value="+357">🇨🇾 +357 (CY)</option>
+                            <option value="+420">🇨🇿 +420 (CZ)</option>
+                            <option value="+45">🇩🇰 +45 (DK)</option>
+                            <option value="+1DM">🇩🇲 +1 (DM)</option>
+                            <option value="+1DO">🇩🇴 +1 (DO)</option>
+                            <option value="+593">🇪🇨 +593 (EC)</option>
+                            <option value="+503">🇸🇻 +503 (SV)</option>
+                            <option value="+372">🇪🇪 +372 (EE)</option>
+                            <option value="+358">🇫🇮 +358 (FI)</option>
+                            <option value="+33">🇫🇷 +33 (FR)</option>
+                            <option value="+49">🇩🇪 +49 (DE)</option>
+                            <option value="+30">🇬🇷 +30 (GR)</option>
+                            <option value="+1GD">🇬🇩 +1 (GD)</option>
+                            <option value="+502">🇬🇹 +502 (GT)</option>
+                            <option value="+592">🇬🇾 +592 (GY)</option>
+                            <option value="+509">🇭🇹 +509 (HT)</option>
+                            <option value="+504">🇭🇳 +504 (HN)</option>
+                            <option value="+36">🇭🇺 +36 (HU)</option>
+                            <option value="+354">🇮🇸 +354 (IS)</option>
+                            <option value="+353">🇮🇪 +353 (IE)</option>
+                            <option value="+39">🇮🇹 +39 (IT)</option>
+                            <option value="+1JM">🇯🇲 +1 (JM)</option>
+                            <option value="+371">🇱🇻 +371 (LV)</option>
+                            <option value="+370">🇱🇹 +370 (LT)</option>
+                            <option value="+352">🇱🇺 +352 (LU)</option>
+                            <option value="+356">🇲🇹 +356 (MT)</option>
+                            <option value="+52">🇲🇽 +52 (MX)</option>
+                            <option value="+31">🇳🇱 +31 (NL)</option>
+                            <option value="+505">🇳🇮 +505 (NI)</option>
+                            <option value="+47">🇳🇴 +47 (NO)</option>
+                            <option value="+507">🇵🇦 +507 (PA)</option>
+                            <option value="+595">🇵🇾 +595 (PY)</option>
+                            <option value="+51">🇵🇪 +51 (PE)</option>
+                            <option value="+48">🇵🇱 +48 (PL)</option>
+                            <option value="+351">🇵🇹 +351 (PT)</option>
+                            <option value="+1PR">🇵🇷 +1 (PR)</option>
+                            <option value="+40">🇷🇴 +40 (RO)</option>
+                            <option value="+381">🇷🇸 +381 (RS)</option>
+                            <option value="+421">🇸🇰 +421 (SK)</option>
+                            <option value="+386">🇸🇮 +386 (SI)</option>
+                            <option value="+34">🇪🇸 +34 (ES)</option>
+                            <option value="+1KN">🇰🇳 +1 (KN)</option>
+                            <option value="+1LC">🇱🇨 +1 (LC)</option>
+                            <option value="+1VC">🇻🇨 +1 (VC)</option>
+                            <option value="+597">🇸🇷 +597 (SR)</option>
+                            <option value="+46">🇸🇪 +46 (SE)</option>
+                            <option value="+41">🇨🇭 +41 (CH)</option>
+                            <option value="+1TT">🇹🇹 +1 (TT)</option>
+                            <option value="+90">🇹🇷 +90 (TR)</option>
+                            <option value="+380">🇺🇦 +380 (UA)</option>
+                            <option value="+44">🇬🇧 +44 (UK)</option>
+                            <option value="+598">🇺🇾 +598 (UY)</option>
+                            <option value="+58">🇻🇪 +58 (VE)</option>
+                        </select>
+                        <input type="tel" id="lead-phone" placeholder="(555) 123-4567" data-i18n="phonePlaceholder" required autocomplete="tel">
+                    </div>
+                    <!-- Timeline pills -->
+                    <div class="timeline-field">
+                        <label class="timeline-label">When do you plan to buy?</label>
+                        <div class="timeline-pills" id="timeline-pills">
+                            <button type="button" class="timeline-pill" data-value="0-3 months">0-3 Mo</button>
+                            <button type="button" class="timeline-pill" data-value="3-6 months">3-6 Mo</button>
+                            <button type="button" class="timeline-pill" data-value="6-12 months">6-12 Mo</button>
+                            <button type="button" class="timeline-pill" data-value="12+ months">12+ Mo</button>
+                        </div>
+                        <input type="hidden" id="lead-timeline" value="">
+                    </div>
+
+                    <p class="lead-error" id="lead-error" style="display:none"></p>
+                    <button type="submit" class="lead-submit" id="lead-submit-btn">
+                        <span id="lead-submit-text" data-i18n="sendVerification">Send Verification Code</span>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 014.68 11.6 19.79 19.79 0 011.61 3a2 2 0 012-2.18h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L7.91 8.09a16 16 0 006 6l.91-.91a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+                    </button>
+                    <p class="lead-disclaimer" data-i18n="leadDisclaimer">We'll text a code to verify your number. No spam, ever.</p>
+                </form>
+            </div>
+
+            <!-- ── Step 2: OTP verification ── -->
+            <div id="lead-step-2" style="display:none">
+                <h2 class="lead-title" data-i18n="verifyTitle">Verify Your Number</h2>
+                <p class="lead-subtitle" id="otp-subtitle">We sent a 6-digit code to your phone. Enter it below to continue.</p>
+                <div class="otp-inputs-wrap" id="otp-inputs-wrap">
+                    <input class="otp-digit" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 1">
+                    <input class="otp-digit" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 2">
+                    <input class="otp-digit" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 3">
+                    <input class="otp-digit" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 4">
+                    <input class="otp-digit" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 5">
+                    <input class="otp-digit" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 6">
+                </div>
+                <p class="lead-error" id="otp-error" style="display:none"></p>
+                <button type="button" class="lead-submit" id="otp-verify-btn">
+                    <span id="otp-verify-text" data-i18n="verifyAndContinue">Verify &amp; Continue</span>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </button>
+                <div class="otp-footer">
+                    <button type="button" class="otp-resend-btn" id="otp-resend-btn" disabled>
+                        <span data-i18n="resendCode">Resend code</span> <span id="otp-resend-timer">(60s)</span>
+                    </button>
+                    <button type="button" class="otp-call-btn" id="otp-call-btn">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                        <span data-i18n="callMeInstead">Call me instead</span>
+                    </button>
+                    <button type="button" class="otp-back-btn" id="otp-back-btn" data-i18n="changeNumber">← Change number</button>
+                </div>
+            </div>
+
+
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================
+     PAGE WRAPPER (blurs when lead modal fires)
+     ============================================================ -->
+<div id="page-wrap" class="page-wrap">
+
+    <!-- HEADER -->
+    <header class="lp-header">
+        <div class="lp-header-inner">
+            <a href="index.html" class="lp-logo-link">
+                <img src="logo.png" alt="The Poler Team" class="lp-logo">
+            </a>
+            <div class="lp-header-right">
+                <span class="lp-tagline" data-i18n="tagline">South Florida Luxury Real Estate</span>
+
+                <!-- Language Selector -->
+                <div class="lang-selector" id="lang-selector">
+                    <button class="lang-selector-btn" id="lang-selector-btn" aria-label="Select language" aria-expanded="false">
+                        <span id="lang-btn-text">🇺🇸 EN</span>
+                        <svg class="lang-chevron" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                    </button>
+                    <div class="lang-dropdown" id="lang-dropdown">
+                        <button class="lang-option active" data-lang="en">🇺🇸 English</button>
+                        <button class="lang-option" data-lang="es">🇪🇸 Español</button>
+                        <button class="lang-option" data-lang="pt">🇵🇹 Português</button>
+                    </div>
+                </div>
+
+                <a href="tel:+19542354046" class="lp-call-btn">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 014.68 11.6 19.79 19.79 0 011.61 3a2 2 0 012-2.18h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L7.91 8.09a16 16 0 006 6l.91-.91a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+                    <span data-i18n="callUs">Call Us</span>
+                </a>
+            </div>
+        </div>
+        <nav class="lp-nav">
+            <div class="lp-nav-inner">
+                <a href="listing" class="lp-nav-link active" data-i18n="navHome">Home</a>
+                <a href="#" class="lp-nav-link" onclick="document.querySelector('[data-tab=buy]').click();document.getElementById('search-section').scrollIntoView({behavior:'smooth'});return false;" data-i18n="navBuy">Buy</a>
+                <a href="#" class="lp-nav-link" onclick="document.querySelector('[data-tab=rent]').click();document.getElementById('search-section').scrollIntoView({behavior:'smooth'});return false;" data-i18n="navRent">Rent</a>
+                <a href="str" class="lp-nav-link" data-i18n="navSTR">Short-Term Rentals</a>
+                <a href="#" class="lp-nav-link" onclick="document.querySelector('[data-tab=sell]').click();document.getElementById('search-section').scrollIntoView({behavior:'smooth'});return false;" data-i18n="navValuation">Home Valuation</a>
+                <a href="#" class="lp-nav-link" onclick="document.getElementById('filter-adv-toggle').click();document.getElementById('filter-bar').scrollIntoView({behavior:'smooth'});return false;" data-i18n="navAdvSearch">Advanced Search</a>
+                <a href="index.html#about" class="lp-nav-link" data-i18n="navAbout">About</a>
+                <a href="https://wa.me/19542354046" class="lp-nav-link" target="_blank" data-i18n="navContact">Contact</a>
+            </div>
+        </nav>
+    </header>
+
+    <!-- HERO PROPERTY (populated by JS from ?id= param) -->
+    <section id="hero-property" class="hero-property">
+        <div id="hero-loading" class="hero-loading">
+            <div class="hero-skeleton-img shimmer"></div>
+            <div class="hero-skeleton-info">
+                <div class="skeleton-line shimmer" style="width:35%;height:14px"></div>
+                <div class="skeleton-line shimmer" style="width:60%;height:28px;margin:0.6rem 0"></div>
+                <div class="skeleton-line shimmer" style="width:45%;height:12px"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================
+         SEARCH BAR (Zillow/Redfin style — Tabs + Autocomplete)
+         ============================================================ -->
+    <section class="search-hero" id="search-section">
+        <div class="search-hero-inner">
+
+            <!-- TABS: Buy / Rent / Sell -->
+            <div class="search-tabs" id="search-tabs">
+                <button class="search-tab active" data-tab="buy" data-i18n="tabBuy">Buy</button>
+                <button class="search-tab" data-tab="rent" data-i18n="tabRent">Rent</button>
+                <button class="search-tab" data-tab="sell" data-i18n="tabSell">Sell</button>
+            </div>
+
+            <!-- SEARCH BAR (Buy & Rent modes) -->
+            <div class="search-bar-wrap" id="search-bar-wrap">
+                <div class="search-bar-container">
+                    <svg class="search-bar-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                    <input type="text" id="search-autocomplete" class="search-bar-input" placeholder="Address, City, or ZIP Code" data-i18n="searchPlaceholder" autocomplete="off">
+                    <button class="search-bar-btn" id="search-bar-go">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                    </button>
+                </div>
+                <div class="search-ac-dropdown" id="search-ac-dropdown" style="display:none"></div>
+                <!-- AREA CHIPS — Quick city search -->
+                <div class="area-chips">
+                    <button class="area-chip" data-city="Miami Beach">Miami Beach</button>
+                    <button class="area-chip" data-city="Sunny Isles Beach">Sunny Isles</button>
+                    <button class="area-chip" data-city="Fort Lauderdale">Fort Lauderdale</button>
+                    <button class="area-chip" data-city="Miami">Brickell</button>
+                    <button class="area-chip" data-city="Aventura">Aventura</button>
+                    <button class="area-chip" data-city="Coral Gables">Coral Gables</button>
+                    <button class="area-chip" data-city="Key Biscayne">Key Biscayne</button>
+                    <button class="area-chip" data-city="Hollywood">Hollywood</button>
+                </div>
+            </div>
+
+            <!-- SELL FORM (Sell mode — hidden by default) -->
+            <div class="sell-form-panel" id="sell-form-panel" style="display:none">
+                <h3 class="sell-form-title" data-i18n="sellTitle">What's Your Home Worth?</h3>
+                <p class="sell-form-subtitle" data-i18n="sellSubtitle">Get a free home valuation from our team.</p>
+                <form id="sell-form" class="sell-form">
+                    <input type="text" id="sell-address" class="sell-input" placeholder="Property Address" data-i18n="sellPropertyAddress" required>
+                    <div class="sell-row">
+                        <input type="text" id="sell-name" class="sell-input" placeholder="Your Name" data-i18n="sellName" required>
+                        <input type="email" id="sell-email" class="sell-input" placeholder="Email Address" data-i18n="sellEmail" required>
+                    </div>
+                    <input type="tel" id="sell-phone" class="sell-input" placeholder="Phone Number" data-i18n="sellPhone">
+                    <button type="submit" class="sell-submit" data-i18n="sellSubmit">Get My Home Value</button>
+                </form>
+                <div id="sell-success" class="sell-success" style="display:none" data-i18n="sellSuccess">Thank you! Rosa will contact you shortly with your valuation.</div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- ============================================================
+         SOCIAL PROOF STRIP
+         ============================================================ -->
+    <section class="social-proof-strip">
+        <div class="social-proof-inner">
+            <div class="social-proof-stat">
+                <span class="social-proof-number">80+</span>
+                <span class="social-proof-label" data-i18n="proofBuyers">Buyers Served from 15+ Countries</span>
+            </div>
+            <div class="social-proof-divider"></div>
+            <div class="social-proof-quotes">
+                <div class="social-proof-quote">"Found our dream condo in Sunny Isles in two weeks." <span>— Carlos R., Colombia</span></div>
+                <div class="social-proof-quote">"Rosa made the whole process easy from Brazil." <span>— Luiz F., Brazil</span></div>
+                <div class="social-proof-quote">"Best experience buying property in Miami." <span>— Ivan C., New York</span></div>
+            </div>
+            <div class="social-proof-divider"></div>
+            <div class="social-proof-flags">🇺🇸 🇧🇷 🇨🇴 🇻🇪 🇦🇷 🇨🇷 🇪🇨 🇵🇪 🇲🇽 🇩🇪 🇪🇸 🇵🇹 🇬🇧 🇨🇦 🇳🇮</div>
+        </div>
+    </section>
+
+    <!-- ============================================================
+         HORIZONTAL FILTER BAR + RESULTS
+         ============================================================ -->
+    <section class="browse-section" id="browse-section">
+        <div class="browse-inner">
+
+            <!-- HORIZONTAL FILTER BAR -->
+            <div class="filter-bar" id="filter-bar">
+                <div class="filter-bar-row">
+                    <!-- Hidden location field (populated by autocomplete) -->
+                    <input type="hidden" id="f-location" value="">
+
+                    <div class="filter-bar-item">
+                        <select id="f-type" class="fb-select">
+                            <option value="all" data-i18n="allTypes">All Types</option>
+                            <option value="Single Family Residence" data-i18n="singleFamily">Single Family</option>
+                            <option value="Condominium" data-i18n="condoVilla">Condo / Townhouse</option>
+                            <option value="MultiFamily" data-i18n="multiFamily">MultiFamily</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-bar-item fb-price">
+                        <input type="number" id="f-price-min" class="fb-input" placeholder="Min Price (000s)" min="0">
+                        <span class="fb-dash">&ndash;</span>
+                        <input type="number" id="f-price-max" class="fb-input" placeholder="Max Price (000s)" min="0">
+                        <p class="filter-error" id="price-error" style="display:none">Min &gt; Max</p>
+                    </div>
+
+                    <div class="filter-bar-item">
+                        <select id="f-beds" class="fb-select">
+                            <option value="0" data-i18n="anyBeds">Beds</option>
+                            <option value="1">1+ Beds</option>
+                            <option value="2">2+ Beds</option>
+                            <option value="3">3+ Beds</option>
+                            <option value="4">4+ Beds</option>
+                            <option value="5">5+ Beds</option>
+                            <option value="6">6+ Beds</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-bar-item">
+                        <select id="f-baths" class="fb-select">
+                            <option value="0" data-i18n="anyBaths">Baths</option>
+                            <option value="1">1+ Baths</option>
+                            <option value="2">2+ Baths</option>
+                            <option value="3">3+ Baths</option>
+                            <option value="4">4+ Baths</option>
+                        </select>
+                    </div>
+
+                    <button class="fb-more-toggle" id="filter-adv-toggle">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
+                        <span data-i18n="moreFilters">More Filters</span>
+                    </button>
+
+                    <button class="fb-search-btn" id="search-btn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                        <span id="search-btn-text" data-i18n="searchProperties">Search</span>
+                    </button>
+                </div>
+                <p class="price-hint" id="price-hint" data-i18n="priceHint">Prices in thousands — e.g. 500 = $500,000</p>
+
+                <!-- ADVANCED FILTERS (collapsible) -->
+                <div class="fb-advanced" id="filter-advanced" style="display:none">
+                    <div class="fb-adv-grid">
+                        <div class="fb-adv-item">
+                            <label class="fb-adv-label" data-i18n="listingStatus">Status</label>
+                            <div class="filter-checkboxes-row">
+                                <label class="fb-check"><input type="checkbox" name="status" value="Active" checked><span data-i18n="active">Active</span></label>
+                                <label class="fb-check"><input type="checkbox" name="status" value="Pending"><span data-i18n="pending">Pending</span></label>
+                                <label class="fb-check"><input type="checkbox" name="status" value="ActiveUnderContract"><span data-i18n="underContract">Under Contract</span></label>
+                                <label class="fb-check"><input type="checkbox" name="status" value="ComingSoon"><span data-i18n="comingSoon">Coming Soon</span></label>
+                                <label class="fb-check"><input type="checkbox" name="status" value="Closed"><span data-i18n="closed">Closed</span></label>
+                            </div>
+                        </div>
+                        <div class="fb-adv-item">
+                            <label class="fb-adv-label" data-i18n="squareFeet">Sqft</label>
+                            <div class="fb-adv-row">
+                                <input type="number" id="f-sqft-min" class="fb-input-sm" placeholder="Min" min="0">
+                                <span class="fb-dash">&ndash;</span>
+                                <input type="number" id="f-sqft-max" class="fb-input-sm" placeholder="Max" min="0">
+                            </div>
+                        </div>
+                        <div class="fb-adv-item">
+                            <label class="fb-adv-label">Year Built &mdash; <span id="year-range-label">Any</span></label>
+                            <div class="year-slider-wrap">
+                                <div class="year-track"><div class="year-track-fill" id="year-fill"></div></div>
+                                <input type="range" id="year-min" class="year-range" min="1900" max="2026" value="1900" step="1">
+                                <input type="range" id="year-max" class="year-range" min="1900" max="2026" value="2026" step="1">
+                            </div>
+                        </div>
+                        <div class="fb-adv-item">
+                            <label class="fb-adv-label" data-i18n="lotSize">Lot Size</label>
+                            <div class="fb-adv-row">
+                                <input type="number" id="f-lot-min" class="fb-input-sm" placeholder="Min sqft" min="0">
+                                <span class="fb-dash">&ndash;</span>
+                                <input type="number" id="f-lot-max" class="fb-input-sm" placeholder="Max sqft" min="0">
+                            </div>
+                        </div>
+                        <div class="fb-adv-item">
+                            <label class="fb-adv-label" data-i18n="county">County</label>
+                            <input type="text" id="f-county" class="fb-input-sm" placeholder="Miami-Dade...">
+                        </div>
+                        <div class="fb-adv-item">
+                            <label class="fb-adv-label" data-i18n="waterfront">Waterfront</label>
+                            <div class="fb-wf-row">
+                                <label class="filter-switch"><input type="checkbox" id="f-waterfront"><span class="filter-switch-track"></span></label>
+                                <div class="waterfront-subtypes" id="waterfront-subtypes" style="display:none">
+                                    <label class="fb-radio"><input type="radio" name="wf-type" value="any" checked><span data-i18n="anyWaterfront">Any</span></label>
+                                    <label class="fb-radio"><input type="radio" name="wf-type" value="bay"><span data-i18n="bayfront">Bay</span></label>
+                                    <label class="fb-radio"><input type="radio" name="wf-type" value="canal"><span data-i18n="canalfront">Canal</span></label>
+                                    <label class="fb-radio"><input type="radio" name="wf-type" value="ocean"><span data-i18n="oceanBeachfront">Ocean</span></label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RESULTS AREA (full width) -->
+            <div class="results-area">
+                <div class="results-header">
+                    <p class="results-count" id="results-count" data-i18n="showingFeatured">Showing featured South Florida properties</p>
+                    <div class="view-toggle">
+                        <button class="view-toggle-btn" data-view="grid" id="view-grid-btn">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+                            Grid
+                        </button>
+                        <button class="view-toggle-btn active" data-view="list" id="view-list-btn">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                            List
+                        </button>
+                        <button class="view-toggle-btn" data-view="map" id="view-map-btn">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                            Map
+                        </button>
+                    </div>
+                </div>
+                <div class="results-grid" id="results-grid"></div>
+                <div id="map-view" class="map-view-container" style="display:none"></div>
+                <div id="load-more-wrap" class="load-more-wrap" style="display:none">
+                    <button class="load-more-btn" id="load-more-btn" data-i18n="loadMore">Load More Properties</button>
+                </div>
+                <div id="no-results" class="no-results" style="display:none">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                    <p data-i18n="noResults">No properties found matching your filters.</p>
+                    <p class="no-results-hint" data-i18n="noResultsHint">Try broadening your search — adjust price range, location, or remove some filters.</p>
+                </div>
+            </div>
+
+            <!-- SAVE SEARCH CTA (shown after user searches) -->
+            <div id="save-search-cta" class="save-search-cta" style="display:none">
+                <div class="save-search-inner">
+                    <h3 data-i18n="saveSearchTitle">Like what you see?</h3>
+                    <p data-i18n="saveSearchSubtitle">Get new listings matching your search delivered to your inbox.</p>
+                    <form id="save-search-form" class="save-search-form">
+                        <input type="email" id="save-search-email" placeholder="Your email address" required>
+                        <button type="submit" data-i18n="getAlerts">Get Alerts</button>
+                    </form>
+                    <div id="save-search-success" style="display:none" data-i18n="alertsSuccess">You're subscribed! We'll send you matching properties.</div>
+                </div>
+            </div>
+
+            <!-- AGENT BANNER (compact, below results) -->
+            <div class="agent-banner">
+                <img src="team-rosa.jpg" alt="Rosa Poler" class="agent-banner-photo">
+                <div class="agent-banner-info">
+                    <span class="agent-banner-name">Rosa Poler</span>
+                    <span class="agent-banner-title">REALTOR® &mdash; Optimar International Realty</span>
+                </div>
+                <a href="tel:+19542354046" class="agent-banner-phone">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 014.68 11.6 19.79 19.79 0 011.61 3a2 2 0 012-2.18h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L7.91 8.09a16 16 0 006 6l.91-.91a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+                    (954) 235-4046
+                </a>
+                <img src="optimar-logo.jpg" alt="Optimar" class="agent-banner-logo">
+            </div>
+
+        </div>
+    </section>
+
+    <!-- ============================================================
+         EXPLORE NEIGHBORHOODS
+         ============================================================ -->
+    <section class="neighborhood-section">
+        <div class="neighborhood-inner">
+            <h2 class="neighborhood-title" data-i18n="exploreNeighborhoods">Explore South Florida Neighborhoods</h2>
+            <div class="neighborhood-grid">
+                <a href="listing?city=Miami Beach" class="neighborhood-card" style="background-image:url('https://images.unsplash.com/photo-1535498730771-e735b998cd64?w=600&q=80')">
+                    <div class="neighborhood-overlay"><span>Miami Beach</span></div>
+                </a>
+                <a href="listing?city=Sunny Isles Beach" class="neighborhood-card" style="background-image:url('https://images.unsplash.com/photo-1545153996-e01b9adb5c07?w=600&q=80')">
+                    <div class="neighborhood-overlay"><span>Sunny Isles Beach</span></div>
+                </a>
+                <a href="listing?city=Fort Lauderdale" class="neighborhood-card" style="background-image:url('https://images.unsplash.com/photo-1570129477492-45c003edd2be?w=600&q=80')">
+                    <div class="neighborhood-overlay"><span>Fort Lauderdale</span></div>
+                </a>
+                <a href="listing?city=Aventura" class="neighborhood-card" style="background-image:url('https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=600&q=80')">
+                    <div class="neighborhood-overlay"><span>Aventura</span></div>
+                </a>
+                <a href="listing?city=Coral Gables" class="neighborhood-card" style="background-image:url('https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=600&q=80')">
+                    <div class="neighborhood-overlay"><span>Coral Gables</span></div>
+                </a>
+                <a href="listing?city=Key Biscayne" class="neighborhood-card" style="background-image:url('https://images.unsplash.com/photo-1580587771525-78b9dba3b914?w=600&q=80')">
+                    <div class="neighborhood-overlay"><span>Key Biscayne</span></div>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="lp-footer">
+        <div class="footer-columns">
+            <div class="footer-col">
+                <h4 class="footer-col-title" data-i18n="popularSearches">Popular Searches</h4>
+                <a href="listing?city=Miami Beach" class="footer-link">Miami Beach Condos</a>
+                <a href="listing?city=Sunny Isles Beach" class="footer-link">Sunny Isles Oceanfront</a>
+                <a href="listing?city=Fort Lauderdale" class="footer-link">Fort Lauderdale Homes</a>
+                <a href="listing?city=Aventura" class="footer-link">Aventura Properties</a>
+                <a href="listing?city=Coral Gables" class="footer-link">Coral Gables Luxury</a>
+                <a href="listing?city=Hollywood" class="footer-link">Hollywood Waterfront</a>
+            </div>
+            <div class="footer-col">
+                <h4 class="footer-col-title" data-i18n="contactUs">Contact Us</h4>
+                <p class="footer-contact-name">Rosa Poler, REALTOR®</p>
+                <a href="tel:+19542354046" class="footer-link">📞 (954) 235-4046</a>
+                <a href="mailto:rosa@homesinsoflorida.com" class="footer-link">✉️ rosa@homesinsoflorida.com</a>
+                <p class="footer-brokerage">Optimar International Realty</p>
+            </div>
+            <div class="footer-col">
+                <h4 class="footer-col-title" data-i18n="followUs">Follow Us</h4>
+                <div class="footer-social">
+                    <a href="https://instagram.com/thepolerteam" target="_blank" rel="noopener" class="footer-social-link" aria-label="Instagram">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+                    </a>
+                    <a href="https://facebook.com/thepolerteam" target="_blank" rel="noopener" class="footer-social-link" aria-label="Facebook">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385h-3.047v-3.47h3.047v-2.642c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953h-1.514c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385c5.737-.9 10.125-5.864 10.125-11.854z"/></svg>
+                    </a>
+                    <a href="https://wa.me/19542354046" target="_blank" rel="noopener" class="footer-social-link" aria-label="WhatsApp">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                    </a>
+                </div>
+            </div>
+            <div class="footer-col">
+                <h4 class="footer-col-title" data-i18n="footerAlerts">Get Property Alerts</h4>
+                <form id="footer-alert-form" class="footer-alert-form">
+                    <input type="email" id="footer-alert-email" placeholder="Your email" required>
+                    <button type="submit">Subscribe</button>
+                </form>
+            </div>
+        </div>
+        <div class="lp-footer-inner">
+            <img src="logo-white.png" alt="The Poler Team" class="lp-footer-logo">
+            <p class="lp-footer-copy" data-i18n="footerCopy">&copy; 2025 The Poler Team &mdash; Optimar International Realty. All rights reserved.</p>
+            <a href="index.html" class="lp-footer-back" data-i18n="backToMain">&#8592; Back to Main Site</a>
+        </div>
+    </footer>
+
+</div><!-- /page-wrap -->
+
+<!-- ============================================================
+     AI CHAT WIDGET — outside page-wrap so position:fixed works
+     correctly (parent filter:blur breaks fixed positioning)
+     ============================================================ -->
+<div id="ai-chat-widget" class="ai-chat-widget">
+
+    <!-- Floating toggle button -->
+    <button id="ai-chat-toggle" class="ai-chat-toggle" aria-label="Open AI home assistant" aria-expanded="false">
+        <span class="ai-chat-toggle-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+        </span>
+        <span class="ai-chat-toggle-label" data-i18n="aiAssistant">AI Assistant</span>
+        <span class="ai-chat-ping" id="ai-chat-ping" aria-hidden="true"></span>
+    </button>
+
+    <!-- Chat panel -->
+    <div id="ai-chat-panel" class="ai-chat-panel" aria-hidden="true" role="dialog" aria-label="AI Home Assistant">
+
+        <!-- Header -->
+        <div class="ai-chat-header">
+            <div class="ai-chat-header-left">
+                <div class="ai-chat-avatar">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                </div>
+                <div class="ai-chat-header-info">
+                    <div class="ai-chat-header-name" data-i18n="aiChatName">AI Home Assistant</div>
+                    <div class="ai-chat-header-sub" data-i18n="aiChatSub">The Poler Team &middot; South Florida Real Estate</div>
+                </div>
+            </div>
+            <button class="ai-chat-close" id="ai-chat-close" aria-label="Close chat">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+
+        <!-- Messages -->
+        <div class="ai-chat-messages" id="ai-chat-messages" role="log" aria-live="polite"></div>
+
+        <!-- Input area -->
+        <div class="ai-chat-input-area">
+            <textarea
+                id="ai-chat-input"
+                class="ai-chat-input"
+                placeholder="Ask me anything about real estate..." data-i18n="aiChatPlaceholder"
+                rows="1"
+                aria-label="Chat message"
+                maxlength="2000"
+            ></textarea>
+            <button id="ai-chat-send" class="ai-chat-send-btn" aria-label="Send message">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            </button>
+        </div>
+
+    </div>
+</div>
+
+<!-- EmailJS SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script src="https://unpkg.com/maplibre-gl@4.1.2/dist/maplibre-gl.js"></script>
+<script src="i18n.js"></script>
+<script src="listing.js"></script>
+</body>
+</html>
