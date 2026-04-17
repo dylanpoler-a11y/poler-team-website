@@ -273,47 +273,83 @@
   }
 
   @media (max-width: 768px) {
-    .cover { padding: 48px 24px; min-height: auto; }
-    .cover h1 { font-size: 36px; }
-    .cover .subtitle { font-size: 16px; }
-    .cover-stats { flex-wrap: wrap; gap: 24px; justify-content: center; padding: 20px 24px; }
-    .cover-stat .val { font-size: 26px; }
+    /* COVER: switch to full-bleed hero image with dark overlay so text sits on top cleanly */
+    .cover {
+      padding: 72px 24px 48px !important;
+      min-height: 80vh;
+      background-size: cover, cover !important;
+      background-position: center, center !important;
+      align-items: flex-start;
+      text-align: left;
+    }
+    .cover::before {
+      background: linear-gradient(135deg, rgba(15,23,41,0.72) 0%, rgba(15,23,41,0.82) 100%) !important;
+    }
+    .cover > * { max-width: 100% !important; }
+    .cover h1 { font-size: 34px; letter-spacing: -0.5px; }
+    .cover .subtitle { font-size: 15px; margin-bottom: 28px; }
+    .cover .tag { font-size: 11px; padding: 8px 18px; margin-bottom: 20px; }
+    .cover-stats { flex-wrap: wrap; gap: 16px 24px; padding: 16px 20px; width: 100%; box-sizing: border-box; }
+    .cover-stat { flex: 1 1 30%; min-width: 0; text-align: left; }
+    .cover-stat .val { font-size: 22px; }
+    .cover-stat .label { font-size: 10px; letter-spacing: 0.5px; }
+    .cover-footer { font-size: 11px; margin-top: 32px; }
 
-    .section { padding: 48px 20px; }
-    .section-dark { padding: 48px 20px; }
-    .section-gold { padding: 48px 20px; }
-    .section-gold > div { padding: 0; }
-    .section-compare { padding: 48px 20px; }
-    .section-compare > div { padding: 0; }
-    .section-dark > div { padding: 0 20px; }
+    /* Sections: consistent edge padding, prevent horizontal overflow */
+    body { overflow-x: hidden; }
+    .section, .section-dark, .section-gold, .section-compare { padding: 48px 20px; }
+    .section-gold > div, .section-compare > div, .section-dark > div { padding: 0; }
     .section h2, .section-dark h2, .section-compare h2 { font-size: 26px; }
 
-    .prop-grid { grid-template-columns: 1fr; gap: 24px; }
-    .exit-grid { grid-template-columns: 1fr; }
-    .lever-grid { grid-template-columns: 1fr; }
-    .kpi-row { gap: 12px; }
-    .kpi-card { min-width: 120px; padding: 14px; }
+    /* All multi-column grids collapse to 1 column, including inline-styled ones */
+    .prop-grid, .exit-grid, .lever-grid { grid-template-columns: 1fr !important; gap: 20px !important; }
+    [style*="grid-template-columns:1fr 1.3fr"],
+    [style*="grid-template-columns: 1fr 1.3fr"],
+    [style*="grid-template-columns:1fr 1fr 1fr"],
+    [style*="grid-template-columns: 1fr 1fr 1fr"] {
+      grid-template-columns: 1fr !important;
+      gap: 20px !important;
+    }
+
+    /* KPI cards */
+    .kpi-row { flex-direction: column; gap: 12px; }
+    .kpi-card { min-width: 0; width: 100%; padding: 14px; }
     .kpi-card .kpi-val { font-size: 22px; }
 
     .timeline { flex-direction: column; gap: 0; }
     .timeline-step { border-top: none; border-left: 4px solid var(--gold); padding: 16px 20px; }
     .timeline-step::before { top: 50%; left: -10px; transform: translateY(-50%); }
 
-    .combined-stats { gap: 24px; }
-    .combined-stat .val { font-size: 24px; }
+    .combined-stats { gap: 16px 24px; flex-wrap: wrap; }
+    .combined-stat { flex: 1 1 40%; }
+    .combined-stat .val { font-size: 22px; }
 
-    .fin-table, .compare-table, .cf-table { font-size: 12px; }
-    .fin-table thead th, .compare-table thead th, .cf-table thead th { padding: 10px 8px; font-size: 10px; }
-    .fin-table tbody td, .compare-table tbody td, .cf-table tbody td { padding: 8px; }
+    /* TABLES: wrap every table in horizontal scroll so they never push the page wider than the viewport */
+    .fin-table, .compare-table, .cf-table, .sens-table {
+      display: block;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      white-space: nowrap;
+      font-size: 12px;
+      max-width: 100%;
+    }
+    .fin-table thead th, .compare-table thead th, .cf-table thead th, .sens-table thead th {
+      padding: 10px 8px; font-size: 10px;
+    }
+    .fin-table tbody td, .compare-table tbody td, .cf-table tbody td, .sens-table tbody td {
+      padding: 8px;
+    }
+
+    /* Images scale to container */
+    img { max-width: 100%; height: auto; }
 
     .cta-contacts { gap: 32px; }
-    .cover-footer { font-size: 11px; }
 
-    /* Validation hero */
+    /* Legacy validation hero (removed section, kept for safety) */
     div[style*="grid-template-columns:1fr auto 1fr"] {
       grid-template-columns: 1fr !important;
     }
-    div[style*="font-size:56px"] { font-size: 40px !important; }
+    div[style*="font-size:56px"] { font-size: 36px !important; }
   }
 </style>
 </head>
