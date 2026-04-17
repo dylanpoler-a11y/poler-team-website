@@ -9,8 +9,11 @@
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
     --navy: #1a2744;
-    --gold: #C9A84C;
-    --light-gold: #f5f0e1;
+    --lauderdale-navy: #1B2B5E;
+    --lauderdale-green: #2D9B4A;
+    --lauderdale-green-dark: #1F7A36;
+    --gold: #2D9B4A;
+    --light-gold: #eaf6ec;
     --dark: #0f1729;
     --white: #ffffff;
     --gray: #f8f9fa;
@@ -22,25 +25,41 @@
 
   /* COVER */
   .cover {
-    background: linear-gradient(135deg, var(--navy) 0%, var(--dark) 100%);
+    position: relative;
+    background-color: var(--dark);
+    background-image:
+      linear-gradient(90deg, rgba(15,23,41,0.85) 0%, rgba(15,23,41,0.55) 40%, rgba(15,23,41,0.15) 70%, rgba(15,23,41,0) 100%),
+      url('images/lauderdale-hero.jpg');
+    background-size: 100% auto, contain;
+    background-position: left top, right 48px bottom 48px;
+    background-repeat: no-repeat, no-repeat;
     color: var(--white);
     min-height: 100vh;
     display: flex;
     flex-direction: column;
     justify-content: center;
-    align-items: center;
-    text-align: center;
-    padding: 60px 40px;
+    align-items: flex-start;
+    text-align: left;
+    padding: 176px 80px 80px 196px;
     page-break-after: always;
+    overflow: hidden;
   }
-  .cover h1 { font-size: 52px; color: var(--gold); margin-bottom: 16px; letter-spacing: -1px; }
-  .cover .subtitle { font-size: 22px; font-weight: 300; margin-bottom: 40px; opacity: 0.9; }
-  .cover .tag { display: inline-block; background: var(--gold); color: var(--navy); padding: 10px 28px; border-radius: 6px; font-weight: 700; font-size: 14px; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 40px; }
-  .cover-stats { display: flex; gap: 48px; margin-top: 20px; }
-  .cover-stat { text-align: center; }
-  .cover-stat .val { font-size: 36px; font-weight: 700; color: var(--gold); }
-  .cover-stat .label { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.7; margin-top: 4px; }
-  .cover-footer { margin-top: 60px; font-size: 13px; opacity: 0.5; }
+  .cover::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(0,0,0,0) 60%, rgba(0,0,0,0.4) 100%);
+    pointer-events: none;
+  }
+  .cover > * { position: relative; z-index: 1; max-width: 680px; }
+  .cover h1 { font-size: 64px; color: var(--white); margin-bottom: 20px; letter-spacing: -1.5px; line-height: 1.05; text-shadow: 0 2px 30px rgba(0,0,0,0.8); }
+  .cover .subtitle { display: inline-block; font-size: 20px; font-weight: 500; margin-bottom: 48px; color: var(--white); line-height: 1.5; max-width: none; text-shadow: 0 2px 16px rgba(0,0,0,0.8); }
+  .cover .tag { display: inline-block; background: var(--lauderdale-green); color: var(--white); padding: 10px 28px; border-radius: 6px; font-weight: 700; font-size: 13px; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 28px; box-shadow: 0 4px 20px rgba(45,155,74,0.5); max-width: none; }
+  .cover-stats { display: flex; gap: 36px; margin-top: 8px; background: rgba(0,0,0,0.5); backdrop-filter: blur(12px); padding: 24px 36px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.15); max-width: none; flex-wrap: wrap; }
+  .cover-stat { text-align: left; }
+  .cover-stat .val { font-size: 32px; font-weight: 700; color: var(--white); text-shadow: 0 2px 12px rgba(0,0,0,0.5); line-height: 1; }
+  .cover-stat .label { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--lauderdale-green); margin-top: 6px; font-weight: 600; }
+  .cover-footer { margin-top: 56px; font-size: 12px; color: rgba(255,255,255,0.7); text-shadow: 0 1px 6px rgba(0,0,0,0.6); letter-spacing: 0.5px; max-width: none; }
 
   /* SECTIONS */
   .section {
@@ -255,9 +274,9 @@
 
   @media (max-width: 768px) {
     .cover { padding: 48px 24px; min-height: auto; }
-    .cover h1 { font-size: 32px; }
+    .cover h1 { font-size: 36px; }
     .cover .subtitle { font-size: 16px; }
-    .cover-stats { flex-wrap: wrap; gap: 24px; justify-content: center; }
+    .cover-stats { flex-wrap: wrap; gap: 24px; justify-content: center; padding: 20px 24px; }
     .cover-stat .val { font-size: 26px; }
 
     .section { padding: 48px 20px; }
@@ -308,8 +327,6 @@
   <div class="cover-stats">
     <div class="cover-stat"><div class="val">41</div><div class="label">Combined Keys</div></div>
     <div class="cover-stat"><div class="val">$9.7M</div><div class="label">Combined Price</div></div>
-    <div class="cover-stat"><div class="val">$743K</div><div class="label">505 Actual Revenue</div></div>
-    <div class="cover-stat"><div class="val">$1.06M</div><div class="label">506 Y1 Pro Forma</div></div>
     <div class="cover-stat"><div class="val">8.6%</div><div class="label">Blended Cap Rate</div></div>
   </div>
   <div class="cover-footer">Confidential Offering Memorandum | The Poler Team | 2026</div>
@@ -328,7 +345,7 @@
     <li><span class="check-icon">&#10003;</span> <strong>Proven Playbook:</strong> The 505 conversion from 13 outdated motel rooms to 17 tech-enabled boutique keys has already been executed — same concept, copy & paste to 506</li>
     <li><span class="check-icon">&#10003;</span> <strong>Across-the-Street Synergy:</strong> Both properties share one operation, one tech stack (Guesty, Conduit AI, PricePoint), one part-time manager — doubling keys without doubling costs</li>
     <li><span class="check-icon">&#10003;</span> <strong>Economies of Scale:</strong> Combined 41-key operation unlocks institutional-grade RevPAR, vendor pricing, and OTA positioning that 17 keys alone cannot achieve</li>
-    <li><span class="check-icon">&#10003;</span> <strong>Triple Lot Assemblage:</strong> 505 sits on 3 contiguous lots (21,450 SF) with 5-story zoning — the expansion lot is 70% vacant and already has design plans</li>
+    <li><span class="check-icon">&#10003;</span> <strong>Triple Lot Assemblage:</strong> 505 sits on 3 contiguous lots (21,450 SF) with 5-story zoning — roughly a third of the land is unbuilt and already has design plans</li>
     <li><span class="check-icon">&#10003;</span> <strong>Location Demand Drivers:</strong> 2 min from Broward Health (716 beds), walkable to $1.2B Convention Center, 10 min from FLL Airport & Port Everglades</li>
   </ul>
 </div>
@@ -404,6 +421,129 @@
         <div class="combined-stat"><div class="val">8.6%</div><div class="label">Blended Cap Rate</div></div>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- HIDDEN UPSIDE WITHIN 505 -->
+<div class="section">
+  <h2>Hidden Upside Within 505</h2>
+  <p class="section-sub">Before you touch 506 — Lot 505 alone is already a development site</p>
+
+  <div class="thesis-box">
+    The 505 assemblage sits on three contiguous lots totaling <strong>21,450 SF</strong>. Today, only <strong>6,869 SF of building</strong> sits on that land — roughly <strong>a third of the lot is unbuilt "lazy equity."</strong> Lot 20 (the 505 folio itself) houses the existing structure plus asphalt overflow parking, leaving ample room for vertical expansion or amenities. RO zoning permits a <strong>5-story vertical build (55 ft height)</strong>, and the adjacent Avalon at 410 SE 16th Ct — an 8-story, 243-unit luxury apartment with Whole Foods on the ground floor, built 2020 — already validates this corridor for institutional density.
+  </div>
+
+  <!-- Property surveys -->
+  <div style="margin:48px 0 40px;border-radius:16px;overflow:hidden;border:3px solid var(--gold);box-shadow:0 8px 32px rgba(26,39,68,0.18);">
+    <div style="background:var(--navy);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;">
+      <span style="font-family:'Playfair Display',serif;color:var(--gold);font-size:16px;font-weight:600;letter-spacing:0.5px;">Three-Lot Assemblage — Lots 18, 19 &amp; 20 (Block 62-L)</span>
+      <span style="font-size:12px;color:rgba(255,255,255,0.6);text-transform:uppercase;letter-spacing:1px;">Property Surveys</span>
+    </div>
+    <img src="images/lauderdale-505-surveys.png" alt="Property surveys for Lots 18, 19, and 20 at 421, 445, and 505 SE 16th Street" style="width:100%;display:block;background:#fff;">
+    <div style="background:var(--navy);padding:12px 24px;font-size:13px;color:rgba(255,255,255,0.85);text-align:center;">
+      All lots 50' × 143' · Total frontage 150' · <strong>21,450 SF total</strong> · Lot 20 (#505) = development-ready
+    </div>
+  </div>
+
+  <h3 style="font-size:24px;margin:48px 0 8px;color:var(--navy);">Three Expansion Concepts for Lot 505</h3>
+  <p style="color:var(--text-light);margin-bottom:32px;font-size:15px;">Escalating CapEx, escalating returns — each path stands alone or stacks on top of the 506 conversion</p>
+
+  <div class="prop-grid" style="grid-template-columns: 1fr 1fr 1fr; gap: 20px;">
+    <div class="prop-card" style="border-color:var(--gold);background:var(--light-gold);">
+      <div class="prop-badge">Concept A</div>
+      <h3 style="font-size:22px;">Lifestyle Upgrade</h3>
+      <p class="prop-addr" style="color:var(--lauderdale-green-dark);font-weight:600;">Low CapEx · High ADR Impact</p>
+      <ul style="list-style:none;padding:0;margin:16px 0;font-size:14px;line-height:1.8;">
+        <li>✓ Resort-style saltwater pool (30'×18')</li>
+        <li>✓ Enclosed pickleball / sport court</li>
+        <li>✓ Yoga deck & landscaped garden</li>
+        <li>✓ Fire pit gathering area</li>
+      </ul>
+      <div style="border-top:1px solid #e0ddd4;padding-top:16px;margin-top:16px;">
+        <div style="font-size:11px;color:var(--text-light);text-transform:uppercase;letter-spacing:1px;font-weight:600;">Projected ROI</div>
+        <div style="font-size:22px;font-weight:700;color:var(--navy);margin-top:4px;">+$30–$50 ADR</div>
+        <div style="font-size:13px;color:var(--text-light);margin-top:4px;">across 17 units = <strong>+$186K–$310K/yr</strong></div>
+        <div style="font-size:12px;color:var(--text-light);margin-top:8px;font-style:italic;">Pickleball adds 15–20% booking premium at boutique properties</div>
+      </div>
+    </div>
+
+    <div class="prop-card">
+      <div class="prop-badge">Concept B</div>
+      <h3 style="font-size:22px;">Digital Nomad Hub</h3>
+      <p class="prop-addr" style="color:var(--lauderdale-green-dark);font-weight:600;">Mid CapEx · New Market Segment</p>
+      <ul style="list-style:none;padding:0;margin:16px 0;font-size:14px;line-height:1.8;">
+        <li>✓ Fitness center / gym</li>
+        <li>✓ Co-working lounge + WiFi 6</li>
+        <li>✓ Extended-stay kitchenettes</li>
+        <li>✓ Content creation studio</li>
+      </ul>
+      <div style="border-top:1px solid #e0ddd4;padding-top:16px;margin-top:16px;">
+        <div style="font-size:11px;color:var(--text-light);text-transform:uppercase;letter-spacing:1px;font-weight:600;">Target Segment</div>
+        <div style="font-size:22px;font-weight:700;color:var(--navy);margin-top:4px;">30–90 Day Stays</div>
+        <div style="font-size:13px;color:var(--text-light);margin-top:4px;">Mid-term rental at premium ADR</div>
+        <div style="font-size:12px;color:var(--text-light);margin-top:8px;font-style:italic;">Remote worker travel up 40% since 2020 — Fort Lauderdale top-5 nomad destination</div>
+      </div>
+    </div>
+
+    <div class="prop-card">
+      <div class="prop-badge">Concept C</div>
+      <h3 style="font-size:22px;">Vertical Play</h3>
+      <p class="prop-addr" style="color:var(--lauderdale-green-dark);font-weight:600;">High CapEx · Maximum Exit Value</p>
+      <ul style="list-style:none;padding:0;margin:16px 0;font-size:14px;line-height:1.8;">
+        <li>✓ 5-story tower (55' max allowed)</li>
+        <li>✓ 8–12 new residential / hotel units</li>
+        <li>✓ Ground-floor commercial</li>
+        <li>✓ Rooftop amenity deck</li>
+      </ul>
+      <div style="border-top:1px solid #e0ddd4;padding-top:16px;margin-top:16px;">
+        <div style="font-size:11px;color:var(--text-light);text-transform:uppercase;letter-spacing:1px;font-weight:600;">Projected ROI</div>
+        <div style="font-size:22px;font-weight:700;color:var(--navy);margin-top:4px;">2× Key Count</div>
+        <div style="font-size:13px;color:var(--text-light);margin-top:4px;">29+ unit asset → institutional buyers</div>
+        <div style="font-size:12px;color:var(--text-light);margin-top:8px;font-style:italic;">Precedent: Avalon @ 410 SE 16th Ct — 8 stories, 243 units, same block, built 2020</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Design work: Site plan + Floor plan -->
+  <h3 style="font-size:24px;margin:56px 0 8px;color:var(--navy);">Design Work Already In Hand</h3>
+  <p style="color:var(--text-light);margin-bottom:32px;font-size:15px;">The architect has sketched Concept A — pool, enclosed pickleball / gym, and amenity area — on the existing site plan. Renderings and floor plans are ready for a buyer to execute on day one.</p>
+
+  <!-- Site plan panoramic -->
+  <div style="margin:0 0 32px;border-radius:16px;overflow:hidden;border:3px solid var(--gold);box-shadow:0 8px 32px rgba(26,39,68,0.18);">
+    <div style="background:var(--navy);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;">
+      <span style="font-family:'Playfair Display',serif;color:var(--gold);font-size:16px;font-weight:600;letter-spacing:0.5px;">Site Plan — Concept A Rendering</span>
+      <span style="font-size:12px;color:rgba(255,255,255,0.6);text-transform:uppercase;letter-spacing:1px;">Lot 505 Expansion</span>
+    </div>
+    <img src="images/lauderdale-505-site-plan.png" alt="Architectural site plan showing existing building with proposed enclosed pickleball court, gym, and pool area" style="width:100%;display:block;background:#fff;">
+    <div style="background:var(--navy);padding:12px 24px;font-size:13px;color:rgba(255,255,255,0.85);text-align:center;">
+      Existing Building · Proposed Enclosed Pickleball / Gym · Resort-Style Pool Area
+    </div>
+  </div>
+
+  <!-- Floor plan detail -->
+  <div style="display:grid;grid-template-columns:1fr 1.3fr;gap:32px;align-items:start;margin-bottom:32px;">
+    <div style="border-radius:16px;overflow:hidden;border:3px solid var(--gold);box-shadow:0 8px 32px rgba(26,39,68,0.18);">
+      <div style="background:var(--navy);padding:14px 24px;">
+        <span style="font-family:'Playfair Display',serif;color:var(--gold);font-size:14px;font-weight:600;letter-spacing:0.5px;">Floor Plan · Lot 505</span>
+      </div>
+      <img src="images/lauderdale-505-floor-plan.png" alt="Scaled floor plan showing proposed pickleball courts, pool, and existing building footprint on Lot 505" style="width:100%;display:block;background:#fff;">
+    </div>
+    <div style="padding-top:8px;">
+      <h4 style="font-size:20px;color:var(--navy);margin-bottom:16px;font-family:'Playfair Display',serif;">What You're Buying</h4>
+      <p style="font-size:15px;line-height:1.7;color:var(--text);margin-bottom:16px;">The scaled site plan shows exactly what Concept A looks like on the ground: <strong>two enclosed pickleball courts</strong>, a <strong>30' × 18' resort-style saltwater pool</strong>, and a landscaped amenity zone — all built on the 50' × 143' parcel without touching the existing revenue-generating structure.</p>
+      <p style="font-size:15px;line-height:1.7;color:var(--text);margin-bottom:16px;">The existing 1-story building remains intact and operational. Construction happens on the unbuilt portion, so <strong>505 continues cash-flowing through the build</strong> — no downtime, no displaced guests.</p>
+      <p style="font-size:15px;line-height:1.7;color:var(--text);"><strong style="color:var(--lauderdale-green-dark);">A buyer walks into a cash-flowing asset with renderings, a site plan, and a contractor-ready scope already in place.</strong></p>
+    </div>
+  </div>
+
+  <div class="combined-box" style="margin-top:48px;background:var(--navy);color:var(--white);">
+    <h3 style="color:var(--gold);">The Strategic Play: Buy the Cash Flow — Get the Land Free</h3>
+    <div class="combined-stats">
+      <div class="combined-stat"><div class="val" style="color:var(--gold);">6.2%</div><div class="label" style="color:rgba(255,255,255,0.7);">Current Cap (Third-Party Managed)</div></div>
+      <div class="combined-stat"><div class="val" style="color:var(--gold);">7.7%</div><div class="label" style="color:rgba(255,255,255,0.7);">Stabilized Cap (Owner-Operated, $461K NOI)</div></div>
+      <div class="combined-stat"><div class="val" style="color:var(--gold);">33%</div><div class="label" style="color:rgba(255,255,255,0.7);">Of Lot 505 Is Unbuilt — Free Development Option</div></div>
+    </div>
+    <p style="margin-top:28px;text-align:center;font-size:16px;font-weight:500;color:rgba(255,255,255,0.9);font-style:italic;">Cash flow covers the carry. Development is a free option on top of 506.</p>
   </div>
 </div>
 
