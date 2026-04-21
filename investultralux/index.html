@@ -456,8 +456,8 @@
 (function () {
   const TOTAL = 26;
   const pad = n => String(n).padStart(2, '0');
-  const slidePath = n => `/investultralux/slides/slide-${pad(n)}.jpg`;
-  const thumbPath = n => `/investultralux/thumbs/thumb-${pad(n)}.jpg`;
+  const slidePath = n => `/investultralux/${lang === 'es' ? 'slides-es' : 'slides'}/slide-${pad(n)}.jpg`;
+  const thumbPath = n => `/investultralux/${lang === 'es' ? 'thumbs-es' : 'thumbs'}/thumb-${pad(n)}.jpg`;
 
   // Section map: first slide of each section (1-indexed)
   const SECTIONS = [
@@ -619,6 +619,11 @@
       const sec = SECTIONS.find(s => s.id === secId);
       if (sec) el.textContent = sec.i18n[lang];
     });
+    // Swap thumbnail image sources to match language
+    [...jumpGrid.children].forEach((card, i) => {
+      const img = card.querySelector('img');
+      if (img) img.src = thumbPath(i + 1);
+    });
   }
 
   function openJump() {
@@ -643,6 +648,8 @@
     localStorage.setItem('hh-invest-lang', lang);
     applyI18n();
     refreshThumbSections();
+    preloadCache.clear();
+    render(current);
   });
 
   // Language landing buttons
@@ -652,6 +659,8 @@
       localStorage.setItem('hh-invest-lang', lang);
       applyI18n();
       refreshThumbSections();
+      preloadCache.clear();
+      render(current);
       langLanding.classList.add('hide');
     });
   });
