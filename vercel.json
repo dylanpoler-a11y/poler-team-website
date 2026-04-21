@@ -33,6 +33,12 @@
         { "key": "Content-Type", "value": "text/html; charset=utf-8" },
         { "key": "Content-Disposition", "value": "inline" }
       ]
+    },
+    {
+      "source": "/investultralux/(.*)",
+      "headers": [
+        { "key": "Content-Disposition", "value": "inline" }
+      ]
     }
   ]
 }
