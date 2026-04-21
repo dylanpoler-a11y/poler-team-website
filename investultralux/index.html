@@ -1,0 +1,711 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Invest in Ultra-Luxury — Hausmann Haus × Poler Team</title>
+<meta name="description" content="Hausmann Haus × Poler Team ultra-luxury development pitch — 435 Marquesa Dr, Old Cutler Bay, Coral Gables.">
+<meta property="og:title" content="Invest in Ultra-Luxury — 435 Marquesa">
+<meta property="og:description" content="Ultra-luxury development pitch. Hausmann Haus design + Primary Build steel + Poler Team capital.">
+<meta property="og:type" content="website">
+<style>
+  :root {
+    --bg: #0a0c10;
+    --panel: rgba(18, 21, 27, 0.92);
+    --gold: #a5763c;
+    --gold-bright: #d4a259;
+    --text: #e9e6de;
+    --muted: rgba(233, 230, 222, 0.5);
+    --border: rgba(165, 118, 60, 0.22);
+    --section-active: #d4a259;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Helvetica Neue', sans-serif;
+    height: 100%;
+    overflow: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  body { display: flex; flex-direction: column; }
+
+  /* ═════════════ LANGUAGE LANDING ═════════════ */
+  .lang-landing {
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse at center, #14181f 0%, #050609 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+    padding: 40px;
+    animation: fadeIn 400ms ease;
+  }
+  .lang-landing.hide { display: none; }
+  .brand-mark {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 48px;
+    font-weight: 700;
+    letter-spacing: 0.28em;
+    color: var(--gold);
+    text-align: center;
+    border: 2px solid var(--gold);
+    padding: 18px 42px;
+    margin-bottom: 56px;
+    text-transform: uppercase;
+  }
+  .lang-pre {
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  .lang-title {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: clamp(28px, 5vw, 44px);
+    font-weight: 600;
+    text-align: center;
+    line-height: 1.2;
+    margin-bottom: 48px;
+    max-width: 700px;
+  }
+  .lang-title .accent { color: var(--gold-bright); font-style: italic; }
+  .lang-row {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .lang-btn {
+    background: transparent;
+    border: 1.5px solid var(--gold);
+    color: var(--text);
+    padding: 18px 40px;
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    cursor: pointer;
+    border-radius: 2px;
+    text-transform: uppercase;
+    transition: all 180ms ease;
+    min-width: 200px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    justify-content: center;
+  }
+  .lang-btn:hover {
+    background: var(--gold);
+    color: #000;
+    transform: translateY(-2px);
+  }
+  .lang-btn .flag {
+    width: 24px;
+    height: 18px;
+    display: inline-block;
+    background-size: cover;
+    background-position: center;
+    border-radius: 2px;
+    border: 1px solid rgba(255,255,255,0.12);
+  }
+  .flag-us { background: linear-gradient(to bottom, #b22234 0%, #b22234 8%, #fff 8%, #fff 16%, #b22234 16%, #b22234 24%, #fff 24%, #fff 32%, #b22234 32%, #b22234 40%, #fff 40%, #fff 48%, #b22234 48%, #b22234 56%, #fff 56%, #fff 64%, #b22234 64%, #b22234 72%, #fff 72%, #fff 80%, #b22234 80%, #b22234 88%, #fff 88%, #fff 96%, #b22234 96%, #b22234 100%); position: relative; }
+  .flag-us::before { content: ''; position: absolute; top: 0; left: 0; width: 40%; height: 54%; background: #3c3b6e; }
+  .flag-es { background: linear-gradient(to bottom, #c60b1e 0%, #c60b1e 25%, #ffc400 25%, #ffc400 75%, #c60b1e 75%, #c60b1e 100%); }
+  .lang-foot {
+    position: absolute;
+    bottom: 32px;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+
+  /* ═════════════ SECTION TABS (top) ═════════════ */
+  .sections {
+    display: flex;
+    gap: 2px;
+    align-items: center;
+    padding: 10px 16px 8px;
+    background: var(--panel);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+    scrollbar-width: none;
+    z-index: 10;
+    position: relative;
+  }
+  .sections::-webkit-scrollbar { display: none; }
+  .section-btn {
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    padding: 8px 14px;
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    cursor: pointer;
+    border-radius: 4px;
+    text-transform: uppercase;
+    transition: color 150ms ease, background 150ms ease;
+    white-space: nowrap;
+    position: relative;
+  }
+  .section-btn:hover { color: var(--text); background: rgba(165, 118, 60, 0.06); }
+  .section-btn.active { color: var(--section-active); }
+  .section-btn.active::after {
+    content: '';
+    position: absolute;
+    bottom: -9px;
+    left: 14px;
+    right: 14px;
+    height: 2px;
+    background: var(--section-active);
+  }
+  .section-num {
+    font-family: 'SF Mono', 'JetBrains Mono', monospace;
+    font-size: 9px;
+    opacity: 0.55;
+    margin-right: 4px;
+  }
+
+  /* ═════════════ STAGE ═════════════ */
+  .stage {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    padding: 20px 20px 84px;
+  }
+  .slide-img {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    box-shadow: 0 20px 80px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(165, 118, 60, 0.12);
+    border-radius: 4px;
+    transition: opacity 120ms ease;
+  }
+  .stage.loading .slide-img { opacity: 0.4; }
+  .hit-left, .hit-right {
+    position: absolute;
+    top: 0;
+    bottom: 84px;
+    width: 18%;
+    cursor: pointer;
+    z-index: 5;
+  }
+  .hit-left { left: 0; }
+  .hit-right { right: 0; }
+
+  /* ═════════════ BOTTOM CONTROLS ═════════════ */
+  .controls {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 64px;
+    background: var(--panel);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    gap: 10px;
+    z-index: 10;
+  }
+  .progress {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.04);
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--gold), var(--gold-bright));
+    width: 0%;
+    transition: width 200ms ease;
+  }
+  .btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 8px 14px;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    border-radius: 5px;
+    font-family: inherit;
+    transition: all 150ms ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn:hover:not(:disabled) {
+    border-color: var(--gold);
+    background: rgba(165, 118, 60, 0.08);
+    color: var(--gold-bright);
+  }
+  .btn:active:not(:disabled) { transform: scale(0.97); }
+  .btn:disabled { opacity: 0.3; cursor: not-allowed; }
+  .btn-primary {
+    background: var(--gold);
+    border-color: var(--gold);
+    color: #000;
+    font-weight: 600;
+  }
+  .btn-primary:hover:not(:disabled) {
+    background: var(--gold-bright);
+    border-color: var(--gold-bright);
+    color: #000;
+  }
+  .btn svg { width: 13px; height: 13px; fill: currentColor; }
+  .spacer { flex: 1; }
+  .counter {
+    font-family: 'SF Mono', 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    padding: 0 10px;
+    white-space: nowrap;
+  }
+  .counter .current { color: var(--gold-bright); font-weight: 600; }
+  .lang-switch {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 6px 10px;
+    font-family: 'SF Mono', 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 3px;
+    letter-spacing: 0.1em;
+    transition: all 150ms ease;
+    text-transform: uppercase;
+  }
+  .lang-switch:hover { border-color: var(--gold); color: var(--gold-bright); }
+
+  /* ═════════════ JUMP GRID ═════════════ */
+  .jump-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(5, 7, 10, 0.93);
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
+    z-index: 100;
+    display: none;
+    flex-direction: column;
+    padding: 32px 40px 20px;
+    opacity: 0;
+    transition: opacity 180ms ease;
+  }
+  .jump-overlay.open { display: flex; opacity: 1; }
+  .jump-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .jump-title {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+  }
+  .jump-title .accent { color: var(--gold); }
+  .jump-grid {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 14px;
+    overflow-y: auto;
+    padding-right: 8px;
+    padding-bottom: 20px;
+  }
+  .jump-grid::-webkit-scrollbar { width: 8px; }
+  .jump-grid::-webkit-scrollbar-track { background: transparent; }
+  .jump-grid::-webkit-scrollbar-thumb { background: rgba(165, 118, 60, 0.3); border-radius: 4px; }
+  .jump-grid::-webkit-scrollbar-thumb:hover { background: var(--gold); }
+  .thumb-card {
+    background: #14181f;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 6px;
+    overflow: hidden;
+    cursor: pointer;
+    position: relative;
+    transition: all 150ms ease;
+  }
+  .thumb-card:hover { border-color: var(--gold); transform: translateY(-2px); }
+  .thumb-card.active { border-color: var(--gold-bright); box-shadow: 0 0 0 2px var(--gold); }
+  .thumb-card img { width: 100%; display: block; aspect-ratio: 16 / 9; object-fit: cover; }
+  .thumb-label {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    background: linear-gradient(transparent, rgba(0, 0, 0, 0.9) 60%);
+    padding: 14px 10px 8px;
+    font-family: 'SF Mono', 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    color: var(--text);
+    display: flex;
+    justify-content: space-between;
+  }
+  .thumb-card.active .thumb-label { color: var(--gold-bright); }
+  .thumb-section { color: var(--gold); opacity: 0.8; text-transform: uppercase; letter-spacing: 0.15em; }
+
+  @media (max-width: 760px) {
+    .sections { padding: 8px 10px 6px; }
+    .section-btn { padding: 7px 10px; font-size: 10px; }
+    .stage { padding: 10px 10px 74px; }
+    .controls { height: 58px; padding: 0 10px; gap: 6px; }
+    .btn { padding: 6px 10px; font-size: 11px; }
+    .btn-text { display: none; }
+    .counter { padding: 0 6px; font-size: 10px; }
+    .jump-overlay { padding: 20px 14px 14px; }
+    .jump-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+    .hit-left, .hit-right { width: 30%; }
+    .lang-switch { padding: 5px 7px; font-size: 9px; }
+  }
+
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+</style>
+</head>
+<body>
+
+<!-- ═════════════ LANGUAGE LANDING ═════════════ -->
+<div class="lang-landing" id="langLanding">
+  <div class="brand-mark">Hausmann&nbsp;Haus</div>
+  <div class="lang-pre" id="langPre">Ultra-Luxury Development · Coral Gables</div>
+  <div class="lang-title" id="langTitle">
+    Select your <span class="accent">language</span>
+    <br>
+    <span style="font-size:0.6em; opacity:0.7;">Seleccione su idioma</span>
+  </div>
+  <div class="lang-row">
+    <button class="lang-btn" data-lang="en"><span class="flag flag-us"></span>English</button>
+    <button class="lang-btn" data-lang="es"><span class="flag flag-es"></span>Español</button>
+  </div>
+  <div class="lang-foot" id="langFoot">Hausmann Haus · Poler Team · April 2026</div>
+</div>
+
+<!-- ═════════════ SECTION TABS ═════════════ -->
+<div class="sections" id="sections"></div>
+
+<!-- ═════════════ STAGE ═════════════ -->
+<div class="stage" id="stage">
+  <div class="hit-left" id="hitLeft" aria-label="Previous slide"></div>
+  <img class="slide-img" id="slide" alt="Slide" draggable="false">
+  <div class="hit-right" id="hitRight" aria-label="Next slide"></div>
+</div>
+
+<!-- ═════════════ CONTROLS ═════════════ -->
+<div class="controls">
+  <div class="progress"><div class="progress-fill" id="progressFill"></div></div>
+
+  <button class="btn" id="btnBack" title="" data-i18n-title="back_title">
+    <svg viewBox="0 0 24 24"><path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6z"/></svg>
+    <span class="btn-text" data-i18n="back">Back</span>
+  </button>
+
+  <button class="btn" id="btnReset" title="" data-i18n-title="reset_title">
+    <svg viewBox="0 0 24 24"><path d="M17.65 6.35A7.95 7.95 0 0 0 12 4a8 8 0 1 0 7.73 10h-2.08A6 6 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+    <span class="btn-text" data-i18n="reset">Reset</span>
+  </button>
+
+  <button class="btn" id="btnJump" title="" data-i18n-title="jump_title">
+    <svg viewBox="0 0 24 24"><path d="M4 6h16v2H4V6m0 5h16v2H4v-2m0 5h16v2H4v-2z"/></svg>
+    <span class="btn-text" data-i18n="jump">Jump</span>
+  </button>
+
+  <div class="spacer"></div>
+  <div class="counter"><span class="current" id="cur">01</span> / <span id="total">26</span></div>
+  <div class="spacer"></div>
+
+  <button class="lang-switch" id="btnLangSwitch" title="Change language" data-i18n-title="lang_switch_title">EN</button>
+
+  <button class="btn btn-primary" id="btnNext" title="" data-i18n-title="next_title">
+    <span class="btn-text" data-i18n="next">Next</span>
+    <svg viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
+  </button>
+</div>
+
+<!-- ═════════════ JUMP GRID MODAL ═════════════ -->
+<div class="jump-overlay" id="jumpOverlay" role="dialog">
+  <div class="jump-header">
+    <div class="jump-title" data-i18n="jump_header_html"></div>
+    <button class="btn" id="btnCloseJump"><span data-i18n="close">Close</span> · Esc</button>
+  </div>
+  <div class="jump-grid" id="jumpGrid"></div>
+</div>
+
+<script>
+(function () {
+  const TOTAL = 26;
+  const pad = n => String(n).padStart(2, '0');
+  const slidePath = n => `slides/slide-${pad(n)}.jpg`;
+  const thumbPath = n => `thumbs/thumb-${pad(n)}.jpg`;
+
+  // Section map: first slide of each section (1-indexed)
+  const SECTIONS = [
+    { id: 'cover',     start: 1,  i18n: { en: 'Cover',          es: 'Portada' } },
+    { id: 'strategy',  start: 2,  i18n: { en: 'Strategy',       es: 'Estrategia' } },
+    { id: 'experience',start: 5,  i18n: { en: 'Experience',     es: 'Experiencia' } },
+    { id: 'alliances', start: 13, i18n: { en: 'Alliances',      es: 'Alianzas' } },
+    { id: 'scale',     start: 15, i18n: { en: 'Scale',          es: 'Escala' } },
+    { id: 'timeline',  start: 18, i18n: { en: 'Timeline',       es: 'Cronograma' } },
+    { id: 'marquesa',  start: 19, i18n: { en: '435 Marquesa',   es: '435 Marquesa' } },
+    { id: 'invest',    start: 25, i18n: { en: 'Invest',         es: 'Invertir' } },
+  ];
+
+  // UI translations
+  const T = {
+    en: {
+      back: 'Back', next: 'Next', reset: 'Reset', jump: 'Jump', close: 'Close',
+      back_title: 'Previous slide (←)',
+      next_title: 'Next slide (→)',
+      reset_title: 'Back to cover (Home)',
+      jump_title: 'Jump to any slide (J)',
+      lang_switch_title: 'Cambiar a español',
+      jump_header_html: 'Jump <span class="accent">to slide</span>',
+    },
+    es: {
+      back: 'Atrás', next: 'Siguiente', reset: 'Reiniciar', jump: 'Saltar', close: 'Cerrar',
+      back_title: 'Diapositiva anterior (←)',
+      next_title: 'Siguiente diapositiva (→)',
+      reset_title: 'Volver a la portada (Home)',
+      jump_title: 'Ir a cualquier diapositiva (J)',
+      lang_switch_title: 'Switch to English',
+      jump_header_html: 'Ir <span class="accent">a diapositiva</span>',
+    }
+  };
+
+  // DOM refs
+  const stage = document.getElementById('stage');
+  const slideImg = document.getElementById('slide');
+  const curEl = document.getElementById('cur');
+  const totalEl = document.getElementById('total');
+  const progressFill = document.getElementById('progressFill');
+  const btnBack = document.getElementById('btnBack');
+  const btnNext = document.getElementById('btnNext');
+  const btnReset = document.getElementById('btnReset');
+  const btnJump = document.getElementById('btnJump');
+  const btnLangSwitch = document.getElementById('btnLangSwitch');
+  const jumpOverlay = document.getElementById('jumpOverlay');
+  const jumpGrid = document.getElementById('jumpGrid');
+  const btnCloseJump = document.getElementById('btnCloseJump');
+  const hitLeft = document.getElementById('hitLeft');
+  const hitRight = document.getElementById('hitRight');
+  const sectionsBar = document.getElementById('sections');
+  const langLanding = document.getElementById('langLanding');
+
+  totalEl.textContent = pad(TOTAL);
+
+  let current = 1;
+  let lang = localStorage.getItem('hh-invest-lang') || null;
+
+  // ─── i18n ───────────────────────────────────────────
+  function applyI18n() {
+    const dict = T[lang];
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.getAttribute('data-i18n');
+      if (dict[key]) {
+        if (key.endsWith('_html')) el.innerHTML = dict[key];
+        else el.textContent = dict[key];
+      }
+    });
+    document.querySelectorAll('[data-i18n-title]').forEach(el => {
+      const key = el.getAttribute('data-i18n-title');
+      if (dict[key]) el.title = dict[key];
+    });
+    btnLangSwitch.textContent = lang === 'en' ? 'EN' : 'ES';
+    document.documentElement.lang = lang;
+    renderSections();
+  }
+
+  // ─── Section tabs ───────────────────────────────────
+  function sectionOfSlide(n) {
+    let cur = SECTIONS[0];
+    for (const s of SECTIONS) {
+      if (s.start <= n) cur = s;
+      else break;
+    }
+    return cur;
+  }
+
+  function renderSections() {
+    sectionsBar.innerHTML = '';
+    const activeSec = sectionOfSlide(current);
+    SECTIONS.forEach((s, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'section-btn' + (s.id === activeSec.id ? ' active' : '');
+      btn.innerHTML = `<span class="section-num">0${i + 1}</span>${s.i18n[lang]}`;
+      btn.addEventListener('click', () => render(s.start));
+      sectionsBar.appendChild(btn);
+    });
+  }
+
+  // ─── Preload neighbors ──────────────────────────────
+  const preloadCache = new Set();
+  function preload(n) {
+    if (n < 1 || n > TOTAL || preloadCache.has(n)) return;
+    const img = new Image();
+    img.src = slidePath(n);
+    preloadCache.add(n);
+  }
+
+  // ─── Render a slide ─────────────────────────────────
+  function render(n) {
+    n = Math.max(1, Math.min(TOTAL, n));
+    current = n;
+    stage.classList.add('loading');
+    const img = new Image();
+    img.onload = () => {
+      slideImg.src = img.src;
+      stage.classList.remove('loading');
+    };
+    img.src = slidePath(n);
+    curEl.textContent = pad(n);
+    progressFill.style.width = `${(n / TOTAL) * 100}%`;
+    btnBack.disabled = n === 1;
+    btnNext.disabled = n === TOTAL;
+    [...jumpGrid.children].forEach((card, i) => {
+      card.classList.toggle('active', i + 1 === n);
+    });
+    renderSections();
+    preload(n + 1);
+    preload(n + 2);
+    preload(n - 1);
+    if (location.hash !== `#${n}`) history.replaceState(null, '', `#${n}`);
+  }
+
+  function next() { if (current < TOTAL) render(current + 1); }
+  function prev() { if (current > 1) render(current - 1); }
+  function reset() { render(1); }
+  function go(n) { render(n); closeJump(); }
+
+  // ─── Build jump grid ────────────────────────────────
+  for (let i = 1; i <= TOTAL; i++) {
+    const card = document.createElement('button');
+    card.className = 'thumb-card';
+    card.setAttribute('aria-label', `Slide ${i}`);
+    const sec = sectionOfSlide(i);
+    card.innerHTML = `
+      <img src="${thumbPath(i)}" alt="Slide ${i}" loading="lazy" draggable="false">
+      <div class="thumb-label">
+        <span>${pad(i)}</span>
+        <span class="thumb-section" data-sec="${sec.id}">${sec.i18n.en}</span>
+      </div>
+    `;
+    card.addEventListener('click', () => go(i));
+    jumpGrid.appendChild(card);
+  }
+  function refreshThumbSections() {
+    jumpGrid.querySelectorAll('.thumb-section').forEach(el => {
+      const secId = el.getAttribute('data-sec');
+      const sec = SECTIONS.find(s => s.id === secId);
+      if (sec) el.textContent = sec.i18n[lang];
+    });
+  }
+
+  function openJump() {
+    jumpOverlay.classList.add('open');
+    const active = jumpGrid.children[current - 1];
+    if (active) active.scrollIntoView({ block: 'center', behavior: 'auto' });
+  }
+  function closeJump() { jumpOverlay.classList.remove('open'); }
+
+  // ─── Wiring ─────────────────────────────────────────
+  btnBack.addEventListener('click', prev);
+  btnNext.addEventListener('click', next);
+  btnReset.addEventListener('click', reset);
+  btnJump.addEventListener('click', openJump);
+  btnCloseJump.addEventListener('click', closeJump);
+  jumpOverlay.addEventListener('click', e => { if (e.target === jumpOverlay) closeJump(); });
+  hitLeft.addEventListener('click', prev);
+  hitRight.addEventListener('click', next);
+
+  btnLangSwitch.addEventListener('click', () => {
+    lang = lang === 'en' ? 'es' : 'en';
+    localStorage.setItem('hh-invest-lang', lang);
+    applyI18n();
+    refreshThumbSections();
+  });
+
+  // Language landing buttons
+  document.querySelectorAll('.lang-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      lang = btn.getAttribute('data-lang');
+      localStorage.setItem('hh-invest-lang', lang);
+      applyI18n();
+      refreshThumbSections();
+      langLanding.classList.add('hide');
+    });
+  });
+
+  // Keyboard
+  document.addEventListener('keydown', e => {
+    if (!langLanding.classList.contains('hide')) return;
+    if (jumpOverlay.classList.contains('open')) {
+      if (e.key === 'Escape') { closeJump(); e.preventDefault(); }
+      return;
+    }
+    switch (e.key) {
+      case 'ArrowRight': case 'PageDown': case ' ': next(); e.preventDefault(); break;
+      case 'ArrowLeft': case 'PageUp': prev(); e.preventDefault(); break;
+      case 'Home': reset(); e.preventDefault(); break;
+      case 'End': render(TOTAL); e.preventDefault(); break;
+      case 'j': case 'J': openJump(); e.preventDefault(); break;
+    }
+  });
+
+  // Touch swipe
+  let touchStartX = 0;
+  stage.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; }, { passive: true });
+  stage.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    if (Math.abs(dx) > 50) { if (dx < 0) next(); else prev(); }
+  }, { passive: true });
+
+  // Hash routing
+  function fromHash() {
+    const m = location.hash.match(/^#(\d+)/);
+    if (m) {
+      const n = parseInt(m[1], 10);
+      if (n >= 1 && n <= TOTAL) render(n);
+      else render(1);
+    } else render(1);
+  }
+  window.addEventListener('hashchange', fromHash);
+
+  // ─── Init ───────────────────────────────────────────
+  if (lang) {
+    // returning visitor — skip landing
+    langLanding.classList.add('hide');
+    applyI18n();
+    refreshThumbSections();
+  } else {
+    // show landing; default English until picked
+    lang = 'en';
+    applyI18n();
+    refreshThumbSections();
+  }
+  fromHash();
+})();
+</script>
+
+</body>
+</html>
