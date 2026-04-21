@@ -8,6 +8,16 @@
 <meta property="og:title" content="Invest in Ultra-Luxury — 435 Marquesa">
 <meta property="og:description" content="Ultra-luxury development pitch. Hausmann Haus design + Primary Build steel + Poler Team capital.">
 <meta property="og:type" content="website">
+<meta property="og:url" content="https://thepolerteam.com/investultralux">
+<meta property="og:image" content="https://thepolerteam.com/investultralux/og-image.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Hausmann Haus — Ultra Luxury Market Development, Cutler Bay">
+<meta property="og:site_name" content="The Poler Team">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Invest in Ultra-Luxury — 435 Marquesa">
+<meta name="twitter:description" content="Hausmann Haus × Primary Build × Poler Team. Ultra-luxury development pitch.">
+<meta name="twitter:image" content="https://thepolerteam.com/investultralux/og-image.jpg">
 <style>
   :root {
     --bg: #0a0c10;
@@ -297,6 +307,44 @@
   }
   .lang-switch:hover { border-color: var(--gold); color: var(--gold-bright); }
 
+  /* ═════════════ FULLSCREEN / CHROMELESS MODE ═════════════ */
+  body.chromeless .sections,
+  body.chromeless .controls { display: none !important; }
+  body.chromeless .stage { padding: 0 !important; }
+  body.chromeless .slide-img {
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    max-height: 100vh;
+    max-width: 100vw;
+  }
+  body.chromeless .hit-left,
+  body.chromeless .hit-right { bottom: 0 !important; }
+  /* Floating exit button in chromeless mode */
+  .exit-chrome {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(10, 12, 16, 0.55);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(165, 118, 60, 0.3);
+    color: var(--text);
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 50;
+    opacity: 0;
+    transition: opacity 250ms ease;
+  }
+  body.chromeless .exit-chrome { display: flex; }
+  body.chromeless.show-exit .exit-chrome { opacity: 1; }
+  .exit-chrome:hover { border-color: var(--gold); color: var(--gold-bright); }
+  .exit-chrome svg { width: 18px; height: 18px; fill: currentColor; }
+
   /* ═════════════ JUMP GRID ═════════════ */
   .jump-overlay {
     position: fixed;
@@ -431,6 +479,11 @@
     <span class="btn-text" data-i18n="jump">Jump</span>
   </button>
 
+  <button class="btn" id="btnFull" title="" data-i18n-title="full_title">
+    <svg viewBox="0 0 24 24"><path d="M5 5h5V3H3v7h2V5m14 0v5h2V3h-7v2h5M5 19v-5H3v7h7v-2H5m14-5v5h-5v2h7v-7h-2z"/></svg>
+    <span class="btn-text" data-i18n="full">Full</span>
+  </button>
+
   <div class="spacer"></div>
   <div class="counter"><span class="current" id="cur">01</span> / <span id="total">26</span></div>
   <div class="spacer"></div>
@@ -444,6 +497,10 @@
 </div>
 
 <!-- ═════════════ JUMP GRID MODAL ═════════════ -->
+<button class="exit-chrome" id="exitChrome" title="Exit fullscreen (F or Esc)" aria-label="Exit fullscreen">
+  <svg viewBox="0 0 24 24"><path d="M14 14h7v2h-5v5h-2v-7m-4 0v7H8v-5H3v-2h7M14 10V3h2v5h5v2h-7m-4 0H3V8h5V3h2v7z"/></svg>
+</button>
+
 <div class="jump-overlay" id="jumpOverlay" role="dialog">
   <div class="jump-header">
     <div class="jump-title" data-i18n="jump_header_html"></div>
@@ -474,20 +531,22 @@
   // UI translations
   const T = {
     en: {
-      back: 'Back', next: 'Next', reset: 'Reset', jump: 'Jump', close: 'Close',
+      back: 'Back', next: 'Next', reset: 'Reset', jump: 'Jump', close: 'Close', full: 'Full',
       back_title: 'Previous slide (←)',
       next_title: 'Next slide (→)',
       reset_title: 'Back to cover (Home)',
       jump_title: 'Jump to any slide (J)',
+      full_title: 'Fullscreen · hide controls (F)',
       lang_switch_title: 'Cambiar a español',
       jump_header_html: 'Jump <span class="accent">to slide</span>',
     },
     es: {
-      back: 'Atrás', next: 'Siguiente', reset: 'Reiniciar', jump: 'Saltar', close: 'Cerrar',
+      back: 'Atrás', next: 'Siguiente', reset: 'Reiniciar', jump: 'Saltar', close: 'Cerrar', full: 'Pantalla',
       back_title: 'Diapositiva anterior (←)',
       next_title: 'Siguiente diapositiva (→)',
       reset_title: 'Volver a la portada (Home)',
       jump_title: 'Ir a cualquier diapositiva (J)',
+      full_title: 'Pantalla completa · ocultar controles (F)',
       lang_switch_title: 'Switch to English',
       jump_header_html: 'Ir <span class="accent">a diapositiva</span>',
     }
@@ -643,6 +702,44 @@
   hitLeft.addEventListener('click', prev);
   hitRight.addEventListener('click', next);
 
+  // ─── Fullscreen / chromeless mode ───────────────────
+  const btnFull = document.getElementById('btnFull');
+  const exitChrome = document.getElementById('exitChrome');
+
+  function enterChromeless() {
+    document.body.classList.add('chromeless', 'show-exit');
+    if (document.documentElement.requestFullscreen) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    }
+    scheduleHideExit();
+  }
+  function exitChromeless() {
+    document.body.classList.remove('chromeless', 'show-exit');
+    if (document.fullscreenElement && document.exitFullscreen) {
+      document.exitFullscreen().catch(() => {});
+    }
+  }
+  function toggleChromeless() {
+    if (document.body.classList.contains('chromeless')) exitChromeless();
+    else enterChromeless();
+  }
+  let hideExitTimer;
+  function scheduleHideExit() {
+    clearTimeout(hideExitTimer);
+    document.body.classList.add('show-exit');
+    hideExitTimer = setTimeout(() => document.body.classList.remove('show-exit'), 2200);
+  }
+  btnFull.addEventListener('click', enterChromeless);
+  exitChrome.addEventListener('click', exitChromeless);
+  document.addEventListener('mousemove', () => {
+    if (document.body.classList.contains('chromeless')) scheduleHideExit();
+  });
+  document.addEventListener('fullscreenchange', () => {
+    if (!document.fullscreenElement && document.body.classList.contains('chromeless')) {
+      document.body.classList.remove('chromeless', 'show-exit');
+    }
+  });
+
   btnLangSwitch.addEventListener('click', () => {
     lang = lang === 'en' ? 'es' : 'en';
     localStorage.setItem('hh-invest-lang', lang);
@@ -672,12 +769,16 @@
       if (e.key === 'Escape') { closeJump(); e.preventDefault(); }
       return;
     }
+    if (e.key === 'Escape' && document.body.classList.contains('chromeless')) {
+      exitChromeless(); e.preventDefault(); return;
+    }
     switch (e.key) {
       case 'ArrowRight': case 'PageDown': case ' ': next(); e.preventDefault(); break;
       case 'ArrowLeft': case 'PageUp': prev(); e.preventDefault(); break;
       case 'Home': reset(); e.preventDefault(); break;
       case 'End': render(TOTAL); e.preventDefault(); break;
       case 'j': case 'J': openJump(); e.preventDefault(); break;
+      case 'f': case 'F': toggleChromeless(); e.preventDefault(); break;
     }
   });
 
