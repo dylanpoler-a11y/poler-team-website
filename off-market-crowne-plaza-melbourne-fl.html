@@ -8,7 +8,118 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<meta name="robots" content="noindex,nofollow" />
+<!-- Pre-paint gate: hides everything until JS unlocks it. -->
+<style id="pwd-pregate">
+  body:not([data-unlocked="true"]) > *:not(#pwd-gate) { visibility: hidden !important; }
+  body:not([data-unlocked="true"]) { overflow: hidden !important; height: 100vh; }
+  #pwd-gate { display: flex; }
+</style>
 <style>
+  /* ── PASSWORD GATE ───────────────────────────────────── */
+  #pwd-gate {
+    position: fixed; inset: 0;
+    z-index: 9999;
+    align-items: center; justify-content: center;
+    background:
+      radial-gradient(ellipse at 30% 20%, rgba(201,168,76,0.10), transparent 55%),
+      radial-gradient(ellipse at 80% 90%, rgba(27,43,94,0.6), transparent 50%),
+      linear-gradient(180deg, #0a1226 0%, #0E1830 70%, #14213d 100%);
+    color: #fff;
+    font-family: 'Inter', -apple-system, sans-serif;
+    padding: 32px;
+    animation: gateFade 0.35s ease-out;
+  }
+  @keyframes gateFade { from { opacity: 0; } to { opacity: 1; } }
+  .gate-card {
+    width: 100%;
+    max-width: 440px;
+    text-align: center;
+    border: 1px solid rgba(201,168,76,0.25);
+    background: rgba(255,255,255,0.02);
+    backdrop-filter: blur(6px);
+    padding: 50px 44px 44px;
+  }
+  .gate-brand {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px;
+    letter-spacing: 0.04em;
+    margin-bottom: 36px;
+    color: #fff;
+  }
+  .gate-brand span { color: #C9A84C; font-style: italic; }
+  .gate-eyebrow {
+    font-size: 10px;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: #C9A84C;
+    margin-bottom: 14px;
+  }
+  .gate-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 32px;
+    font-weight: 500;
+    margin: 0 0 14px;
+    letter-spacing: -0.01em;
+  }
+  .gate-sub {
+    font-size: 14px;
+    color: rgba(255,255,255,0.68);
+    line-height: 1.6;
+    margin: 0 0 28px;
+    font-weight: 300;
+  }
+  #pwd-form {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  #pwd-input {
+    width: 100%;
+    padding: 14px 18px;
+    background: rgba(0,0,0,0.25);
+    border: 1px solid rgba(255,255,255,0.18);
+    color: #fff;
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    letter-spacing: 0.04em;
+    text-align: center;
+    outline: none;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  #pwd-input::placeholder { color: rgba(255,255,255,0.4); letter-spacing: 0.18em; text-transform: uppercase; font-size: 11px; }
+  #pwd-input:focus { border-color: #C9A84C; background: rgba(0,0,0,0.4); }
+  #pwd-form button {
+    padding: 14px 26px;
+    background: #C9A84C;
+    color: #0E1830;
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    font-weight: 600;
+    border: 1px solid #C9A84C;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  #pwd-form button:hover { background: #d8bd6c; }
+  .gate-error {
+    margin-top: 16px;
+    font-size: 12px;
+    color: #e88a8a;
+    letter-spacing: 0.04em;
+  }
+  .gate-foot {
+    margin-top: 36px;
+    padding-top: 24px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.45);
+  }
+  .gate-foot a { color: #d8bd6c; text-decoration: none; }
+
   :root {
     --navy: #0E1830;
     --navy-2: #1B2B5E;
@@ -381,6 +492,102 @@
 </style>
 </head>
 <body>
+
+<!-- ─────────────────── PASSWORD GATE ─────────────────── -->
+<div id="pwd-gate" role="dialog" aria-modal="true" aria-labelledby="gate-title">
+  <div class="gate-card">
+    <div class="gate-brand">The Poler<span> Team</span></div>
+    <div class="gate-eyebrow">Confidential Materials</div>
+    <h2 id="gate-title" class="gate-title">Access Required</h2>
+    <p class="gate-sub">This profile was prepared for a specific recipient. Please enter the access code provided to you.</p>
+    <form id="pwd-form" autocomplete="off">
+      <input id="pwd-input" type="password" placeholder="Access code" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" />
+      <button type="submit">Continue &rarr;</button>
+    </form>
+    <div class="gate-error" id="pwd-error" hidden>Incorrect code. Please try again.</div>
+    <div class="gate-foot">
+      For access &middot; <a href="mailto:dylan@poler.org">dylan@poler.org</a> &middot; 954.610.6975
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  // SHA-256 of the access code. Default code is "viceroy".
+  // To change: run `echo -n "newpassword" | shasum -a 256` and replace the hash below.
+  var ACCESS_HASH = '32e321c1fbf312351d6dfb0f1434c455b13f6a4310d8307d8cf45c5540e312f9';
+  var STORAGE_KEY = 'cpm-vc-unlocked-v1';
+  var URL_PARAM = 'k';
+
+  var gate  = document.getElementById('pwd-gate');
+  var form  = document.getElementById('pwd-form');
+  var input = document.getElementById('pwd-input');
+  var error = document.getElementById('pwd-error');
+
+  function unlock(){
+    document.body.setAttribute('data-unlocked', 'true');
+    gate.style.display = 'none';
+    try { localStorage.setItem(STORAGE_KEY, '1'); } catch(e){}
+  }
+
+  async function sha256(text){
+    var enc = new TextEncoder().encode(text);
+    var buf = await crypto.subtle.digest('SHA-256', enc);
+    return Array.from(new Uint8Array(buf))
+      .map(function(b){ return b.toString(16).padStart(2,'0'); })
+      .join('');
+  }
+
+  async function tryUnlock(pw){
+    if (!pw) return false;
+    try {
+      var h = await sha256(pw.trim().toLowerCase());
+      if (h === ACCESS_HASH) { unlock(); return true; }
+    } catch(e){}
+    return false;
+  }
+
+  // Already unlocked in this browser?
+  try {
+    if (localStorage.getItem(STORAGE_KEY) === '1') { unlock(); return; }
+  } catch(e){}
+
+  // URL bypass: ?k=<code>
+  var qs = new URLSearchParams(window.location.search);
+  var urlKey = qs.get(URL_PARAM);
+  if (urlKey) {
+    tryUnlock(urlKey).then(function(ok){
+      if (ok) {
+        // Strip the key from the URL after a successful unlock so it doesn't linger.
+        try {
+          var clean = window.location.pathname + window.location.hash;
+          window.history.replaceState({}, document.title, clean);
+        } catch(e){}
+      } else {
+        setTimeout(function(){ input && input.focus(); }, 50);
+      }
+    });
+  } else {
+    setTimeout(function(){ input && input.focus(); }, 50);
+  }
+
+  form.addEventListener('submit', async function(ev){
+    ev.preventDefault();
+    error.hidden = true;
+    var ok = await tryUnlock(input.value);
+    if (!ok) {
+      error.hidden = false;
+      input.value = '';
+      input.focus();
+      // little shake
+      input.animate(
+        [{ transform: 'translateX(0)' },{ transform: 'translateX(-6px)' },{ transform: 'translateX(6px)' },{ transform: 'translateX(0)' }],
+        { duration: 280 }
+      );
+    }
+  });
+})();
+</script>
 
 <!-- ─────────────────── HERO ─────────────────── -->
 <header class="hero">
