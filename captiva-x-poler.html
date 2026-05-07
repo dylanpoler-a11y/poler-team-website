@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Captiva Containers · The Poler Team · May 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+:root{
+  --ink:#14151a;
+  --navy:#1a2744;
+  --navy-deep:#0f1a30;
+  --gold:#C9A84C;
+  --gold-soft:#b89640;
+  --cream:#F7F4ED;
+  --paper:#fbf9f3;
+  --ash:#6b6f76;
+  --rule:#e6dec9;
+  --ease-out:cubic-bezier(0.23,1,0.32,1);
+  --ease-in-out:cubic-bezier(0.77,0,0.175,1);
+  --measure:65ch;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:'IBM Plex Sans',system-ui,sans-serif;font-weight:400;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+body{font-size:16px;line-height:1.6}
+
+::selection{background:var(--gold);color:var(--navy-deep)}
+
+.shell{max-width:1240px;margin:0 auto;padding:0 32px}
+@media(max-width:720px){.shell{padding:0 20px}}
+
+.eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:var(--gold-soft)}
+.rule-thin{height:1px;background:var(--rule);border:0;margin:0}
+.rule-gold{height:1px;background:var(--gold);border:0;width:64px;margin:0}
+
+h1,h2,h3,h4{font-family:'Playfair Display',Georgia,serif;font-weight:500;letter-spacing:-.01em;color:var(--ink);line-height:1.06}
+h1{font-size:clamp(44px,6.4vw,86px);font-weight:500}
+h2{font-size:clamp(34px,4.2vw,56px)}
+h3{font-size:clamp(22px,2.4vw,30px)}
+em{font-style:italic;color:var(--navy)}
+.serif-it{font-family:'Playfair Display',Georgia,serif;font-style:italic;font-weight:400}
+
+p{max-width:var(--measure);color:var(--ink)}
+p.lede{font-size:20px;line-height:1.55;color:#26282f;font-weight:300}
+.muted{color:var(--ash)}
+
+.mono{font-family:'IBM Plex Mono',monospace;font-feature-settings:"tnum" 1}
+
+/* ---------- top bar ---------- */
+header.bar{position:sticky;top:0;z-index:20;background:rgba(251,249,243,.86);backdrop-filter:saturate(140%) blur(10px);-webkit-backdrop-filter:saturate(140%) blur(10px);border-bottom:1px solid var(--rule)}
+.bar-inner{display:flex;align-items:center;justify-content:space-between;padding:14px 0}
+.brand{font-family:'Playfair Display',serif;font-weight:600;font-size:16px;letter-spacing:.02em}
+.brand .amp{color:var(--gold-soft);font-style:italic;padding:0 .35em}
+.bar-meta{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ash)}
+
+/* ---------- HERO ---------- */
+section.hero{padding:120px 0 140px;position:relative;overflow:hidden}
+.hero-grid{display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:end}
+@media(max-width:920px){.hero-grid{grid-template-columns:1fr;gap:32px}}
+.hero h1{margin-top:24px}
+.hero h1 .quiet{color:var(--ash);font-style:italic;font-weight:400}
+.hero-right{padding-bottom:14px}
+.hero-right p{font-size:16px;line-height:1.65;color:#3a3d46}
+.tag-row{display:flex;gap:18px;align-items:center;margin-top:34px;flex-wrap:wrap}
+.tag{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--navy);border:1px solid var(--rule);padding:8px 14px;border-radius:999px;background:#fff}
+.hero-mark{position:absolute;right:32px;top:120px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.3em;color:var(--ash);writing-mode:vertical-rl;text-orientation:mixed}
+@media(max-width:920px){.hero-mark{display:none}}
+
+/* ---------- BRIEF ---------- */
+section.brief{padding:80px 0;border-top:1px solid var(--rule);background:linear-gradient(180deg,var(--paper),var(--cream))}
+.brief-grid{display:grid;grid-template-columns:1fr 2fr;gap:64px;align-items:start}
+@media(max-width:920px){.brief-grid{grid-template-columns:1fr;gap:24px}}
+.brief p{font-size:22px;line-height:1.5;font-weight:300;max-width:none}
+
+/* ---------- BIG STAT (proof headline) ---------- */
+section.proof{padding:120px 0 80px;background:var(--navy-deep);color:var(--cream);position:relative;overflow:hidden}
+section.proof::before{content:"";position:absolute;inset:0;background:radial-gradient(1100px 500px at 80% -10%, rgba(201,168,76,.08), transparent 60%);pointer-events:none}
+.proof .eyebrow{color:var(--gold)}
+.proof h2{color:var(--cream)}
+.proof-grid{display:grid;grid-template-columns:5fr 7fr;gap:80px;align-items:start;margin-top:48px}
+@media(max-width:920px){.proof-grid{grid-template-columns:1fr;gap:48px}}
+.proof-lede{color:#dcd6c5;font-size:18px;line-height:1.55;max-width:36ch}
+.proof-lede strong{color:var(--gold);font-weight:500}
+
+.hero-stat{display:flex;flex-direction:column;gap:8px;border-bottom:1px solid rgba(255,255,255,.12);padding-bottom:36px;margin-bottom:36px}
+.hero-stat .num{font-family:'Playfair Display',serif;font-weight:500;font-size:clamp(72px,10vw,150px);line-height:.95;color:var(--gold);letter-spacing:-.02em}
+.hero-stat .num small{font-size:.4em;color:var(--cream);font-weight:400;letter-spacing:.02em;margin-left:6px;font-family:'IBM Plex Sans',sans-serif}
+.hero-stat .lab{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:#cfc7b1}
+
+.metric-row{display:grid;grid-template-columns:1fr 1fr;gap:0;border-top:1px solid rgba(255,255,255,.12)}
+.metric{padding:22px 0;border-bottom:1px solid rgba(255,255,255,.08);display:flex;justify-content:space-between;align-items:baseline;gap:16px}
+.metric:nth-child(odd){padding-right:24px;border-right:1px solid rgba(255,255,255,.08)}
+.metric:nth-child(even){padding-left:24px}
+.metric .v{font-family:'Playfair Display',serif;font-size:34px;font-weight:500;color:var(--cream)}
+.metric .k{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#a8a18e;text-align:right}
+@media(max-width:720px){.metric-row{grid-template-columns:1fr}.metric{border-right:0!important;padding-left:0!important;padding-right:0!important}}
+
+/* ---------- LIVE CALL panel ---------- */
+section.calls{padding:120px 0;background:var(--cream)}
+.calls-head{display:flex;align-items:flex-end;justify-content:space-between;gap:32px;flex-wrap:wrap}
+.calls-head h2{max-width:18ch}
+.calls-head .calls-note{font-size:13px;color:var(--ash);max-width:30ch;text-align:right}
+.three{display:grid;grid-template-columns:repeat(3,1fr);gap:0;margin-top:64px;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule)}
+.three .cell{padding:48px 28px;border-right:1px solid var(--rule);position:relative}
+.three .cell:last-child{border-right:0}
+.three .cell .eyebrow{margin-bottom:18px}
+.three .cell .big{font-family:'Playfair Display',serif;font-size:clamp(56px,8vw,108px);font-weight:500;color:var(--navy);line-height:1;letter-spacing:-.02em}
+.three .cell .pct{font-size:.5em;color:var(--gold-soft);font-weight:500;margin-left:2px}
+.three .cell .cap{margin-top:14px;font-size:14px;line-height:1.5;color:#3a3d46;max-width:24ch}
+@media(max-width:880px){.three{grid-template-columns:1fr}.three .cell{border-right:0;border-bottom:1px solid var(--rule)}.three .cell:last-child{border-bottom:0}}
+
+.calls-foot{margin-top:32px;font-size:12px;letter-spacing:.05em;color:var(--ash);font-family:'IBM Plex Mono',monospace}
+
+/* ---------- FUNNEL ---------- */
+section.funnel{padding:120px 0;background:var(--paper);border-top:1px solid var(--rule)}
+.funnel-rows{margin-top:56px;display:grid;gap:8px}
+.fr{display:grid;grid-template-columns:200px 1fr 110px;align-items:center;gap:24px;padding:14px 0;border-bottom:1px solid var(--rule)}
+.fr:last-child{border-bottom:0}
+.fr .stage{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--navy)}
+.fr .bar{height:18px;background:#efe6cc;border-radius:2px;overflow:hidden;position:relative}
+.fr .bar::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,var(--gold),var(--gold-soft));width:var(--w,0%);transform-origin:left;transition:width 1200ms var(--ease-out)}
+.fr.active .bar::after{width:var(--w)}
+.fr .val{font-family:'Playfair Display',serif;font-size:24px;color:var(--ink);text-align:right;font-weight:500}
+.fr .val small{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ash);display:block;font-weight:400;letter-spacing:.06em}
+@media(max-width:720px){.fr{grid-template-columns:1fr;gap:6px}.fr .val{text-align:left}}
+
+/* ---------- METHODOLOGY ---------- */
+section.method{padding:120px 0;background:var(--cream);border-top:1px solid var(--rule)}
+.method-grid{display:grid;grid-template-columns:5fr 7fr;gap:80px;align-items:start}
+@media(max-width:920px){.method-grid{grid-template-columns:1fr;gap:32px}}
+.method-list{list-style:none;display:grid;gap:0}
+.method-list li{padding:24px 0;border-top:1px solid var(--rule);display:grid;grid-template-columns:48px 1fr;gap:24px;align-items:start}
+.method-list li:last-child{border-bottom:1px solid var(--rule)}
+.method-list .n{font-family:'Playfair Display',serif;font-style:italic;font-weight:400;font-size:28px;color:var(--gold-soft)}
+.method-list h4{font-family:'IBM Plex Sans',sans-serif;font-size:15px;font-weight:600;color:var(--navy);margin-bottom:6px;letter-spacing:.01em}
+.method-list p{font-size:15px;color:#3a3d46;max-width:none}
+
+/* ---------- TRANSLATION ---------- */
+section.trans{padding:120px 0;background:var(--navy);color:var(--cream)}
+section.trans .eyebrow{color:var(--gold)}
+section.trans h2{color:var(--cream)}
+.trans-table{margin-top:56px;display:grid;grid-template-columns:1fr 60px 1fr;gap:0;border-top:1px solid rgba(255,255,255,.12)}
+.trans-table .h,.trans-table .c{padding:22px 24px;border-bottom:1px solid rgba(255,255,255,.08);font-size:15px;line-height:1.5;color:#dcd6c5}
+.trans-table .h{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold)}
+.trans-table .arrow{display:flex;align-items:center;justify-content:center;color:var(--gold);font-style:italic;font-family:'Playfair Display',serif;font-size:22px}
+@media(max-width:720px){.trans-table{grid-template-columns:1fr}.trans-table .arrow{padding:6px 0}}
+
+/* ---------- PILOT ---------- */
+section.pilot{padding:120px 0;background:var(--paper)}
+.pilot-card{margin-top:48px;border:1px solid var(--rule);background:#fff;padding:56px;display:grid;grid-template-columns:1fr 1fr;gap:48px}
+@media(max-width:880px){.pilot-card{grid-template-columns:1fr;padding:36px}}
+.pilot-card h3{margin-bottom:18px}
+.pilot-card ul{list-style:none;display:grid;gap:14px}
+.pilot-card ul li{position:relative;padding-left:22px;font-size:15px;line-height:1.55}
+.pilot-card ul li::before{content:"";position:absolute;left:0;top:.7em;width:10px;height:1px;background:var(--gold)}
+.pilot-aside{border-left:1px solid var(--rule);padding-left:48px}
+@media(max-width:880px){.pilot-aside{border-left:0;padding-left:0;border-top:1px solid var(--rule);padding-top:24px}}
+.pilot-aside .stat-block{margin-bottom:28px}
+.pilot-aside .stat-block .v{font-family:'Playfair Display',serif;font-size:48px;color:var(--navy);line-height:1}
+.pilot-aside .stat-block .k{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--ash);margin-top:8px}
+
+/* ---------- TEAM ---------- */
+section.team{padding:120px 0;background:var(--cream);border-top:1px solid var(--rule)}
+.team-grid{margin-top:48px;display:grid;grid-template-columns:repeat(4,1fr);gap:0;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule)}
+.team-grid .person{padding:32px 24px;border-right:1px solid var(--rule)}
+.team-grid .person:last-child{border-right:0}
+.team-grid .person .nm{font-family:'Playfair Display',serif;font-size:24px;color:var(--navy);font-weight:500}
+.team-grid .person .rl{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold-soft);margin-top:8px}
+.team-grid .person .bio{margin-top:16px;font-size:14px;color:#3a3d46;line-height:1.5}
+@media(max-width:880px){.team-grid{grid-template-columns:1fr 1fr}.team-grid .person:nth-child(2n){border-right:0}.team-grid .person{border-bottom:1px solid var(--rule)}}
+@media(max-width:540px){.team-grid{grid-template-columns:1fr}.team-grid .person{border-right:0}}
+
+/* ---------- ASK ---------- */
+section.ask{padding:160px 0;background:var(--navy-deep);color:var(--cream);text-align:left}
+section.ask .eyebrow{color:var(--gold)}
+section.ask h2{color:var(--cream);max-width:18ch;margin-top:24px}
+section.ask p.lede{color:#cfc7b1;max-width:50ch;margin-top:24px}
+.ask-cta{margin-top:48px;display:inline-flex;align-items:center;gap:14px;border:1px solid var(--gold);padding:16px 28px;font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);transition:background 200ms var(--ease-out),color 200ms var(--ease-out),transform 120ms var(--ease-out);cursor:pointer;background:transparent;text-decoration:none}
+.ask-cta:hover{background:var(--gold);color:var(--navy-deep)}
+.ask-cta:active{transform:scale(.98)}
+.ask-cta .arr{font-family:'Playfair Display',serif;font-style:italic;font-size:14px}
+
+footer{padding:48px 0;background:var(--navy-deep);color:#7d7a6a;border-top:1px solid rgba(255,255,255,.06);font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase}
+.foot-inner{display:flex;justify-content:space-between;flex-wrap:wrap;gap:16px}
+
+/* ---------- reveal animations ---------- */
+.reveal{opacity:0;transform:translateY(14px);transition:opacity 700ms var(--ease-out),transform 700ms var(--ease-out)}
+.reveal.in{opacity:1;transform:translateY(0)}
+.reveal-d1{transition-delay:80ms}
+.reveal-d2{transition-delay:160ms}
+.reveal-d3{transition-delay:240ms}
+.reveal-d4{transition-delay:320ms}
+.reveal-d5{transition-delay:400ms}
+.reveal-d6{transition-delay:480ms}
+
+@media (prefers-reduced-motion: reduce){
+  .reveal,.reveal.in{opacity:1;transform:none;transition:none}
+  .fr .bar::after{transition:none}
+}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<header class="bar">
+  <div class="shell bar-inner">
+    <div class="brand">The Poler Team <span class="amp">×</span> Captiva</div>
+    <div class="bar-meta">May 2026 · Proposal</div>
+  </div>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="shell">
+    <div class="hero-grid">
+      <div>
+        <div class="eyebrow reveal">Add-on sourcing for a Trivest growth platform</div>
+        <h1 class="reveal reveal-d1">Founder-only sourcing.<br/><span class="quiet">For founder-only investors.</span></h1>
+        <div class="tag-row reveal reveal-d3">
+          <span class="tag">PET Packaging</span>
+          <span class="tag">Co-Pack</span>
+          <span class="tag">Custom Containers</span>
+          <span class="tag">Value-Add Distribution</span>
+        </div>
+      </div>
+      <div class="hero-right reveal reveal-d2">
+        <hr class="rule-gold" style="margin-bottom:22px"/>
+        <p>Trivest backs founder-led businesses. We find them. The numbers below are what our sourcing engine produced in a different vertical, against the same founder-only filter Captiva would apply.</p>
+      </div>
+    </div>
+  </div>
+  <div class="hero-mark">001 · CONFIDENTIAL</div>
+</section>
+
+<!-- BRIEF -->
+<section class="brief">
+  <div class="shell">
+    <div class="brief-grid">
+      <div class="reveal">
+        <div class="eyebrow">The Brief</div>
+      </div>
+      <div class="reveal reveal-d1">
+        <p>Captiva is positioned to consolidate a fragmented founder-owned packaging market. The next chapter is add-on acquisitions in adjacent shops the bankers do not reach. <em>That is the work we do.</em></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PROOF -->
+<section class="proof">
+  <div class="shell">
+    <div class="eyebrow reveal">Proof · An 18-month buy-side engagement</div>
+    <h2 class="reveal reveal-d1" style="margin-top:18px;max-width:22ch">What our sourcing engine produced for one buyer.</h2>
+    <div class="proof-grid">
+      <div class="proof-lede reveal reveal-d2">
+        <p>Our scope is the front of the funnel: <strong>universe through booked meeting.</strong> What the buyer closes from that pipeline is a separate decision, on their timeline, with their criteria. Every metric below is pulled live from the Airtable CRM the morning of this meeting.</p>
+      </div>
+      <div>
+        <div class="hero-stat reveal reveal-d2">
+          <div class="num">115<small>assisted intro meetings delivered</small></div>
+          <div class="lab">From 526 owners contacted, against a founder-only filter</div>
+        </div>
+        <div class="metric-row">
+          <div class="metric reveal reveal-d3"><span class="v mono">1,036</span><span class="k">Founder-owned targets identified</span></div>
+          <div class="metric reveal reveal-d3"><span class="v mono">40+</span><span class="k">States covered</span></div>
+          <div class="metric reveal reveal-d4"><span class="v mono">526</span><span class="k">Owners contacted</span></div>
+          <div class="metric reveal reveal-d4"><span class="v mono">133</span><span class="k">Intro calls scheduled</span></div>
+          <div class="metric reveal reveal-d5"><span class="v mono">33.7<span style="color:var(--gold);font-size:.7em">%</span></span><span class="k">All-channel response rate <br/><span style="color:#7d7a6a">vs. ~5% industry baseline</span></span></div>
+          <div class="metric reveal reveal-d5"><span class="v mono">6.7×</span><span class="k">Response rate vs. industry</span></div>
+        </div>
+        <div class="reveal reveal-d6" style="margin-top:28px;padding-top:22px;border-top:1px solid rgba(255,255,255,.12);font-size:13px;line-height:1.6;color:#a8a18e">
+          <span class="eyebrow" style="color:var(--gold);display:block;margin-bottom:10px">Buyer outcomes, for context</span>
+          From this pipeline the buyer built an active book of <span class="mono" style="color:var(--cream)">36</span> deals and closed a <span class="mono" style="color:var(--cream)">$20M</span> transaction with no broker fee paid. Close volume is the buyer's call; pipeline is ours.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- LIVE CALL -->
+<section class="calls">
+  <div class="shell">
+    <div class="calls-head">
+      <div>
+        <div class="eyebrow reveal">When the phone connects</div>
+        <h2 class="reveal reveal-d1" style="margin-top:18px">This is what one live call is worth.</h2>
+      </div>
+      <p class="calls-note reveal reveal-d2">Per-company conversion across 232 founder-owned companies in the source universe.</p>
+    </div>
+    <div class="three">
+      <div class="cell reveal reveal-d1">
+        <div class="eyebrow">Companies dialed</div>
+        <div class="big">47.4<span class="pct">%</span></div>
+        <div class="cap">respond. Across all reply channels, after one or more dial attempts.</div>
+      </div>
+      <div class="cell reveal reveal-d2">
+        <div class="eyebrow">Companies dialed</div>
+        <div class="big">36.2<span class="pct">%</span></div>
+        <div class="cap">schedule an intro call. Booked, on the calendar, with the buyer.</div>
+      </div>
+      <div class="cell reveal reveal-d3">
+        <div class="eyebrow">Voicemails alone</div>
+        <div class="big">18.3<span class="pct">%</span></div>
+        <div class="cap">of companies who only heard a voicemail still booked an intro. Voicemails do real work.</div>
+      </div>
+    </div>
+    <div class="calls-foot reveal reveal-d4" style="margin-top:36px">For Captiva: ~500 founder-owned targets ⇒ ~180 conversations ⇒ ~180 booked intros, on the same math.</div>
+  </div>
+</section>
+
+<!-- FUNNEL -->
+<section class="funnel">
+  <div class="shell">
+    <div class="eyebrow reveal">The funnel, in real numbers</div>
+    <h2 class="reveal reveal-d1" style="margin-top:18px;max-width:24ch">Our deliverables.</h2>
+    <div class="funnel-rows">
+      <div class="reveal" style="display:flex;align-items:center;gap:14px;margin-bottom:6px;padding-top:12px"><span class="eyebrow" style="color:var(--gold-soft)">Our scope</span><span style="flex:1;height:1px;background:var(--rule)"></span></div>
+      <div class="fr reveal" style="--w:100%"><div class="stage">Universe</div><div class="bar"></div><div class="val">1,036<small>targets identified</small></div></div>
+      <div class="fr reveal reveal-d1" style="--w:50.8%"><div class="stage">Contacted</div><div class="bar"></div><div class="val">526<small>owners reached out to</small></div></div>
+      <div class="fr reveal reveal-d2" style="--w:17.1%"><div class="stage">Responded</div><div class="bar"></div><div class="val">177<small>two-way conversations</small></div></div>
+      <div class="fr reveal reveal-d3" style="--w:12.8%"><div class="stage">Intros booked</div><div class="bar"></div><div class="val">133<small>scheduled calls</small></div></div>
+      <div class="fr reveal reveal-d4" style="--w:11.1%"><div class="stage">Assisted meetings</div><div class="bar"></div><div class="val">115<small>met with buyer</small></div></div>
+      <div class="reveal reveal-d5" style="display:flex;align-items:center;gap:14px;margin:24px 0 6px"><span class="eyebrow" style="color:var(--ash)">Buyer scope</span><span style="flex:1;height:1px;background:var(--rule)"></span></div>
+      <div class="fr reveal reveal-d5" style="--w:3.5%;opacity:.85"><div class="stage" style="color:var(--ash)">Active pipeline</div><div class="bar" style="background:#eee5cf"></div><div class="val" style="color:var(--ash)">36<small>buyer's active book</small></div></div>
+      <div class="fr reveal reveal-d6" style="--w:2%;opacity:.85"><div class="stage" style="color:var(--ash)">Closed by buyer</div><div class="bar" style="background:#eee5cf;position:relative"><span style="position:absolute;left:0;top:0;bottom:0;width:2%;background:var(--gold-soft)"></span></div><div class="val" style="color:var(--ash)">$20M<small>one transaction, no broker fee</small></div></div>
+    </div>
+    <p class="reveal reveal-d6" style="margin-top:28px;font-size:13px;color:var(--ash);max-width:62ch">The buyer pursues a small number of deals at a time by design. The shape of the bottom of this funnel reflects buyer selectivity, not pipeline quality. Our work is everything above the dashed line.</p>
+  </div>
+</section>
+
+<!-- METHODOLOGY -->
+<section class="method">
+  <div class="shell">
+    <div class="method-grid">
+      <div class="reveal">
+        <div class="eyebrow">Methodology</div>
+        <h2 style="margin-top:18px;max-width:14ch">Why our numbers do not look like a banker's.</h2>
+      </div>
+      <ol class="method-list">
+        <li class="reveal reveal-d1"><span class="n">01</span><div><h4>Filter at intake</h4><p>Per-target ownership research before any outreach. PE-backed, public, and big-chain operators get filtered out before a single call. Trivest's investment thesis sits inside our default filter.</p></div></li>
+        <li class="reveal reveal-d2"><span class="n">02</span><div><h4>Multi-touch sequencing</h4><p>Phone, voicemail, LinkedIn, text. Single-channel campaigns die at five percent response. The 33.7% number is what compounds across channels.</p></div></li>
+        <li class="reveal reveal-d3"><span class="n">03</span><div><h4>Live CRM, not PDF reports</h4><p>You log into the Airtable dashboard. Pipeline is visible in real time. Weekly reporting is for review, not for status.</p></div></li>
+        <li class="reveal reveal-d4"><span class="n">04</span><div><h4>Weekly buyer call</h4><p>Criteria gets retuned every seven days. New geographies, new size bands, new exclusions. The longer we run, the sharper the targeting.</p></div></li>
+        <li class="reveal reveal-d5"><span class="n">05</span><div><h4>Human delivery, AI-augmented research</h4><p>Every call is from a Poler. Every research note is human-reviewed. AI is in the prep, not the conversation.</p></div></li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<!-- TRANSLATION -->
+<section class="trans">
+  <div class="shell">
+    <div class="eyebrow reveal">Translated for Captiva</div>
+    <h2 class="reveal reveal-d1" style="margin-top:18px;max-width:20ch">Same engine, retargeted to your adjacencies.</h2>
+    <div class="trans-table">
+      <div class="h reveal">Prior engagement</div><div class="h" style="text-align:center">·</div><div class="h reveal reveal-d1">Captiva filter</div>
+      <div class="c reveal">Inpatient behavioral health facilities</div><div class="arrow">/</div><div class="c reveal reveal-d1">PET packaging, custom containers, co-pack, value-add distribution</div>
+      <div class="c reveal reveal-d1">Exclude large public and PE-backed strategics</div><div class="arrow">/</div><div class="c reveal reveal-d2">Exclude PE-owned, public, large strategics</div>
+      <div class="c reveal reveal-d2">Mom-and-pop or smaller-PE owned</div><div class="arrow">/</div><div class="c reveal reveal-d3">Founder-led, family-owned (Trivest's thesis)</div>
+      <div class="c reveal reveal-d3">Eleven tier states across the Southeast and Midwest</div><div class="arrow">/</div><div class="c reveal reveal-d4">Confirmed with Captiva on day one. Likely SE plus national CPG corridors.</div>
+    </div>
+  </div>
+</section>
+
+<!-- PILOT -->
+<section class="pilot">
+  <div class="shell">
+    <div class="eyebrow reveal">The proposal</div>
+    <h2 class="reveal reveal-d1" style="margin-top:18px;max-width:20ch">A 90-day exclusive pilot. Numbers visible from day one.</h2>
+    <div class="pilot-card reveal reveal-d2">
+      <div>
+        <h3>What you get</h3>
+        <ul>
+          <li>Exclusive sourcing engagement across PET packaging, custom containers, co-pack, and value-add distribution.</li>
+          <li>~500 founder-owned targets identified and scored in the first fourteen days.</li>
+          <li>Live Airtable CRM and dashboard, accessible from day one.</li>
+          <li>Weekly call with Captiva leadership. Criteria retuned every seven days.</li>
+          <li>Warm intro handoffs. You join the second call, not the first.</li>
+          <li>All NDAs, CIMs, and target intake managed by us.</li>
+        </ul>
+      </div>
+      <div class="pilot-aside">
+        <div class="stat-block"><div class="v">90 <span style="font-size:.4em;color:var(--ash);font-family:'IBM Plex Sans',sans-serif">days</span></div><div class="k">Pilot length</div></div>
+        <div class="stat-block"><div class="v">~500</div><div class="k">Targets in week two</div></div>
+        <div class="stat-block"><div class="v">14 <span style="font-size:.4em;color:var(--ash);font-family:'IBM Plex Sans',sans-serif">days</span></div><div class="k">To first dial</div></div>
+        <div style="font-size:13px;color:var(--ash);line-height:1.5;margin-top:24px">Economics: retainer plus per-closed-deal success fee. We will walk through specifics after the meeting.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TEAM -->
+<section class="team">
+  <div class="shell">
+    <div class="eyebrow reveal">The Poler Team</div>
+    <h2 class="reveal reveal-d1" style="margin-top:18px;max-width:18ch">A family-operated firm. Twenty years of closings.</h2>
+    <div class="team-grid">
+      <div class="person reveal"><div class="nm">Rosa Poler</div><div class="rl">Founder</div><div class="bio">Twenty-plus years in real estate, more than one hundred closings. Sets the standard for everything we send out the door.</div></div>
+      <div class="person reveal reveal-d1"><div class="nm">Dylan Poler</div><div class="rl">M&amp;A Lead Generation</div><div class="bio">Runs the sourcing engine. Owns the CRM, the dashboards, the outreach calendar, and the weekly buyer call.</div></div>
+      <div class="person reveal reveal-d2"><div class="nm">Kevin Poler</div><div class="rl">Commercial Real Estate</div><div class="bio">Investment sales and offering memoranda. Translates a target's real estate footprint into a dollar number for the buyer.</div></div>
+      <div class="person reveal reveal-d3"><div class="nm">Noel Poler</div><div class="rl">Hospitality &amp; Asset Strategy</div><div class="bio">Asset-management consulting. Folded in when an acquisition needs a P&amp;L cleaned up before close.</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ASK -->
+<section class="ask">
+  <div class="shell">
+    <div class="eyebrow reveal">The ask</div>
+    <h2 class="reveal reveal-d1">Greenlight a 90-day pilot.</h2>
+    <p class="lede reveal reveal-d2">We will have a populated target universe and first dials inside two weeks. Decisions get made on real numbers, not on a pitch.</p>
+    <a href="mailto:dylan@polerteam.com?subject=Captiva%20pilot" class="ask-cta reveal reveal-d3">Start the pilot <span class="arr">→</span></a>
+  </div>
+</section>
+
+<footer>
+  <div class="shell foot-inner">
+    <div>The Poler Team · info@polerteam.com</div>
+    <div>Sunny Isles Beach, FL · May 2026</div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  if (!('IntersectionObserver' in window)) {
+    document.querySelectorAll('.reveal').forEach(function(el){ el.classList.add('in'); });
+    document.querySelectorAll('.fr').forEach(function(el){ el.classList.add('active'); });
+    return;
+  }
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if (e.isIntersecting) {
+        e.target.classList.add('in');
+        if (e.target.classList.contains('fr')) e.target.classList.add('active');
+        io.unobserve(e.target);
+      }
+    });
+  }, {threshold: 0.12, rootMargin: "0px 0px -40px 0px"});
+  document.querySelectorAll('.reveal').forEach(function(el){ io.observe(el); });
+})();
+</script>
+
+</body>
+</html>
