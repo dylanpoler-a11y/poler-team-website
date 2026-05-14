@@ -27,7 +27,7 @@ import {
 } from '../../lib/gmail.js';
 import { getEmailIndex } from '../../lib/crm-contacts.js';
 import { extractEmailUpdate, classifyByHeuristic } from '../../lib/email-extract.js';
-import { sendTelegramMessage, getOwnerChatId } from '../../lib/telegram.js';
+import { sendSlackMessage, getOwnerSlackWebhook } from '../../lib/slack.js';
 
 // Internal: skip-by-default UNLESS forwarded
 const INTERNAL_DOMAINS = ['poler.org', 'homesinsoflorida.com', 'investoros1.com'];
@@ -374,28 +374,30 @@ async function writeCrmUpdate({ match, extracted, inbox, email, accessToken, eff
 }
 
 /**
- * Fire-and-(mostly-)forget consolidated Telegram notification for one processed email.
+ * Fire-and-(mostly-)forget consolidated Slack notification for one processed email.
  * Lists what was stored (note, attachments, reminders) in a single message.
- * No-op if owner's TELEGRAM_CHAT_ID_<OWNER> env var isn't configured.
+ * Routes to a per-owner webhook if SLACK_WEBHOOK_<OWNER> is set, else the
+ * shared SLACK_WEBHOOK_URL (recommended: a single #crm-updates channel).
+ * No-op if neither env var is configured.
  */
 async function notifyOwner({
     owner, writeSummary, fromName, fromEmail, effectiveSenderEmail, isForward,
     recordName, recordType, subject,
 }) {
-    const chatId = getOwnerChatId(owner);
-    if (!chatId) return; // owner doesn't have Telegram configured — silently skip
+    const webhookUrl = getOwnerSlackWebhook(owner);
+    if (!webhookUrl) return; // no Slack configured — silently skip
 
-    const lines = ['🔔 *CRM update*'];
+    const lines = [`🔔 *CRM update for ${owner}*`];
 
     // Who + what record
     const recordLabel = recordType === 'lead' ? 'Lead' : 'Company';
-    lines.push(`${recordLabel}: ${recordName}`);
+    lines.push(`*${recordLabel}:* ${recordName}`);
     if (isForward) {
-        lines.push(`From (forwarded): ${effectiveSenderEmail}`);
+        lines.push(`*From (forwarded):* ${effectiveSenderEmail}`);
     } else {
-        lines.push(`From: ${fromName}`);
+        lines.push(`*From:* ${fromName}`);
     }
-    if (subject) lines.push(`Subject: ${truncate(subject, 60)}`);
+    if (subject) lines.push(`*Subject:* ${truncate(subject, 80)}`);
     lines.push(''); // blank line
 
     // Note
@@ -430,9 +432,9 @@ async function notifyOwner({
     }
 
     lines.push('');
-    lines.push('https://www.homesinsoflorida.com/crm');
+    lines.push('<https://www.homesinsoflorida.com/crm|Open CRM →>');
 
-    await sendTelegramMessage({ chatId, text: lines.join('\n') });
+    await sendSlackMessage({ webhookUrl, text: lines.join('\n') });
 }
 
 async function createLeadReminder({ leadRecordId, leadName, leadEmail, title, actionType, dueAt, note, agent, apiKey, baseId }) {
