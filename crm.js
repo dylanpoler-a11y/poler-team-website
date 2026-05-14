@@ -710,9 +710,23 @@ function renderStats() {
 // ── OPEN LEAD PANEL ────────────────────────────────────────────────────────
 function openPanel(id) {
   const lead = allLeads.find(l => String(l.id) === String(id));
-  if (!lead) return;
+  if (!lead) { console.warn('[openPanel] lead not found for id:', id); return; }
   activeLead = lead;
 
+  // OPEN THE PANEL FIRST — never let a data-population error keep it hidden.
+  // The panel CSS slides in via .open class; any subsequent error only affects
+  // field contents, not visibility.
+  document.getElementById('lead-panel').classList.add('open');
+  document.getElementById('panel-overlay').classList.add('show');
+
+  try {
+    populatePanel(lead);
+  } catch (err) {
+    console.error('[openPanel] error populating panel for lead', lead?.id, lead?.name, err);
+  }
+}
+
+function populatePanel(lead) {
   // Name & date
   document.getElementById('panel-name').textContent       = lead.name || '—';
   document.getElementById('panel-date').textContent       = 'Registered ' + relativeTime(lead.createdAt);
@@ -797,9 +811,7 @@ function openPanel(id) {
   renderPropertiesViewed(lead);
   renderLeadReminders(lead);
 
-  // Open panel
-  document.getElementById('lead-panel').classList.add('open');
-  document.getElementById('panel-overlay').classList.add('show');
+  // Panel is already opened at the top of openPanel(); nothing more to do.
 }
 
 // ── CLOSE LEAD PANEL ───────────────────────────────────────────────────────
