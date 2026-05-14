@@ -27,6 +27,7 @@ import {
 } from '../../lib/gmail.js';
 import { getEmailIndex } from '../../lib/crm-contacts.js';
 import { extractEmailUpdate, classifyByHeuristic } from '../../lib/email-extract.js';
+import { sendWhatsAppMessage, getOwnerWhatsApp } from '../../lib/whatsapp.js';
 
 // Internal: skip-by-default UNLESS forwarded
 const INTERNAL_DOMAINS = ['poler.org', 'homesinsoflorida.com', 'investoros1.com'];
@@ -330,11 +331,52 @@ async function writeCrmUpdate({ match, extracted, inbox, email, accessToken, eff
                         apiKey, baseId,
                     });
                 }
+                // WhatsApp notification (best-effort)
+                await notifyOwnerWhatsApp({
+                    owner: agent,
+                    reminder: rem,
+                    fromName: m.from.name || email.from.email,
+                    recordName: match.recordName,
+                    effectiveSenderEmail: m.from.email,
+                });
             } catch (err) {
                 console.error(`Reminder create failed (${rem.title}):`, err.message);
             }
         }
     }
+}
+
+/**
+ * Fire-and-(mostly-)forget WhatsApp notification for a newly-auto-created reminder.
+ * Looks up the owner's WhatsApp number from NOTIFY_WHATSAPP_<OWNER> env var.
+ * No-op if env vars aren't configured.
+ */
+async function notifyOwnerWhatsApp({ owner, reminder, fromName, recordName, effectiveSenderEmail }) {
+    const to = getOwnerWhatsApp(owner);
+    if (!to) return; // owner doesn't have a WhatsApp configured — silently skip
+
+    const dueDate = new Date(reminder.dueAt);
+    const dueStr = isNaN(dueDate.getTime())
+        ? reminder.dueAt
+        : dueDate.toLocaleString('en-US', {
+            month: 'short', day: 'numeric',
+            hour: 'numeric', minute: '2-digit', hour12: true,
+            timeZone: 'America/New_York',
+        });
+
+    const body = [
+        `🔔 New reminder set by Poler CRM`,
+        ``,
+        `${reminder.actionType}: ${reminder.title}`,
+        `Due: ${dueStr} ET`,
+        ``,
+        `From: ${fromName} (${effectiveSenderEmail})`,
+        `Re: ${recordName}`,
+        reminder.note ? `\n${reminder.note}` : '',
+        `\nhttps://www.homesinsoflorida.com/crm`,
+    ].filter(Boolean).join('\n');
+
+    await sendWhatsAppMessage({ to, body });
 }
 
 async function createLeadReminder({ leadRecordId, leadName, leadEmail, title, actionType, dueAt, note, agent, apiKey, baseId }) {
