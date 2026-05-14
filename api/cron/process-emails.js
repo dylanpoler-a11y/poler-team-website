@@ -232,6 +232,14 @@ async function writeCrmUpdate({ match, extracted, inbox, email, accessToken, eff
         'Content-Type': 'application/json',
     };
 
+    // Track everything we write for a consolidated WhatsApp notification at the end.
+    const writeSummary = {
+        noteWritten: false,
+        attachmentsUploaded: [], // [{filename, category}]
+        attachmentsFailed: [],   // [{filename, reason}]
+        remindersCreated: [],    // {title, actionType, dueAt, note}
+    };
+
     const attachmentNames = (email.attachments || []).map(a => a.filename);
     const attachLine = attachmentNames.length > 0 ? ` [Attachments: ${attachmentNames.join(', ')}]` : '';
     const subjectLine = email.subject ? `Re: "${truncate(email.subject, 80)}"` : '';
@@ -252,6 +260,7 @@ async function writeCrmUpdate({ match, extracted, inbox, email, accessToken, eff
             body: JSON.stringify({ records: [{ id: match.recordId, fields: { 'Notes': newNotes } }] }),
         });
         if (!patchRes.ok) throw new Error(`Lead PATCH: ${(await patchRes.json().catch(() => ({}))).error?.message || patchRes.status}`);
+        writeSummary.noteWritten = true;
     } else if (match.recordType === 'consulting-contact') {
         if (!match.companyId) throw new Error('contact has no companyId');
 
@@ -273,6 +282,7 @@ async function writeCrmUpdate({ match, extracted, inbox, email, accessToken, eff
             }),
         });
         if (!actRes.ok) throw new Error(`Activity log: ${(await actRes.json().catch(() => ({}))).error?.message || actRes.status}`);
+        writeSummary.noteWritten = true;
 
         // NOTE: We intentionally do NOT also append to Company.Notes anymore.
         // Each email is one Consulting Activity row (= one note card in the UI).
@@ -294,11 +304,14 @@ async function writeCrmUpdate({ match, extracted, inbox, email, accessToken, eff
 
                 if (match.recordType === 'lead') {
                     await uploadAirtableAttachment({ recordId: match.recordId, field: 'Documents', filename: att.filename, contentType: att.mimeType, base64, apiKey, baseId });
+                    writeSummary.attachmentsUploaded.push({ filename: att.filename, category: 'Documents' });
                 } else {
                     await uploadAirtableAttachment({ recordId: match.companyId, field: category, filename: att.filename, contentType: att.mimeType, base64, apiKey, baseId });
+                    writeSummary.attachmentsUploaded.push({ filename: att.filename, category });
                 }
             } catch (err) {
                 console.error(`Attachment upload failed (${att.filename}):`, err.message);
+                writeSummary.attachmentsFailed.push({ filename: att.filename, reason: err.message });
             }
         }
     }
@@ -331,29 +344,95 @@ async function writeCrmUpdate({ match, extracted, inbox, email, accessToken, eff
                         apiKey, baseId,
                     });
                 }
-                // WhatsApp notification (best-effort)
-                await notifyOwnerWhatsApp({
-                    owner: agent,
-                    reminder: rem,
-                    fromName: m.from.name || email.from.email,
-                    recordName: match.recordName,
-                    effectiveSenderEmail: m.from.email,
-                });
+                writeSummary.remindersCreated.push(rem);
             } catch (err) {
                 console.error(`Reminder create failed (${rem.title}):`, err.message);
             }
         }
     }
+
+    // ── Consolidated WhatsApp notification (one per email) ─────────────────
+    // Only fire if anything actually got stored. If we wrote nothing (rare —
+    // would mean everything errored out), skip the ping.
+    const wroteSomething =
+        writeSummary.noteWritten ||
+        writeSummary.attachmentsUploaded.length > 0 ||
+        writeSummary.remindersCreated.length > 0;
+    if (wroteSomething) {
+        await notifyOwnerWhatsApp({
+            owner: agent,
+            writeSummary,
+            fromName: email.from.name || email.from.email,
+            fromEmail: email.from.email,
+            effectiveSenderEmail: effectiveSenderEmail || email.from.email,
+            isForward: !!isForward,
+            recordName: match.recordName,
+            recordType: match.recordType,
+            subject: email.subject || '(no subject)',
+        });
+    }
 }
 
 /**
- * Fire-and-(mostly-)forget WhatsApp notification for a newly-auto-created reminder.
- * Looks up the owner's WhatsApp number from NOTIFY_WHATSAPP_<OWNER> env var.
- * No-op if env vars aren't configured.
+ * Fire-and-(mostly-)forget consolidated WhatsApp notification for one processed email.
+ * Lists what was stored (note, attachments, reminders) in a single message.
+ * No-op if owner's NOTIFY_WHATSAPP_<OWNER> env var isn't configured.
  */
-async function notifyOwnerWhatsApp({ owner, reminder, fromName, recordName, effectiveSenderEmail }) {
+async function notifyOwnerWhatsApp({
+    owner, writeSummary, fromName, fromEmail, effectiveSenderEmail, isForward,
+    recordName, recordType, subject,
+}) {
     const to = getOwnerWhatsApp(owner);
     if (!to) return; // owner doesn't have a WhatsApp configured — silently skip
+
+    const lines = ['🔔 *CRM update*'];
+
+    // Who + what record
+    const recordLabel = recordType === 'lead' ? 'Lead' : 'Company';
+    lines.push(`${recordLabel}: ${recordName}`);
+    if (isForward) {
+        lines.push(`From (forwarded): ${effectiveSenderEmail}`);
+    } else {
+        lines.push(`From: ${fromName}`);
+    }
+    if (subject) lines.push(`Subject: ${truncate(subject, 60)}`);
+    lines.push(''); // blank line
+
+    // Note
+    if (writeSummary.noteWritten) {
+        lines.push('📝 Note added');
+    }
+
+    // Attachments grouped by category
+    if (writeSummary.attachmentsUploaded.length > 0) {
+        const byCat = {};
+        for (const a of writeSummary.attachmentsUploaded) {
+            byCat[a.category] = (byCat[a.category] || 0) + 1;
+        }
+        const parts = Object.entries(byCat).map(([cat, n]) => `${n} → ${cat}`);
+        lines.push(`📎 ${writeSummary.attachmentsUploaded.length} file${writeSummary.attachmentsUploaded.length > 1 ? 's' : ''}: ${parts.join(', ')}`);
+    }
+    if (writeSummary.attachmentsFailed.length > 0) {
+        lines.push(`⚠️ ${writeSummary.attachmentsFailed.length} attachment upload(s) failed — review in Gmail`);
+    }
+
+    // Reminders (each one listed since these are time-sensitive)
+    if (writeSummary.remindersCreated.length > 0) {
+        lines.push(`⏰ ${writeSummary.remindersCreated.length} reminder${writeSummary.remindersCreated.length > 1 ? 's' : ''}:`);
+        for (const rem of writeSummary.remindersCreated) {
+            const due = new Date(rem.dueAt);
+            const dueStr = isNaN(due.getTime()) ? rem.dueAt : due.toLocaleString('en-US', {
+                month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
+                hour12: true, timeZone: 'America/New_York',
+            });
+            lines.push(`  • ${rem.actionType}: ${rem.title} — ${dueStr} ET`);
+        }
+    }
+
+    lines.push('');
+    lines.push('https://www.homesinsoflorida.com/crm');
+
+    await sendWhatsAppMessage({ to, body: lines.join('\n') });
 
     const dueDate = new Date(reminder.dueAt);
     const dueStr = isNaN(dueDate.getTime())
