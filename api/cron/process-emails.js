@@ -27,7 +27,7 @@ import {
 } from '../../lib/gmail.js';
 import { getEmailIndex } from '../../lib/crm-contacts.js';
 import { extractEmailUpdate, classifyByHeuristic } from '../../lib/email-extract.js';
-import { sendWhatsAppMessage, getOwnerWhatsApp } from '../../lib/whatsapp.js';
+import { sendTelegramMessage, getOwnerChatId } from '../../lib/telegram.js';
 
 // Internal: skip-by-default UNLESS forwarded
 const INTERNAL_DOMAINS = ['poler.org', 'homesinsoflorida.com', 'investoros1.com'];
@@ -359,7 +359,7 @@ async function writeCrmUpdate({ match, extracted, inbox, email, accessToken, eff
         writeSummary.attachmentsUploaded.length > 0 ||
         writeSummary.remindersCreated.length > 0;
     if (wroteSomething) {
-        await notifyOwnerWhatsApp({
+        await notifyOwner({
             owner: agent,
             writeSummary,
             fromName: email.from.name || email.from.email,
@@ -374,16 +374,16 @@ async function writeCrmUpdate({ match, extracted, inbox, email, accessToken, eff
 }
 
 /**
- * Fire-and-(mostly-)forget consolidated WhatsApp notification for one processed email.
+ * Fire-and-(mostly-)forget consolidated Telegram notification for one processed email.
  * Lists what was stored (note, attachments, reminders) in a single message.
- * No-op if owner's NOTIFY_WHATSAPP_<OWNER> env var isn't configured.
+ * No-op if owner's TELEGRAM_CHAT_ID_<OWNER> env var isn't configured.
  */
-async function notifyOwnerWhatsApp({
+async function notifyOwner({
     owner, writeSummary, fromName, fromEmail, effectiveSenderEmail, isForward,
     recordName, recordType, subject,
 }) {
-    const to = getOwnerWhatsApp(owner);
-    if (!to) return; // owner doesn't have a WhatsApp configured — silently skip
+    const chatId = getOwnerChatId(owner);
+    if (!chatId) return; // owner doesn't have Telegram configured — silently skip
 
     const lines = ['🔔 *CRM update*'];
 
@@ -432,30 +432,7 @@ async function notifyOwnerWhatsApp({
     lines.push('');
     lines.push('https://www.homesinsoflorida.com/crm');
 
-    await sendWhatsAppMessage({ to, body: lines.join('\n') });
-
-    const dueDate = new Date(reminder.dueAt);
-    const dueStr = isNaN(dueDate.getTime())
-        ? reminder.dueAt
-        : dueDate.toLocaleString('en-US', {
-            month: 'short', day: 'numeric',
-            hour: 'numeric', minute: '2-digit', hour12: true,
-            timeZone: 'America/New_York',
-        });
-
-    const body = [
-        `🔔 New reminder set by Poler CRM`,
-        ``,
-        `${reminder.actionType}: ${reminder.title}`,
-        `Due: ${dueStr} ET`,
-        ``,
-        `From: ${fromName} (${effectiveSenderEmail})`,
-        `Re: ${recordName}`,
-        reminder.note ? `\n${reminder.note}` : '',
-        `\nhttps://www.homesinsoflorida.com/crm`,
-    ].filter(Boolean).join('\n');
-
-    await sendWhatsAppMessage({ to, body });
+    await sendTelegramMessage({ chatId, text: lines.join('\n') });
 }
 
 async function createLeadReminder({ leadRecordId, leadName, leadEmail, title, actionType, dueAt, note, agent, apiKey, baseId }) {
