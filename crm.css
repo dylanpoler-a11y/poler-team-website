@@ -935,6 +935,12 @@ body {
   color: #fff;
   transition: opacity 0.15s;
 }
+/* When used inside a section header (alongside a label), don't grow to fill — sit at natural width. */
+.panel-section-title .alert-action-btn,
+.panel-section-title .refresh-btn {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
 .alert-action-btn:hover {
   opacity: 0.9;
 }

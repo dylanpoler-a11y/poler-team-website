@@ -139,3 +139,38 @@ There is NO Git-based auto-deploy. Every deployment must be done manually via CL
 - **Kevin** (kevinpolermiami) — primary developer, works on listing page & CRM
 - **Dylan** (dylanpoler-a11y) — works on thepolerteam.com (SEPARATE project)
 - **Rosa** — team member / agent
+
+## Session Handoffs (Mandatory)
+
+When the system reminder fires that **context is getting full (~75–80%)**, **immediately** write a session handoff and KEEP UPDATING IT for the rest of the session. Do NOT wait for auto-compact — compact summaries are lossy by design.
+
+Location: `<project>/.claude/handoffs/YYYY-MM-DD-HHMM-<short-slug>.md` (use `~/poler-team-website/.claude/handoffs/`).
+
+Required sections in every handoff:
+- **Goal**: one sentence on what this session is trying to do
+- **State**: what's done — be specific (file:line refs, deployment URLs, commit SHAs, Airtable record IDs)
+- **Pending**: exact next step, command-ready if possible
+- **Touched**: every file modified, every external system mutated (Vercel deploys, Airtable writes, env-var changes, git commits)
+- **Gotchas**: stashes, uncommitted work, half-deployed changes, things the next session would step on
+
+After writing it once, UPDATE the same file after every meaningful subsequent action until the session ends. A handoff written once at 80% is stale by 81%.
+
+**Why this is here:** 2026-05-11 session left lib/* and api/agent/*.js uncommitted on disk; next session inherited a stale working tree and deployed a partial codebase, silently dropping ~80 endpoints from production. A live handoff would have warned the next session that those files existed only on disk and on the Vercel deployment, not in git. Committing the active work to `main` is the other half of this defense.
+
+## CRM Architecture (added 2026-05-14, was missing from original CLAUDE.md)
+
+The CRM (`/crm`) has two distinct sections in the left nav:
+- **Real Estate**: Dashboard, All Leads, Reminders, Export CSV — driven by `Leads` table in Airtable
+- **CONSULTING**: Companies, Opportunities, Pipeline, Reminders, Partners — driven by `Consulting Clients` / `Consulting Deals` / `Consulting Contacts` / `Consulting Tasks` / `Consulting Activity` / `Consulting Partners` Airtable tables
+
+Backend endpoints for consulting live at `api/get-consulting-*.js`, `api/save-consulting-*.js`, `api/update-consulting-*.js`, `api/delete-consulting-*.js`, plus `api/log-consulting-activity.js` and `api/stamp-last-contact.js`.
+
+The hosted MCP server at `api/mcp.js` exposes ~50 tools as `mcp__poler-crm__*`, used by Claude.ai connectors on the Poler Team's accounts. The local MCP at `~/poler-team-mcp/index.js` exposes the same tools.
+
+## Email → CRM Auto-Sync (added 2026-05-11/14)
+
+Cron at `api/cron/process-emails.js` runs every 5 min (triggered externally by cron-job.org — Vercel Hobby blocks sub-daily crons). Reads each authorized Gmail inbox (rows in Airtable `Team Inboxes` table, populated by the OAuth flow at `api/agent/gmail-oauth-start.js` → `gmail-oauth-callback.js`), matches sender against CRM (Leads + Consulting Contacts + Consulting Clients email), summarizes via Claude Haiku (`lib/email-extract.js`), writes notes + activity entries, uploads attachments classified into Contracts/Deliverables/Spreadsheets/Misc.
+
+Forward detection: when sender is internal (`@poler.org`), the body is scanned for the original external sender and that's used for matching — so a teammate forwarding a client email lands on the actual client's CRM record.
+
+`lib/` directory holds the cron's helpers: `gmail.js` (Gmail API), `email-extract.js` (Anthropic), `crm-contacts.js` (email→record index), `team-inboxes.js` (Airtable CRUD).

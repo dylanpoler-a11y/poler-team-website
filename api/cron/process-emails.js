@@ -273,17 +273,10 @@ async function writeCrmUpdate({ match, extracted, inbox, email, accessToken, eff
         });
         if (!actRes.ok) throw new Error(`Activity log: ${(await actRes.json().catch(() => ({}))).error?.message || actRes.status}`);
 
-        // (2) Prepend to Company.Notes
-        const cur = await fetch(`https://api.airtable.com/v0/${baseId}/Consulting%20Clients/${match.companyId}`, { headers });
-        if (cur.ok) {
-            const existing = (await cur.json()).fields?.['Notes'] || '';
-            const entry = `[${nowDateStr()} — ${agent}] ${note}`;
-            const newNotes = existing ? `${entry}\n\n${existing}` : entry;
-            await fetch(`https://api.airtable.com/v0/${baseId}/Consulting%20Clients`, {
-                method: 'PATCH', headers,
-                body: JSON.stringify({ records: [{ id: match.companyId, fields: { 'Notes': newNotes } }] }),
-            }).catch(err => console.error('Company Notes append failed:', err.message));
-        }
+        // NOTE: We intentionally do NOT also append to Company.Notes anymore.
+        // Each email is one Consulting Activity row (= one note card in the UI).
+        // The Company.Notes textarea is reserved for Kevin's manual notes only,
+        // so it doesn't become a giant concatenated thread.
     } else {
         throw new Error(`Unknown recordType: ${match.recordType}`);
     }
