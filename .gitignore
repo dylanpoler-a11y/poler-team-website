@@ -21,3 +21,8 @@ save-images.html
 receiver.html
 .vercel
 .env*.local
+
+# Secrets
+.env.production
+.env.development.local
+.env.local
