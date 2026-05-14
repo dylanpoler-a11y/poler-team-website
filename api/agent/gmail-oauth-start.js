@@ -1,11 +1,19 @@
 /**
- * /api/agent/gmail-oauth-start.js — initiates Google OAuth consent flow.
+ * /api/agent/gmail-oauth-start.js
+ *
+ * Initiates Google OAuth consent flow for a Gmail inbox.
  *
  * Query:
- *   ?email=<gmailAddressToAuthorize>
- *   &owner=<Kevin|Noel|Dylan|Rosa>
+ *   ?email=<gmailAddressToAuthorize>   (e.g. kevinpolermiami@gmail.com)
+ *   &owner=<Kevin|Noel|Dylan|Rosa>     (which team member owns this inbox)
  *
- * Scopes: gmail.readonly + gmail.modify + gmail.send
+ * Each Gmail account gets its own row in the Team Inboxes Airtable table —
+ * so Rosa (or anyone) can OAuth multiple accounts, each owned by her.
+ *
+ * Scopes:
+ *   gmail.readonly — list + read messages
+ *   gmail.modify   — apply CRM_PROCESSED / CRM_UNMATCHED labels
+ *   gmail.send     — send outbound on behalf of the inbox (for the outbound endpoint)
  */
 
 export const config = { runtime: 'edge' };
@@ -29,11 +37,12 @@ export default async function handler(req) {
     if (!email) {
         return new Response(
             'Missing ?email=<yourGmailAddress>&owner=<Kevin|Noel|Dylan|Rosa>. ' +
-            'Example: /api/agent/gmail-oauth-start?email=kevinpolermiami@gmail.com&owner=Kevin',
+            'Example: /api/agent/gmail-oauth-start?email=rosadasilvapoler@gmail.com&owner=Rosa',
             { status: 400 }
         );
     }
 
+    // state carries email+owner so the callback can write the right row.
     const state = b64url(JSON.stringify({ email, owner }));
 
     const scopes = [

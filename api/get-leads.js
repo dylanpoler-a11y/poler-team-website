@@ -10,6 +10,8 @@
 
 export const config = { runtime: 'edge' };
 
+import { authorize } from './_auth.js';
+
 export default async function handler(req) {
     if (req.method === 'OPTIONS') {
         return new Response(null, {
@@ -32,7 +34,7 @@ export default async function handler(req) {
     const url      = new URL(req.url);
     const password = url.searchParams.get('password');
 
-    if (!crmPass || password !== crmPass) {
+    if (!authorize(req, null).ok) {
         return json({ error: 'Unauthorized' }, 401);
     }
 
@@ -57,7 +59,14 @@ export default async function handler(req) {
             { headers: { 'Authorization': `Bearer ${apiKey}` } }
         );
 
-        if (!res.ok) break;
+        // Hard fail loud instead of silently returning empty — used to swallow
+        // 429 (Airtable quota exhausted) and 401/403 and just return { leads:[] }.
+        // Now surfaces the real error so the CRM UI shows what's broken.
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            const msg = err.error?.message || err.errors?.[0]?.message || `Airtable ${res.status}`;
+            return json({ error: msg, status: res.status, leads: [] }, res.status);
+        }
 
         const data = await res.json();
         const records = data.records || [];
@@ -88,6 +97,7 @@ export default async function handler(req) {
             alertLastSent:      r.fields['Alert Last Sent'] || '',
             alertNextDue:       r.fields['Alert Next Due'] || '',
             alertToken:         r.fields['Alert Token'] || '',
+            accessPassword:     r.fields['Access Password'] || '',
             alertPolygon:       r.fields['Alert Polygon'] || '',
             alertProfiles:      r.fields['Alert Profiles'] || '[]',
             preferredLanguage:  r.fields['Preferred Language'] || 'en',
@@ -97,6 +107,8 @@ export default async function handler(req) {
             lastLogin:          r.fields['Last Login'] || '',
             propertiesViewed:   r.fields['Properties Viewed'] || '[]',
             totalPropertiesViewed: r.fields['Total Properties Viewed'] || 0,
+            savedProperties:    r.fields['Saved Properties'] || '[]',
+            totalTimeSpent:     r.fields['Total Time Spent'] || 0,
         })));
 
         if (!data.offset) break;

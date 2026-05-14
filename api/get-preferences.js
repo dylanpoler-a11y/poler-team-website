@@ -11,6 +11,8 @@
 
 export const config = { runtime: 'edge' };
 
+import { authorize } from './_auth.js';
+
 export default async function handler(req) {
     if (req.method === 'OPTIONS') {
         return new Response(null, {
@@ -58,9 +60,9 @@ export default async function handler(req) {
 
     } else if (id && password) {
         // CRM admin access
-        if (!crmPass || password !== crmPass) {
-            return json({ error: 'Unauthorized' }, 401);
-        }
+        if (!authorize(req, null).ok) {
+        return json({ error: 'Unauthorized' }, 401);
+    }
         const res = await fetch(
             `https://api.airtable.com/v0/${baseId}/Leads/${id}`,
             { headers: { 'Authorization': `Bearer ${apiKey}` } }

@@ -130,6 +130,12 @@ export default async function handler(req) {
     crypto.getRandomValues(tokenArray);
     const alertToken = Array.from(tokenArray, b => b.toString(16).padStart(2, '0')).join('');
 
+    // Generate a simple, memorable access password
+    const namePrefix = (first || 'User').substring(0, 3).charAt(0).toUpperCase() + (first || 'User').substring(1, 3).toLowerCase();
+    const phoneSuffix = (phone || '').replace(/\D/g, '').slice(-4) || '0000';
+    const randDigits = String(Math.floor(Math.random() * 90) + 10);
+    const accessPassword = namePrefix + phoneSuffix + randDigits;
+
     // Core fields that always exist in Airtable
     const coreFields = {
         'Name':            `${first} ${last}`.trim(),
@@ -143,6 +149,7 @@ export default async function handler(req) {
         'Status':          'New',
         'Created At':      new Date().toISOString(),
         'Alert Token':     alertToken,
+        'Access Password': accessPassword,
         'Preferred Language': language,
         ...(timeline && { 'Timeline': timeline }),
     };
@@ -200,12 +207,147 @@ export default async function handler(req) {
         }
         if (!res.ok) {
             const retryErr = await res.json().catch(() => ({}));
-            return json({ error: retryErr.error?.message || 'Failed to save lead' }, 500);
+            // Still return password so the user sees their credentials even if CRM save failed
+            return json({ error: retryErr.error?.message || 'Failed to save lead', password: accessPassword, token: alertToken }, 500);
         }
     }
 
     const data = await res.json();
-    return json({ success: true, id: data.records?.[0]?.id, token: alertToken });
+
+    // Send emails via Resend — must be awaited before returning, Edge runtime
+    // terminates immediately on response and kills any pending fire-and-forget fetches.
+    const resendKey = process.env.RESEND_API_KEY;
+    const fromEmail = process.env.ALERT_FROM_EMAIL || 'alerts@homesinsoflorida.com';
+    if (resendKey) {
+        const lang = language || 'en';
+        const resendHeaders = { 'Authorization': `Bearer ${resendKey}`, 'Content-Type': 'application/json' };
+        const emailPromises = [];
+
+        // 1. Welcome email → new lead (with login credentials)
+        if (email) {
+            const subjects = { en: 'Your Account — The Poler Team', es: 'Tu Cuenta — The Poler Team', pt: 'Sua Conta — The Poler Team' };
+            emailPromises.push(
+                fetch('https://api.resend.com/emails', {
+                    method: 'POST',
+                    headers: resendHeaders,
+                    body: JSON.stringify({
+                        from: `The Poler Team <${fromEmail}>`,
+                        to: [email],
+                        subject: subjects[lang] || subjects.en,
+                        html: buildWelcomeEmail(first, email, accessPassword, lang),
+                    }),
+                }).catch(err => console.error('Welcome email failed:', err))
+            );
+        }
+
+        // 2. New lead notification → Kevin, Rosa, Dylan
+        const notifyRecipients = [
+            'kevinpolermiami@gmail.com',
+            'rosadasilvapoler@gmail.com',
+            'rosapoler@hotmail.com',
+            'dylan@poler.org',
+        ];
+        const notifyHtml = buildNotificationEmail({
+            first, last, email, phone,
+            listingAddress, listingPrice,
+            sourceUrl, country, assignedTo,
+            timeline, utmSummary,
+        });
+        emailPromises.push(
+            fetch('https://api.resend.com/emails', {
+                method: 'POST',
+                headers: resendHeaders,
+                body: JSON.stringify({
+                    from: `New Lead <${fromEmail}>`,
+                    to: notifyRecipients,
+                    subject: `New Lead: ${first} ${last}${country ? ` (${country})` : ''}`,
+                    html: notifyHtml,
+                }),
+            }).then(async r => {
+                if (!r.ok) {
+                    const body = await r.json().catch(() => ({}));
+                    console.error('Notification email failed:', r.status, JSON.stringify(body));
+                }
+            }).catch(err => console.error('Notification email error:', err))
+        );
+
+        // Await both before returning — Edge runtime kills pending fetches on response
+        await Promise.allSettled(emailPromises);
+    }
+
+    return json({ success: true, id: data.records?.[0]?.id, token: alertToken, password: accessPassword });
+}
+
+function buildWelcomeEmail(firstName, email, password, lang) {
+    const i = {
+        en: { hi: `Hi ${firstName}!`, msg: 'Your account has been created. Here are your login credentials:', emailLabel: 'Email', passLabel: 'Password', note: 'Use these credentials to browse properties without registering again. You\'ll also find them in every property alert email.', browse: 'Browse Properties', footer: 'Rosa Poler · The Poler Team · (954) 235-4046 · rosadasilvapoler@gmail.com' },
+        es: { hi: `¡Hola ${firstName}!`, msg: 'Tu cuenta ha sido creada. Aquí están tus credenciales:', emailLabel: 'Correo', passLabel: 'Contraseña', note: 'Usa estas credenciales para ver propiedades sin registrarte de nuevo. También las encontrarás en cada alerta de propiedades.', browse: 'Explorar Propiedades', footer: 'Rosa Poler · The Poler Team · (954) 235-4046 · rosadasilvapoler@gmail.com' },
+        pt: { hi: `Olá ${firstName}!`, msg: 'Sua conta foi criada. Aqui estão suas credenciais:', emailLabel: 'Email', passLabel: 'Senha', note: 'Use estas credenciais para ver imóveis sem se registrar novamente. Você também as encontrará em cada alerta de imóveis.', browse: 'Explorar Imóveis', footer: 'Rosa Poler · The Poler Team · (954) 235-4046 · rosadasilvapoler@gmail.com' },
+    };
+    const t = i[lang] || i.en;
+    return `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#f8fafc;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:20px 0;">
+<table width="100%" style="max-width:520px;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+  <tr><td style="background:#1a2744;padding:24px 30px;text-align:center;">
+    <span style="font-family:'Playfair Display',Georgia,serif;font-size:22px;font-weight:700;color:#fff;">The Poler Team</span><br>
+    <span style="font-size:11px;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;">Optimar International Realty</span>
+  </td></tr>
+  <tr><td style="padding:30px;">
+    <div style="font-size:20px;font-weight:700;color:#1a2744;margin-bottom:8px;">${t.hi}</div>
+    <div style="font-size:14px;color:#475569;margin-bottom:24px;">${t.msg}</div>
+    <div style="background:#eff6ff;border:2px solid #3b82f6;border-radius:12px;padding:20px 24px;margin-bottom:20px;">
+      <div style="font-size:13px;font-weight:700;color:#1e40af;margin-bottom:10px;">🔑 LOGIN</div>
+      <div style="font-size:15px;color:#1e3a5f;line-height:2.2;">
+        <strong>${t.emailLabel}:</strong> ${email}<br>
+        <strong>${t.passLabel}:</strong> <span style="font-size:20px;font-weight:800;color:#1e40af;letter-spacing:1px;">${password}</span>
+      </div>
+    </div>
+    <div style="font-size:13px;color:#64748b;margin-bottom:24px;">${t.note}</div>
+    <div style="text-align:center;">
+      <a href="https://www.homesinsoflorida.com/listing" style="display:inline-block;padding:14px 36px;background:#c8a55a;color:#1a2744;text-decoration:none;border-radius:8px;font-size:15px;font-weight:700;">${t.browse} →</a>
+    </div>
+  </td></tr>
+  <tr><td style="background:#f1f5f9;padding:20px;text-align:center;font-size:12px;color:#64748b;border-top:1px solid #e2e8f0;">
+    ${t.footer}
+  </td></tr>
+</table>
+</td></tr></table></body></html>`;
+}
+
+function buildNotificationEmail({ first, last, email, phone, listingAddress, listingPrice, sourceUrl, country, assignedTo, timeline, utmSummary }) {
+    const name = `${first} ${last}`.trim() || 'Unknown';
+    const price = listingPrice ? `$${Number(listingPrice).toLocaleString()}` : '—';
+    const row = (label, value) => value
+        ? `<tr><td style="padding:6px 0;font-size:13px;color:#64748b;width:140px;vertical-align:top;">${label}</td><td style="padding:6px 0;font-size:13px;color:#1a2744;font-weight:500;">${value}</td></tr>`
+        : '';
+    return `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#f8fafc;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:20px 0;">
+<table width="100%" style="max-width:560px;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+  <tr><td style="background:#1a2744;padding:20px 30px;">
+    <span style="font-size:18px;font-weight:700;color:#fff;">🔔 New Lead — The Poler Team</span>
+  </td></tr>
+  <tr><td style="padding:28px 30px;">
+    <div style="font-size:22px;font-weight:700;color:#1a2744;margin-bottom:20px;">${name}</div>
+    <table cellpadding="0" cellspacing="0" style="width:100%;border-top:1px solid #e2e8f0;">
+      ${row('Email', email ? `<a href="mailto:${email}" style="color:#3b82f6;">${email}</a>` : '')}
+      ${row('Phone', phone ? `<a href="tel:${phone}" style="color:#3b82f6;">${phone}</a>` : '')}
+      ${row('Country', country)}
+      ${row('Assigned To', assignedTo)}
+      ${row('Timeline', timeline)}
+      ${row('Interested In', listingAddress)}
+      ${row('Listing Price', listingAddress ? price : '')}
+      ${row('Source', utmSummary)}
+      ${row('Page URL', sourceUrl ? `<a href="${sourceUrl}" style="color:#3b82f6;word-break:break-all;">${sourceUrl}</a>` : '')}
+    </table>
+    <div style="margin-top:24px;text-align:center;">
+      <a href="https://www.homesinsoflorida.com/crm" style="display:inline-block;padding:12px 32px;background:#1a2744;color:#fff;text-decoration:none;border-radius:8px;font-size:14px;font-weight:600;">Open CRM →</a>
+    </div>
+  </td></tr>
+  <tr><td style="background:#f1f5f9;padding:16px 30px;text-align:center;font-size:12px;color:#94a3b8;border-top:1px solid #e2e8f0;">
+    The Poler Team · homesinsoflorida.com
+  </td></tr>
+</table>
+</td></tr></table></body></html>`;
 }
 
 function json(data, status = 200) {

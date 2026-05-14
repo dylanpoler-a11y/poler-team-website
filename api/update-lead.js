@@ -10,6 +10,8 @@
 
 export const config = { runtime: 'edge' };
 
+import { authorize } from './_auth.js';
+
 export default async function handler(req) {
     if (req.method === 'OPTIONS') {
         return new Response(null, {
@@ -40,9 +42,9 @@ export default async function handler(req) {
         return json({ error: 'Invalid request body' }, 400);
     }
 
-    const { id, status, notes, assignedTo, password } = body;
+    const { id, status, notes, assignedTo, firstName, lastName, email, phone, password } = body;
 
-    if (!crmPass || password !== crmPass) {
+    if (!authorize(req, body).ok) {
         return json({ error: 'Unauthorized' }, 401);
     }
 
@@ -54,6 +56,25 @@ export default async function handler(req) {
     if (status     !== undefined) fields['Status']      = status;
     if (notes      !== undefined) fields['Notes']       = notes;
     if (assignedTo !== undefined) fields['Assigned To'] = assignedTo;
+    if (firstName  !== undefined) fields['First Name']  = firstName;
+    if (lastName   !== undefined) fields['Last Name']   = lastName;
+    if (email      !== undefined) fields['Email']       = email;
+    if (phone      !== undefined) fields['Phone']       = phone;
+
+    // Recompute primary "Name" if first or last changed (matches the convention
+    // already in save-lead.js / Airtable formula).
+    if (firstName !== undefined || lastName !== undefined) {
+        // Fetch current record to know the OTHER name component
+        const curRes = await fetch(`https://api.airtable.com/v0/${baseId}/Leads/${id}`, {
+            headers: { 'Authorization': `Bearer ${apiKey}` },
+        });
+        if (curRes.ok) {
+            const cur = await curRes.json();
+            const fn = firstName !== undefined ? firstName : (cur.fields?.['First Name'] || '');
+            const ln = lastName  !== undefined ? lastName  : (cur.fields?.['Last Name']  || '');
+            fields['Name'] = `${fn} ${ln}`.trim();
+        }
+    }
 
     if (Object.keys(fields).length === 0) {
         return json({ error: 'Nothing to update' }, 400);
@@ -65,7 +86,7 @@ export default async function handler(req) {
             'Authorization': `Bearer ${apiKey}`,
             'Content-Type':  'application/json',
         },
-        body: JSON.stringify({ records: [{ id, fields }] }),
+        body: JSON.stringify({ records: [{ id, fields }], typecast: true }),
     });
 
     if (!res.ok) {

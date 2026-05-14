@@ -15,6 +15,8 @@
 
 export const config = { runtime: 'edge' };
 
+import { authorize } from './_auth.js';
+
 export default async function handler(req) {
     if (req.method === 'OPTIONS') {
         return new Response(null, {
@@ -64,9 +66,9 @@ export default async function handler(req) {
         recordId = data.records[0].id;
 
     } else if (id && password) {
-        if (!crmPass || password !== crmPass) {
-            return json({ error: 'Unauthorized' }, 401);
-        }
+        if (!authorize(req, body).ok) {
+        return json({ error: 'Unauthorized' }, 401);
+    }
         recordId = id;
 
     } else {
@@ -104,7 +106,7 @@ export default async function handler(req) {
             'Authorization': `Bearer ${apiKey}`,
             'Content-Type':  'application/json',
         },
-        body: JSON.stringify({ records: [{ id: recordId, fields }] }),
+        body: JSON.stringify({ records: [{ id: recordId, fields }], typecast: true }),
     });
 
     if (!res.ok) {

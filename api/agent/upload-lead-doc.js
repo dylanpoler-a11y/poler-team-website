@@ -1,5 +1,19 @@
 /**
- * /api/agent/upload-lead-doc.js — upload file as Lead.Documents attachment.
+ * /api/agent/upload-lead-doc.js — Vercel Edge Function
+ * Uploads a file as an attachment on a Lead record (Documents field).
+ *
+ * Mirrors upload-consulting-doc.js but targets the Leads table.
+ *
+ * Body: { id, filename, contentType, base64 }  OR  { id, filename, contentType, url }
+ *   id: Lead recordId (Leads table)
+ *   filename: filename to display in CRM
+ *   contentType: MIME type (inferred from URL response headers if URL mode)
+ *   base64: file contents encoded as base64 (NO data: prefix)
+ *   url: alternative — server fetches the file then uploads
+ *
+ * Auth: Bearer token (Authorization header) or ?token= query.
+ *
+ * Required env vars: AIRTABLE_API_KEY, AIRTABLE_BASE_ID
  */
 
 export const config = { runtime: 'edge' };
@@ -18,6 +32,7 @@ export default async function handler(req) {
             },
         });
     }
+
     if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
 
     const apiKey = process.env.AIRTABLE_API_KEY;
@@ -34,6 +49,7 @@ export default async function handler(req) {
         return json({ error: 'id, filename, and one of (base64 | url) are required' }, 400);
     }
 
+    // URL mode: fetch the file server-side, base64-encode it.
     let fileB64 = base64;
     let inferredType = contentType;
     if (!fileB64 && fileUrl) {
@@ -54,31 +70,43 @@ export default async function handler(req) {
         }
     }
 
+    // Airtable content upload URL — record ID alone identifies the table.
     const url = `https://content.airtable.com/v0/${baseId}/${id}/${encodeURIComponent(FIELD)}/uploadAttachment`;
+
     const res = await fetch(url, {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+        headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+        },
         body: JSON.stringify({
             contentType: inferredType || 'application/octet-stream',
-            file: fileB64, filename,
+            file: fileB64,
+            filename,
         }),
     });
 
     if (!res.ok) {
         const err = await res.json().catch(() => ({}));
+        console.error('Airtable upload-lead-doc failed:', res.status, JSON.stringify(err));
         return json({
-            error: err.error?.message || 'Failed to upload',
+            error: err.error?.message || err.error || 'Failed to upload',
             status: res.status,
-            hint: res.status === 422 ? "Add a 'Documents' (attachment) field to the Leads table." : undefined,
+            hint: res.status === 422 ? "If you see 'Field \"Documents\" cannot accept attachments', add a Documents (attachment) field to the Leads table." : undefined,
         }, 500);
     }
+
     const data = await res.json();
-    return json({ success: true, attachments: data.fields?.[FIELD] || [] });
+    const attachments = data.fields?.[FIELD] || [];
+    return json({ success: true, attachments });
 }
 
 function json(data, status = 200) {
     return new Response(JSON.stringify(data), {
         status,
-        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+        headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+        },
     });
 }

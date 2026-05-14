@@ -71,7 +71,7 @@ export default async function handler(req) {
 
     for (const record of dueLeads) {
         const f = record.fields;
-        const email = f['Email'];
+        const email = (f['Email'] || '').replace(/[^\x20-\x7E]/g, '').trim();
         if (!email) {
             results.skipped++;
             results.details.push({ id: record.id, status: 'skipped', reason: 'no email' });
@@ -91,6 +91,8 @@ export default async function handler(req) {
             count:     f['Alert Count'] || 5,
             frequency: f['Alert Frequency'] || 'Weekly',
             token:     f['Alert Token'] || '',
+            password:  f['Access Password'] || '',
+            phone:     f['Phone'] || '',
             language:  f['Preferred Language'] || 'en',
             polygon:   f['Alert Polygon'] || '',
             profiles:  f['Alert Profiles'] || '',
@@ -134,6 +136,8 @@ export default async function handler(req) {
                     sqftMin: profile.sqftMin || 0,
                     sqftMax: profile.sqftMax || 0,
                     lotSizeMin: profile.lotSizeMin || 0,
+                    hoaMin: profile.hoaMin || 0,
+                    hoaMax: profile.hoaMax || 0,
                     yearBuiltMin: profile.yearBuiltMin || 0,
                     keywords: profile.keywords || '',
                 };
@@ -186,9 +190,37 @@ export default async function handler(req) {
             listings = listings.slice(0, lead.count || 5);
 
             if (listings.length === 0) {
+                // Still advance Alert Next Due so the lead isn't stuck as "due" forever
+                const nextDue = computeNextDue(today, lead.frequency);
+                try {
+                    await fetch(`https://api.airtable.com/v0/${baseId}/Leads`, {
+                        method: 'PATCH',
+                        headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ records: [{ id: record.id, fields: { 'Alert Next Due': nextDue } }] }),
+                    });
+                } catch (_) { /* non-fatal */ }
                 results.skipped++;
-                results.details.push({ id: record.id, email, status: 'skipped', reason: 'no matching listings' });
+                results.details.push({ id: record.id, email, status: 'skipped', reason: 'no matching listings', nextDue });
                 continue;
+            }
+
+            // Ensure every email has a password — backfill older leads that
+            // were created before Access Password was generated automatically.
+            if (!lead.password) {
+                lead.password = generateFallbackPassword(lead.firstName, lead.phone);
+                // Write it back to Airtable so the same password is reused on future sends
+                try {
+                    await fetch(`https://api.airtable.com/v0/${baseId}/Leads`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Authorization': `Bearer ${apiKey}`,
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            records: [{ id: record.id, fields: { 'Access Password': lead.password } }],
+                        }),
+                    });
+                } catch (_) { /* non-fatal */ }
             }
 
             // Build and send email
@@ -250,6 +282,15 @@ export default async function handler(req) {
         totalDue: dueLeads.length,
         ...results,
     });
+}
+
+// ── FALLBACK PASSWORD (for leads created before Access Password was auto-set) ─
+function generateFallbackPassword(firstName, phone) {
+    const safeName = (firstName || 'User').toString();
+    const namePrefix = safeName.substring(0, 3).charAt(0).toUpperCase() + safeName.substring(1, 3).toLowerCase();
+    const phoneSuffix = (phone || '').toString().replace(/\D/g, '').slice(-4) || '0000';
+    const randDigits = String(Math.floor(Math.random() * 90) + 10);
+    return namePrefix + phoneSuffix + randDigits;
 }
 
 // ── COMPUTE NEXT DUE DATE ─────────────────────────────────────────────────────
@@ -342,15 +383,35 @@ async function fetchBridgeListings(token, lead) {
         'Townhouse':     'Townhouse',
         'Multi Family':  'Multi Family',
     };
+    const isRental = (lead.types || []).includes('For Rent');
+
+    // Request all fields needed for feature filtering
+    const FEATURE_FIELDS = [
+        'ListingId','ListingKey','ListPrice','City','PropertySubType',
+        'BedroomsTotal','BathroomsTotalInteger','LivingArea','LotSizeSquareFeet',
+        'AssociationFee','YearBuilt','Latitude','Longitude','PublicRemarks',
+        'UnparsedAddress','WaterfrontYN','WaterfrontFeatures','View','PoolFeatures',
+        'PatioAndPorchFeatures','CommunityFeatures','AssociationAmenities',
+        'MIAMIRE_Restrictions','ArchitecturalStyle','Media','ListOfficeName',
+        'ModificationTimestamp',
+    ].join(',');
 
     const baseParams = new URLSearchParams({
         access_token:   token,
         limit:          String(needsClientFilter ? 100 : count * 2),
         sortBy:         'ModificationTimestamp',
         order:          'desc',
-        PropertyType:   'Residential',
+        PropertyType:   isRental ? 'Residential Lease' : 'Residential',
         StandardStatus: 'Active',
+        fields:         FEATURE_FIELDS,
     });
+
+    // Push waterfront filter to API level
+    const waterfrontFeats = (lead.features || []).filter(f => f.startsWith('Waterfront'));
+    if (waterfrontFeats.length > 0) baseParams.set('WaterfrontYN', 'true');
+
+    // Push pool filter to API level
+    if ((lead.features || []).includes('Pool')) baseParams.set('PoolPrivateYN', 'true');
 
     if (lead.priceMin > 0) baseParams.set('ListPrice.gte', String(lead.priceMin));
     if (lead.priceMax > 0) baseParams.set('ListPrice.lte', String(lead.priceMax));
@@ -359,6 +420,8 @@ async function fetchBridgeListings(token, lead) {
     if (lead.sqftMin > 0) baseParams.set('LivingArea.gte', String(lead.sqftMin));
     if (lead.sqftMax > 0) baseParams.set('LivingArea.lte', String(lead.sqftMax));
     if (lead.lotSizeMin > 0) baseParams.set('LotSizeSquareFeet.gte', String(lead.lotSizeMin));
+    if (lead.hoaMin > 0) baseParams.set('AssociationFee.gte', String(lead.hoaMin));
+    if (lead.hoaMax > 0) baseParams.set('AssociationFee.lte', String(lead.hoaMax));
     if (lead.yearBuiltMin > 0) baseParams.set('YearBuilt.gte', String(lead.yearBuiltMin));
 
     // When polygon exists but no cities, derive cities from polygon center
@@ -382,8 +445,8 @@ async function fetchBridgeListings(token, lead) {
         } catch (e) { /* invalid polygon */ }
     }
 
-    // Map property types to API values
-    const mappedTypes = (lead.types || []).map(t => typeMap[t] || t).filter(Boolean);
+    // Map property types to API values (exclude 'For Rent' — it controls PropertyType, not PropertySubType)
+    const mappedTypes = (lead.types || []).filter(t => t !== 'For Rent').map(t => typeMap[t] || t).filter(Boolean);
     const effectiveCities = cities.length > 0 ? cities : (polygonCities.length > 0 ? polygonCities : [null]);
 
     // Build one request per city × type combination for targeted results
@@ -436,13 +499,20 @@ async function fetchBridgeListings(token, lead) {
         filtered = filtered.filter(l => features.every(feat => matchesFeature(l, feat)));
     }
 
-    // Client-side keyword filtering (check PublicRemarks)
+    // Client-side keyword filtering — search description + architecture/community fields
     if (lead.keywords) {
         const kws = lead.keywords.toLowerCase().split(',').map(s => s.trim()).filter(Boolean);
         if (kws.length > 0) {
+            const joinField = v => v ? (Array.isArray(v) ? v.join(' ') : String(v)) : '';
             filtered = filtered.filter(l => {
-                const remarks = (l.PublicRemarks || '').toLowerCase();
-                return kws.some(kw => remarks.includes(kw));
+                const searchText = [
+                    l.PublicRemarks || '',
+                    joinField(l.ArchitecturalStyle),
+                    joinField(l.CommunityFeatures),
+                    joinField(l.AssociationAmenities),
+                    joinField(l.MIAMIRE_Restrictions),
+                ].join(' ').toLowerCase();
+                return kws.some(kw => searchText.includes(kw));
             });
         }
     }
@@ -485,14 +555,9 @@ function matchesFeature(listing, feature) {
             const hasDaily = arrContains(restrictions, 'Daily Rentals Allowed');
             const noRestrictions = arrContains(restrictions, 'No Restrictions');
             const noDaily = arrContains(restrictions, 'No Daily Rentals');
-            const strInRemarks = remarks.includes('short term') || remarks.includes('short-term') || remarks.includes('airbnb') || remarks.includes('vrbo') || remarks.includes('daily rental') || remarks.includes('hotel program');
-            if (hasDaily || noRestrictions || strInRemarks) return !noDaily;
-            const subType = (listing.PropertySubType || '').toLowerCase();
-            const isSF = subType.includes('single family') || subType.includes('detached');
-            const isGated = arrContains(listing.CommunityFeatures || listing.AssociationAmenities, 'gated', 'guard', 'security') || remarks.includes('gated');
-            const city = (listing.City || '').toLowerCase();
-            const isMiamiBeach = city === 'miami beach' || city === 'south beach';
-            if (isSF && !isGated && !isMiamiBeach && !noDaily) return true;
+            const strInRemarks = remarks.includes('short term rental') || remarks.includes('short-term rental') || remarks.includes('airbnb') || remarks.includes('vrbo') || remarks.includes('daily rental') || remarks.includes('hotel program') || remarks.includes('nightly rental');
+            if (noDaily) return false;
+            if (hasDaily || noRestrictions || strInRemarks) return true;
             return false;
         }
         case 'Gated Community':
@@ -508,6 +573,10 @@ function matchesFeature(listing, feature) {
         case 'Penthouse':
             return arrContains(listing.ArchitecturalStyle, 'penthouse')
                 || remarks.includes('penthouse');
+        case 'No HOA': {
+            const fee = parseFloat(listing.AssociationFee);
+            return !fee || fee === 0;
+        }
         default:
             return true;
     }
@@ -528,6 +597,19 @@ function buildAlertEmail(lead, listings, siteBase) {
     const lang = lead.language || 'en';
     const i18n = getEmailStrings(lang);
 
+    // Auto-login auth params — appended to every URL in this email so that
+    // clicking ANY link/button logs the lead in automatically on any device.
+    // Front-end strips these from the URL immediately after reading them.
+    const authParams = [];
+    if (lead.email)    authParams.push(`e=${encodeURIComponent(lead.email)}`);
+    if (lead.password) authParams.push(`p=${encodeURIComponent(lead.password)}`);
+    if (lead.token)    authParams.push(`t=${encodeURIComponent(lead.token)}`);
+    const authQS = authParams.join('&');
+    const appendAuth = (url) => {
+        if (!authQS) return url;
+        return url + (url.includes('?') ? '&' : '?') + authQS;
+    };
+
     const propertyCards = listings.map(listing => {
         const photo = getListingPhoto(listing);
         const price = listing.ListPrice
@@ -542,8 +624,7 @@ function buildAlertEmail(lead, listings, siteBase) {
             ? Number(listing.LivingArea).toLocaleString('en-US') + ' sqft'
             : '';
         const mlsId = listing.ListingId || '';
-        const tokenParam = lead.token ? `&t=${lead.token}` : '';
-        const listingUrl = `${siteBase}/listing?id=${mlsId}${tokenParam}`;
+        const listingUrl = appendAuth(`${siteBase}/listing?id=${mlsId}`);
 
         return `
         <tr><td style="padding:0 0 20px;">
@@ -567,11 +648,13 @@ function buildAlertEmail(lead, listings, siteBase) {
         </td></tr>`;
     }).join('');
 
-    const prefsUrl = lead.token
-        ? `${siteBase}/preferences?token=${lead.token}&lang=${lang}`
-        : siteBase;
+    const prefsUrl = appendAuth(
+        lead.token
+            ? `${siteBase}/preferences?token=${lead.token}&lang=${lang}`
+            : `${siteBase}/preferences?lang=${lang}`
+    );
 
-    const searchUrl = buildSearchUrl(siteBase, lead);
+    const searchUrl = appendAuth(buildSearchUrl(siteBase, lead));
 
     return `<!DOCTYPE html>
 <html lang="${lang}">
@@ -593,6 +676,15 @@ function buildAlertEmail(lead, listings, siteBase) {
     <td style="padding:30px 20px 10px;">
       <div style="font-size:18px;color:#1a2744;font-weight:600;margin-bottom:6px;">${i18n.greeting.replace('{name}', lead.firstName)}</div>
       <div style="font-size:14px;color:#475569;line-height:1.6;margin-bottom:24px;">${i18n.intro}</div>
+      ${lead.password ? `
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+        <tr><td style="background:#f0f9ff;border:2px solid #1a2744;border-radius:10px;padding:16px 20px;text-align:center;">
+          <div style="font-size:12px;color:#64748b;text-transform:uppercase;letter-spacing:1.5px;font-weight:700;margin-bottom:8px;">${lang === 'es' ? 'TUS CREDENCIALES DE ACCESO' : lang === 'pt' ? 'SUAS CREDENCIAIS DE ACESSO' : 'YOUR LOGIN CREDENTIALS'}</div>
+          <div style="font-size:15px;color:#1a2744;margin-bottom:4px;"><strong>${lang === 'es' ? 'Email' : lang === 'pt' ? 'Email' : 'Email'}:</strong> ${lead.email}</div>
+          <div style="font-size:18px;color:#1a2744;font-weight:800;letter-spacing:0.5px;"><strong>${lang === 'es' ? 'Contraseña' : lang === 'pt' ? 'Senha' : 'Password'}:</strong> ${lead.password}</div>
+          <div style="font-size:11px;color:#94a3b8;margin-top:8px;">${lang === 'es' ? 'Tocar cualquier enlace en este correo te conecta automáticamente.' : lang === 'pt' ? 'Tocar em qualquer link deste e-mail te conecta automaticamente.' : 'Tapping any link in this email logs you in automatically.'}</div>
+        </td></tr>
+      </table>` : ''}
     </td>
   </tr>
 
@@ -610,7 +702,7 @@ function buildAlertEmail(lead, listings, siteBase) {
     <td style="padding:24px 20px;text-align:center;max-width:600px;margin:0 auto;">
       <div style="font-size:13px;color:#475569;margin-bottom:8px;">
         <strong>Rosa Poler</strong> · The Poler Team<br>
-        📞 (954) 235-4046 · ✉️ rosa@homesinsoflorida.com
+        📞 (954) 235-4046 · ✉️ rosadasilvapoler@gmail.com
       </div>
       <div style="font-size:12px;color:#94a3b8;margin-bottom:12px;">
         Optimar International Realty · South Florida

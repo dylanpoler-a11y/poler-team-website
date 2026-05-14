@@ -1,41 +1,59 @@
 /**
- * /api/_auth.js — shared auth helper.
+ * /api/_auth.js — shared auth helper for all consulting + lead endpoints.
  *
- * Accepts ANY of:
- *   1. Authorization: Bearer <token>  — preferred for agents
- *   2. ?token=<token> query string    — for Claude.ai connectors that can't set headers
- *   3. { password: "..." } in body    — legacy web UI
+ * Two ways to authenticate:
+ *   1. Authorization: Bearer <AGENT_API_TOKEN>   (for agents — Claude, Claude Code, scripts)
+ *   2. password: <CRM_PASSWORD> in body or ?password=  (for the web UI — same as before)
  *
- * AGENT_API_TOKEN env var can be a single token OR a comma-separated list
- * (per-user audit trail). Any match passes.
- * CRM_PASSWORD env var is the single web-UI password.
+ * Either works. The web UI keeps using password. New agent integrations use the token.
  *
- * Returns { ok: true, mode: 'bearer'|'token-query'|'password', token? } on success
- *      or { ok: false } on failure.
+ * Usage in an endpoint:
+ *   import { authorize } from './_auth.js';
+ *   if (!authorize(req, body).ok) return json({ error: 'Unauthorized' }, 401);
  */
 
 export function authorize(req, body) {
-    const tokensRaw = process.env.AGENT_API_TOKEN || '';
-    const tokens = tokensRaw.split(',').map(t => t.trim()).filter(Boolean);
-    const crmPass = process.env.CRM_PASSWORD;
+    // AGENT_API_TOKEN can be a single token OR a comma-separated list of
+    // user-specific tokens (e.g. "kevinTOKEN,dylanTOKEN,noelTOKEN,rosaTOKEN").
+    // Each colleague gets their own so we can rotate/revoke individually.
+    const tokens = (process.env.AGENT_API_TOKEN || '')
+        .split(',')
+        .map(s => s.trim())
+        .filter(Boolean);
+    const pw = process.env.CRM_PASSWORD;
 
-    // 1. Authorization: Bearer <token>
-    const authHeader = req.headers.get('authorization') || req.headers.get('Authorization') || '';
-    if (authHeader.startsWith('Bearer ')) {
-        const t = authHeader.slice(7).trim();
-        if (tokens.includes(t)) return { ok: true, mode: 'bearer', token: t };
+    // Bearer token (agents)
+    const header = req.headers.get('authorization') || '';
+    if (header.startsWith('Bearer ')) {
+        const presented = header.slice(7);
+        if (tokens.includes(presented)) {
+            return { ok: true, mode: 'token', token: presented };
+        }
     }
 
-    // 2. ?token= query
+    // Token via query string (for Claude.ai connector — its UI only supports
+    // OAuth or no-auth, so we embed the token in the URL itself).
     try {
-        const u = new URL(req.url);
-        const qt = u.searchParams.get('token');
-        if (qt && tokens.includes(qt)) return { ok: true, mode: 'token-query', token: qt };
-    } catch { /* not a URL — ignore */ }
+        const url = new URL(req.url);
+        const qsToken = url.searchParams.get('token');
+        if (qsToken && tokens.includes(qsToken)) {
+            return { ok: true, mode: 'token-qs', token: qsToken };
+        }
+    } catch { /* ignore */ }
 
-    // 3. body.password (legacy)
-    if (body && typeof body === 'object' && crmPass && body.password === crmPass) {
+    // Body password (POST/PATCH from web UI)
+    if (pw && body && body.password === pw) {
         return { ok: true, mode: 'password' };
+    }
+
+    // Query param password (GET from web UI)
+    try {
+        const url = new URL(req.url);
+        if (pw && url.searchParams.get('password') === pw) {
+            return { ok: true, mode: 'password' };
+        }
+    } catch {
+        /* ignore */
     }
 
     return { ok: false };
