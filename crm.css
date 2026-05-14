@@ -567,20 +567,21 @@ body {
 #lead-panel {
   position: fixed;
   top: 0;
-  right: -440px;
+  right: 0;
   width: 440px;
   height: 100vh;
   background: white;
   box-shadow: -4px 0 24px rgba(0,0,0,0.12);
   z-index: 1000;
-  transition: right 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  transform: translateX(100%);
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
   overflow-y: auto;
   display: flex;
   flex-direction: column;
 }
 
 #lead-panel.open {
-  right: 0;
+  transform: translateX(0);
 }
 
 .panel-header {
@@ -1422,11 +1423,11 @@ body {
 
   #lead-panel {
     width: 100%;
-    right: -100%;
+    transform: translateX(100%);
   }
 
   #lead-panel.open {
-    right: 0;
+    transform: translateX(0);
   }
 
   .crm-header {
