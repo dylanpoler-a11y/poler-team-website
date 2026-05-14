@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="crm.css?v=20260514c" />
+  <link rel="stylesheet" href="crm.css?v=20260514d" />
   <!-- MapLibre GL JS for alert map drawing (vector tiles — smooth zooming) -->
   <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.1.2/dist/maplibre-gl.css" />
 </head>
@@ -59,6 +59,23 @@
           <a class="nav-item" data-action="reminders" href="#">
             <span class="nav-icon">🔔</span> Reminders <span id="reminder-badge" class="reminder-badge" style="display:none;">0</span>
           </a>
+          <div class="sidebar-section-divider">Consulting</div>
+          <a class="nav-item" data-action="clients" href="#">
+            <span class="nav-icon">🏢</span> Companies
+          </a>
+          <a class="nav-item" data-action="opportunities" href="#">
+            <span class="nav-icon">📋</span> Opportunities
+          </a>
+          <a class="nav-item" data-action="pipeline" href="#">
+            <span class="nav-icon">💰</span> Pipeline
+          </a>
+          <a class="nav-item" data-action="cons-tasks" href="#">
+            <span class="nav-icon">✓</span> Reminders <span id="cons-task-badge" class="reminder-badge" style="display:none;">0</span>
+          </a>
+          <a class="nav-item" data-action="partners" href="#">
+            <span class="nav-icon">🤝</span> Partners
+          </a>
+          <div class="sidebar-section-divider">Tools</div>
           <a class="nav-item" data-action="export" href="#">
             <span class="nav-icon">⬇️</span> Export CSV
           </a>
@@ -149,6 +166,7 @@
               <option value="Kevin">Kevin</option>
               <option value="Rosa">Rosa</option>
               <option value="Dylan">Dylan</option>
+              <option value="Noel">Noel</option>
             </select>
             <span id="lead-count"></span>
           </div>
@@ -172,6 +190,7 @@
                   <th data-sort="name">Lead <span class="sort-icon">↕</span></th>
                   <th data-sort="createdAt" class="sorted">Date <span class="sort-icon">↓</span></th>
                   <th data-sort="lastLogin">Last Login <span class="sort-icon">↕</span></th>
+                  <th data-sort="totalTimeSpent">Time on Site <span class="sort-icon">↕</span></th>
                   <th data-sort="phone">Phone <span class="sort-icon">↕</span></th>
                   <th data-sort="email">Email <span class="sort-icon">↕</span></th>
                   <th data-sort="listingAddress">Property <span class="sort-icon">↕</span></th>
@@ -191,7 +210,7 @@
         <!-- ═══════ REMINDERS VIEW ═══════ -->
         <div id="reminders-view" style="display:none;">
           <div class="crm-header">
-            <h1>Reminders</h1>
+            <h1>Reminders <span id="reminders-count-label" class="reminders-count-label"></span></h1>
             <div class="header-right">
               <select id="reminder-status-filter" class="filter-select">
                 <option value="">All</option>
@@ -229,6 +248,237 @@
           </div>
         </div><!-- /reminders-view -->
 
+        <!-- ═══════ CONSULTING CLIENTS VIEW ═══════ -->
+        <div id="clients-view" style="display:none;">
+          <div class="crm-header">
+            <h1>Consulting Clients <span id="clients-count-label" class="reminders-count-label"></span></h1>
+            <div class="header-right">
+              <button id="add-client-btn" class="refresh-btn">+ New Company</button>
+              <select id="client-status-filter" class="filter-select">
+                <option value="">All Statuses</option>
+                <option value="Lead">Lead</option>
+                <option value="Active Client">Active Client</option>
+                <option value="Dormant">Dormant</option>
+                <option value="Closed Lost">Closed Lost</option>
+              </select>
+              <input
+                type="text"
+                id="client-search"
+                class="filter-select"
+                placeholder="Search company or contact…"
+                style="min-width:220px;"
+              />
+              <button id="refresh-clients-btn" class="refresh-btn">↻ Refresh</button>
+            </div>
+          </div>
+
+          <!-- Stats Row -->
+          <div class="stats-row">
+            <div class="stat-card">
+              <div class="stat-icon blue">💼</div>
+              <div>
+                <div class="stat-number" id="client-stat-total">—</div>
+                <div class="stat-label">Total Clients</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon green">▶️</div>
+              <div>
+                <div class="stat-number" id="client-stat-active">—</div>
+                <div class="stat-label">Active</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon teal">⏸</div>
+              <div>
+                <div class="stat-number" id="client-stat-onhold">—</div>
+                <div class="stat-label">On Hold</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon red">✓</div>
+              <div>
+                <div class="stat-number" id="client-stat-completed">—</div>
+                <div class="stat-label">Completed</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="table-card">
+            <div id="clients-loading" style="display:none;">
+              <div class="loading-spinner"></div>
+              <div>Loading clients…</div>
+            </div>
+            <div id="clients-empty" style="display:none;">No consulting clients found.</div>
+            <table class="leads-table" id="clients-table">
+              <thead>
+                <tr>
+                  <th>Company</th>
+                  <th>Status</th>
+                  <th>Country</th>
+                  <th>Owner</th>
+                  <th>Open Deals</th>
+                  <th>Pipeline $</th>
+                  <th>Primary Contact</th>
+                </tr>
+              </thead>
+              <tbody id="clients-tbody"></tbody>
+            </table>
+          </div>
+        </div><!-- /clients-view -->
+
+        <!-- ═══════ CONSULTING PIPELINE (KANBAN) VIEW ═══════ -->
+        <div id="pipeline-view" style="display:none;">
+          <div class="crm-header">
+            <h1>Pipeline <span id="pipeline-count-label" class="reminders-count-label"></span></h1>
+            <div class="header-right">
+              <button id="add-deal-btn" class="refresh-btn">+ New Deal</button>
+              <select id="pipeline-owner-filter" class="filter-select">
+                <option value="">All Owners</option>
+                <option value="Kevin">Kevin</option>
+                <option value="Rosa">Rosa</option>
+                <option value="Dylan">Dylan</option>
+                <option value="Noel">Noel</option>
+              </select>
+              <button id="refresh-pipeline-btn" class="refresh-btn">↻ Refresh</button>
+            </div>
+          </div>
+
+          <!-- Reports strip -->
+          <div class="stats-row">
+            <div class="stat-card">
+              <div class="stat-icon blue">💰</div>
+              <div>
+                <div class="stat-number" id="pipeline-stat-total">—</div>
+                <div class="stat-label">Total Pipeline</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon teal">⚖️</div>
+              <div>
+                <div class="stat-number" id="pipeline-stat-weighted">—</div>
+                <div class="stat-label">Weighted</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon green">🏆</div>
+              <div>
+                <div class="stat-number" id="pipeline-stat-won">—</div>
+                <div class="stat-label">Won (this quarter)</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon red">📉</div>
+              <div>
+                <div class="stat-number" id="pipeline-stat-winrate">—</div>
+                <div class="stat-label">Win Rate</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Kanban board: rendered by renderPipeline() in crm.js -->
+          <div id="kanban-board" class="kanban-board"></div>
+        </div><!-- /pipeline-view -->
+
+        <!-- ═══════ CONSULTING TASKS VIEW ═══════ -->
+        <div id="cons-tasks-view" style="display:none;">
+          <div class="crm-header">
+            <h1>Consulting Tasks <span id="cons-tasks-count-label" class="reminders-count-label"></span></h1>
+            <div class="header-right">
+              <select id="cons-tasks-status-filter" class="filter-select">
+                <option value="">All</option>
+                <option value="Pending" selected>Pending</option>
+                <option value="Completed">Completed</option>
+                <option value="Cancelled">Cancelled</option>
+              </select>
+              <select id="cons-tasks-owner-filter" class="filter-select">
+                <option value="">All Owners</option>
+                <option value="Kevin">Kevin</option>
+                <option value="Rosa">Rosa</option>
+                <option value="Dylan">Dylan</option>
+                <option value="Noel">Noel</option>
+              </select>
+              <button id="refresh-cons-tasks-btn" class="refresh-btn">↻ Refresh</button>
+            </div>
+          </div>
+          <div class="table-card">
+            <div id="cons-tasks-empty" style="display:none;">No consulting tasks found.</div>
+            <div id="cons-tasks-groups"></div>
+          </div>
+        </div><!-- /cons-tasks-view -->
+
+        <!-- ═══════ OPPORTUNITIES (FLAT TABLE) VIEW ═══════ -->
+        <div id="opportunities-view" style="display:none;">
+          <div class="crm-header">
+            <h1>Opportunities <span id="opportunities-count-label" class="reminders-count-label"></span></h1>
+            <div class="header-right">
+              <button id="add-opp-btn" class="refresh-btn">+ New Opportunity</button>
+              <select id="opp-stage-filter" class="filter-select">
+                <option value="">All Stages</option>
+                <option value="Pitching">Pitching</option>
+                <option value="Proposal Sent">Proposal Sent</option>
+                <option value="Verbal Commitment">Verbal Commitment</option>
+                <option value="Signed">Signed</option>
+                <option value="Active">Active</option>
+                <option value="Completed">Completed</option>
+                <option value="Closed Lost">Closed Lost</option>
+              </select>
+              <select id="opp-owner-filter" class="filter-select">
+                <option value="">All Owners</option>
+                <option value="Noel">Noel</option>
+                <option value="Kevin">Kevin</option>
+                <option value="Dylan">Dylan</option>
+              </select>
+              <input type="text" id="opp-search" class="filter-select" placeholder="Search…" style="min-width:200px;">
+              <button id="refresh-opps-btn" class="refresh-btn">↻ Refresh</button>
+            </div>
+          </div>
+          <div class="table-card">
+            <div id="opps-empty" style="display:none;">No opportunities found.</div>
+            <table class="leads-table" id="opps-table">
+              <thead>
+                <tr>
+                  <th>Opportunity</th>
+                  <th>Company</th>
+                  <th>Stage</th>
+                  <th>Owner</th>
+                  <th>Deal Value</th>
+                  <th>Expected Close</th>
+                  <th>Last Contact</th>
+                  <th>Timeline</th>
+                </tr>
+              </thead>
+              <tbody id="opps-tbody"></tbody>
+            </table>
+          </div>
+        </div><!-- /opportunities-view -->
+
+        <!-- ═══════ PARTNERS VIEW ═══════ -->
+        <div id="partners-view" style="display:none;">
+          <div class="crm-header">
+            <h1>Partners <span id="partners-count-label" class="reminders-count-label"></span></h1>
+            <div class="header-right">
+              <button id="add-partner-btn" class="refresh-btn">+ New Partner</button>
+              <button id="refresh-partners-btn" class="refresh-btn">↻ Refresh</button>
+            </div>
+          </div>
+          <div class="table-card">
+            <div id="partners-empty" style="display:none;">No partners yet.</div>
+            <table class="leads-table" id="partners-table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Type</th>
+                  <th>Contact</th>
+                  <th>Default Rev Share</th>
+                  <th>Linked Opps</th>
+                </tr>
+              </thead>
+              <tbody id="partners-tbody"></tbody>
+            </table>
+          </div>
+        </div><!-- /partners-view -->
+
       </main>
     </div>
   </div>
@@ -250,22 +500,48 @@
       <div class="panel-avatar">
         <span id="panel-avatar-text">?</span>
       </div>
-      <div>
+      <div style="flex:1;min-width:0;">
         <div class="panel-name" id="panel-name">—</div>
         <div class="panel-date" id="panel-date">—</div>
       </div>
+      <button id="panel-edit-contact-btn" type="button" title="Edit name / phone / email" style="background:none;border:1px solid #e5e7eb;border-radius:6px;padding:4px 8px;font-size:12px;cursor:pointer;color:#475569;">✏️</button>
     </div>
 
     <!-- Contact Info -->
     <div class="panel-section">
       <div class="panel-section-title">Contact</div>
+
+      <!-- Editable name (toggled by edit button) -->
+      <div id="panel-contact-edit" style="display:none;">
+        <div class="panel-field">
+          <div class="panel-field-label">First Name</div>
+          <input type="text" id="panel-first-name" class="panel-input" placeholder="First name" />
+        </div>
+        <div class="panel-field">
+          <div class="panel-field-label">Last Name</div>
+          <input type="text" id="panel-last-name" class="panel-input" placeholder="Last name" />
+        </div>
+      </div>
+
       <div class="panel-field">
         <div class="panel-field-label">Phone</div>
-        <div class="panel-field-value" id="panel-phone-display">—</div>
+        <input type="tel" id="panel-phone-input" class="panel-input" placeholder="+1 305 555 0000" />
       </div>
       <div class="panel-field">
         <div class="panel-field-label">Email</div>
-        <div class="panel-field-value" id="panel-email-display">—</div>
+        <input type="email" id="panel-email-input" class="panel-input" placeholder="email@example.com" />
+      </div>
+      <div class="panel-field">
+        <div class="panel-field-label">Time on Site</div>
+        <div class="panel-field-value" id="panel-time-spent">—</div>
+      </div>
+      <div class="panel-field">
+        <div class="panel-field-label">Last Login</div>
+        <div class="panel-field-value" id="panel-last-login">—</div>
+      </div>
+      <div class="panel-field">
+        <div class="panel-field-label">Timeline to Buy</div>
+        <div class="panel-field-value" id="panel-timeline">—</div>
       </div>
     </div>
 
@@ -280,6 +556,36 @@
       <a id="panel-whatsapp" href="#" class="action-btn whatsapp" target="_blank" rel="noopener">
         💬 WhatsApp
       </a>
+      <button type="button" id="panel-share-property" class="action-btn" style="background:#c8a55a;color:#0a0a0a;border:none;cursor:pointer;">
+        🔗 Share Property
+      </button>
+    </div>
+
+    <!-- Share Property Modal -->
+    <div id="share-property-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:10000;align-items:center;justify-content:center;padding:20px;">
+      <div style="background:#fff;border-radius:12px;max-width:520px;width:100%;padding:28px;box-shadow:0 12px 40px rgba(0,0,0,0.3);">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <h2 style="margin:0;font-size:20px;color:#0a0a0a;">Share Property with Lead</h2>
+          <button type="button" id="share-close-btn" style="background:none;border:none;font-size:24px;cursor:pointer;color:#666;line-height:1;">×</button>
+        </div>
+        <p id="share-lead-name" style="margin:0 0 18px;font-size:13px;color:#666;">—</p>
+
+        <label style="display:block;font-size:12px;font-weight:600;color:#555;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;">MLS # or Listing URL</label>
+        <input type="text" id="share-mls-input" placeholder="e.g. A11848923 or https://homesinsoflorida.com/listing?id=..." style="width:100%;padding:12px 14px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;margin-bottom:14px;box-sizing:border-box;">
+
+        <label style="display:block;font-size:12px;font-weight:600;color:#555;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;">Personal Message (optional)</label>
+        <textarea id="share-message-input" rows="3" placeholder="Hey, thought you'd love this one..." style="width:100%;padding:12px 14px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;margin-bottom:14px;box-sizing:border-box;resize:vertical;"></textarea>
+
+        <div id="share-preview" style="display:none;background:#f8f8f8;border:1px solid #e5e5e5;border-radius:8px;padding:12px;margin-bottom:14px;font-size:12px;color:#444;word-break:break-all;font-family:monospace;"></div>
+
+        <p id="share-error" style="display:none;color:#c0392b;font-size:13px;margin:0 0 12px;"></p>
+
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <button type="button" id="share-whatsapp-btn" style="flex:1;min-width:140px;padding:13px 18px;background:#25D366;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">💬 Send via WhatsApp</button>
+          <button type="button" id="share-copy-btn" style="flex:1;min-width:140px;padding:13px 18px;background:#0a0a0a;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">📋 Copy Link</button>
+        </div>
+        <p style="margin:14px 0 0;font-size:11px;color:#888;line-height:1.5;">The link will silently log this lead in when they tap it — no password required. Their email and access token are embedded in the URL.</p>
+      </div>
     </div>
 
     <!-- Property Section -->
@@ -331,6 +637,7 @@
               <label><input type="checkbox" value="Condo"> Condo</label>
               <label><input type="checkbox" value="Townhouse"> Townhouse</label>
               <label><input type="checkbox" value="Multi Family"> Multi Family</label>
+              <label><input type="checkbox" value="For Rent"> For Rent</label>
             </div>
           </div>
 
@@ -382,6 +689,7 @@
               <label><input type="checkbox" value="Short-Term Rental Allowed"> Short-Term Rental Allowed</label>
               <label><input type="checkbox" value="High Rise"> High Rise</label>
               <label><input type="checkbox" value="Penthouse"> Penthouse</label>
+              <label><input type="checkbox" value="No HOA"> No HOA</label>
             </div>
           </div>
 
@@ -408,6 +716,15 @@
           <div class="panel-field">
             <div class="panel-field-label">Lot Size (min sqft)</div>
             <input type="number" id="panel-alert-lot-size" class="panel-input" placeholder="e.g. 10000 (= ~0.23 acres)" />
+          </div>
+
+          <div class="panel-field">
+            <div class="panel-field-label">HOA Cost ($/mo)</div>
+            <div class="panel-input-row">
+              <input type="number" id="panel-alert-hoa-min" class="panel-input panel-input-half" placeholder="Min" />
+              <span class="panel-input-dash">–</span>
+              <input type="number" id="panel-alert-hoa-max" class="panel-input panel-input-half" placeholder="Max" />
+            </div>
           </div>
 
           <div class="panel-field">
@@ -480,6 +797,7 @@
         <option value="Kevin">Kevin</option>
         <option value="Dylan">Dylan</option>
         <option value="Rosa">Rosa</option>
+        <option value="Noel">Noel</option>
       </select>
     </div>
 
@@ -520,6 +838,14 @@
       </div>
     </div>
 
+    <!-- Saved / Favorited Properties -->
+    <div class="panel-section">
+      <div class="panel-section-title">❤️ Saved Properties (<span id="panel-saved-count">0</span>)</div>
+      <div id="panel-saved-properties" class="panel-properties-viewed-wrap">
+        <p class="panel-empty-text">No saved properties yet</p>
+      </div>
+    </div>
+
     <!-- Properties Viewed Section -->
     <div class="panel-section">
       <div class="panel-section-title">Properties Viewed (<span id="panel-properties-count">0</span>)</div>
@@ -542,15 +868,6 @@
       <div id="panel-existing-reminders"></div>
     </div>
 
-    <!-- Sync Call Notes Section -->
-    <div class="panel-section">
-      <div class="panel-section-title">Sync Call Notes</div>
-      <p style="font-size:0.78rem;color:#6b7280;margin-bottom:0.5rem;">Paste a call transcript or notes and AI will extract property preferences, set up alerts, and add a summary.</p>
-      <textarea id="panel-call-transcript" class="panel-input" rows="4" placeholder="Paste call transcript or notes here..." style="resize:vertical;min-height:80px;"></textarea>
-      <button id="panel-sync-call-btn" class="alert-action-btn" type="button" style="margin-top:0.5rem;">🤖 Sync with AI</button>
-      <div id="panel-sync-status" class="panel-alert-status" style="display:none;"></div>
-    </div>
-
     <!-- Set Reminder Section -->
     <div class="panel-section">
       <div class="panel-section-title">Set Reminder</div>
@@ -563,6 +880,15 @@
           <option value="WhatsApp">WhatsApp</option>
           <option value="Follow Up">Follow Up</option>
           <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="panel-field">
+        <div class="panel-field-label">Assign To</div>
+        <select id="panel-reminder-agent" class="panel-input">
+          <option value="Kevin">Kevin</option>
+          <option value="Rosa">Rosa</option>
+          <option value="Dylan">Dylan</option>
+          <option value="Noel">Noel</option>
         </select>
       </div>
       <div class="panel-field">
@@ -579,6 +905,624 @@
 
   </aside>
 
+  <!-- ═══════════════════════════════════════════════════════ CLIENT DETAIL PANEL -->
+  <aside id="client-panel">
+
+    <!-- Panel Header -->
+    <div class="panel-header">
+      <span style="font-size:0.875rem;font-weight:600;color:#1a2744;">Consulting Client</span>
+      <button id="client-panel-close" class="panel-close" aria-label="Close panel">✕</button>
+    </div>
+
+    <!-- Client Info -->
+    <div class="panel-lead-info">
+      <div class="panel-avatar">
+        <span id="client-avatar-text">?</span>
+      </div>
+      <div>
+        <div class="panel-name" id="client-panel-name">—</div>
+        <div class="panel-date" id="client-panel-status-badge">—</div>
+      </div>
+    </div>
+
+    <!-- Contact Section -->
+    <div class="panel-section">
+      <div class="panel-section-title">Contact</div>
+      <div class="panel-field">
+        <div class="panel-field-label">Company</div>
+        <input type="text" id="client-company" class="panel-input" placeholder="Company name" />
+      </div>
+      <div class="panel-field">
+        <div class="panel-field-label">Primary Contact</div>
+        <input type="text" id="client-primary-contact" class="panel-input" placeholder="Person's name" />
+      </div>
+      <div class="panel-field">
+        <div class="panel-field-label">Email</div>
+        <input type="email" id="client-email" class="panel-input" placeholder="email@example.com" />
+      </div>
+      <div class="panel-field">
+        <div class="panel-field-label">Phone</div>
+        <input type="tel" id="client-phone" class="panel-input" placeholder="+1 555 123 4567" />
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="panel-actions">
+      <a id="client-call" href="#" class="action-btn">📞 Call</a>
+      <a id="client-email-action" href="#" class="action-btn">✉️ Email</a>
+      <a id="client-whatsapp" href="#" class="action-btn whatsapp" target="_blank" rel="noopener">💬 WhatsApp</a>
+    </div>
+
+    <!-- Project Section -->
+    <div class="panel-section">
+      <div class="panel-section-title">Project</div>
+      <div class="panel-field">
+        <div class="panel-field-label">Country</div>
+        <select id="client-country" class="panel-input">
+          <option value="">—</option>
+          <option value="Argentina">Argentina</option>
+          <option value="Bolivia">Bolivia</option>
+          <option value="Brazil">Brazil</option>
+          <option value="Chile">Chile</option>
+          <option value="Colombia">Colombia</option>
+          <option value="Ecuador">Ecuador</option>
+          <option value="Mexico">Mexico</option>
+          <option value="Paraguay">Paraguay</option>
+          <option value="Peru">Peru</option>
+          <option value="Uruguay">Uruguay</option>
+          <option value="USA">USA</option>
+          <option value="Venezuela">Venezuela</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="panel-field">
+        <div class="panel-field-label">Service Type</div>
+        <div class="alert-checkbox-group" id="client-service-type">
+          <label><input type="checkbox" value="Deal Advisory"> Deal Advisory</label>
+          <label><input type="checkbox" value="Hotel Operations"> Hotel Operations</label>
+          <label><input type="checkbox" value="Retail/Mall"> Retail/Mall</label>
+          <label><input type="checkbox" value="Underwriting"> Underwriting</label>
+          <label><input type="checkbox" value="Business Plan"> Business Plan</label>
+          <label><input type="checkbox" value="Other"> Other</label>
+        </div>
+      </div>
+      <div class="panel-field">
+        <div class="panel-field-label">Project Value (USD)</div>
+        <input type="number" id="client-project-value" class="panel-input" placeholder="0" />
+      </div>
+      <div class="panel-field">
+        <div class="panel-field-label">Started At</div>
+        <input type="date" id="client-started-at" class="panel-input" />
+      </div>
+      <div class="panel-field">
+        <div class="panel-field-label">Last Contact</div>
+        <input type="date" id="client-last-contact" class="panel-input" />
+      </div>
+    </div>
+
+    <!-- Status Section -->
+    <div class="panel-section">
+      <div class="panel-section-title" style="display:flex;justify-content:space-between;align-items:center;">
+        Status
+        <button id="client-promote-btn" type="button" class="alert-action-btn" style="padding:4px 12px;font-size:12px;display:none;">↑ Promote to Client</button>
+      </div>
+      <select id="client-status" class="panel-status-select">
+        <option value="Lead">Lead</option>
+        <option value="Active Client">Active Client</option>
+        <option value="Dormant">Dormant</option>
+        <option value="Closed Lost">Closed Lost</option>
+      </select>
+    </div>
+
+    <!-- Owner / Website / Source -->
+    <div class="panel-section">
+      <div class="panel-section-title">Relationship</div>
+      <div class="panel-field">
+        <div class="panel-field-label">Owner</div>
+        <select id="client-owner" class="panel-input">
+          <option value="">—</option>
+          <option value="Noel">Noel</option>
+          <option value="Kevin">Kevin</option>
+          <option value="Dylan">Dylan</option>
+        </select>
+      </div>
+      <div class="panel-field">
+        <div class="panel-field-label">Website</div>
+        <input type="url" id="client-website" class="panel-input" placeholder="https://example.com" />
+      </div>
+      <div class="panel-field">
+        <div class="panel-field-label">Source</div>
+        <input type="text" id="client-source" class="panel-input" placeholder="Referral, conference, partner…" />
+      </div>
+    </div>
+
+    <!-- Contacts (v3) -->
+    <div class="panel-section" id="company-contacts-section">
+      <div class="panel-section-title" style="display:flex;justify-content:space-between;align-items:center;">
+        Contacts
+        <button id="company-add-contact-btn" type="button" class="alert-action-btn" style="padding:4px 10px;font-size:12px;">+ New Contact</button>
+      </div>
+      <div id="company-contacts-list" class="company-contacts-list">
+        <p class="panel-empty-text">No contacts yet.</p>
+      </div>
+    </div>
+
+    <!-- Notes Section -->
+    <div class="panel-section">
+      <div class="panel-section-title">Notes</div>
+      <textarea
+        id="client-notes"
+        class="panel-notes"
+        placeholder="Running notes on this client…"
+        style="min-height:120px"
+      ></textarea>
+      <div id="client-save-status" class="panel-alert-status"></div>
+    </div>
+
+    <!-- Documents Section -->
+    <div class="panel-section">
+      <div class="panel-section-title">Documents</div>
+
+      <div class="doc-group" data-field="Contracts">
+        <div class="doc-group-header">
+          <span class="doc-group-icon">📜</span>
+          <span class="doc-group-title">Contracts</span>
+          <span class="doc-group-count" id="doc-count-Contracts">0</span>
+        </div>
+        <div class="doc-group-body">
+          <div class="doc-list" id="doc-list-Contracts"></div>
+          <label class="doc-dropzone" data-field="Contracts">
+            <input type="file" data-field="Contracts" multiple style="display:none;" />
+            <span class="doc-dropzone-text">Drop files here or click to upload</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="doc-group" data-field="Deliverables">
+        <div class="doc-group-header">
+          <span class="doc-group-icon">📦</span>
+          <span class="doc-group-title">Deliverables</span>
+          <span class="doc-group-count" id="doc-count-Deliverables">0</span>
+        </div>
+        <div class="doc-group-body">
+          <div class="doc-list" id="doc-list-Deliverables"></div>
+          <label class="doc-dropzone" data-field="Deliverables">
+            <input type="file" data-field="Deliverables" multiple style="display:none;" />
+            <span class="doc-dropzone-text">Drop files here or click to upload</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="doc-group" data-field="Spreadsheets">
+        <div class="doc-group-header">
+          <span class="doc-group-icon">📊</span>
+          <span class="doc-group-title">Spreadsheets</span>
+          <span class="doc-group-count" id="doc-count-Spreadsheets">0</span>
+        </div>
+        <div class="doc-group-body">
+          <div class="doc-list" id="doc-list-Spreadsheets"></div>
+          <label class="doc-dropzone" data-field="Spreadsheets">
+            <input type="file" data-field="Spreadsheets" multiple style="display:none;" />
+            <span class="doc-dropzone-text">Drop files here or click to upload</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="doc-group" data-field="Misc">
+        <div class="doc-group-header">
+          <span class="doc-group-icon">📁</span>
+          <span class="doc-group-title">Misc</span>
+          <span class="doc-group-count" id="doc-count-Misc">0</span>
+        </div>
+        <div class="doc-group-body">
+          <div class="doc-list" id="doc-list-Misc"></div>
+          <label class="doc-dropzone" data-field="Misc">
+            <input type="file" data-field="Misc" multiple style="display:none;" />
+            <span class="doc-dropzone-text">Drop files here or click to upload</span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Deals Section (consulting only) -->
+    <div class="panel-section" id="company-deals-section">
+      <div class="panel-section-title" style="display:flex;justify-content:space-between;align-items:center;">
+        Deals
+        <button id="company-add-deal-btn" type="button" class="alert-action-btn" style="padding:4px 10px;font-size:12px;">+ New Deal</button>
+      </div>
+      <div id="company-deals-list" class="company-deals-list">
+        <p class="panel-empty-text">No deals yet.</p>
+      </div>
+    </div>
+
+    <!-- Tasks Section (consulting only) -->
+    <div class="panel-section" id="company-tasks-section">
+      <div class="panel-section-title" style="display:flex;justify-content:space-between;align-items:center;">
+        Tasks
+        <button id="company-add-task-btn" type="button" class="alert-action-btn" style="padding:4px 10px;font-size:12px;">+ New Task</button>
+      </div>
+      <div id="company-tasks-list" class="company-tasks-list">
+        <p class="panel-empty-text">No open tasks.</p>
+      </div>
+    </div>
+
+    <!-- Activity Timeline (consulting only) -->
+    <div class="panel-section" id="company-activity-section">
+      <div class="panel-section-title">Activity</div>
+      <div id="company-activity-list" class="activity-timeline">
+        <p class="panel-empty-text">No activity yet.</p>
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- ═══════════════════════════════════════════════════════ DEAL DETAIL PANEL -->
+  <aside id="deal-panel">
+    <div class="panel-header">
+      <span style="font-size:0.875rem;font-weight:600;color:#1a2744;">Deal</span>
+      <button id="deal-panel-close" class="panel-close" aria-label="Close panel">✕</button>
+    </div>
+
+    <div class="panel-lead-info">
+      <div class="panel-avatar">
+        <span id="deal-avatar-text">$</span>
+      </div>
+      <div>
+        <div class="panel-name" id="deal-panel-name">—</div>
+        <div class="panel-date">
+          <a href="#" id="deal-panel-company-link" style="color:#6b7280;text-decoration:underline;cursor:pointer;">—</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick actions: auto-stamp Last Contact + log activity -->
+    <div class="panel-actions">
+      <a id="deal-call-btn" href="#" class="action-btn" data-channel="Call">📞 Call</a>
+      <a id="deal-email-btn" href="#" class="action-btn" data-channel="Email">✉️ Email</a>
+      <a id="deal-whatsapp-btn" href="#" class="action-btn whatsapp" data-channel="WhatsApp" target="_blank" rel="noopener">💬 WhatsApp</a>
+    </div>
+
+    <div class="panel-section">
+      <div class="panel-section-title">Pipeline</div>
+      <div class="panel-field">
+        <div class="panel-field-label">Deal Name</div>
+        <input type="text" id="deal-name" class="panel-input" />
+      </div>
+      <div class="panel-field">
+        <div class="panel-field-label">Stage</div>
+        <select id="deal-stage" class="panel-status-select">
+          <option value="Pitching">Pitching</option>
+          <option value="Proposal Sent">Proposal Sent</option>
+          <option value="Verbal Commitment">Verbal Commitment</option>
+          <option value="Signed">Signed</option>
+          <option value="Active">Active</option>
+          <option value="Completed">Completed</option>
+          <option value="Closed Lost">Closed Lost</option>
+        </select>
+      </div>
+      <div class="panel-field">
+        <div class="panel-field-label">Service Type</div>
+        <div class="alert-checkbox-group" id="deal-service-type">
+          <label><input type="checkbox" value="Deal Advisory"> Deal Advisory</label>
+          <label><input type="checkbox" value="Hotel Operations"> Hotel Operations</label>
+          <label><input type="checkbox" value="Retail/Mall"> Retail/Mall</label>
+          <label><input type="checkbox" value="Underwriting"> Underwriting</label>
+          <label><input type="checkbox" value="Business Plan"> Business Plan</label>
+          <label><input type="checkbox" value="Other"> Other</label>
+        </div>
+      </div>
+      <div class="panel-field">
+        <div class="panel-field-label">Deal Value (USD)</div>
+        <input type="number" id="deal-value" class="panel-input" placeholder="0" />
+      </div>
+      <div class="panel-field">
+        <div class="panel-field-label">Probability (0–100)</div>
+        <input type="number" id="deal-probability" class="panel-input" min="0" max="100" placeholder="10" />
+      </div>
+      <div class="panel-field">
+        <div class="panel-field-label">Owner</div>
+        <select id="deal-owner" class="panel-input">
+          <option value="">—</option>
+          <option value="Kevin">Kevin</option>
+          <option value="Rosa">Rosa</option>
+          <option value="Dylan">Dylan</option>
+          <option value="Noel">Noel</option>
+        </select>
+      </div>
+      <div class="panel-field">
+        <div class="panel-field-label">Started At</div>
+        <input type="date" id="deal-started-at" class="panel-input" />
+      </div>
+      <div class="panel-field">
+        <div class="panel-field-label">Last Contact</div>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <input type="date" id="deal-last-contact" class="panel-input" style="flex:1;" />
+          <span id="deal-last-contact-rel" style="font-size:11px;color:#64748b;"></span>
+        </div>
+      </div>
+      <div class="panel-field">
+        <div class="panel-field-label">Expected Close</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <input type="date" id="deal-expected-close" class="panel-input" style="flex:1;min-width:140px;" />
+          <span id="deal-expected-close-bucket" style="font-size:11px;color:#64748b;align-self:center;"></span>
+        </div>
+        <div class="bucket-quickpick">
+          <button type="button" data-bucket="this-week">This Week</button>
+          <button type="button" data-bucket="this-month">This Month</button>
+          <button type="button" data-bucket="next-month">Next Month</button>
+          <button type="button" data-bucket="this-quarter">This Quarter</button>
+          <button type="button" data-bucket="this-year">This Year</button>
+          <button type="button" data-bucket="clear">Clear</button>
+        </div>
+      </div>
+      <div class="panel-field">
+        <div class="panel-field-label">Timeline Status</div>
+        <select id="deal-timeline" class="panel-input">
+          <option value="">— (auto-derived)</option>
+          <option value="On Schedule">On Schedule</option>
+          <option value="Delayed">Delayed</option>
+          <option value="Dead">Dead</option>
+        </select>
+      </div>
+      <div class="panel-field">
+        <div class="panel-field-label">Partner (optional)</div>
+        <select id="deal-partner" class="panel-input">
+          <option value="">— Direct (no partner) —</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Fees section -->
+    <div class="panel-section">
+      <div class="panel-section-title">Fees</div>
+      <div class="panel-field">
+        <div class="panel-field-label">Diagnostic Fee (USD, one-time)</div>
+        <input type="number" id="deal-diagnostic-fee" class="panel-input" placeholder="0" />
+      </div>
+      <div class="panel-field">
+        <div class="panel-field-label">Monthly Recurring Fee (USD)</div>
+        <input type="number" id="deal-monthly-fee" class="panel-input" placeholder="0" />
+      </div>
+      <div class="panel-field">
+        <div class="panel-field-label">Success Fee (%)</div>
+        <input type="number" id="deal-success-fee" class="panel-input" placeholder="0" min="0" max="100" />
+      </div>
+      <div class="panel-field">
+        <div class="panel-field-label">Fee Notes</div>
+        <textarea id="deal-fee-notes" class="panel-input" rows="2" placeholder="Hybrid structures, hourly rates, etc." style="resize:vertical;min-height:50px;"></textarea>
+      </div>
+    </div>
+
+    <!-- Contract section -->
+    <div class="panel-section">
+      <div class="panel-section-title">Contract</div>
+      <div class="panel-field">
+        <div class="panel-field-label">End Type</div>
+        <select id="deal-end-type" class="panel-input">
+          <option value="">—</option>
+          <option value="Fixed End Date">Fixed End Date</option>
+          <option value="Open-Ended">Open-Ended (until cancelled)</option>
+          <option value="Milestone-Based">Milestone-Based</option>
+        </select>
+      </div>
+      <div class="panel-field">
+        <div class="panel-field-label">Contract Start</div>
+        <input type="date" id="deal-contract-start" class="panel-input" />
+      </div>
+      <div class="panel-field">
+        <div class="panel-field-label">Contract End (if Fixed)</div>
+        <input type="date" id="deal-contract-end" class="panel-input" />
+      </div>
+      <div class="panel-field">
+        <div class="panel-field-label">Notice Period</div>
+        <input type="text" id="deal-notice-period" class="panel-input" placeholder="e.g. 30 days written notice" />
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <div class="panel-section-title">Description</div>
+      <textarea id="deal-description" class="panel-notes" placeholder="What's this engagement about?" style="min-height:90px;"></textarea>
+      <div id="deal-save-status" class="panel-alert-status"></div>
+    </div>
+
+    <div class="panel-section">
+      <div class="panel-section-title">Documents</div>
+
+      <div class="doc-group" data-field="Contracts" data-target="deal">
+        <div class="doc-group-header">
+          <span class="doc-group-icon">📜</span>
+          <span class="doc-group-title">Contracts</span>
+          <span class="doc-group-count" id="deal-doc-count-Contracts">0</span>
+        </div>
+        <div class="doc-group-body">
+          <div class="doc-list" id="deal-doc-list-Contracts"></div>
+          <label class="doc-dropzone" data-field="Contracts" data-target="deal">
+            <input type="file" data-field="Contracts" data-target="deal" multiple style="display:none;" />
+            <span class="doc-dropzone-text">Drop or click to upload</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="doc-group" data-field="Deliverables" data-target="deal">
+        <div class="doc-group-header">
+          <span class="doc-group-icon">📦</span>
+          <span class="doc-group-title">Deliverables</span>
+          <span class="doc-group-count" id="deal-doc-count-Deliverables">0</span>
+        </div>
+        <div class="doc-group-body">
+          <div class="doc-list" id="deal-doc-list-Deliverables"></div>
+          <label class="doc-dropzone" data-field="Deliverables" data-target="deal">
+            <input type="file" data-field="Deliverables" data-target="deal" multiple style="display:none;" />
+            <span class="doc-dropzone-text">Drop or click to upload</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="doc-group" data-field="Spreadsheets" data-target="deal">
+        <div class="doc-group-header">
+          <span class="doc-group-icon">📊</span>
+          <span class="doc-group-title">Spreadsheets</span>
+          <span class="doc-group-count" id="deal-doc-count-Spreadsheets">0</span>
+        </div>
+        <div class="doc-group-body">
+          <div class="doc-list" id="deal-doc-list-Spreadsheets"></div>
+          <label class="doc-dropzone" data-field="Spreadsheets" data-target="deal">
+            <input type="file" data-field="Spreadsheets" data-target="deal" multiple style="display:none;" />
+            <span class="doc-dropzone-text">Drop or click to upload</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="doc-group" data-field="Misc" data-target="deal">
+        <div class="doc-group-header">
+          <span class="doc-group-icon">📁</span>
+          <span class="doc-group-title">Misc</span>
+          <span class="doc-group-count" id="deal-doc-count-Misc">0</span>
+        </div>
+        <div class="doc-group-body">
+          <div class="doc-list" id="deal-doc-list-Misc"></div>
+          <label class="doc-dropzone" data-field="Misc" data-target="deal">
+            <input type="file" data-field="Misc" data-target="deal" multiple style="display:none;" />
+            <span class="doc-dropzone-text">Drop or click to upload</span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <div class="panel-section-title" style="display:flex;justify-content:space-between;align-items:center;">
+        Tasks
+        <button id="deal-add-task-btn" type="button" class="alert-action-btn" style="padding:4px 10px;font-size:12px;">+ New Task</button>
+      </div>
+      <div id="deal-tasks-list" class="company-tasks-list">
+        <p class="panel-empty-text">No tasks yet.</p>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <div class="panel-section-title">Activity</div>
+      <div id="deal-activity-list" class="activity-timeline">
+        <p class="panel-empty-text">No activity yet.</p>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ═══════════════════════════════════════════════════════ NEW DEAL MODAL -->
+  <div id="new-deal-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:10000;align-items:center;justify-content:center;padding:20px;">
+    <div style="background:#fff;border-radius:12px;max-width:500px;width:100%;padding:28px;box-shadow:0 12px 40px rgba(0,0,0,0.3);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <h2 style="margin:0;font-size:20px;color:#0a0a0a;">New Deal</h2>
+        <button type="button" id="new-deal-close" style="background:none;border:none;font-size:24px;cursor:pointer;color:#666;">×</button>
+      </div>
+      <label style="display:block;font-size:12px;font-weight:600;color:#555;margin-bottom:6px;text-transform:uppercase;">Company</label>
+      <select id="new-deal-company" style="width:100%;padding:10px;border:1.5px solid #ddd;border-radius:8px;margin-bottom:12px;"></select>
+      <label style="display:block;font-size:12px;font-weight:600;color:#555;margin-bottom:6px;text-transform:uppercase;">Deal Name</label>
+      <input type="text" id="new-deal-name" placeholder="e.g. 2026 Hotel Ops Diagnostic" style="width:100%;padding:10px;border:1.5px solid #ddd;border-radius:8px;margin-bottom:12px;box-sizing:border-box;">
+      <label style="display:block;font-size:12px;font-weight:600;color:#555;margin-bottom:6px;text-transform:uppercase;">Stage</label>
+      <select id="new-deal-stage" style="width:100%;padding:10px;border:1.5px solid #ddd;border-radius:8px;margin-bottom:12px;">
+        <option value="Prospect">Prospect</option>
+        <option value="Intro">Intro</option>
+        <option value="Negotiation">Negotiation</option>
+        <option value="Engagement Signed">Engagement Signed</option>
+        <option value="Pre-Diagnostic">Pre-Diagnostic</option>
+        <option value="Diagnostic">Diagnostic</option>
+        <option value="Implementation">Implementation</option>
+      </select>
+      <label style="display:block;font-size:12px;font-weight:600;color:#555;margin-bottom:6px;text-transform:uppercase;">Deal Value (USD)</label>
+      <input type="number" id="new-deal-value" placeholder="0" style="width:100%;padding:10px;border:1.5px solid #ddd;border-radius:8px;margin-bottom:16px;box-sizing:border-box;">
+      <button type="button" id="new-deal-create" style="width:100%;padding:12px;background:#0a0a0a;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">Create Deal</button>
+      <p id="new-deal-error" style="color:#c0392b;font-size:13px;margin:10px 0 0;display:none;"></p>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════ NEW TASK MODAL -->
+  <div id="new-task-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:10000;align-items:center;justify-content:center;padding:20px;">
+    <div style="background:#fff;border-radius:12px;max-width:500px;width:100%;padding:28px;box-shadow:0 12px 40px rgba(0,0,0,0.3);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <h2 style="margin:0;font-size:20px;color:#0a0a0a;">New Task</h2>
+        <button type="button" id="new-task-close" style="background:none;border:none;font-size:24px;cursor:pointer;color:#666;">×</button>
+      </div>
+      <label style="display:block;font-size:12px;font-weight:600;color:#555;margin-bottom:6px;text-transform:uppercase;">Title</label>
+      <input type="text" id="new-task-title" placeholder="e.g. Call Mitch about extension" style="width:100%;padding:10px;border:1.5px solid #ddd;border-radius:8px;margin-bottom:12px;box-sizing:border-box;">
+      <label style="display:block;font-size:12px;font-weight:600;color:#555;margin-bottom:6px;text-transform:uppercase;">Type</label>
+      <select id="new-task-type" style="width:100%;padding:10px;border:1.5px solid #ddd;border-radius:8px;margin-bottom:12px;">
+        <option value="Call">Call</option>
+        <option value="Email">Email</option>
+        <option value="Meeting">Meeting</option>
+        <option value="WhatsApp">WhatsApp</option>
+        <option value="Follow Up">Follow Up</option>
+        <option value="Other">Other</option>
+      </select>
+      <label style="display:block;font-size:12px;font-weight:600;color:#555;margin-bottom:6px;text-transform:uppercase;">Due Date</label>
+      <input type="date" id="new-task-due" style="width:100%;padding:10px;border:1.5px solid #ddd;border-radius:8px;margin-bottom:12px;box-sizing:border-box;">
+      <label style="display:block;font-size:12px;font-weight:600;color:#555;margin-bottom:6px;text-transform:uppercase;">Owner</label>
+      <select id="new-task-owner" style="width:100%;padding:10px;border:1.5px solid #ddd;border-radius:8px;margin-bottom:12px;">
+        <option value="Kevin">Kevin</option>
+        <option value="Rosa">Rosa</option>
+        <option value="Dylan">Dylan</option>
+        <option value="Noel">Noel</option>
+      </select>
+      <label style="display:block;font-size:12px;font-weight:600;color:#555;margin-bottom:6px;text-transform:uppercase;">Notes</label>
+      <textarea id="new-task-notes" rows="3" style="width:100%;padding:10px;border:1.5px solid #ddd;border-radius:8px;margin-bottom:16px;box-sizing:border-box;resize:vertical;"></textarea>
+      <button type="button" id="new-task-create" style="width:100%;padding:12px;background:#0a0a0a;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">Create Task</button>
+      <p id="new-task-error" style="color:#c0392b;font-size:13px;margin:10px 0 0;display:none;"></p>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════ NEW CONTACT MODAL -->
+  <div id="new-contact-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:10000;align-items:center;justify-content:center;padding:20px;">
+    <div style="background:#fff;border-radius:12px;max-width:500px;width:100%;padding:28px;box-shadow:0 12px 40px rgba(0,0,0,0.3);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <h2 style="margin:0;font-size:20px;color:#0a0a0a;">New Contact</h2>
+        <button type="button" id="new-contact-close" style="background:none;border:none;font-size:24px;cursor:pointer;color:#666;">×</button>
+      </div>
+      <label style="display:block;font-size:12px;font-weight:600;color:#555;margin-bottom:6px;text-transform:uppercase;">Name</label>
+      <input type="text" id="new-contact-name" placeholder="Full name" style="width:100%;padding:10px;border:1.5px solid #ddd;border-radius:8px;margin-bottom:12px;box-sizing:border-box;">
+      <label style="display:block;font-size:12px;font-weight:600;color:#555;margin-bottom:6px;text-transform:uppercase;">Role / Title</label>
+      <input type="text" id="new-contact-role" placeholder="e.g. CFO" style="width:100%;padding:10px;border:1.5px solid #ddd;border-radius:8px;margin-bottom:12px;box-sizing:border-box;">
+      <label style="display:block;font-size:12px;font-weight:600;color:#555;margin-bottom:6px;text-transform:uppercase;">Email</label>
+      <input type="email" id="new-contact-email" placeholder="email@example.com" style="width:100%;padding:10px;border:1.5px solid #ddd;border-radius:8px;margin-bottom:12px;box-sizing:border-box;">
+      <label style="display:block;font-size:12px;font-weight:600;color:#555;margin-bottom:6px;text-transform:uppercase;">Phone (with country code)</label>
+      <input type="tel" id="new-contact-phone" placeholder="+1 555 123 4567" style="width:100%;padding:10px;border:1.5px solid #ddd;border-radius:8px;margin-bottom:12px;box-sizing:border-box;">
+      <label style="display:block;font-size:12px;font-weight:600;color:#555;margin-bottom:6px;text-transform:uppercase;">Language</label>
+      <select id="new-contact-language" style="width:100%;padding:10px;border:1.5px solid #ddd;border-radius:8px;margin-bottom:12px;">
+        <option value="">—</option>
+        <option value="Spanish">Spanish</option>
+        <option value="Portuguese">Portuguese</option>
+        <option value="English">English</option>
+        <option value="Other">Other</option>
+      </select>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:14px;cursor:pointer;">
+        <input type="checkbox" id="new-contact-primary" /> Primary contact
+      </label>
+      <button type="button" id="new-contact-create" style="width:100%;padding:12px;background:#0a0a0a;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">Create Contact</button>
+      <p id="new-contact-error" style="color:#c0392b;font-size:13px;margin:10px 0 0;display:none;"></p>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════ NEW PARTNER MODAL -->
+  <div id="new-partner-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:10000;align-items:center;justify-content:center;padding:20px;">
+    <div style="background:#fff;border-radius:12px;max-width:500px;width:100%;padding:28px;box-shadow:0 12px 40px rgba(0,0,0,0.3);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <h2 style="margin:0;font-size:20px;color:#0a0a0a;">New Partner</h2>
+        <button type="button" id="new-partner-close" style="background:none;border:none;font-size:24px;cursor:pointer;color:#666;">×</button>
+      </div>
+      <label style="display:block;font-size:12px;font-weight:600;color:#555;margin-bottom:6px;text-transform:uppercase;">Partner Name</label>
+      <input type="text" id="new-partner-name" placeholder="e.g. Boris Buvinic, B|P Intelligence" style="width:100%;padding:10px;border:1.5px solid #ddd;border-radius:8px;margin-bottom:12px;box-sizing:border-box;">
+      <label style="display:block;font-size:12px;font-weight:600;color:#555;margin-bottom:6px;text-transform:uppercase;">Type</label>
+      <select id="new-partner-type" style="width:100%;padding:10px;border:1.5px solid #ddd;border-radius:8px;margin-bottom:12px;">
+        <option value="Individual">Individual</option>
+        <option value="Company">Company</option>
+      </select>
+      <label style="display:block;font-size:12px;font-weight:600;color:#555;margin-bottom:6px;text-transform:uppercase;">Contact Info</label>
+      <input type="text" id="new-partner-contact" placeholder="Email or phone" style="width:100%;padding:10px;border:1.5px solid #ddd;border-radius:8px;margin-bottom:12px;box-sizing:border-box;">
+      <label style="display:block;font-size:12px;font-weight:600;color:#555;margin-bottom:6px;text-transform:uppercase;">Default Revenue Share (%)</label>
+      <input type="number" id="new-partner-share" placeholder="e.g. 25" min="0" max="100" style="width:100%;padding:10px;border:1.5px solid #ddd;border-radius:8px;margin-bottom:16px;box-sizing:border-box;">
+      <button type="button" id="new-partner-create" style="width:100%;padding:12px;background:#0a0a0a;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">Create Partner</button>
+      <p id="new-partner-error" style="color:#c0392b;font-size:13px;margin:10px 0 0;display:none;"></p>
+    </div>
+  </div>
+
   <!-- Property Detail Modal -->
   <div id="property-modal" class="property-modal">
     <div class="property-modal-backdrop" onclick="closePropertyModal()"></div>
@@ -591,6 +1535,6 @@
   </div>
 
   <script src="https://unpkg.com/maplibre-gl@4.1.2/dist/maplibre-gl.js"></script>
-  <script src="crm.js?v=20260514c" defer></script>
+  <script src="crm.js?v=20260514d" defer></script>
 </body>
 </html>
