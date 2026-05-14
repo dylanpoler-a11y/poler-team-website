@@ -301,6 +301,94 @@ async function writeCrmUpdate({ match, extracted, inbox, email, accessToken, eff
             }
         }
     }
+
+    // Reminders extracted from the email content (zoom dates, follow-up commitments, etc).
+    // Conservative — only when Sonnet found a concrete date/time.
+    if (Array.isArray(extracted.reminders) && extracted.reminders.length > 0) {
+        for (const rem of extracted.reminders) {
+            try {
+                if (match.recordType === 'lead') {
+                    await createLeadReminder({
+                        leadRecordId: match.recordId,
+                        leadName: match.recordName,
+                        leadEmail: email.from.email,
+                        title: rem.title,
+                        actionType: rem.actionType,
+                        dueAt: rem.dueAt,
+                        note: rem.note,
+                        agent,
+                        apiKey, baseId,
+                    });
+                } else {
+                    await createConsultingTask({
+                        companyId: match.companyId,
+                        title: rem.title,
+                        type: rem.actionType,
+                        dueAt: rem.dueAt,
+                        notes: rem.note,
+                        owner: agent,
+                        apiKey, baseId,
+                    });
+                }
+            } catch (err) {
+                console.error(`Reminder create failed (${rem.title}):`, err.message);
+            }
+        }
+    }
+}
+
+async function createLeadReminder({ leadRecordId, leadName, leadEmail, title, actionType, dueAt, note, agent, apiKey, baseId }) {
+    const res = await fetch(`https://api.airtable.com/v0/${baseId}/Reminders`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            records: [{
+                fields: {
+                    'Name': title,
+                    'Lead Record ID': leadRecordId,
+                    'Lead Name': leadName || '',
+                    'Lead Email': leadEmail || '',
+                    'Action Type': actionType,
+                    'Due At': dueAt,
+                    'Note': note || '',
+                    'Status': 'Pending',
+                    'Reminder Status': 'Pending',
+                    'Agent Name': agent,
+                    'Created At': new Date().toISOString(),
+                },
+            }],
+            typecast: true,
+        }),
+    });
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(`Reminder POST: ${err.error?.message || res.status}`);
+    }
+}
+
+async function createConsultingTask({ companyId, title, type, dueAt, notes, owner, apiKey, baseId }) {
+    const res = await fetch(`https://api.airtable.com/v0/${baseId}/Consulting%20Tasks`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            records: [{
+                fields: {
+                    'Title': title,
+                    'Type': type,
+                    'Due At': dueAt,
+                    'Status': 'Pending',
+                    'Owner': owner,
+                    'Company': [companyId],
+                    'Notes': notes || '',
+                },
+            }],
+            typecast: true,
+        }),
+    });
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(`Consulting Task POST: ${err.error?.message || res.status}`);
+    }
 }
 
 async function uploadAirtableAttachment({ recordId, field, filename, contentType, base64, apiKey, baseId }) {

@@ -3122,10 +3122,96 @@ function openClientPanel(id) {
     renderDocList(field, getClientDocs(client, field));
   });
 
+  // Notes — render as separate cards from Consulting Activity (Type=Note + Type=Email Logged)
+  loadClientNotes(client.id).catch(err => console.error('loadClientNotes:', err));
+
+  // Hide the Add Note form on each open (reset state)
+  const noteForm = document.getElementById('client-new-note-form');
+  if (noteForm) noteForm.style.display = 'none';
+  const noteInput = document.getElementById('client-new-note-text');
+  if (noteInput) noteInput.value = '';
+
   // Open the panel + overlay
   document.getElementById('client-panel').classList.add('open');
   const overlay = document.getElementById('panel-overlay');
   if (overlay) overlay.style.display = 'block';
+}
+
+// ── COMPANY NOTES (as separate cards from Consulting Activity) ─────────────
+async function loadClientNotes(companyId) {
+  const container = document.getElementById('client-notes-list');
+  if (!container) return;
+  container.innerHTML = '<p class="panel-empty-text">Loading notes…</p>';
+
+  const items = await loadActivityFor({ companyId });
+  // Show Note + Email Logged (auto-generated email summaries) as notes
+  const notes = items.filter(a => a.type === 'Note' || a.type === 'Email Logged');
+  if (notes.length === 0) {
+    container.innerHTML = '<p class="panel-empty-text">No notes yet. Click + Add Note to create one.</p>';
+    return;
+  }
+  container.innerHTML = notes.map((n, i) => {
+    const date = n.createdAt ? new Date(n.createdAt) : null;
+    const dateStr = date ? date.toLocaleString('en-US', {
+      month: 'numeric', day: 'numeric', year: 'numeric',
+      hour: 'numeric', minute: '2-digit', hour12: true,
+    }) : '';
+    const typeIcon = n.type === 'Email Logged' ? '✉️' : '📝';
+    return `<div class="note-card" data-activity-id="${escHtml(n.id)}">
+      <div class="note-header">
+        <span class="note-author">${typeIcon} ${escHtml(n.agent || '')}</span>
+        <span class="note-date">${escHtml(dateStr)}</span>
+      </div>
+      <div class="note-body" style="white-space: pre-wrap;">${escHtml(n.details || n.title || '')}</div>
+      <div class="note-actions">
+        <button class="note-delete-btn" onclick="deleteClientNote('${escHtml(n.id)}')">Delete</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function saveNewClientNote() {
+  if (!currentClient) return;
+  const input = document.getElementById('client-new-note-text');
+  const status = document.getElementById('client-new-note-status');
+  if (!input) return;
+  const text = input.value.trim();
+  if (!text) { status.textContent = 'Type something first.'; return; }
+  status.textContent = 'Saving…';
+  try {
+    await logActivity({
+      companyId: currentClient.id,
+      type: 'Note',
+      title: text.length > 80 ? text.slice(0, 80) + '…' : text,
+      details: text,
+    });
+    input.value = '';
+    document.getElementById('client-new-note-form').style.display = 'none';
+    status.textContent = '';
+    await loadClientNotes(currentClient.id);
+  } catch (err) {
+    status.textContent = 'Save failed: ' + err.message;
+  }
+}
+
+async function deleteClientNote(activityId) {
+  if (!currentClient || !activityId) return;
+  if (!confirm('Delete this note?')) return;
+  try {
+    const res = await fetch(`${CRM_API_BASE}/api/delete-consulting-activity`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: activityId, password: currentPassword }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      alert('Delete failed: ' + (err.error || res.status));
+      return;
+    }
+    await loadClientNotes(currentClient.id);
+  } catch (err) {
+    alert('Delete error: ' + err.message);
+  }
 }
 
 function closeClientPanel() {
@@ -4855,6 +4941,23 @@ function wireConsultingV3Events() {
   // Add Contact button
   document.getElementById('company-add-contact-btn')?.addEventListener('click', () => {
     if (currentClient) openNewContactModal(currentClient.id);
+  });
+
+  // Add Note button (company panel)
+  document.getElementById('client-add-note-toggle')?.addEventListener('click', () => {
+    const form = document.getElementById('client-new-note-form');
+    if (!form) return;
+    form.style.display = form.style.display === 'none' ? 'block' : 'none';
+    if (form.style.display === 'block') {
+      document.getElementById('client-new-note-text')?.focus();
+    }
+  });
+  document.getElementById('client-save-new-note')?.addEventListener('click', saveNewClientNote);
+  document.getElementById('client-cancel-new-note')?.addEventListener('click', () => {
+    const form = document.getElementById('client-new-note-form');
+    const input = document.getElementById('client-new-note-text');
+    if (form) form.style.display = 'none';
+    if (input) input.value = '';
   });
 
   // New Contact modal
