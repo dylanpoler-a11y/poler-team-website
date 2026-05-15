@@ -25,7 +25,7 @@ import {
     parseMessage, applyLabel, fetchAttachment,
     parseForwardedSenders, isForwardSubject,
 } from '../../lib/gmail.js';
-import { getEmailIndex, getClientList, getDealList, findClientMentions, findDealMentions } from '../../lib/crm-contacts.js';
+import { getEmailIndex, getClientList, getDealList, findClientMentions, findDealMentions, hasNewClientSignals } from '../../lib/crm-contacts.js';
 import { extractEmailUpdate, extractTeamDiscussion, classifyByHeuristic } from '../../lib/email-extract.js';
 import { sendSlackMessage, getOwnerSlackWebhook } from '../../lib/slack.js';
 
@@ -196,7 +196,11 @@ export default async function handler(req) {
                                 return addr && lc.includes(addr.split(',')[0].toLowerCase());
                             });
                             const anyMention = clientMentions.length + dealMentions.length + listingMentions.length;
-                            if (anyMention === 0) {
+                            const newClientSignal = hasNewClientSignals(m.plainText);
+                            // Run team-discussion if EITHER a known entity is mentioned
+                            // OR the body contains new-client engagement phrases (so we can
+                            // catch brand-new clients not yet in the CRM, like "AD1 Global").
+                            if (anyMention === 0 && !newClientSignal) {
                                 inboxResult.skipped++; results.skipped++;
                                 continue;
                             }
@@ -587,11 +591,75 @@ async function processTeamDiscussion({ email: m, clientList, dealList = [], list
         meetingsCreated: [], // [{title, companyId, dueAt}]
         clientReferences: extracted.clientReferences || [],
         listingReferences: extracted.listingReferences || [],
+        newClientsCreated: [], // [{name, id}]
     };
 
     const headers = { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' };
     const subjectLine = m.subject ? ` Re: "${truncate(m.subject, 80)}"` : '';
     const fromLabel = `${m.from.name || m.from.email}`;
+
+    // (0) Auto-create new Consulting Clients for HIGH-confidence newClientCandidates.
+    // Medium/low: just include in Slack notification, don't auto-create — Kevin can
+    // create them manually if real.
+    for (const cand of (extracted.newClientCandidates || [])) {
+        if (cand.confidence !== 'high') continue;
+        // Skip if a same-named client already exists (case-insensitive)
+        const dupe = clientList.find(c => c.name.toLowerCase().trim() === cand.name.toLowerCase().trim());
+        if (dupe) {
+            // Treat as existing client reference instead
+            summary.clientReferences.push({
+                companyId: dupe.id,
+                companyName: dupe.name,
+                excerpt: cand.evidence || '',
+            });
+            continue;
+        }
+        try {
+            const createRes = await fetch(`https://api.airtable.com/v0/${baseId}/Consulting%20Clients`, {
+                method: 'POST', headers,
+                body: JSON.stringify({
+                    records: [{
+                        fields: {
+                            'Company': cand.name,
+                            'Type': 'Client',
+                            'Status': 'Lead',
+                            'Owner': agent,
+                            'Source': `Auto-created from team email by ${fromLabel}`,
+                            'Country': cand.country || '',
+                            'Primary Contact': cand.primaryContact || '',
+                            'Notes': `[${nowDateStr()} — ${agent}] AUTO-CREATED from team email: ${cand.evidence || '(no detail)'}`,
+                            'Started At': new Date().toISOString().slice(0, 10),
+                        },
+                    }],
+                    typecast: true,
+                }),
+            });
+            if (createRes.ok) {
+                const data = await createRes.json();
+                const newId = data.records?.[0]?.id;
+                if (newId) {
+                    summary.newClientsCreated.push({ name: cand.name, id: newId, evidence: cand.evidence });
+                    // Treat it as a client reference for the activity log below
+                    summary.clientReferences.push({
+                        companyId: newId,
+                        companyName: cand.name,
+                        excerpt: cand.evidence || '',
+                    });
+                    // Also push into Sonnet's reference list so attached tasks find it
+                    extracted.clientReferences.push({
+                        companyId: newId,
+                        companyName: cand.name,
+                        excerpt: cand.evidence || '',
+                    });
+                }
+            } else {
+                const err = await createRes.json().catch(() => ({}));
+                console.error(`Auto-create client '${cand.name}' failed:`, err.error?.message || createRes.status);
+            }
+        } catch (err) {
+            console.error(`Auto-create client exception (${cand.name}):`, err.message);
+        }
+    }
 
     // (1) For each referenced client, log a Note activity with the excerpt
     for (const ref of extracted.clientReferences) {
@@ -694,7 +762,8 @@ async function processTeamDiscussion({ email: m, clientList, dealList = [], list
         summary.clientNotesWritten > 0 ||
         summary.listingNotesWritten > 0 ||
         summary.tasksCreated.length > 0 ||
-        summary.meetingsCreated.length > 0;
+        summary.meetingsCreated.length > 0 ||
+        (summary.newClientsCreated && summary.newClientsCreated.length > 0);
 
     if (wroteSomething) {
         await notifyOwnerTeamDiscussion({
@@ -724,6 +793,9 @@ async function notifyOwnerTeamDiscussion({ owner, fromLabel, subject, extracted,
     if (extracted.summary) lines.push(`_${extracted.summary}_`);
     lines.push('');
 
+    if (summary.newClientsCreated && summary.newClientsCreated.length > 0) {
+        lines.push(`🆕 *New clients auto-created:* ${summary.newClientsCreated.map(c => c.name).join(', ')}`);
+    }
     if (summary.clientReferences.length > 0) {
         lines.push(`*Clients referenced:* ${summary.clientReferences.map(r => r.companyName).join(', ')}`);
     }
