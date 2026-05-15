@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="crm.css?v=20260515b" />
+  <link rel="stylesheet" href="crm.css?v=20260515c" />
   <!-- MapLibre GL JS for alert map drawing (vector tiles — smooth zooming) -->
   <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.1.2/dist/maplibre-gl.css" />
 </head>
@@ -402,6 +402,7 @@
                 <option value="Dylan">Dylan</option>
                 <option value="Noel">Noel</option>
               </select>
+              <button id="new-cons-task-btn" class="refresh-btn">+ New Task</button>
               <button id="refresh-cons-tasks-btn" class="refresh-btn">↻ Refresh</button>
             </div>
           </div>
@@ -410,6 +411,54 @@
             <div id="cons-tasks-groups"></div>
           </div>
         </div><!-- /cons-tasks-view -->
+
+        <!-- ═══════ NEW CONSULTING TASK MODAL ═══════ -->
+        <div id="new-cons-task-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:10000;align-items:center;justify-content:center;padding:20px;overflow-y:auto;">
+          <div style="background:#fff;border-radius:12px;max-width:540px;width:100%;padding:28px;box-shadow:0 12px 40px rgba(0,0,0,0.3);max-height:90vh;overflow-y:auto;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+              <h2 style="margin:0;font-size:20px;color:#0a0a0a;">New Task</h2>
+              <button type="button" id="new-cons-task-close" style="background:none;border:none;font-size:24px;cursor:pointer;color:#666;">×</button>
+            </div>
+            <label style="display:block;font-size:12px;font-weight:600;color:#555;margin-bottom:6px;text-transform:uppercase;">Company *</label>
+            <select id="new-cons-task-company" style="width:100%;padding:10px;border:1.5px solid #ddd;border-radius:8px;margin-bottom:12px;box-sizing:border-box;"></select>
+            <label style="display:block;font-size:12px;font-weight:600;color:#555;margin-bottom:6px;text-transform:uppercase;">Deal (optional)</label>
+            <select id="new-cons-task-deal" style="width:100%;padding:10px;border:1.5px solid #ddd;border-radius:8px;margin-bottom:12px;box-sizing:border-box;">
+              <option value="">— None —</option>
+            </select>
+            <label style="display:block;font-size:12px;font-weight:600;color:#555;margin-bottom:6px;text-transform:uppercase;">Title *</label>
+            <input type="text" id="new-cons-task-title" placeholder="What needs to happen?" style="width:100%;padding:10px;border:1.5px solid #ddd;border-radius:8px;margin-bottom:12px;box-sizing:border-box;">
+            <div style="display:flex;gap:12px;margin-bottom:12px;">
+              <div style="flex:1;">
+                <label style="display:block;font-size:12px;font-weight:600;color:#555;margin-bottom:6px;text-transform:uppercase;">Type</label>
+                <select id="new-cons-task-type" style="width:100%;padding:10px;border:1.5px solid #ddd;border-radius:8px;box-sizing:border-box;">
+                  <option value="Follow-up">Follow-up</option>
+                  <option value="Meeting">Meeting</option>
+                  <option value="Call">Call</option>
+                  <option value="Email">Email</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              <div style="flex:1;">
+                <label style="display:block;font-size:12px;font-weight:600;color:#555;margin-bottom:6px;text-transform:uppercase;">Owner</label>
+                <select id="new-cons-task-owner" style="width:100%;padding:10px;border:1.5px solid #ddd;border-radius:8px;box-sizing:border-box;">
+                  <option value="Kevin">Kevin</option>
+                  <option value="Noel">Noel</option>
+                  <option value="Dylan">Dylan</option>
+                  <option value="Rosa">Rosa</option>
+                </select>
+              </div>
+            </div>
+            <label style="display:block;font-size:12px;font-weight:600;color:#555;margin-bottom:6px;text-transform:uppercase;">Due At</label>
+            <input type="datetime-local" id="new-cons-task-due" style="width:100%;padding:10px;border:1.5px solid #ddd;border-radius:8px;margin-bottom:12px;box-sizing:border-box;">
+            <label style="display:block;font-size:12px;font-weight:600;color:#555;margin-bottom:6px;text-transform:uppercase;">Notes</label>
+            <textarea id="new-cons-task-notes" rows="3" placeholder="Context / details" style="width:100%;padding:10px;border:1.5px solid #ddd;border-radius:8px;margin-bottom:14px;box-sizing:border-box;font-family:inherit;"></textarea>
+            <div id="new-cons-task-status" style="font-size:13px;color:#6b7280;margin-bottom:8px;min-height:1em;"></div>
+            <div style="display:flex;gap:8px;justify-content:flex-end;">
+              <button type="button" id="new-cons-task-cancel" style="padding:10px 18px;background:#e5e7eb;color:#0a0a0a;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">Cancel</button>
+              <button type="button" id="new-cons-task-create" style="padding:10px 18px;background:#0a0a0a;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">Create Task</button>
+            </div>
+          </div>
+        </div><!-- /new-cons-task-modal -->
 
         <!-- ═══════ OPPORTUNITIES (FLAT TABLE) VIEW ═══════ -->
         <div id="opportunities-view" style="display:none;">
@@ -1615,6 +1664,6 @@
   </div>
 
   <script src="https://unpkg.com/maplibre-gl@4.1.2/dist/maplibre-gl.js"></script>
-  <script src="crm.js?v=20260515b" defer></script>
+  <script src="crm.js?v=20260515c" defer></script>
 </body>
 </html>

@@ -3660,6 +3660,80 @@ async function loadConsultingTasks() {
   if (currentView === 'cons-tasks') renderConsultingTasks();
 }
 
+// ── NEW CONSULTING TASK MODAL ──────────────────────────────────────────────
+function openNewConsTaskModal(prefill = {}) {
+  const modal = document.getElementById('new-cons-task-modal');
+  if (!modal) return;
+  // Populate company dropdown
+  const companySel = document.getElementById('new-cons-task-company');
+  companySel.innerHTML = '<option value="">— Select a company —</option>' +
+    (allClients || []).map(c => `<option value="${escHtml(c.id)}">${escHtml(c.company || '—')}</option>`).join('');
+  if (prefill.companyId) companySel.value = prefill.companyId;
+  populateNewConsTaskDealOptions(companySel.value);
+  // Reset other fields
+  document.getElementById('new-cons-task-title').value = prefill.title || '';
+  document.getElementById('new-cons-task-type').value = prefill.type || 'Follow-up';
+  document.getElementById('new-cons-task-due').value = prefill.dueAt ? prefill.dueAt.slice(0, 16) : '';
+  document.getElementById('new-cons-task-owner').value = prefill.owner || (currentAgent?.name || 'Kevin');
+  document.getElementById('new-cons-task-notes').value = prefill.notes || '';
+  document.getElementById('new-cons-task-status').textContent = '';
+  modal.style.display = 'flex';
+}
+
+function closeNewConsTaskModal() {
+  const modal = document.getElementById('new-cons-task-modal');
+  if (modal) modal.style.display = 'none';
+}
+
+function populateNewConsTaskDealOptions(companyId) {
+  const dealSel = document.getElementById('new-cons-task-deal');
+  if (!dealSel) return;
+  const deals = (allDeals || []).filter(d => d.companyId === companyId);
+  dealSel.innerHTML = '<option value="">— None —</option>' +
+    deals.map(d => `<option value="${escHtml(d.id)}">${escHtml(d.dealName || '—')}</option>`).join('');
+}
+
+async function submitNewConsTask() {
+  const companyId = document.getElementById('new-cons-task-company').value;
+  const title = document.getElementById('new-cons-task-title').value.trim();
+  const statusEl = document.getElementById('new-cons-task-status');
+  if (!companyId) { statusEl.textContent = 'Select a company first.'; statusEl.style.color = '#dc2626'; return; }
+  if (!title)     { statusEl.textContent = 'Title is required.';      statusEl.style.color = '#dc2626'; return; }
+  statusEl.textContent = 'Saving…';
+  statusEl.style.color = '#6b7280';
+
+  const dueLocal = document.getElementById('new-cons-task-due').value;
+  const dueAt = dueLocal ? new Date(dueLocal).toISOString() : '';
+
+  try {
+    const res = await fetch(`${CRM_API_BASE}/api/create-consulting-task`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        password: currentPassword,
+        companyId,
+        dealId: document.getElementById('new-cons-task-deal').value || '',
+        title,
+        type: document.getElementById('new-cons-task-type').value || 'Follow-up',
+        dueAt,
+        owner: document.getElementById('new-cons-task-owner').value || '',
+        notes: document.getElementById('new-cons-task-notes').value.trim() || '',
+      }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      statusEl.textContent = 'Save failed: ' + (err.error || res.status);
+      statusEl.style.color = '#dc2626';
+      return;
+    }
+    closeNewConsTaskModal();
+    await loadConsultingTasks();
+  } catch (err) {
+    statusEl.textContent = 'Error: ' + err.message;
+    statusEl.style.color = '#dc2626';
+  }
+}
+
 function updateConsTaskBadge() {
   const badge = document.getElementById('cons-task-badge');
   if (!badge) return;
@@ -4335,6 +4409,14 @@ function wireConsultingV2Events() {
   document.getElementById('cons-tasks-status-filter')?.addEventListener('change', renderConsultingTasks);
   document.getElementById('cons-tasks-owner-filter')?.addEventListener('change', renderConsultingTasks);
   document.getElementById('refresh-cons-tasks-btn')?.addEventListener('click', loadConsultingTasks);
+  document.getElementById('new-cons-task-btn')?.addEventListener('click', openNewConsTaskModal);
+  document.getElementById('new-cons-task-close')?.addEventListener('click', closeNewConsTaskModal);
+  document.getElementById('new-cons-task-cancel')?.addEventListener('click', closeNewConsTaskModal);
+  document.getElementById('new-cons-task-create')?.addEventListener('click', submitNewConsTask);
+  // Refresh deal dropdown when company changes
+  document.getElementById('new-cons-task-company')?.addEventListener('change', () => {
+    populateNewConsTaskDealOptions(document.getElementById('new-cons-task-company').value);
+  });
 
   // Deal panel
   document.getElementById('deal-panel-close')?.addEventListener('click', closeDealPanel);
