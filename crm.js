@@ -582,6 +582,7 @@ async function createReminderFromPanel() {
 function setupEvents() {
   // Header refresh button
   document.getElementById('refresh-btn').addEventListener('click', loadLeads);
+  document.getElementById('resync-email-btn')?.addEventListener('click', resyncEmailInbox);
 
   // Filters
   document.getElementById('search-input').addEventListener('input', applyFilters);
@@ -5014,6 +5015,38 @@ if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', wireConsultingV3Events);
 } else {
   wireConsultingV3Events();
+}
+
+// ── RESYNC EMAIL INBOX (manual re-scan of last 24h) ────────────────────────
+async function resyncEmailInbox() {
+  const btn = document.getElementById('resync-email-btn');
+  if (!btn) return;
+  const orig = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = '⏳ Scanning…';
+  try {
+    // The cron endpoint requires CRON_SECRET. Use a proxy via the CRM password:
+    // we can hit /api/cron/process-emails directly with Bearer if Kevin passes a token.
+    // For now, send a request that goes through our standard auth (?password=).
+    // The cron endpoint accepts Bearer CRON_SECRET — we don't expose that to the
+    // browser. So instead we route through a small proxy on the server side.
+    const res = await fetch(`${CRM_API_BASE}/api/agent-trigger-resync?password=${encodeURIComponent(currentPassword)}&since=1d`, {
+      method: 'POST',
+    });
+    if (!res.ok) {
+      const errBody = await res.text().catch(() => '');
+      alert(`Resync failed (HTTP ${res.status}). ${errBody.slice(0, 200)}`);
+      return;
+    }
+    const data = await res.json().catch(() => ({}));
+    const r = data.results || {};
+    alert(`Resync complete:\n• Scanned: ${r.messagesScanned ?? '?'}\n• Matched: ${r.matched ?? '?'}\n• Unmatched: ${r.unmatched ?? '?'}\n• Writes: ${r.writes ?? '?'}\n• Errors: ${r.errors ?? '?'}\nCheck Slack #crm-updates for details.`);
+  } catch (err) {
+    alert('Resync error: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = orig;
+  }
 }
 
 // ── LISTINGS (Rosa's MLS listings + per-listing notes) ─────────────────────

@@ -18,6 +18,10 @@
     {
       "path": "/api/granola-sync",
       "schedule": "0 20 * * *"
+    },
+    {
+      "path": "/api/cron/daily-audit",
+      "schedule": "0 23 * * *"
     }
   ],
   "headers": [

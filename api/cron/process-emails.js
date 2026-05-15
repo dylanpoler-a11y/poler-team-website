@@ -113,7 +113,13 @@ export default async function handler(req) {
     let emailIndex;
     try { emailIndex = await getEmailIndex(); } catch (err) { return json({ error: `CRM index failed: ${err.message}` }, 500); }
 
-    const query = 'in:inbox newer_than:30m -label:CRM_PROCESSED -label:CRM_UNMATCHED -label:CRM_NEEDS_REVIEW';
+    // Query window: 2h default (was 30m — too aggressive given cron-job.org
+    // glitches + occasional Vercel cold-start delays). Manual resync can pass
+    // ?since=24h or any Gmail duration string ('1d','7d','3h') for catch-up.
+    const reqUrl = new URL(req.url);
+    const sinceRaw = (reqUrl.searchParams.get('since') || '2h').toLowerCase();
+    const sinceClean = sinceRaw.replace(/[^a-z0-9]/g, '') || '2h';
+    const query = `in:inbox newer_than:${sinceClean} -label:CRM_PROCESSED -label:CRM_UNMATCHED -label:CRM_NEEDS_REVIEW`;
 
     for (const inbox of inboxes) {
         const inboxResult = {
@@ -179,31 +185,17 @@ export default async function handler(req) {
                             continue;
                         }
                     } else {
-                        // Internal sender, NOT a forward → check for team-discussion.
-                        // Fire-and-include 3 things in the pre-filter: real Clients (Type!=Partner),
-                        // Deals (Royal/Dream Inn/etc.), and Listings (Lauderdale/etc.).
+                        // Internal sender, NOT a forward → ALWAYS run Sonnet team-discussion.
+                        // (Removed the regex pre-filter — Sonnet decides what's CRM-worthy,
+                        // not a brittle keyword check that kept missing edge cases like
+                        // "Toyosa" vs "Intermex / Toyosa" or "Royal" vs "MR9 Holdings".)
+                        // Cost impact: ~$0.017 per internal team email. Worth it.
                         try {
                             const [clientList, dealList, listings] = await Promise.all([
                                 getClientList(),
                                 getDealList(),
                                 getRosaListings(),
                             ]);
-                            const clientMentions = findClientMentions(m.plainText, clientList);
-                            const dealMentions = findDealMentions(m.plainText, dealList);
-                            const listingMentions = listings.filter(l => {
-                                const lc = m.plainText.toLowerCase();
-                                const addr = (l.title || '').toLowerCase();
-                                return addr && lc.includes(addr.split(',')[0].toLowerCase());
-                            });
-                            const anyMention = clientMentions.length + dealMentions.length + listingMentions.length;
-                            const newClientSignal = hasNewClientSignals(m.plainText);
-                            // Run team-discussion if EITHER a known entity is mentioned
-                            // OR the body contains new-client engagement phrases (so we can
-                            // catch brand-new clients not yet in the CRM, like "AD1 Global").
-                            if (anyMention === 0 && !newClientSignal) {
-                                inboxResult.skipped++; results.skipped++;
-                                continue;
-                            }
                             const writeSummary = await processTeamDiscussion({
                                 email: m, clientList, dealList, listings, inbox, accessToken,
                             });
@@ -229,6 +221,17 @@ export default async function handler(req) {
                 if (!match) {
                     inboxResult.unmatched++; results.unmatched++;
                     await applyLabel(m.id, 'CRM_UNMATCHED', accessToken).catch(e => console.error('label CRM_UNMATCHED failed:', e));
+                    // Slack-ping for visibility: external sender we don't know yet.
+                    // Skip if it looks like marketing/newsletter (already passed the
+                    // SKIP_DOMAINS + noreply filters, but heuristics for content).
+                    await notifyUnmatchedSlack({
+                        owner: inbox.owner || 'Email Bot',
+                        fromName: m.from.name || '',
+                        fromEmail: m.from.email || effectiveSenderEmail || '',
+                        subject: m.subject || '(no subject)',
+                        snippet: (m.plainText || m.snippet || '').slice(0, 240),
+                        isForward,
+                    }).catch(err => console.error('notifyUnmatchedSlack failed:', err.message));
                     continue;
                 }
 
@@ -832,6 +835,42 @@ async function notifyOwnerTeamDiscussion({ owner, fromLabel, subject, extracted,
     }
 
     lines.push('');
+    lines.push('<https://www.homesinsoflorida.com/crm|Open CRM →>');
+
+    await sendSlackMessage({ webhookUrl, text: lines.join('\n') });
+}
+
+/**
+ * Lightweight Slack ping for an external email whose sender isn't in CRM.
+ * No Sonnet call — keeps cost at zero per ping. Includes a heuristic skip
+ * for likely-newsletter content so we don't blast Slack with marketing junk
+ * that slipped past the SKIP_DOMAINS filter.
+ */
+async function notifyUnmatchedSlack({ owner, fromName, fromEmail, subject, snippet, isForward }) {
+    const webhookUrl = getOwnerSlackWebhook(owner);
+    if (!webhookUrl) return;
+
+    // Heuristic skip: if the body looks like a newsletter/mass blast, skip the ping.
+    // We've already gated by SKIP_DOMAINS + isNoreplyLocal, but some marketing emails
+    // sneak through. Common giveaways:
+    const newsletterSignals = [
+        'unsubscribe', 'view in browser', 'view this email in your browser',
+        'manage your preferences', 'opt out', 'mass email', 'do not reply',
+        'this is a marketing', 'promotional email',
+    ];
+    const lc = (snippet || '').toLowerCase();
+    if (newsletterSignals.some(s => lc.includes(s))) return;
+
+    const lines = [`⚠️ *Unmatched email — not in CRM yet*`];
+    lines.push(`*From:* ${fromName ? fromName + ' ' : ''}<${fromEmail}>`);
+    if (isForward) lines.push(`_Forwarded by team_`);
+    lines.push(`*Subject:* ${truncate(subject, 100)}`);
+    if (snippet) {
+        lines.push('');
+        lines.push(`> ${truncate(snippet.replace(/\n+/g, ' '), 220)}`);
+    }
+    lines.push('');
+    lines.push('If this is a real lead/contact, add them to the CRM. Otherwise ignore.');
     lines.push('<https://www.homesinsoflorida.com/crm|Open CRM →>');
 
     await sendSlackMessage({ webhookUrl, text: lines.join('\n') });
