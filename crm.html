@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="crm.css?v=20260514f" />
+  <link rel="stylesheet" href="crm.css?v=20260515a" />
   <!-- MapLibre GL JS for alert map drawing (vector tiles — smooth zooming) -->
   <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.1.2/dist/maplibre-gl.css" />
 </head>
@@ -58,6 +58,9 @@
           </a>
           <a class="nav-item" data-action="reminders" href="#">
             <span class="nav-icon">🔔</span> Reminders <span id="reminder-badge" class="reminder-badge" style="display:none;">0</span>
+          </a>
+          <a class="nav-item" data-action="listings" href="#">
+            <span class="nav-icon">🏠</span> Listings
           </a>
           <div class="sidebar-section-divider">Consulting</div>
           <a class="nav-item" data-action="clients" href="#">
@@ -478,6 +481,65 @@
             </table>
           </div>
         </div><!-- /partners-view -->
+
+        <!-- ── LISTINGS VIEW (Rosa's MLS listings + per-listing notes) ─────── -->
+        <div id="listings-view" style="display:none;">
+          <div class="crm-header">
+            <h1>Listings <span id="listings-count-label" class="reminders-count-label"></span></h1>
+            <div class="header-right">
+              <button id="refresh-listings-btn" class="refresh-btn">↻ Refresh</button>
+            </div>
+          </div>
+          <p style="color:#6b7280;font-size:0.85rem;margin:-0.5rem 0 1rem 0;">
+            Rosa Poler's active MLS listings. Notes auto-attached when an email mentions a listing; click a listing to view + add notes.
+          </p>
+          <div id="listings-grid" class="listings-grid">
+            <p style="color:#9ca3af;padding:2rem;text-align:center;">Loading listings…</p>
+          </div>
+        </div><!-- /listings-view -->
+
+        <!-- ── LISTING DETAIL PANEL (right side, like lead-panel) ──────────── -->
+        <div id="listing-panel">
+          <div class="panel-header">
+            <h2 id="listing-panel-name">—</h2>
+            <button class="panel-close" id="listing-panel-close" type="button">✕</button>
+          </div>
+          <div class="panel-section">
+            <div class="panel-field">
+              <label class="panel-label">MLS#</label>
+              <div id="listing-panel-mls" class="panel-static">—</div>
+            </div>
+            <div class="panel-field">
+              <label class="panel-label">Price</label>
+              <div id="listing-panel-price" class="panel-static">—</div>
+            </div>
+            <div class="panel-field">
+              <label class="panel-label">Type / Beds / Baths / SqFt</label>
+              <div id="listing-panel-specs" class="panel-static">—</div>
+            </div>
+            <div class="panel-field">
+              <label class="panel-label">Description</label>
+              <div id="listing-panel-desc" class="panel-static" style="white-space:pre-wrap;max-height:140px;overflow-y:auto;">—</div>
+            </div>
+            <a id="listing-panel-url" target="_blank" rel="noopener" class="alert-action-btn" style="display:inline-block;text-decoration:none;text-align:center;margin-top:0.5rem;">View listing page →</a>
+          </div>
+          <div class="panel-section">
+            <div class="panel-section-title" style="display:flex;justify-content:space-between;align-items:center;">
+              Notes
+              <button id="listing-add-note-toggle" type="button" class="alert-action-btn" style="padding:4px 10px;font-size:12px;">+ Add Note</button>
+            </div>
+            <div id="listing-new-note-form" style="display:none;margin-bottom:1rem;">
+              <textarea id="listing-new-note-text" class="panel-input" rows="3" placeholder="Write a note about this listing…" style="width:100%;"></textarea>
+              <div style="display:flex;gap:8px;margin-top:8px;">
+                <button id="listing-save-new-note" type="button" class="alert-action-btn" style="padding:6px 12px;font-size:12px;flex:0 0 auto;">Save</button>
+                <button id="listing-cancel-new-note" type="button" class="alert-action-btn secondary" style="padding:6px 12px;font-size:12px;flex:0 0 auto;">Cancel</button>
+              </div>
+            </div>
+            <div id="listing-notes-list">
+              <p class="panel-empty-text">No notes yet.</p>
+            </div>
+          </div>
+        </div><!-- /listing-panel -->
 
       </main>
     </div>
@@ -1552,6 +1614,6 @@
   </div>
 
   <script src="https://unpkg.com/maplibre-gl@4.1.2/dist/maplibre-gl.js"></script>
-  <script src="crm.js?v=20260514f" defer></script>
+  <script src="crm.js?v=20260515a" defer></script>
 </body>
 </html>

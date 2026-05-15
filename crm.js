@@ -245,6 +245,7 @@ function switchView(view) {
   const views = {
     dashboard:     document.getElementById('dashboard-view'),
     reminders:     document.getElementById('reminders-view'),
+    listings:      document.getElementById('listings-view'),
     clients:       document.getElementById('clients-view'),
     pipeline:      document.getElementById('pipeline-view'),
     'cons-tasks':  document.getElementById('cons-tasks-view'),
@@ -279,6 +280,9 @@ function switchView(view) {
   } else if (view === 'partners') {
     if (views.partners) views.partners.style.display = 'block';
     renderPartnersTable();
+  } else if (view === 'listings') {
+    if (views.listings) views.listings.style.display = 'block';
+    loadListings();
   } else {
     if (views.dashboard) views.dashboard.style.display = 'block';
   }
@@ -5010,4 +5014,196 @@ if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', wireConsultingV3Events);
 } else {
   wireConsultingV3Events();
+}
+
+// ── LISTINGS (Rosa's MLS listings + per-listing notes) ─────────────────────
+let allListings = [];
+let activeListing = null;
+
+async function loadListings() {
+  const grid = document.getElementById('listings-grid');
+  const countLabel = document.getElementById('listings-count-label');
+  if (!grid) return;
+  grid.innerHTML = '<p style="color:#9ca3af;padding:2rem;text-align:center;">Loading listings…</p>';
+  try {
+    const res = await fetch(`${CRM_API_BASE}/api/list-rosa-listings?password=${encodeURIComponent(currentPassword)}`);
+    if (!res.ok) {
+      grid.innerHTML = `<p style="color:#dc2626;padding:2rem;">Failed to load listings (HTTP ${res.status}).</p>`;
+      return;
+    }
+    const data = await res.json();
+    allListings = data.listings || [];
+    if (countLabel) countLabel.textContent = `(${allListings.length})`;
+    renderListings();
+  } catch (err) {
+    grid.innerHTML = `<p style="color:#dc2626;padding:2rem;">Error: ${escHtml(err.message)}</p>`;
+  }
+}
+
+function renderListings() {
+  const grid = document.getElementById('listings-grid');
+  if (!grid) return;
+  if (allListings.length === 0) {
+    grid.innerHTML = '<p style="color:#9ca3af;padding:2rem;text-align:center;">No active listings.</p>';
+    return;
+  }
+  grid.innerHTML = allListings.map(l => {
+    const priceStr = l.price ? '$' + Number(l.price).toLocaleString() : '—';
+    const photoStyle = l.photo ? `style="background-image:url('${escHtml(l.photo)}')"` : '';
+    return `<div class="listing-card" data-mls="${escHtml(l.mlsId)}" onclick="openListingPanel('${escHtml(l.mlsId)}')">
+      <div class="listing-card-photo" ${photoStyle}></div>
+      <div class="listing-card-body">
+        <div class="listing-card-price">${priceStr}</div>
+        <div class="listing-card-addr">${escHtml(l.address || '—')}${l.city ? ', ' + escHtml(l.city) : ''}</div>
+        <div class="listing-card-meta">
+          ${l.propertyType ? `<span class="listing-card-badge">${escHtml(l.propertyType)}</span>` : ''}
+          ${l.beds ? `<span class="listing-card-badge">${l.beds} bd</span>` : ''}
+          ${l.baths ? `<span class="listing-card-badge">${l.baths} ba</span>` : ''}
+          ${l.sqft ? `<span class="listing-card-badge">${Number(l.sqft).toLocaleString()} sqft</span>` : ''}
+        </div>
+        <div class="listing-card-mls">MLS# ${escHtml(l.mlsId)}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openListingPanel(mlsId) {
+  const l = allListings.find(x => String(x.mlsId) === String(mlsId));
+  if (!l) return;
+  activeListing = l;
+  const priceStr = l.price ? '$' + Number(l.price).toLocaleString() : '—';
+  document.getElementById('listing-panel-name').textContent = (l.address || 'Listing') + (l.city ? ', ' + l.city : '');
+  document.getElementById('listing-panel-mls').textContent = l.mlsId || '—';
+  document.getElementById('listing-panel-price').textContent = priceStr;
+  document.getElementById('listing-panel-specs').textContent =
+    [l.propertyType || '', l.beds ? `${l.beds} bd` : '', l.baths ? `${l.baths} ba` : '', l.sqft ? `${Number(l.sqft).toLocaleString()} sqft` : '']
+      .filter(Boolean).join(' • ') || '—';
+  document.getElementById('listing-panel-desc').textContent = l.description || '—';
+  const urlEl = document.getElementById('listing-panel-url');
+  if (urlEl) urlEl.href = l.url || '#';
+  // Reset add-note form
+  const form = document.getElementById('listing-new-note-form');
+  const input = document.getElementById('listing-new-note-text');
+  if (form) form.style.display = 'none';
+  if (input) input.value = '';
+  // Load notes
+  loadListingNotes(l.mlsId).catch(err => console.error('loadListingNotes:', err));
+  document.getElementById('listing-panel').classList.add('open');
+}
+
+function closeListingPanel() {
+  document.getElementById('listing-panel')?.classList.remove('open');
+  activeListing = null;
+}
+
+async function loadListingNotes(mlsId) {
+  const container = document.getElementById('listing-notes-list');
+  if (!container) return;
+  container.innerHTML = '<p class="panel-empty-text">Loading notes…</p>';
+  try {
+    const res = await fetch(`${CRM_API_BASE}/api/get-listing-notes?password=${encodeURIComponent(currentPassword)}&mlsId=${encodeURIComponent(mlsId)}`);
+    if (!res.ok) {
+      container.innerHTML = `<p class="panel-empty-text" style="color:#dc2626;">Failed (HTTP ${res.status})</p>`;
+      return;
+    }
+    const data = await res.json();
+    const notes = data.notes || [];
+    if (notes.length === 0) {
+      container.innerHTML = '<p class="panel-empty-text">No notes yet. Click + Add Note to create one.</p>';
+      return;
+    }
+    container.innerHTML = notes.map(n => {
+      const date = n.createdAt ? new Date(n.createdAt) : null;
+      const dateStr = date ? date.toLocaleString('en-US', {
+        month: 'numeric', day: 'numeric', year: 'numeric',
+        hour: 'numeric', minute: '2-digit', hour12: true,
+      }) : '';
+      const typeIcon = n.type === 'Email Logged' ? '✉️' : n.type === 'Showing' ? '👀' : n.type === 'Offer' ? '💰' : '📝';
+      return `<div class="note-card">
+        <div class="note-header">
+          <span class="note-author">${typeIcon} ${escHtml(n.agent || '')}</span>
+          <span class="note-date">${escHtml(dateStr)}</span>
+        </div>
+        <div class="note-body" style="white-space:pre-wrap;">${escHtml(n.details || n.title || '')}</div>
+        <div class="note-actions">
+          <button class="note-delete-btn" onclick="deleteListingNote('${escHtml(n.id)}')">Delete</button>
+        </div>
+      </div>`;
+    }).join('');
+  } catch (err) {
+    container.innerHTML = `<p class="panel-empty-text" style="color:#dc2626;">Error: ${escHtml(err.message)}</p>`;
+  }
+}
+
+async function saveNewListingNote() {
+  if (!activeListing) return;
+  const input = document.getElementById('listing-new-note-text');
+  if (!input) return;
+  const text = input.value.trim();
+  if (!text) return;
+  try {
+    const res = await fetch(`${CRM_API_BASE}/api/save-listing-note`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        password: currentPassword,
+        mlsId: activeListing.mlsId,
+        listingTitle: (activeListing.address || '') + (activeListing.city ? ', ' + activeListing.city : ''),
+        type: 'Note',
+        details: text,
+        agent: (currentAgent ? currentAgent.name : 'Kevin'),
+      }),
+    });
+    if (!res.ok) {
+      alert('Save failed: ' + res.status);
+      return;
+    }
+    input.value = '';
+    document.getElementById('listing-new-note-form').style.display = 'none';
+    await loadListingNotes(activeListing.mlsId);
+  } catch (err) {
+    alert('Save error: ' + err.message);
+  }
+}
+
+async function deleteListingNote(id) {
+  if (!id || !confirm('Delete this listing note?')) return;
+  try {
+    const res = await fetch(`${CRM_API_BASE}/api/save-listing-note`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: currentPassword, id, _delete: true }),
+    });
+    if (!res.ok) {
+      alert('Delete failed: ' + res.status);
+      return;
+    }
+    if (activeListing) await loadListingNotes(activeListing.mlsId);
+  } catch (err) {
+    alert('Delete error: ' + err.message);
+  }
+}
+
+function wireListingEvents() {
+  document.getElementById('refresh-listings-btn')?.addEventListener('click', loadListings);
+  document.getElementById('listing-panel-close')?.addEventListener('click', closeListingPanel);
+  document.getElementById('listing-add-note-toggle')?.addEventListener('click', () => {
+    const form = document.getElementById('listing-new-note-form');
+    if (!form) return;
+    form.style.display = form.style.display === 'none' ? 'block' : 'none';
+    if (form.style.display === 'block') document.getElementById('listing-new-note-text')?.focus();
+  });
+  document.getElementById('listing-save-new-note')?.addEventListener('click', saveNewListingNote);
+  document.getElementById('listing-cancel-new-note')?.addEventListener('click', () => {
+    const form = document.getElementById('listing-new-note-form');
+    const input = document.getElementById('listing-new-note-text');
+    if (form) form.style.display = 'none';
+    if (input) input.value = '';
+  });
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', wireListingEvents);
+} else {
+  wireListingEvents();
 }

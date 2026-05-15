@@ -25,9 +25,37 @@ import {
     parseMessage, applyLabel, fetchAttachment,
     parseForwardedSenders, isForwardSubject,
 } from '../../lib/gmail.js';
-import { getEmailIndex, getClientList, findClientMentions } from '../../lib/crm-contacts.js';
+import { getEmailIndex, getClientList, getDealList, findClientMentions, findDealMentions } from '../../lib/crm-contacts.js';
 import { extractEmailUpdate, extractTeamDiscussion, classifyByHeuristic } from '../../lib/email-extract.js';
 import { sendSlackMessage, getOwnerSlackWebhook } from '../../lib/slack.js';
+
+// Bridge MLS — Rosa's listings (used by team-discussion extractor for listing references)
+const ROSA_MLS_AGENT_ID = '3268052';
+async function getRosaListings() {
+    const token = process.env.BRIDGE_API_TOKEN;
+    if (!token) return [];
+    try {
+        const params = new URLSearchParams({
+            access_token: token,
+            StandardStatus: 'Active',
+            ListAgentMlsId: ROSA_MLS_AGENT_ID,
+            limit: '50',
+            fields: 'ListingId,UnparsedAddress,City,ListPrice,PropertySubType',
+        });
+        const res = await fetch(`https://api.bridgedataoutput.com/api/v2/miamire/listings?${params}`);
+        if (!res.ok) return [];
+        const data = await res.json();
+        return (data.bundle || data.value || []).map(r => ({
+            mlsId: r.ListingId,
+            title: `${r.UnparsedAddress || 'Unknown address'}${r.City ? ', ' + r.City : ''}`,
+            price: r.ListPrice || 0,
+            type: r.PropertySubType || '',
+        }));
+    } catch (err) {
+        console.error('[bridge] listings fetch failed:', err.message);
+        return [];
+    }
+}
 
 // Internal: skip-by-default UNLESS forwarded
 const INTERNAL_DOMAINS = ['poler.org', 'homesinsoflorida.com', 'investoros1.com'];
@@ -151,20 +179,29 @@ export default async function handler(req) {
                             continue;
                         }
                     } else {
-                        // Internal sender, NOT a forward → check for team-discussion:
-                        // does the body mention any known CRM client? If yes, run a
-                        // team-discussion extraction (different prompt, writes notes +
-                        // tasks per referenced client). If no, skip.
+                        // Internal sender, NOT a forward → check for team-discussion.
+                        // Fire-and-include 3 things in the pre-filter: real Clients (Type!=Partner),
+                        // Deals (Royal/Dream Inn/etc.), and Listings (Lauderdale/etc.).
                         try {
-                            const clientList = await getClientList();
-                            const mentions = findClientMentions(m.plainText, clientList);
-                            if (mentions.length === 0) {
+                            const [clientList, dealList, listings] = await Promise.all([
+                                getClientList(),
+                                getDealList(),
+                                getRosaListings(),
+                            ]);
+                            const clientMentions = findClientMentions(m.plainText, clientList);
+                            const dealMentions = findDealMentions(m.plainText, dealList);
+                            const listingMentions = listings.filter(l => {
+                                const lc = m.plainText.toLowerCase();
+                                const addr = (l.title || '').toLowerCase();
+                                return addr && lc.includes(addr.split(',')[0].toLowerCase());
+                            });
+                            const anyMention = clientMentions.length + dealMentions.length + listingMentions.length;
+                            if (anyMention === 0) {
                                 inboxResult.skipped++; results.skipped++;
                                 continue;
                             }
-                            // Process as team-discussion — handler returns true if it wrote anything.
                             const writeSummary = await processTeamDiscussion({
-                                email: m, clientList, mentions, inbox, accessToken,
+                                email: m, clientList, dealList, listings, inbox, accessToken,
                             });
                             if (writeSummary?.wroteSomething) {
                                 inboxResult.matched++; results.matched++;
@@ -527,28 +564,29 @@ async function createConsultingTask({ companyId, title, type, dueAt, notes, owne
  *
  * Returns { wroteSomething, summary } so the caller can log + Slack-notify.
  */
-async function processTeamDiscussion({ email: m, clientList, mentions, inbox, accessToken }) {
+async function processTeamDiscussion({ email: m, clientList, dealList = [], listings = [], inbox, accessToken }) {
     const apiKey = process.env.AIRTABLE_API_KEY;
     const baseId = process.env.AIRTABLE_BASE_ID;
     const agent = inbox.owner || 'Email Bot';
-    // Only feed Sonnet the clients we suspect are relevant + a few popular ones
-    // (capped at ~15 to keep token cost down).
-    const relevantClients = mentions.length > 0 ? mentions.slice(0, 15) : clientList.slice(0, 15);
 
     const extracted = await extractTeamDiscussion({
         fromName: m.from.name || m.from.email,
         subject: m.subject,
         plainTextBody: m.plainText,
-        clientList: relevantClients,
+        clientList,    // already filtered to Type!=Partner
+        dealList,
+        listings,
     });
 
     if (!extracted) return { wroteSomething: false };
 
     const summary = {
         clientNotesWritten: 0,
+        listingNotesWritten: 0,
         tasksCreated: [],   // [{assignee, title, companyId, dueAt}]
         meetingsCreated: [], // [{title, companyId, dueAt}]
         clientReferences: extracted.clientReferences || [],
+        listingReferences: extracted.listingReferences || [],
     };
 
     const headers = { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' };
@@ -579,6 +617,40 @@ async function processTeamDiscussion({ email: m, clientList, mentions, inbox, ac
         } else {
             console.error(`Team-discussion note write failed for ${ref.companyId}:`,
                 (await res.json().catch(() => ({}))).error?.message || res.status);
+        }
+    }
+
+    // (1b) Listing references — write to Listing Notes table
+    for (const lref of (extracted.listingReferences || [])) {
+        try {
+            const matched = listings.find(l => String(l.mlsId) === String(lref.listingMlsId));
+            const title = `Email note: ${truncate(lref.excerpt || extracted.summary || m.subject || '(no subject)', 200)}`;
+            const body = `[via Gmail/${inbox.email} (team discussion from ${fromLabel})]${subjectLine}\n\n${lref.excerpt || extracted.summary}`;
+            const res = await fetch(`https://api.airtable.com/v0/${baseId}/Listing%20Notes`, {
+                method: 'POST', headers,
+                body: JSON.stringify({
+                    records: [{
+                        fields: {
+                            'Title': title.slice(0, 250),
+                            'MLS ID': String(lref.listingMlsId),
+                            'Listing Title': matched?.title || lref.listingTitle || '',
+                            'Type': 'Email Logged',
+                            'Details': body,
+                            'Agent': agent,
+                            'Created At': new Date().toISOString(),
+                        },
+                    }],
+                    typecast: true,
+                }),
+            });
+            if (res.ok) {
+                summary.listingNotesWritten++;
+            } else {
+                console.error(`Listing note write failed for ${lref.listingMlsId}:`,
+                    (await res.json().catch(() => ({}))).error?.message || res.status);
+            }
+        } catch (err) {
+            console.error(`Listing note exception (${lref.listingMlsId}):`, err.message);
         }
     }
 
@@ -620,6 +692,7 @@ async function processTeamDiscussion({ email: m, clientList, mentions, inbox, ac
 
     const wroteSomething =
         summary.clientNotesWritten > 0 ||
+        summary.listingNotesWritten > 0 ||
         summary.tasksCreated.length > 0 ||
         summary.meetingsCreated.length > 0;
 
@@ -654,8 +727,14 @@ async function notifyOwnerTeamDiscussion({ owner, fromLabel, subject, extracted,
     if (summary.clientReferences.length > 0) {
         lines.push(`*Clients referenced:* ${summary.clientReferences.map(r => r.companyName).join(', ')}`);
     }
+    if (summary.listingReferences.length > 0) {
+        lines.push(`*Listings referenced:* ${summary.listingReferences.map(r => r.listingTitle).join(', ')}`);
+    }
     if (summary.clientNotesWritten > 0) {
         lines.push(`📝 ${summary.clientNotesWritten} client note${summary.clientNotesWritten > 1 ? 's' : ''} added`);
+    }
+    if (summary.listingNotesWritten > 0) {
+        lines.push(`🏠 ${summary.listingNotesWritten} listing note${summary.listingNotesWritten > 1 ? 's' : ''} added`);
     }
     if (summary.tasksCreated.length > 0) {
         lines.push(`⏰ ${summary.tasksCreated.length} task${summary.tasksCreated.length > 1 ? 's' : ''}:`);
