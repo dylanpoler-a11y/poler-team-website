@@ -25,8 +25,8 @@ import {
     parseMessage, applyLabel, fetchAttachment,
     parseForwardedSenders, isForwardSubject,
 } from '../../lib/gmail.js';
-import { getEmailIndex } from '../../lib/crm-contacts.js';
-import { extractEmailUpdate, classifyByHeuristic } from '../../lib/email-extract.js';
+import { getEmailIndex, getClientList, findClientMentions } from '../../lib/crm-contacts.js';
+import { extractEmailUpdate, extractTeamDiscussion, classifyByHeuristic } from '../../lib/email-extract.js';
 import { sendSlackMessage, getOwnerSlackWebhook } from '../../lib/slack.js';
 
 // Internal: skip-by-default UNLESS forwarded
@@ -151,9 +151,35 @@ export default async function handler(req) {
                             continue;
                         }
                     } else {
-                        // Internal sender, not a forward — skip.
-                        inboxResult.skipped++; results.skipped++;
-                        continue;
+                        // Internal sender, NOT a forward → check for team-discussion:
+                        // does the body mention any known CRM client? If yes, run a
+                        // team-discussion extraction (different prompt, writes notes +
+                        // tasks per referenced client). If no, skip.
+                        try {
+                            const clientList = await getClientList();
+                            const mentions = findClientMentions(m.plainText, clientList);
+                            if (mentions.length === 0) {
+                                inboxResult.skipped++; results.skipped++;
+                                continue;
+                            }
+                            // Process as team-discussion — handler returns true if it wrote anything.
+                            const writeSummary = await processTeamDiscussion({
+                                email: m, clientList, mentions, inbox, accessToken,
+                            });
+                            if (writeSummary?.wroteSomething) {
+                                inboxResult.matched++; results.matched++;
+                                inboxResult.writes++; results.writes++;
+                            } else {
+                                inboxResult.skipped++; results.skipped++;
+                            }
+                            await applyLabel(m.id, 'CRM_PROCESSED', accessToken).catch(() => {});
+                            continue;
+                        } catch (err) {
+                            console.error(`Team-discussion extract failed for msg ${m.id}:`, err.message);
+                            inboxResult.errors++; results.errors++;
+                            await applyLabel(m.id, 'CRM_NEEDS_REVIEW', accessToken).catch(() => {});
+                            continue;
+                        }
                     }
                 }
 
@@ -489,6 +515,175 @@ async function createConsultingTask({ companyId, title, type, dueAt, notes, owne
         const err = await res.json().catch(() => ({}));
         throw new Error(`Consulting Task POST: ${err.error?.message || res.status}`);
     }
+}
+
+/**
+ * Internal team-discussion handler.
+ *
+ * Called when an internal team email (Noel/Dylan/Kevin/Rosa) doesn't look
+ * like a forward but the body mentions one or more known CRM clients.
+ * Sonnet extracts structured client references + per-person task assignments
+ * + scheduled meetings. We then write each piece to the right CRM record.
+ *
+ * Returns { wroteSomething, summary } so the caller can log + Slack-notify.
+ */
+async function processTeamDiscussion({ email: m, clientList, mentions, inbox, accessToken }) {
+    const apiKey = process.env.AIRTABLE_API_KEY;
+    const baseId = process.env.AIRTABLE_BASE_ID;
+    const agent = inbox.owner || 'Email Bot';
+    // Only feed Sonnet the clients we suspect are relevant + a few popular ones
+    // (capped at ~15 to keep token cost down).
+    const relevantClients = mentions.length > 0 ? mentions.slice(0, 15) : clientList.slice(0, 15);
+
+    const extracted = await extractTeamDiscussion({
+        fromName: m.from.name || m.from.email,
+        subject: m.subject,
+        plainTextBody: m.plainText,
+        clientList: relevantClients,
+    });
+
+    if (!extracted) return { wroteSomething: false };
+
+    const summary = {
+        clientNotesWritten: 0,
+        tasksCreated: [],   // [{assignee, title, companyId, dueAt}]
+        meetingsCreated: [], // [{title, companyId, dueAt}]
+        clientReferences: extracted.clientReferences || [],
+    };
+
+    const headers = { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' };
+    const subjectLine = m.subject ? ` Re: "${truncate(m.subject, 80)}"` : '';
+    const fromLabel = `${m.from.name || m.from.email}`;
+
+    // (1) For each referenced client, log a Note activity with the excerpt
+    for (const ref of extracted.clientReferences) {
+        const noteTitle = `Team note from ${fromLabel}: ${truncate(ref.excerpt || extracted.summary || m.subject || '(no subject)', 200)}`;
+        const noteBody = `[via Gmail/${inbox.email} (team discussion from ${fromLabel})]${subjectLine}\n\n${ref.excerpt || extracted.summary}`;
+        const res = await fetch(`https://api.airtable.com/v0/${baseId}/Consulting%20Activity`, {
+            method: 'POST', headers,
+            body: JSON.stringify({
+                records: [{
+                    fields: {
+                        'Title': noteTitle.slice(0, 250),
+                        'Type': 'Note',
+                        'Company': [ref.companyId],
+                        'Details': noteBody,
+                        'Agent': agent,
+                    },
+                }],
+                typecast: true,
+            }),
+        });
+        if (res.ok) {
+            summary.clientNotesWritten++;
+        } else {
+            console.error(`Team-discussion note write failed for ${ref.companyId}:`,
+                (await res.json().catch(() => ({}))).error?.message || res.status);
+        }
+    }
+
+    // (2) Tasks assigned to specific team members
+    for (const task of extracted.tasksAssigned) {
+        try {
+            await createConsultingTask({
+                companyId: task.companyId || (extracted.clientReferences[0]?.companyId), // fallback to first ref
+                title: task.title,
+                type: 'Other',
+                dueAt: task.dueAt || null,
+                notes: task.notes ? `${task.notes}\n\n(Assigned by ${fromLabel} via team email)` : `Assigned by ${fromLabel}`,
+                owner: task.assignee,
+                apiKey, baseId,
+            });
+            summary.tasksCreated.push(task);
+        } catch (err) {
+            console.error(`Team task create failed (${task.title}):`, err.message);
+        }
+    }
+
+    // (3) Meetings — also Consulting Tasks but Type=Meeting
+    for (const meeting of extracted.meetingsScheduled) {
+        try {
+            await createConsultingTask({
+                companyId: meeting.companyId || (extracted.clientReferences[0]?.companyId),
+                title: meeting.title,
+                type: 'Meeting',
+                dueAt: meeting.dueAt,
+                notes: meeting.notes ? `${meeting.notes}\n\n(Set up via team email from ${fromLabel})` : `Set up via team email from ${fromLabel}`,
+                owner: agent, // default to the sender's owner; could refine
+                apiKey, baseId,
+            });
+            summary.meetingsCreated.push(meeting);
+        } catch (err) {
+            console.error(`Team meeting create failed (${meeting.title}):`, err.message);
+        }
+    }
+
+    const wroteSomething =
+        summary.clientNotesWritten > 0 ||
+        summary.tasksCreated.length > 0 ||
+        summary.meetingsCreated.length > 0;
+
+    if (wroteSomething) {
+        await notifyOwnerTeamDiscussion({
+            owner: agent,
+            fromLabel,
+            subject: m.subject || '(no subject)',
+            extracted,
+            summary,
+        });
+    }
+
+    return { wroteSomething, summary };
+}
+
+/**
+ * Consolidated Slack notification for a processed team-discussion email.
+ */
+async function notifyOwnerTeamDiscussion({ owner, fromLabel, subject, extracted, summary }) {
+    const webhookUrl = getOwnerSlackWebhook(owner);
+    if (!webhookUrl) return;
+
+    const lines = [`📋 *Team discussion — auto-logged to CRM*`];
+    lines.push(`*From:* ${fromLabel}`);
+    if (subject) lines.push(`*Subject:* ${truncate(subject, 80)}`);
+    lines.push('');
+
+    if (extracted.summary) lines.push(`_${extracted.summary}_`);
+    lines.push('');
+
+    if (summary.clientReferences.length > 0) {
+        lines.push(`*Clients referenced:* ${summary.clientReferences.map(r => r.companyName).join(', ')}`);
+    }
+    if (summary.clientNotesWritten > 0) {
+        lines.push(`📝 ${summary.clientNotesWritten} client note${summary.clientNotesWritten > 1 ? 's' : ''} added`);
+    }
+    if (summary.tasksCreated.length > 0) {
+        lines.push(`⏰ ${summary.tasksCreated.length} task${summary.tasksCreated.length > 1 ? 's' : ''}:`);
+        for (const t of summary.tasksCreated) {
+            const due = t.dueAt ? new Date(t.dueAt) : null;
+            const dueStr = due && !isNaN(due.getTime()) ? due.toLocaleString('en-US', {
+                month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
+                hour12: true, timeZone: 'America/New_York',
+            }) + ' ET' : 'no due date';
+            lines.push(`  • *${t.assignee}* → ${t.title} — ${dueStr}`);
+        }
+    }
+    if (summary.meetingsCreated.length > 0) {
+        lines.push(`📅 ${summary.meetingsCreated.length} meeting${summary.meetingsCreated.length > 1 ? 's' : ''}:`);
+        for (const m of summary.meetingsCreated) {
+            const due = new Date(m.dueAt);
+            const dueStr = isNaN(due.getTime()) ? 'no time' : due.toLocaleString('en-US', {
+                month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
+                hour12: true, timeZone: 'America/New_York',
+            }) + ' ET';
+            lines.push(`  • ${m.title} ${m.companyName ? `(${m.companyName})` : ''} — ${dueStr}`);
+        }
+    }
+
+    lines.push('');
+    lines.push('<https://www.homesinsoflorida.com/crm|Open CRM →>');
+
+    await sendSlackMessage({ webhookUrl, text: lines.join('\n') });
 }
 
 async function uploadAirtableAttachment({ recordId, field, filename, contentType, base64, apiKey, baseId }) {
