@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AD1 × Poler — Breakeven Calculator</title>
+<style>
+  :root {
+    --navy: #1A2744;
+    --navy-dk: #121C30;
+    --gold: #C9A84C;
+    --gold-dk: #A8893A;
+    --gold-light: #EBE0BD;
+    --cream: #F7F5F0;
+    --cream-dk: #EDE9DD;
+    --white: #FFFFFF;
+    --mute: #6B6B6B;
+    --line: #D8D3C7;
+    --green: #4A7A52;
+    --green-bg: #E3EFE0;
+    --red: #A85040;
+    --red-bg: #F4DDD8;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 32px 24px;
+    background: var(--cream);
+    font-family: 'Calibri', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: var(--navy);
+    min-height: 100vh;
+  }
+  .wrap {
+    max-width: 1180px;
+    margin: 0 auto;
+  }
+  .header {
+    border-top: 4px solid var(--gold);
+    padding-top: 18px;
+    margin-bottom: 28px;
+  }
+  .kicker {
+    font-family: 'Georgia', serif;
+    font-size: 11px;
+    color: var(--gold-dk);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    font-weight: bold;
+  }
+  h1 {
+    font-family: 'Georgia', serif;
+    font-size: 32px;
+    color: var(--navy);
+    margin: 6px 0 8px 0;
+    font-weight: bold;
+    line-height: 1.15;
+  }
+  .sub {
+    font-size: 14px;
+    color: var(--mute);
+    font-style: italic;
+    max-width: 720px;
+    line-height: 1.5;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr;
+    gap: 24px;
+    margin-top: 24px;
+  }
+  @media (max-width: 920px) {
+    .grid { grid-template-columns: 1fr; }
+  }
+
+  /* === Inputs card === */
+  .card {
+    background: var(--white);
+    border: 1px solid var(--line);
+    padding: 24px 26px;
+  }
+  .card-title {
+    font-family: 'Georgia', serif;
+    font-size: 11px;
+    color: var(--gold-dk);
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    font-weight: bold;
+    margin-bottom: 14px;
+  }
+  .input-row {
+    margin-bottom: 22px;
+  }
+  .input-row:last-child { margin-bottom: 0; }
+  .input-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 10px;
+  }
+  .input-label {
+    font-size: 14px;
+    color: var(--navy);
+    font-weight: 600;
+  }
+  .input-value {
+    font-family: 'Georgia', serif;
+    font-size: 22px;
+    color: var(--navy);
+    font-weight: bold;
+  }
+  .input-value .unit {
+    font-size: 12px;
+    color: var(--mute);
+    font-weight: normal;
+    margin-left: 4px;
+    font-family: 'Calibri', sans-serif;
+    font-style: italic;
+  }
+  .input-hint {
+    font-size: 11px;
+    color: var(--mute);
+    font-style: italic;
+    margin-top: 4px;
+  }
+  input[type="range"] {
+    width: 100%;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 6px;
+    background: var(--cream-dk);
+    border-radius: 3px;
+    outline: none;
+    margin: 4px 0;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 22px;
+    height: 22px;
+    background: var(--navy);
+    border: 3px solid var(--gold);
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 22px;
+    height: 22px;
+    background: var(--navy);
+    border: 3px solid var(--gold);
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+  }
+  .range-min-max {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: var(--mute);
+    margin-top: 4px;
+    letter-spacing: 0.5px;
+  }
+
+  /* === Output card === */
+  .output-card {
+    background: var(--navy);
+    color: var(--white);
+    padding: 28px 30px;
+    position: relative;
+    overflow: hidden;
+  }
+  .output-card::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background: var(--gold);
+  }
+  .output-title {
+    font-family: 'Georgia', serif;
+    font-size: 11px;
+    color: var(--gold);
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    font-weight: bold;
+    margin-bottom: 18px;
+  }
+  .hero {
+    text-align: center;
+    padding: 18px 0 22px 0;
+    border-bottom: 1px solid rgba(201, 168, 76, 0.25);
+    margin-bottom: 22px;
+  }
+  .hero-label {
+    font-size: 12px;
+    color: var(--gold);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-weight: bold;
+    margin-bottom: 8px;
+  }
+  .hero-value {
+    font-family: 'Georgia', serif;
+    font-size: 56px;
+    font-weight: bold;
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+  .hero-value.positive { color: var(--gold); }
+  .hero-value.negative { color: #E89B91; }
+  .hero-sub {
+    font-size: 13px;
+    color: #B8BBC4;
+    font-style: italic;
+  }
+
+  /* === Waterfall (math breakdown) === */
+  .waterfall {
+    background: rgba(255,255,255,0.04);
+    padding: 6px 16px;
+    margin-bottom: 16px;
+    border-left: 3px solid var(--gold);
+  }
+  .wf-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px dashed rgba(201,168,76,0.18);
+  }
+  .wf-row:last-child { border-bottom: none; }
+  .wf-label {
+    font-size: 13px;
+    color: #C9CEDA;
+  }
+  .wf-value {
+    font-family: 'Georgia', serif;
+    font-size: 17px;
+    font-weight: bold;
+    font-variant-numeric: tabular-nums;
+  }
+  .wf-row.pos .wf-value { color: var(--gold); }
+  .wf-row.neg .wf-value { color: #E89B91; }
+  .wf-row.total {
+    padding-top: 12px;
+    margin-top: 4px;
+    border-top: 2px solid var(--gold);
+  }
+  .wf-row.total .wf-label {
+    color: var(--white);
+    font-weight: bold;
+    font-size: 14px;
+    letter-spacing: 0.5px;
+  }
+  .wf-row.total .wf-value {
+    font-size: 22px;
+    color: var(--gold);
+  }
+
+  /* === Poler stripe === */
+  .poler-stripe {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(201,168,76,0.10);
+    border: 1px solid rgba(201,168,76,0.30);
+    padding: 12px 16px;
+    margin-bottom: 16px;
+  }
+  .poler-stripe-label {
+    font-size: 11px;
+    color: var(--gold);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    font-weight: bold;
+  }
+  .poler-stripe-value {
+    font-family: 'Georgia', serif;
+    font-size: 18px;
+    font-weight: bold;
+    color: var(--gold);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* === Breakeven panel === */
+  .breakeven {
+    background: var(--gold);
+    color: var(--navy);
+    padding: 18px 22px;
+    margin-top: 8px;
+  }
+  .breakeven-label {
+    font-family: 'Georgia', serif;
+    font-size: 10px;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    font-weight: bold;
+    margin-bottom: 6px;
+  }
+  .breakeven-headline {
+    font-family: 'Georgia', serif;
+    font-size: 17px;
+    line-height: 1.4;
+    font-weight: bold;
+  }
+  .breakeven-headline .big {
+    font-size: 30px;
+    color: var(--navy);
+  }
+
+  /* === Status row === */
+  .status-row {
+    display: flex;
+    justify-content: center;
+    margin: 18px 0 0 0;
+  }
+  .status-pill {
+    display: inline-block;
+    padding: 8px 18px;
+    border-radius: 22px;
+    font-size: 12px;
+    font-weight: bold;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+  }
+  .status-pill.good {
+    background: var(--green-bg);
+    color: var(--green);
+  }
+  .status-pill.bad {
+    background: var(--red-bg);
+    color: var(--red);
+  }
+  .status-pill.even {
+    background: var(--gold-light);
+    color: var(--navy);
+  }
+
+  /* === Bottom explainer === */
+  .explainer {
+    margin-top: 28px;
+    padding: 22px 26px;
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--gold);
+  }
+  .explainer h3 {
+    font-family: 'Georgia', serif;
+    font-size: 15px;
+    margin: 0 0 10px 0;
+    color: var(--navy);
+  }
+  .explainer p {
+    font-size: 13px;
+    line-height: 1.65;
+    color: var(--navy);
+    margin: 0 0 8px 0;
+  }
+  .explainer p:last-child { margin-bottom: 0; }
+  .explainer code {
+    background: var(--cream);
+    padding: 2px 6px;
+    font-size: 12px;
+    color: var(--navy);
+    border: 1px solid var(--line);
+  }
+
+  /* === Footer === */
+  .footer {
+    margin-top: 28px;
+    padding-top: 14px;
+    border-top: 2px solid var(--gold);
+    font-family: 'Georgia', serif;
+    font-size: 10px;
+    color: var(--mute);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="header">
+    <div class="kicker">The Poler Team &nbsp;·&nbsp; AD1 Hospitality</div>
+    <h1>Hourly retainer — breakeven calculator</h1>
+    <div class="sub">
+      Move the sliders to see when the $1K/week hourly investment "pays for itself" given different deal volumes and HMA sizes. AD1 net = total fees earned minus hourly paid minus bonus paid.
+    </div>
+  </div>
+
+  <div class="grid">
+
+    <!-- === LEFT: Inputs === -->
+    <div class="card">
+      <div class="card-title">Inputs</div>
+
+      <div class="input-row">
+        <div class="input-head">
+          <span class="input-label">Weekly hourly rate</span>
+          <span class="input-value">$<span id="rate-val">1,000</span><span class="unit">/wk</span></span>
+        </div>
+        <input type="range" id="rate" min="500" max="3000" step="250" value="1000" />
+        <div class="range-min-max"><span>$500</span><span>$3,000</span></div>
+        <div class="input-hint">$1K = Starter (10 hrs) · $2K = Standard (20 hrs) · $3K = Aggressive (30 hrs)</div>
+      </div>
+
+      <div class="input-row">
+        <div class="input-head">
+          <span class="input-label">Weeks of active engagement</span>
+          <span class="input-value"><span id="weeks-val">52</span><span class="unit">weeks</span></span>
+        </div>
+        <input type="range" id="weeks" min="4" max="104" step="2" value="52" />
+        <div class="range-min-max"><span>4 wks</span><span>2 yrs</span></div>
+        <div class="input-hint">Initial commitment is 12 weeks. Default shown is a full year of extended engagement.</div>
+      </div>
+
+      <div class="input-row">
+        <div class="input-head">
+          <span class="input-label">HMAs closed during engagement</span>
+          <span class="input-value"><span id="deals-val">3</span><span class="unit">deals</span></span>
+        </div>
+        <input type="range" id="deals" min="0" max="10" step="1" value="3" />
+        <div class="range-min-max"><span>0</span><span>10</span></div>
+        <div class="input-hint">Alex on the call: "1 deal/month is good, 2 deals/month is top of industry."</div>
+      </div>
+
+      <div class="input-row">
+        <div class="input-head">
+          <span class="input-label">Avg AD1 annual fee per HMA</span>
+          <span class="input-value">$<span id="fee-val">100</span><span class="unit">K/yr</span></span>
+        </div>
+        <input type="range" id="fee" min="80" max="500" step="10" value="100" />
+        <div class="range-min-max"><span>$80K (small SS)</span><span>$500K (full-service)</span></div>
+        <div class="input-hint">200-key hotel at $15M gross typically pays ~$270K/yr in mgmt fees.</div>
+      </div>
+
+      <div class="input-row">
+        <div class="input-head">
+          <span class="input-label">Evaluation horizon</span>
+          <span class="input-value"><span id="horizon-val">5</span><span class="unit">years</span></span>
+        </div>
+        <input type="range" id="horizon" min="1" max="10" step="1" value="5" />
+        <div class="range-min-max"><span>1 yr</span><span>10 yrs</span></div>
+        <div class="input-hint">HMAs typically run 5-10 yrs. Longer horizon = more time for recurring AD1 fees.</div>
+      </div>
+
+    </div>
+
+    <!-- === RIGHT: Outputs === -->
+    <div class="output-card">
+      <div class="output-title">AD1 Economics</div>
+
+      <div class="hero">
+        <div class="hero-label">AD1 net P&L over horizon</div>
+        <div class="hero-value" id="net-val">$0</div>
+        <div class="hero-sub" id="net-sub">— move sliders to model —</div>
+        <div class="status-row">
+          <span class="status-pill" id="status-pill">—</span>
+        </div>
+      </div>
+
+      <!-- Math waterfall — shows AD1 net is gross minus bonus minus hourly -->
+      <div class="waterfall">
+        <div class="wf-row pos">
+          <div class="wf-label">HMA gross fees over horizon</div>
+          <div class="wf-value" id="wf-gross">+$0</div>
+        </div>
+        <div class="wf-row neg">
+          <div class="wf-label">− Bonus paid to Poler (20/10/5)</div>
+          <div class="wf-value" id="wf-bonus">−$0</div>
+        </div>
+        <div class="wf-row neg">
+          <div class="wf-label">− Hourly retainer paid</div>
+          <div class="wf-value" id="wf-hourly">−$0</div>
+        </div>
+        <div class="wf-row total">
+          <div class="wf-label">= AD1 net over horizon</div>
+          <div class="wf-value" id="wf-net">$0</div>
+        </div>
+      </div>
+
+      <div class="poler-stripe">
+        <div class="poler-stripe-label">Poler total earnings (hourly + bonus)</div>
+        <div class="poler-stripe-value" id="poler-total">$0</div>
+      </div>
+
+      <div class="breakeven">
+        <div class="breakeven-label">Hourly breakeven threshold</div>
+        <div class="breakeven-headline" id="breakeven-text">
+          —
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="explainer">
+    <h3>How the math works</h3>
+    <p>
+      <strong>Per HMA economics:</strong> Each closed deal generates the annual AD1 fee every year for the life of the HMA. Poler's bonus is paid only in the first 3 years: <code>20% · 10% · 5%</code> of the annual fee. After year 3, the full fee is AD1's forever.
+    </p>
+    <p>
+      <strong>Net to AD1 per HMA over horizon H:</strong> Year 1 = 80% · Year 2 = 90% · Year 3 = 95% · Years 4 through H = 100% of the annual fee.
+    </p>
+    <p>
+      <strong>Breakeven test:</strong> AD1 breaks even on the hourly when net HMA fees earned (after bonus) exceed total hourly paid. The breakeven panel shows how many deals at the current fee size cover the hourly investment.
+    </p>
+  </div>
+
+  <div class="footer">
+    thepolerteam.com &nbsp;·&nbsp; built for the AD1 follow-up conversation
+  </div>
+
+</div>
+
+<script>
+  const fmt = (n) => '$' + Math.round(n).toLocaleString();
+  const fmtK = (n) => {
+    if (Math.abs(n) >= 1000000) return '$' + (n/1000000).toFixed(2).replace(/\.?0+$/,'') + 'M';
+    if (Math.abs(n) >= 1000) return '$' + Math.round(n/1000) + 'K';
+    return '$' + Math.round(n);
+  };
+
+  function calc() {
+    const rate = +document.getElementById('rate').value;
+    const weeks = +document.getElementById('weeks').value;
+    const deals = +document.getElementById('deals').value;
+    const feeK = +document.getElementById('fee').value;
+    const horizon = +document.getElementById('horizon').value;
+
+    const fee = feeK * 1000;
+
+    // ---- Update slider value labels ----
+    document.getElementById('rate-val').textContent = rate.toLocaleString();
+    document.getElementById('weeks-val').textContent = weeks;
+    document.getElementById('deals-val').textContent = deals;
+    document.getElementById('fee-val').textContent = feeK;
+    document.getElementById('horizon-val').textContent = horizon;
+
+    // ---- Core math ----
+    const hourlyCost = rate * weeks;
+
+    // Bonus rates by year of HMA life
+    const bonusRates = [0.20, 0.10, 0.05];
+    // Bonus paid per deal, capped at horizon
+    let bonusPerDeal = 0;
+    for (let y = 1; y <= Math.min(3, horizon); y++) {
+      bonusPerDeal += bonusRates[y-1] * fee;
+    }
+    const bonusCost = bonusPerDeal * deals;
+
+    // Gross HMA fees earned by AD1 per deal over horizon
+    const hmaGrossPerDeal = fee * horizon;
+    const hmaGrossTotal = hmaGrossPerDeal * deals;
+
+    // Net to AD1 (gross fees - bonus paid - hourly paid)
+    const adNet = hmaGrossTotal - bonusCost - hourlyCost;
+
+    // Poler total earnings
+    const polerTotal = hourlyCost + bonusCost;
+
+    // Breakeven calc: how many deals at this fee/horizon to cover hourly?
+    // Per deal AD1 net (gross - bonus) = hmaGrossPerDeal - bonusPerDeal
+    const adNetPerDeal = hmaGrossPerDeal - bonusPerDeal;
+    let breakevenDeals = 0;
+    if (adNetPerDeal > 0) {
+      breakevenDeals = hourlyCost / adNetPerDeal;
+    } else {
+      breakevenDeals = Infinity;
+    }
+
+    // ---- Render outputs ----
+    document.getElementById('wf-gross').textContent = '+' + fmtK(hmaGrossTotal);
+    document.getElementById('wf-bonus').textContent = '−' + fmtK(bonusCost);
+    document.getElementById('wf-hourly').textContent = '−' + fmtK(hourlyCost);
+    document.getElementById('wf-net').textContent = (adNet >= 0 ? '' : '−') + fmtK(Math.abs(adNet));
+    document.getElementById('poler-total').textContent = fmtK(polerTotal);
+
+    // Hero
+    const netEl = document.getElementById('net-val');
+    const subEl = document.getElementById('net-sub');
+    const pill = document.getElementById('status-pill');
+
+    netEl.textContent = (adNet >= 0 ? '+' : '−') + fmtK(Math.abs(adNet));
+    netEl.classList.remove('positive', 'negative');
+
+    if (deals === 0) {
+      netEl.classList.add('negative');
+      subEl.textContent = `AD1 pays ${fmtK(hourlyCost)} in hourly, closes 0 deals → straight loss`;
+      pill.className = 'status-pill bad';
+      pill.textContent = '✕ Below breakeven';
+    } else if (adNet > hourlyCost) {
+      netEl.classList.add('positive');
+      const multiple = (adNet / hourlyCost).toFixed(1);
+      subEl.textContent = `${multiple}× return on hourly · ${deals} deal${deals===1?'':'s'} at $${feeK}K/yr over ${horizon} yrs`;
+      pill.className = 'status-pill good';
+      pill.textContent = '✓ Strongly profitable';
+    } else if (adNet > 0) {
+      netEl.classList.add('positive');
+      subEl.textContent = `Above breakeven but tight · ${deals} deal${deals===1?'':'s'} at $${feeK}K/yr`;
+      pill.className = 'status-pill even';
+      pill.textContent = '~ Marginal';
+    } else {
+      netEl.classList.add('negative');
+      subEl.textContent = `Below breakeven · need more deals or higher fee size`;
+      pill.className = 'status-pill bad';
+      pill.textContent = '✕ Below breakeven';
+    }
+
+    // Breakeven panel
+    const beEl = document.getElementById('breakeven-text');
+    if (!isFinite(breakevenDeals) || adNetPerDeal <= 0) {
+      beEl.innerHTML = `At $${feeK}K/yr fee size, no number of deals breaks even — fee is too small vs. bonus burden. Increase deal size.`;
+    } else {
+      const beRounded = breakevenDeals < 1
+        ? breakevenDeals.toFixed(2)
+        : breakevenDeals.toFixed(1);
+      const deltaText = deals >= breakevenDeals
+        ? `You're <strong>${(deals - breakevenDeals).toFixed(1)} above</strong> breakeven.`
+        : `You're <strong>${(breakevenDeals - deals).toFixed(1)} below</strong> breakeven.`;
+      beEl.innerHTML = `AD1 needs <span class="big">${beRounded}</span> deal${breakevenDeals === 1 ? '' : 's'} at $${feeK}K/yr to cover ${fmtK(hourlyCost)} in hourly. ${deltaText}`;
+    }
+  }
+
+  // Wire up sliders
+  ['rate','weeks','deals','fee','horizon'].forEach(id => {
+    document.getElementById(id).addEventListener('input', calc);
+  });
+
+  // Initial render
+  calc();
+</script>
+
+</body>
+</html>
