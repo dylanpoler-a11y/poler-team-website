@@ -59,14 +59,67 @@ const SKIP_SENDER_DOMAINS = [
     'heatnation.com', 'miamiheat.com', 'mlbmail.com',
     // Real estate competitors / external brokers
     'exprealty.com',
+    // Agency operational mail (our own outbound infra, not client mail).
+    // Added 2026-05-19 — body-first refactor: kevinpolerservices.com is
+    // the agency's own domain, not a client; nothing it sends needs CRM
+    // logging. Filter at the Gmail query so we never even fetch them.
+    'kevinpolerservices.com',
 ];
 
 // Subjects that are pure system noise — Facebook-lead notifications, welcome
 // templates from the website's own lead-capture flow, etc.
+//
+// NOTE (2026-05-19, body-first refactor, skill §15): these subjects ARE the
+// real-estate signal too — `save-lead.js` already creates the Airtable Lead
+// row directly when the form is submitted, so the notification email is just
+// FYI to Kevin/Rosa/Dylan. We continue to filter them out of the cron's
+// fetch query because the Lead already exists; no CRM write needed from the
+// email side. Don't repurpose these patterns — they belong to the website's
+// own auto-create flow.
 const SKIP_SUBJECT_PATTERNS = [
     'New Lead:',
     'Welcome - New Lead',
 ];
+
+// Real-estate signal patterns — when ANY of these match the sender or
+// subject, an incoming email is treated as an explicit real-estate-Lead
+// touch and participant matches of recordType='lead' WILL get the note
+// written to Lead.Notes. When none match, Lead participant matches are
+// suppressed (they're almost always stale rows for someone who's actually
+// a consulting contact — e.g. Maikel in Leads from a long-ago dev test).
+//
+// Sources (subjects emitted by website / FB ad / CINC / MLS pipes):
+//   - "New Lead:" — homesinsoflorida.com form submit (api/save-lead.js)
+//   - "Welcome - New Lead" — the welcome template back to the lead
+//   - "<name> registered on" — FB lead-ad to Gmail forward style
+//   - "Property Inquiry"  / "Tour Request" — listing-page contact forms
+//   - sender domains: facebookmail.com (FB ads), cincapp.com / cinc.com
+//     (CINC pipe), mls-feed senders (Bridge / FlexMLS-style noreply)
+//
+// Filtered out of the fetch query (SKIP_SUBJECT_PATTERNS) — they show up
+// here only when a reply lands on the same thread or when the gate is
+// bypassed (reprocess mode). The RE-signal flag stays useful for those
+// reply-thread cases.
+const RE_LEAD_SIGNAL_SUBJECTS = [
+    'New Lead:', 'Welcome - New Lead',
+    'Property Inquiry', 'Tour Request', 'Showing Request',
+    'registered on homesinsoflorida',
+];
+const RE_LEAD_SIGNAL_DOMAINS = [
+    'facebookmail.com',          // FB lead ad notifications (if subject-replied)
+    'cincapp.com', 'cinc.com',   // CINC pipe
+    'flexmls.com', 'mlsmatrix.com', 'matrix.miamire.com', // MLS-feed senders
+];
+
+function isRealEstateSignal(m) {
+    const subj = (m && m.subject || '').toLowerCase();
+    for (const pat of RE_LEAD_SIGNAL_SUBJECTS) {
+        if (subj.includes(pat.toLowerCase())) return true;
+    }
+    const fromDomain = ((m && m.from && m.from.email) || '').toLowerCase().split('@')[1] || '';
+    if (!fromDomain) return false;
+    return RE_LEAD_SIGNAL_DOMAINS.some(d => fromDomain === d || fromDomain.endsWith('.' + d));
+}
 
 function buildSkipQueryFragment() {
     const senderPart = SKIP_SENDER_DOMAINS.map(d => `-from:${d}`).join(' ');
@@ -517,45 +570,104 @@ export default async function handler(req) {
                     console.warn(`[§8.1] all continuation writes failed for thread ${m.threadId}; falling through to participant match`);
                 }
 
-                // Build participant set + match against CRM
-                const { matchedRecords, internalSender, isForward } = buildParticipantMatches({
+                // === BODY-FIRST CLASSIFICATION (skill §4.1, added 2026-05-19) ===
+                //
+                // Old flow: participant match first; extractTeamDiscussion as
+                // fallback for 0-match OR as a secondary pass for internal
+                // senders. Problem: Kevin is almost always CC'd or forwarded,
+                // so participants are team members → participant-match was
+                // weakly informative, and stale Lead rows for people like
+                // Maikel routed consulting-topic emails to real-estate Lead
+                // notes by accident.
+                //
+                // New flow:
+                //   1. Run extractTeamDiscussion FIRST on every email body.
+                //      Sonnet identifies which consulting clients/listings the
+                //      body actually discusses. This is the primary classifier.
+                //   2. Run participant matching as a SECONDARY signal.
+                //   3. Real-estate Lead participant matches are GATED on
+                //      isRealEstateSignal(m) — i.e. only honored when the
+                //      sender or subject is an explicit RE signal (FB ad form,
+                //      website form, CINC pipe, MLS pipe). Otherwise the Lead
+                //      match is dropped — preventing the "Maikel as buyer" bug.
+                //   4. Consulting-contact / company / dev-project participant
+                //      matches whose companyId is ALREADY in body extraction
+                //      are deduped — body extraction already wrote them.
+                //
+                // Trace: 2026-05-19 — Kevin's consulting-topic emails about
+                // Mitch/Maikel/Royal/AD1 were landing in Lead.Notes via stale
+                // Lead rows or weak participant signal.
+                await ensureContextLists();
+                const { matchedRecords: rawMatched, internalSender, isForward } = buildParticipantMatches({
                     m, emailIndex, pollingInboxEmail,
                 });
 
-                if (matchedRecords.length === 0) {
-                    // 0 matches → team-discussion fallback on full body.
-                    // Sonnet decides if anything in the body is CRM-worthy.
-                    await ensureContextLists();
-                    let extracted;
+                // Step 1: body-first extraction. Sonnet picks the clients.
+                let bodyExtracted = null;
+                try {
+                    bodyExtracted = await extractTeamDiscussion({
+                        fromName: m.from.name || m.from.email,
+                        subject: m.subject,
+                        plainTextBody: m.plainText,
+                        clientList: cachedClientList,
+                        dealList: cachedDealList,
+                        listings: cachedListings,
+                    });
+                } catch (err) {
+                    console.error(`[body-first] extractTeamDiscussion failed for msg ${m.id}:`, err.message);
+                    // Don't NEEDS_REVIEW yet — participant matching may still
+                    // produce a write below. Only escalate if BOTH paths empty.
+                }
+
+                // Step 2: gate participant matches.
+                //   - Drop Lead matches unless the email is an explicit RE
+                //     signal (FB ad / website form / CINC / MLS / subject pat).
+                //   - Drop consulting matches whose companyId is already
+                //     covered by body extraction (body extraction wrote the
+                //     parent timeline; participant write would duplicate).
+                const reSignal = isRealEstateSignal(m);
+                const bodyCompanyIds = new Set(
+                    (bodyExtracted?.clientReferences || []).map(r => r.companyId).filter(Boolean)
+                );
+                const matchedRecords = rawMatched.filter(r => {
+                    if (r.recordType === 'lead') {
+                        // Lead participant match: only keep if explicit RE signal.
+                        if (!reSignal) {
+                            console.log(`[body-first] dropping stale Lead match ${r.recordName} (no RE signal — subj="${(m.subject || '').slice(0, 60)}")`);
+                            return false;
+                        }
+                        return true;
+                    }
+                    // Consulting / dev-project: drop if body already covers parent.
+                    const parentId = r.companyId || r.projectId || r.recordId;
+                    if (parentId && bodyCompanyIds.has(parentId)) {
+                        console.log(`[body-first] deduping participant match ${r.recordName} — already in body extraction`);
+                        return false;
+                    }
+                    return true;
+                });
+
+                // Step 3: write body extraction (primary path).
+                let bodySummary = null;
+                if (bodyExtracted) {
                     try {
-                        extracted = await extractTeamDiscussion({
-                            fromName: m.from.name || m.from.email,
-                            subject: m.subject,
-                            plainTextBody: m.plainText,
-                            clientList: cachedClientList,
-                            dealList: cachedDealList,
-                            listings: cachedListings,
+                        bodySummary = await writeTeamDiscussion({
+                            email: m, extracted: bodyExtracted, inbox, listings: cachedListings,
                         });
                     } catch (err) {
-                        console.error(`Team-discussion extract failed for msg ${m.id}:`, err.message);
-                        inboxResult.errors++; results.errors++;
-                        await flagNeedsReview({
-                            parsed: m, inbox, accessToken,
-                            reason: `Team-discussion extraction threw after retries: ${err.message}`,
-                        });
-                        continue;
+                        console.error(`[body-first] writeTeamDiscussion failed for msg ${m.id}:`, err.message);
                     }
+                }
 
-                    const teamSummary = await writeTeamDiscussion({
-                        email: m, extracted, inbox, listings: cachedListings,
-                    });
-
-                    if (teamSummary.wroteSomething) {
+                // Step 4: branching on whether anything was actually written.
+                if (matchedRecords.length === 0) {
+                    // 0 secondary matches. Did body extraction write anything?
+                    if (bodySummary && bodySummary.wroteSomething) {
                         inboxResult.matched++; results.matched++;
                         inboxResult.writes++; results.writes++;
                         await applyLabel(m.id, 'CRM_PROCESSED', accessToken).catch(e => console.error('label PROCESSED failed:', e.message));
-                        // Route to the Owner of the first referenced client when known.
-                        const firstClientId = teamSummary.clientReferences?.[0]?.companyId;
+                        // Route to Owner of the first referenced client.
+                        const firstClientId = bodySummary.clientReferences?.[0]?.companyId;
                         const firstClientOwner = firstClientId
                             ? cachedClientList.find(c => c.id === firstClientId)?.owner
                             : null;
@@ -565,23 +677,18 @@ export default async function handler(req) {
                             mode: 'team-discussion',
                             email: m,
                             matchedRecords: [],
-                            extractedTeam: extracted,
-                            teamSummary,
+                            extractedTeam: bodyExtracted,
+                            teamSummary: bodySummary,
                             primaryWrite: null,
                             duplicatesCount: 0,
                         }).catch(err => console.error('Slack ping failed:', err.message));
                     } else {
-                        // (NEW §3.1, added 2026-05-18) Internal-sender 0-match
-                        // with nothing extracted must NOT silently land in
-                        // CRM_UNMATCHED. Flip to NEEDS_REVIEW and ping the
-                        // inbox owner so it gets human eyes the same day.
-                        // External-sender 0-match continues to UNMATCHED (the
-                        // daily audit catches those).
+                        // Neither body nor participants produced anything.
                         if (internalSender) {
                             inboxResult.unmatched++; results.unmatched++;
                             await flagNeedsReview({
                                 parsed: m, inbox, accessToken,
-                                reason: 'Team-sender email — no CRM match found and team-discussion extracted nothing',
+                                reason: 'Team-sender email — body extraction empty and no participant match',
                             });
                         } else {
                             inboxResult.unmatched++; results.unmatched++;
@@ -591,7 +698,7 @@ export default async function handler(req) {
                     continue;
                 }
 
-                // ≥1 match path: extractEmailUpdate once with primary as crmContext
+                // ≥1 secondary match path: extractEmailUpdate once with primary as crmContext
                 const primary = matchedRecords[0];
                 const others = matchedRecords.slice(1);
 
@@ -680,33 +787,10 @@ export default async function handler(req) {
                     }
                 }
 
-                // Internal sender → ALWAYS run team-discussion to catch
-                // tasks/meetings/cross-refs the direct notes don't cover. Was
-                // gated on `>= 2 matches` until 2026-05-18 — that gate dropped
-                // mentions of secondary clients in single-match team emails
-                // (e.g. Noel's IBM CEO Study mass-send to 5 clients only
-                // logged on 1). See skill §5.1.
-                let teamExtracted = null;
-                let teamSummary = null;
-                if (internalSender) {
-                    await ensureContextLists();
-                    try {
-                        teamExtracted = await extractTeamDiscussion({
-                            fromName: m.from.name || m.from.email,
-                            subject: m.subject,
-                            plainTextBody: m.plainText,
-                            clientList: cachedClientList,
-                            dealList: cachedDealList,
-                            listings: cachedListings,
-                            excludeCompanyIds: matchedRecords.map(r => r.companyId).filter(Boolean),
-                        });
-                        teamSummary = await writeTeamDiscussion({
-                            email: m, extracted: teamExtracted, inbox, listings: cachedListings,
-                        });
-                    } catch (err) {
-                        console.error(`Secondary team-discussion failed for msg ${m.id}:`, err.message);
-                    }
-                }
+                // Body-first refactor (2026-05-19): team-discussion ALREADY
+                // ran at the top of this branch (`bodyExtracted` / `bodySummary`).
+                // No second call needed. Pass those into Slack for the
+                // consolidated ping.
 
                 await applyLabel(m.id, 'CRM_PROCESSED', accessToken).catch(e => console.error('label processed failed:', e));
 
@@ -719,8 +803,8 @@ export default async function handler(req) {
                     mode: 'direct',
                     email: m,
                     matchedRecords,
-                    extractedTeam: teamExtracted,
-                    teamSummary,
+                    extractedTeam: bodyExtracted,
+                    teamSummary: bodySummary,
                     primaryWrite: primaryResult,
                     duplicatesCount: duplicateResults.length,
                 }).catch(err => console.error('Slack ping failed:', err.message));
