@@ -399,12 +399,12 @@
 
       <div class="input-row">
         <div class="input-head">
-          <span class="input-label">Weekly hourly rate</span>
-          <span class="input-value">$<span id="rate-val">1,000</span><span class="unit">/wk</span></span>
+          <span class="input-label">Hours per week</span>
+          <span class="input-value"><span id="hours-val">10</span><span class="unit">hrs &nbsp;·&nbsp; $<span id="rate-val">1,000</span>/wk</span></span>
         </div>
-        <input type="range" id="rate" min="500" max="3000" step="250" value="1000" />
-        <div class="range-min-max"><span>$500</span><span>$3,000</span></div>
-        <div class="input-hint">$1K = Starter (10 hrs) · $2K = Standard (20 hrs) · $3K = Aggressive (30 hrs)</div>
+        <input type="range" id="hours" min="5" max="30" step="1" value="10" />
+        <div class="range-min-max"><span>5 hrs / $500</span><span>30 hrs / $3,000</span></div>
+        <div class="input-hint">Flat $100/hr rate. 10 = Starter · 20 = Standard · 30 = Aggressive. Fees scale with hours, not deals.</div>
       </div>
 
       <div class="input-row">
@@ -525,7 +525,8 @@
   };
 
   function calc() {
-    const rate = +document.getElementById('rate').value;
+    const hours = +document.getElementById('hours').value;
+    const rate = hours * 100;  // $100/hr fixed
     const weeks = +document.getElementById('weeks').value;
     const deals = +document.getElementById('deals').value;
     const feeK = +document.getElementById('fee').value;
@@ -534,6 +535,7 @@
     const fee = feeK * 1000;
 
     // ---- Update slider value labels ----
+    document.getElementById('hours-val').textContent = hours;
     document.getElementById('rate-val').textContent = rate.toLocaleString();
     document.getElementById('weeks-val').textContent = weeks;
     document.getElementById('deals-val').textContent = deals;
@@ -626,7 +628,7 @@
   }
 
   // Wire up sliders
-  ['rate','weeks','deals','fee','horizon'].forEach(id => {
+  ['hours','weeks','deals','fee','horizon'].forEach(id => {
     document.getElementById(id).addEventListener('input', calc);
   });
 
