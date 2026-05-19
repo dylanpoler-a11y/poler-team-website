@@ -4127,7 +4127,11 @@ function renderConsultingTasks() {
     const noteText = [t.title, t.notes].filter(Boolean).join(' — ');
 
     return `
-      <tr class="${rowClass}">
+      <tr class="${rowClass}" data-task-id="${escHtml(t.id)}" style="cursor:pointer;">
+        <td>
+          <div class="lead-name">${escHtml(company ? company.company : '—')}</div>
+          <div class="td-muted" style="font-size:0.75rem">${escHtml(deal ? deal.dealName : '')}</div>
+        </td>
         <td class="td-muted">
           <span id="cons-task-due-text-${t.id}">${escHtml(dueStr)}</span>
           <div id="cons-task-edit-${t.id}" class="reminder-edit-row" style="display:none;">
@@ -4136,10 +4140,6 @@ function renderConsultingTasks() {
             <button class="reminder-action-btn done" style="margin-top:4px" onclick="saveConsTaskEdit('${t.id}')">Save</button>
           </div>
         </td>
-        <td>
-          <div class="lead-name" style="cursor:pointer" onclick="openPanelFromConsTask('${escHtml(t.id)}')">${escHtml(company ? company.company : '—')}</div>
-          <div class="td-muted" style="font-size:0.75rem">${escHtml(deal ? deal.dealName : '')}</div>
-        </td>
         <td><span class="action-type-badge ${actionClass}">${escHtml(t.type || '—')}</span></td>
         <td class="td-muted" style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escHtml(noteText)}">${escHtml(noteText || '—')}</td>
         <td class="td-muted">${escHtml(t.owner || '—')}</td>
@@ -4147,6 +4147,14 @@ function renderConsultingTasks() {
         <td>${actions}</td>
       </tr>`;
   }).join('');
+
+  // Row click → open panel (skip clicks on buttons, inputs, selects, edit row)
+  tbody.querySelectorAll('tr[data-task-id]').forEach(tr => {
+    tr.addEventListener('click', (e) => {
+      if (e.target.closest('button, input, select, .reminder-edit-row')) return;
+      openPanelFromConsTask(tr.dataset.taskId);
+    });
+  });
 }
 
 // ── CONSULTING REMINDER ACTIONS ────────────────────────────────────────────
