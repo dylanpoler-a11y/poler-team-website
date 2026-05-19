@@ -620,6 +620,107 @@ body {
     line-height: 1.5;
 }
 
+/* Active Engagements */
+
+.lead-gen-engagements {
+    margin-bottom: 80px;
+}
+
+.lead-gen-engagements h3 {
+    font-family: var(--font-heading);
+    font-size: 2rem;
+    color: var(--white);
+    margin-bottom: 8px;
+}
+
+.engagements-context {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.95rem;
+    margin-bottom: 32px;
+}
+
+.engagement-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+}
+
+.engagement-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-left: 3px solid var(--gold);
+    border-radius: 12px;
+    padding: 28px;
+    transition: var(--transition);
+}
+
+.engagement-card:hover {
+    border-color: var(--gold);
+    background: rgba(201, 168, 76, 0.05);
+}
+
+.engagement-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+}
+
+.engagement-status {
+    font-size: 0.75rem;
+    color: var(--gold);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.engagement-since {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.5);
+    font-style: italic;
+}
+
+.engagement-card h4 {
+    font-family: var(--font-heading);
+    font-size: 1.25rem;
+    color: var(--white);
+    margin-bottom: 12px;
+}
+
+.engagement-role {
+    color: rgba(255, 255, 255, 0.75);
+    font-size: 0.9rem;
+    line-height: 1.6;
+    margin-bottom: 20px;
+}
+
+.engagement-stats {
+    display: flex;
+    gap: 18px;
+    flex-wrap: wrap;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.engagement-stat {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.engagement-stat strong {
+    color: var(--gold);
+    font-family: var(--font-heading);
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-right: 4px;
+}
+
+@media (max-width: 768px) {
+    .engagement-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
 /* Process Steps */
 
 .lead-gen-how {
