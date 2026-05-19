@@ -122,11 +122,18 @@ const TEAM_EMAILS = new Set([
     'kevin@poler.org',
     'noel@poler.org',
     'noelpoler@gmail.com',
+    'noelpoler@fastmail.fm',
     'dylan@poler.org',
     'dylanpoler@gmail.com',
     'rosa@poler.org',
     'rosadasilvapoler@gmail.com',
     'rosapoler@gmail.com',
+    'rosapoler@hotmail.com',
+    // Boris Buvinic Guerovich = the "Buvinic" in Buvinic | Poler Intelligence
+    // consulting partnership. He's CC'd on most LATAM client threads as
+    // co-principal, not a client. Treat as team-equivalent for participant
+    // matching (skip).
+    'boris.buvinic@gmail.com',
 ]);
 
 function isTeamMemberEmail(email) {
