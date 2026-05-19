@@ -4051,9 +4051,10 @@ async function saveDealNow() {
 
 // ── CONSULTING TASKS VIEW (grouped) ────────────────────────────────────────
 function renderConsultingTasks() {
-  const container = document.getElementById('cons-tasks-groups');
-  const empty     = document.getElementById('cons-tasks-empty');
-  if (!container) return;
+  const tbody  = document.getElementById('cons-tasks-tbody');
+  const table  = document.getElementById('cons-tasks-table');
+  const empty  = document.getElementById('cons-tasks-empty');
+  if (!tbody) return;
 
   const statusF = document.getElementById('cons-tasks-status-filter')?.value || '';
   const ownerF  = document.getElementById('cons-tasks-owner-filter')?.value || '';
@@ -4064,75 +4065,181 @@ function renderConsultingTasks() {
     return true;
   });
 
+  // Subtitle: "X total · Y due today · Z overdue · <who>"
   const label = document.getElementById('cons-tasks-count-label');
   if (label) {
-    label.textContent = `${filtered.length} ${filtered.length === 1 ? 'task' : 'tasks'}`;
+    const total = filtered.length;
+    const who = ownerF || 'all owners';
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const endOfToday   = startOfToday + 86400000;
+    let dueTodayCount = 0;
+    let overdueCount  = 0;
+    filtered.forEach(t => {
+      if (t.status !== 'Pending') return;
+      const due = t.dueAt ? new Date(t.dueAt).getTime() : NaN;
+      if (isNaN(due)) return;
+      if (due < startOfToday) overdueCount++;
+      else if (due < endOfToday) dueTodayCount++;
+    });
+    label.textContent = `${total} total · ${dueTodayCount} due today · ${overdueCount} overdue · ${who}`;
     label.style.display = 'inline-block';
   }
 
   if (filtered.length === 0) {
-    container.innerHTML = '';
+    if (table) table.style.display = 'none';
     if (empty) empty.style.display = 'block';
+    tbody.innerHTML = '';
     return;
   }
   if (empty) empty.style.display = 'none';
+  if (table) table.style.display = 'table';
 
-  // Group: Overdue / Today / This Week / Later / Done
-  const now = new Date();
-  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-  const endOfToday   = startOfToday + 86400000;
-  const endOfWeek    = startOfToday + 86400000 * 7;
+  const now = Date.now();
 
-  const groups = { overdue: [], today: [], week: [], later: [], done: [] };
-  filtered.forEach(t => {
-    if (t.status === 'Completed' || t.status === 'Cancelled') {
-      groups.done.push(t);
-      return;
-    }
-    const due = t.dueAt ? new Date(t.dueAt).getTime() : null;
-    if (due == null) groups.later.push(t);
-    else if (due < startOfToday) groups.overdue.push(t);
-    else if (due < endOfToday) groups.today.push(t);
-    else if (due < endOfWeek) groups.week.push(t);
-    else groups.later.push(t);
-  });
+  tbody.innerHTML = filtered.map(t => {
+    const company = allClients.find(c => c.id === t.companyId);
+    const deal    = t.dealId ? allDeals.find(d => d.id === t.dealId) : null;
+    const dueDate = t.dueAt ? new Date(t.dueAt) : null;
+    const isOverdue = t.status === 'Pending' && dueDate && dueDate.getTime() < now;
+    const rowClass = isOverdue ? 'reminder-overdue' : '';
+    const actionClass = 'action-type-' + (t.type || 'Other').replace(/\s+/g, '-');
 
-  const renderGroup = (key, title, classMod = '') => {
-    if (!groups[key].length) return '';
+    const dueStr = dueDate ? formatReminderDate(dueDate) : '—';
+    const statusBadge = t.status === 'Pending'
+      ? (isOverdue ? '<span class="reminder-status-badge overdue">Overdue</span>' : '<span class="reminder-status-badge pending">Pending</span>')
+      : t.status === 'Completed'
+        ? '<span class="reminder-status-badge completed">Done</span>'
+        : '<span class="reminder-status-badge cancelled">Cancelled</span>';
+
+    const dtLocal = dueDate ? `${dueDate.getFullYear()}-${String(dueDate.getMonth()+1).padStart(2,'0')}-${String(dueDate.getDate()).padStart(2,'0')}T${String(dueDate.getHours()).padStart(2,'0')}:${String(dueDate.getMinutes()).padStart(2,'0')}` : '';
+
+    const actions = t.status === 'Pending'
+      ? `<button class="reminder-action-btn done" onclick="completeConsTask('${t.id}')">Done</button>
+         <button class="reminder-action-btn cancel" onclick="cancelConsTask('${t.id}')">Cancel</button>
+         <button class="reminder-action-btn edit" onclick="toggleConsTaskEdit('${t.id}')">Edit</button>`
+      : '';
+
+    const ownerOptions = AGENTS.map(a =>
+      `<option value="${escHtml(a.name)}" ${a.name === t.owner ? 'selected' : ''}>${escHtml(a.name)}</option>`
+    ).join('');
+
+    const noteText = [t.title, t.notes].filter(Boolean).join(' — ');
+
     return `
-      <div class="task-group ${classMod}">
-        <div class="task-group-title">${title} (${groups[key].length})</div>
-        ${groups[key].map(t => taskRowHTML(t)).join('')}
-      </div>
-    `;
-  };
-
-  container.innerHTML =
-    renderGroup('overdue', 'Overdue', 'overdue') +
-    renderGroup('today',   'Today') +
-    renderGroup('week',    'This Week') +
-    renderGroup('later',   'Later') +
-    renderGroup('done',    'Done');
-
-  container.querySelectorAll('.task-row-check').forEach(cb => {
-    cb.addEventListener('click', e => {
-      e.stopPropagation();
-      const id = cb.closest('.task-row').dataset.taskId;
-      toggleTaskComplete(id);
-    });
-  });
-  container.querySelectorAll('.task-row').forEach(row => {
-    row.addEventListener('click', () => {
-      const id = row.dataset.taskId;
-      const task = allConsultingTasks.find(t => t.id === id);
-      if (!task) return;
-      // Open the related deal panel if linked, else the company panel
-      if (task.dealId) openDealPanel(task.dealId);
-      else if (task.companyId) openClientPanel(task.companyId);
-    });
-  });
+      <tr class="${rowClass}">
+        <td class="td-muted">
+          <span id="cons-task-due-text-${t.id}">${escHtml(dueStr)}</span>
+          <div id="cons-task-edit-${t.id}" class="reminder-edit-row" style="display:none;">
+            <input type="datetime-local" id="cons-task-dt-${t.id}" class="reminder-dt-input" value="${dtLocal}">
+            <select id="cons-task-owner-${t.id}" class="reminder-dt-input" style="margin-top:4px">${ownerOptions}</select>
+            <button class="reminder-action-btn done" style="margin-top:4px" onclick="saveConsTaskEdit('${t.id}')">Save</button>
+          </div>
+        </td>
+        <td>
+          <div class="lead-name" style="cursor:pointer" onclick="openPanelFromConsTask('${escHtml(t.id)}')">${escHtml(company ? company.company : '—')}</div>
+          <div class="td-muted" style="font-size:0.75rem">${escHtml(deal ? deal.dealName : '')}</div>
+        </td>
+        <td><span class="action-type-badge ${actionClass}">${escHtml(t.type || '—')}</span></td>
+        <td class="td-muted" style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escHtml(noteText)}">${escHtml(noteText || '—')}</td>
+        <td class="td-muted">${escHtml(t.owner || '—')}</td>
+        <td>${statusBadge}</td>
+        <td>${actions}</td>
+      </tr>`;
+  }).join('');
 }
 
+// ── CONSULTING REMINDER ACTIONS ────────────────────────────────────────────
+async function completeConsTask(id) {
+  await updateConsTaskStatus(id, 'Completed');
+}
+
+async function cancelConsTask(id) {
+  await updateConsTaskStatus(id, 'Cancelled');
+}
+
+async function updateConsTaskStatus(id, status) {
+  const task = allConsultingTasks.find(t => t.id === id);
+  if (!task) return;
+  const prev = task.status;
+  task.status = status; // optimistic
+  if (currentView === 'cons-tasks') renderConsultingTasks();
+  try {
+    const res = await fetch(`${CRM_API_BASE}/api/update-consulting-task`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id, password: currentPassword, status,
+        agent: currentAgent ? currentAgent.name : '',
+      }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!data.success) {
+      task.status = prev;
+      if (currentView === 'cons-tasks') renderConsultingTasks();
+      alert('Failed to update reminder: ' + (data.error || 'unknown error'));
+      return;
+    }
+    updateConsTaskBadge();
+  } catch (err) {
+    task.status = prev;
+    if (currentView === 'cons-tasks') renderConsultingTasks();
+    console.error('Failed to update consulting reminder:', err);
+  }
+}
+
+function toggleConsTaskEdit(id) {
+  const editEl = document.getElementById(`cons-task-edit-${id}`);
+  if (editEl) editEl.style.display = editEl.style.display === 'none' ? 'block' : 'none';
+}
+
+async function saveConsTaskEdit(id) {
+  const dtInput    = document.getElementById(`cons-task-dt-${id}`);
+  const ownerInput = document.getElementById(`cons-task-owner-${id}`);
+  const task = allConsultingTasks.find(t => t.id === id);
+  if (!task) return;
+
+  const payload = { id, password: currentPassword };
+  if (dtInput && dtInput.value) {
+    payload.dueAt = new Date(dtInput.value).toISOString();
+  }
+  if (ownerInput && ownerInput.value && ownerInput.value !== task.owner) {
+    payload.owner = ownerInput.value;
+  }
+  if (!payload.dueAt && !payload.owner) {
+    toggleConsTaskEdit(id);
+    return;
+  }
+
+  try {
+    const res = await fetch(`${CRM_API_BASE}/api/update-consulting-task`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (data.success) {
+      if (payload.dueAt) task.dueAt = payload.dueAt;
+      if (payload.owner) task.owner = payload.owner;
+      renderConsultingTasks();
+      updateConsTaskBadge();
+    } else {
+      alert('Failed to update reminder: ' + (data.error || 'unknown error'));
+    }
+  } catch (err) {
+    console.error('Failed to update consulting reminder:', err);
+    alert('Failed to update reminder. See console.');
+  }
+}
+
+function openPanelFromConsTask(id) {
+  const task = allConsultingTasks.find(t => t.id === id);
+  if (!task) return;
+  if (task.dealId) openDealPanel(task.dealId);
+  else if (task.companyId) openClientPanel(task.companyId);
+}
+
+// ── COMPANY/DEAL PANEL TASK ROW (compact list used inside detail panels) ───
 function taskRowHTML(t) {
   const company = allClients.find(c => c.id === t.companyId);
   const due = t.dueAt ? new Date(t.dueAt).toLocaleDateString() : '—';

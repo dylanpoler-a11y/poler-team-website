@@ -1188,12 +1188,15 @@ body {
   white-space: nowrap;
 }
 
-.action-type-Call      { background: #eff6ff; color: #1d4ed8; }
-.action-type-Text      { background: #f5f3ff; color: #6d28d9; }
-.action-type-Email     { background: #fff7ed; color: #c2410c; }
-.action-type-WhatsApp  { background: #f0fdf4; color: #166534; }
-.action-type-Follow-Up { background: #fffbeb; color: #92400e; }
-.action-type-Other     { background: #f9fafb; color: #6b7280; }
+.action-type-Call         { background: #eff6ff; color: #1d4ed8; }
+.action-type-Text         { background: #f5f3ff; color: #6d28d9; }
+.action-type-Email        { background: #fff7ed; color: #c2410c; }
+.action-type-WhatsApp     { background: #f0fdf4; color: #166534; }
+.action-type-Follow-Up    { background: #fffbeb; color: #92400e; }
+.action-type-Follow-up    { background: #fffbeb; color: #92400e; }
+.action-type-Meeting      { background: #ecfeff; color: #155e75; }
+.action-type-Communication{ background: #fdf4ff; color: #86198f; }
+.action-type-Other        { background: #f9fafb; color: #6b7280; }
 
 /* Reminder action buttons */
 .reminder-action-btn {
