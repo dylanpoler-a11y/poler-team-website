@@ -72,57 +72,33 @@ const SKIP_SENDER_DOMAINS = [
 // NOTE (2026-05-19, body-first refactor, skill §15): these subjects ARE the
 // real-estate signal too — `save-lead.js` already creates the Airtable Lead
 // row directly when the form is submitted, so the notification email is just
-// FYI to Kevin/Rosa/Dylan. We continue to filter them out of the cron's
-// fetch query because the Lead already exists; no CRM write needed from the
-// email side. Don't repurpose these patterns — they belong to the website's
-// own auto-create flow.
+// FYI to Kevin/Rosa/Dylan. We filter them out of the cron's fetch query —
+// real-estate Leads are created by OTHER pipes (homesinsoflorida.com web
+// form via api/save-lead.js, FB lead webhook, CINC sync, MLS feed). The
+// email cron is CONSULTING-FIRST: it never creates real-estate Leads and
+// only updates Lead Notes when the inbound email is from a contact who's
+// ALREADY a Lead (e.g. an existing buyer replying to Kevin). Anything that
+// looks like an auto-generated Lead-creation email gets skipped entirely.
 const SKIP_SUBJECT_PATTERNS = [
-    'New Lead:',
-    'Welcome - New Lead',
-];
-
-// Real-estate signal patterns — when ANY of these match the sender or
-// subject, an incoming email is treated as an explicit real-estate-Lead
-// touch and participant matches of recordType='lead' WILL get the note
-// written to Lead.Notes. When none match, Lead participant matches are
-// suppressed (they're almost always stale rows for someone who's actually
-// a consulting contact — e.g. Maikel in Leads from a long-ago dev test).
-//
-// Sources (subjects emitted by website / FB ad / CINC / MLS pipes):
-//   - "New Lead:" — homesinsoflorida.com form submit (api/save-lead.js)
-//   - "Welcome - New Lead" — the welcome template back to the lead
-//   - "<name> registered on" — FB lead-ad to Gmail forward style
-//   - "Property Inquiry"  / "Tour Request" — listing-page contact forms
-//   - sender domains: facebookmail.com (FB ads), cincapp.com / cinc.com
-//     (CINC pipe), mls-feed senders (Bridge / FlexMLS-style noreply)
-//
-// Filtered out of the fetch query (SKIP_SUBJECT_PATTERNS) — they show up
-// here only when a reply lands on the same thread or when the gate is
-// bypassed (reprocess mode). The RE-signal flag stays useful for those
-// reply-thread cases.
-const RE_LEAD_SIGNAL_SUBJECTS = [
-    'New Lead:', 'Welcome - New Lead',
-    'Property Inquiry', 'Tour Request', 'Showing Request',
+    'New Lead:',                  // homesinsoflorida.com form submit (api/save-lead.js)
+    'Welcome - New Lead',         // welcome template back to the lead
+    'Property Inquiry',           // listing-page contact form
+    'Tour Request',
+    'Showing Request',
     'registered on homesinsoflorida',
 ];
-const RE_LEAD_SIGNAL_DOMAINS = [
-    'facebookmail.com',          // FB lead ad notifications (if subject-replied)
+
+// Sender-domain denylist (extends the bank/social/sports denylist further
+// up the file). These are automated RE-Lead pipes whose emails are FYI —
+// the Lead already exists via the pipe's own write path. Don't process.
+const SKIP_RE_LEAD_PIPE_DOMAINS = [
+    'facebookmail.com',          // FB lead ad notifications
     'cincapp.com', 'cinc.com',   // CINC pipe
     'flexmls.com', 'mlsmatrix.com', 'matrix.miamire.com', // MLS-feed senders
 ];
 
-function isRealEstateSignal(m) {
-    const subj = (m && m.subject || '').toLowerCase();
-    for (const pat of RE_LEAD_SIGNAL_SUBJECTS) {
-        if (subj.includes(pat.toLowerCase())) return true;
-    }
-    const fromDomain = ((m && m.from && m.from.email) || '').toLowerCase().split('@')[1] || '';
-    if (!fromDomain) return false;
-    return RE_LEAD_SIGNAL_DOMAINS.some(d => fromDomain === d || fromDomain.endsWith('.' + d));
-}
-
 function buildSkipQueryFragment() {
-    const senderPart = SKIP_SENDER_DOMAINS.map(d => `-from:${d}`).join(' ');
+    const senderPart = [...SKIP_SENDER_DOMAINS, ...SKIP_RE_LEAD_PIPE_DOMAINS].map(d => `-from:${d}`).join(' ');
     const subjectPart = SKIP_SUBJECT_PATTERNS.map(s => `-subject:"${s}"`).join(' ');
     return `${senderPart} ${subjectPart}`.trim();
 }
@@ -586,10 +562,10 @@ export default async function handler(req) {
                 //      body actually discusses. This is the primary classifier.
                 //   2. Run participant matching as a SECONDARY signal.
                 //   3. Real-estate Lead participant matches are GATED on
-                //      isRealEstateSignal(m) — i.e. only honored when the
-                //      sender or subject is an explicit RE signal (FB ad form,
-                //      website form, CINC pipe, MLS pipe). Otherwise the Lead
-                //      match is dropped — preventing the "Maikel as buyer" bug.
+                //      Lead writes are HARD-disabled (cron is consulting-only).
+                //      Real-estate Leads come from other pipes (save-lead.js,
+                //      FB webhook, CINC sync, MLS feed). When a CRM-matched
+                //      Lead would otherwise match here, drop it.
                 //   4. Consulting-contact / company / dev-project participant
                 //      matches whose companyId is ALREADY in body extraction
                 //      are deduped — body extraction already wrote them.
@@ -620,23 +596,24 @@ export default async function handler(req) {
                 }
 
                 // Step 2: gate participant matches.
-                //   - Drop Lead matches unless the email is an explicit RE
-                //     signal (FB ad / website form / CINC / MLS / subject pat).
+                //   - ALWAYS drop Lead participant matches. The email cron is
+                //     CONSULTING-FIRST: real-estate Leads are created/updated
+                //     via OTHER pipes (api/save-lead.js, FB webhook, CINC sync,
+                //     MLS feed). The cron should NEVER write to Lead.Notes
+                //     from inbox email — that's how Maikel-as-buyer happens.
+                //     If a contact is genuinely both a Lead AND a consulting
+                //     contact, the consulting write captures the activity;
+                //     the Lead row stays untouched by this cron.
                 //   - Drop consulting matches whose companyId is already
                 //     covered by body extraction (body extraction wrote the
                 //     parent timeline; participant write would duplicate).
-                const reSignal = isRealEstateSignal(m);
                 const bodyCompanyIds = new Set(
                     (bodyExtracted?.clientReferences || []).map(r => r.companyId).filter(Boolean)
                 );
                 const matchedRecords = rawMatched.filter(r => {
                     if (r.recordType === 'lead') {
-                        // Lead participant match: only keep if explicit RE signal.
-                        if (!reSignal) {
-                            console.log(`[body-first] dropping stale Lead match ${r.recordName} (no RE signal — subj="${(m.subject || '').slice(0, 60)}")`);
-                            return false;
-                        }
-                        return true;
+                        console.log(`[body-first] dropping Lead match ${r.recordName} (cron is consulting-only; Leads handled by other pipes)`);
+                        return false;
                     }
                     // Consulting / dev-project: drop if body already covers parent.
                     const parentId = r.companyId || r.projectId || r.recordId;

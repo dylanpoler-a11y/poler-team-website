@@ -13,7 +13,7 @@ This is the single source of truth for how The Poler Team's email→CRM pipeline
 
 **Out of scope:** outbound email drafting, WhatsApp ingestion (planned future build), iMessage, phone-call logging, voice transcription.
 
-**Default classification is CONSULTING.** The pipeline is body-first: Sonnet reads each email body and decides which consulting clients/listings are discussed. Real-estate Lead activity is GATED on explicit real-estate signals only (FB ad form, homesinsoflorida.com web form, CINC pipe, MLS pipe) — Lead participant-matches are dropped when no RE signal is present. See §4.1.
+**This cron is CONSULTING-ONLY.** It is body-first: Sonnet reads each email body and decides which consulting clients/listings are discussed. **The cron NEVER creates or updates real-estate Leads** — those are owned by other pipes (`api/save-lead.js` web form, FB lead webhook, CINC sync, MLS feed). When a CRM Lead match would otherwise be triggered by participant-matching, it's dropped. See §4.1.
 
 ## 2. Tech context
 
@@ -39,7 +39,7 @@ Applied at the Gmail query level so the cron never even fetches them.
 - `New Lead:` (homesinsoflorida.com form-submit notification — Airtable Lead row is already created by `api/save-lead.js`; the email is FYI)
 - `Welcome - New Lead` (welcome template back to the lead)
 
-These subjects ARE real-estate signals (see §15) — they're skipped at fetch only because the Lead row already exists. Do not repurpose these patterns elsewhere.
+These subjects are emitted by OTHER lead-creation pipes — they're skipped at fetch so this cron never sees them. Real-estate Leads come from those pipes, NEVER from this email cron.
 
 **Display-name denylist** (`SKIP_SENDER_NAMES`, after fetch):
 - "Joe Bryant"
@@ -81,7 +81,7 @@ Participant matching is no longer the primary classifier. It runs as a check aga
 3. **Run `extractTeamDiscussion` FIRST on every email body** — Sonnet picks which consulting clients/listings the body discusses.
 4. Build participant matches (§4) — these are SECONDARY signal.
 5. **Gate the participant matches:**
-   - Drop any `recordType: 'lead'` match unless `isRealEstateSignal(m)` is true (subject = "New Lead:" / "Welcome - New Lead" / "Property Inquiry" / "Tour Request" / "Showing Request" / "registered on homesinsoflorida", OR sender domain in `RE_LEAD_SIGNAL_DOMAINS` = facebookmail.com / cincapp.com / cinc.com / flexmls.com / mlsmatrix.com / matrix.miamire.com).
+   - **Drop ALL `recordType: 'lead'` matches always.** The cron is consulting-only; real-estate Lead writes are owned by other pipes. If a participant happens to also be a real-estate Lead (e.g. a buyer who became a consulting contact), only the consulting write fires.
    - Drop any consulting / dev-project match whose parent companyId is already in `bodyExtracted.clientReferences` — body extraction already wrote that parent's timeline; participant write would duplicate.
 6. Write `bodyExtracted` via `writeTeamDiscussion`.
 7. If filtered participants remain → also write those via `extractEmailUpdate` + `writeCrmUpdate` (primary + duplicates).
@@ -322,7 +322,8 @@ Without §22, `CRM_NEEDS_REVIEW` was a dead-end label — Sonnet's first hesitat
 
 ## Learnings
 
-- 2026-05-19 [FAIL] consulting-topic emails about Mitch/Maikel/Royal/AD1 were getting logged as real-estate Lead notes via stale Lead rows. Fix: body-first refactor — `extractTeamDiscussion` is the primary classifier; participant Lead-matches require `isRealEstateSignal(m)`; consulting parent dedup against body refs.
+- 2026-05-19 [FAIL] consulting-topic emails about Mitch/Maikel/Royal/AD1 were getting logged as real-estate Lead notes via stale Lead rows. Fix: body-first refactor — `extractTeamDiscussion` is the primary classifier; **all Lead participant-matches are dropped unconditionally** (cron is consulting-only); consulting parent dedup against body refs.
+- 2026-05-19 [FAIL] FB-ad/CINC/MLS pipe senders (facebookmail.com, cincapp.com, etc.) were initially treated as 'RE signals that allow Lead creation' — wrong. Those pipes own Lead creation themselves; this cron should never touch them. Fix: added the pipe domains to `SKIP_RE_LEAD_PIPE_DOMAINS` so they're filtered at fetch.
 - 2026-05-19 [WIN] hardcoded alias map in the Sonnet prompt is a 1-PR stopgap that closes the gap until a real `Client Aliases` table exists.
 
 **Last updated:** 2026-05-19 — Body-first classification refactor. `extractTeamDiscussion` now runs FIRST on every email (no longer fallback / secondary). Participant matching becomes secondary; Lead participant-matches are gated on `isRealEstateSignal(m)` (FB ad / website form / CINC / MLS / explicit subject pattern); consulting parent matches dedup against body-extracted clientReferences. Added `kevinpolerservices.com` to the agency-sender skip list. Added §1 default-consulting line, §4.1 body-first order, §5 case-based branching, §5.2 hardcoded alias table. Wired in code: `api/cron/process-emails.js` has the new per-message flow + `isRealEstateSignal()` helper + `RE_LEAD_SIGNAL_*` constants; `lib/email-extract.js` has the alias section at the top of the `extractTeamDiscussion` system prompt; `lib/crm-contacts.js` already indexed Consulting Companies' direct Email field (no change needed).
