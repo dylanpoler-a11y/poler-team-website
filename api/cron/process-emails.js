@@ -86,6 +86,15 @@ const SKIP_SUBJECT_PATTERNS = [
     'Tour Request',
     'Showing Request',
     'registered on homesinsoflorida',
+    // Autonomous-agency operational digests sent FROM kevinpolermiami@gmail.com
+    // to itself by the agency tool. NOT client communications. Skip at fetch.
+    // Trace: 2026-05-19 Slack search showed pings on "Agency hourly — 1
+    // contacted, 0 replied" at 10:23 + 11:25 AM ET from kevinpolermiami.
+    'Agency hourly',
+    'Agency daily',
+    'Agency status',
+    'Agency summary',
+    'Autonomous agency',
 ];
 
 // Sender-domain denylist (extends the bank/social/sports denylist further
