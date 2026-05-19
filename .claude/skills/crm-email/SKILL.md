@@ -15,6 +15,8 @@ This is the single source of truth for how The Poler Team's email→CRM pipeline
 
 **This cron is CONSULTING-ONLY.** It is body-first: Sonnet reads each email body and decides which consulting clients/listings are discussed. **The cron NEVER creates or updates real-estate Leads** — those are owned by other pipes (`api/save-lead.js` web form, FB lead webhook, CINC sync, MLS feed). When a CRM Lead match would otherwise be triggered by participant-matching, it's dropped. See §4.1.
 
+**Trigger-team gate (Kevin's rule, 2026-05-19):** the cron processes an email ONLY if at least one of **Noel / Dylan / Rosa** is somewhere in the participants (FROM, TO, CC, BCC, or forwarded body). Kevin's own presence is NOT sufficient — most of his inbox is FB ad notifications, agency outreach replies, newsletters, RE leads, none of which include a team member. Filtered-out emails get `CRM_NO_TEAM` label and are excluded from future fetches. Code: `TRIGGER_TEAM_EMAILS` Set in `api/cron/process-emails.js`.
+
 ## 2. Tech context
 
 - Edge runtime (Vercel). No node-only packages.
