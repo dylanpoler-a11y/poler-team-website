@@ -1156,6 +1156,10 @@ async function writeTeamDiscussion({ email: m, extracted, inbox, listings = [] }
         clientReferences: extracted.clientReferences || [],
         listingReferences: extracted.listingReferences || [],
         newClientsCreated: [],
+        newDealsCreated: [],         // {dealName, companyId, id}
+        dealsDupSkipped: [],         // {dealName, companyId, existingDealName, existingId, evidence}
+        newContactsCreated: [],      // {name, companyId, id}
+        contactsDupSkipped: [],      // {name, companyId, existingId, evidence, matchedBy}
         wroteSomething: false,
     };
 
@@ -1217,6 +1221,153 @@ async function writeTeamDiscussion({ email: m, extracted, inbox, listings = [] }
             }
         } catch (err) {
             console.error(`Auto-create client exception (${cand.name}):`, err.message);
+        }
+    }
+
+    // (0.5) Auto-create high-confidence new DEAL candidates.
+    // Skips when an OPEN deal (Pitching / Proposal Sent / Verbal Commitment /
+    // Signed / Active) already exists under the same company with a name
+    // that overlaps. On a skip, the Slack ping below surfaces the candidate
+    // + existing match so Kevin can decide manually. NEVER pass dealValue /
+    // fees / probability — those are Kevin's call. Trace: 2026-05-19 MR9
+    // cleanup — Sonnet extracted $2.4M/$2.4M/$9M/$150K from prose, creating
+    // 4 phantom Royal deals on top of 1 real engagement.
+    const OPEN_DEAL_STAGES = new Set(['Pitching', 'Proposal Sent', 'Verbal Commitment', 'Signed', 'Active']);
+    const normalizeDealName = (s) => (s || '').toLowerCase().normalize('NFD')
+        .replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]/g, '');
+    for (const cand of (extracted.newDealCandidates || [])) {
+        if (cand.confidence !== 'high') continue;
+        // Look up existing open deals under this company
+        try {
+            const dealsFilter = `AND(FIND('${cand.companyId}', ARRAYJOIN({Company})), OR(${[...OPEN_DEAL_STAGES].map(s => `{Stage}='${s}'`).join(',')}))`;
+            const dealsRes = await fetch(
+                `https://api.airtable.com/v0/${baseId}/Consulting%20Deals?filterByFormula=${encodeURIComponent(dealsFilter)}&maxRecords=50`,
+                { headers: { 'Authorization': `Bearer ${apiKey}` } },
+            );
+            const candNorm = normalizeDealName(cand.dealName);
+            let dupHit = null;
+            if (dealsRes.ok) {
+                const dealsData = await dealsRes.json();
+                for (const rec of (dealsData.records || [])) {
+                    const existingNorm = normalizeDealName(rec.fields?.['Deal Name']);
+                    if (!existingNorm || !candNorm) continue;
+                    const exact = existingNorm === candNorm;
+                    const sub   = (candNorm.length >= 10 && existingNorm.includes(candNorm))
+                               || (existingNorm.length >= 10 && candNorm.includes(existingNorm));
+                    if (exact || sub) {
+                        dupHit = { id: rec.id, name: rec.fields?.['Deal Name'] };
+                        break;
+                    }
+                }
+            }
+            if (dupHit) {
+                summary.dealsDupSkipped.push({
+                    dealName: cand.dealName,
+                    companyId: cand.companyId,
+                    existingDealName: dupHit.name,
+                    existingId: dupHit.id,
+                    evidence: cand.evidence,
+                });
+                console.log(`[newDealCandidates] skipped "${cand.dealName}" — overlaps existing open deal "${dupHit.name}" (${dupHit.id})`);
+                continue;
+            }
+            // No dup → create with NO dollar fields. Kevin fills in later.
+            const createRes = await fetch(`https://api.airtable.com/v0/${baseId}/Consulting%20Deals`, {
+                method: 'POST', headers,
+                body: JSON.stringify({
+                    records: [{
+                        fields: {
+                            'Deal Name': cand.dealName,
+                            'Company':   [cand.companyId],
+                            'Stage':     'Pitching',
+                            'Stage Entered At': new Date().toISOString().slice(0, 10),
+                            'Description': `[${nowDateStr()} — ${agent}] AUTO-CREATED from team email: ${cand.evidence || '(no detail)'}\n\nFEE STRUCTURE: TBD — Kevin to fill in dealValue / diagnosticFee / monthlyRecurringFee / probability. Cron never extracts these from prose.`,
+                            'Owner':     agent || '',
+                        },
+                    }],
+                    typecast: true,
+                }),
+            });
+            if (createRes.ok) {
+                const d = await createRes.json();
+                const newId = d.records?.[0]?.id;
+                if (newId) summary.newDealsCreated.push({ dealName: cand.dealName, companyId: cand.companyId, id: newId, evidence: cand.evidence });
+            } else {
+                const err = await createRes.json().catch(() => ({}));
+                console.error(`Auto-create deal '${cand.dealName}' failed:`, err.error?.message || createRes.status);
+            }
+        } catch (err) {
+            console.error(`Auto-create deal exception (${cand.dealName}):`, err.message);
+        }
+    }
+
+    // (0.7) Auto-create high-confidence new CONTACT candidates.
+    // Dedup on email (exact, case-insensitive) then normalized name within
+    // the same company. Same trace as above — 2026-05-19 cleanup removed 18
+    // duplicate contacts that were inserted because no upstream check ran.
+    const normalizeContactName = (s) => (s || '').toLowerCase().normalize('NFD')
+        .replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]/g, '');
+    for (const cand of (extracted.newContactCandidates || [])) {
+        if (cand.confidence !== 'high') continue;
+        try {
+            const contactsFilter = `FIND('${cand.companyId}', ARRAYJOIN({Company}))`;
+            const contactsRes = await fetch(
+                `https://api.airtable.com/v0/${baseId}/Consulting%20Contacts?filterByFormula=${encodeURIComponent(contactsFilter)}&maxRecords=100`,
+                { headers: { 'Authorization': `Bearer ${apiKey}` } },
+            );
+            const candEmail = (cand.email || '').toLowerCase().trim();
+            const candName  = normalizeContactName(cand.name);
+            let dupHit = null;
+            if (contactsRes.ok) {
+                const contactsData = await contactsRes.json();
+                for (const rec of (contactsData.records || [])) {
+                    const existingEmail = (rec.fields?.Email || '').toLowerCase().trim();
+                    const existingName  = normalizeContactName(rec.fields?.Name);
+                    const emailMatch = candEmail && existingEmail && existingEmail === candEmail;
+                    const nameMatch  = !candEmail && candName && existingName && existingName === candName;
+                    if (emailMatch || nameMatch) {
+                        dupHit = { id: rec.id, name: rec.fields?.Name, matchedBy: emailMatch ? 'email' : 'name' };
+                        break;
+                    }
+                }
+            }
+            if (dupHit) {
+                summary.contactsDupSkipped.push({
+                    name: cand.name,
+                    companyId: cand.companyId,
+                    existingId: dupHit.id,
+                    evidence: cand.evidence,
+                    matchedBy: dupHit.matchedBy,
+                });
+                console.log(`[newContactCandidates] skipped "${cand.name}" — matches existing "${dupHit.name}" by ${dupHit.matchedBy}`);
+                continue;
+            }
+            // No dup → create
+            const createRes = await fetch(`https://api.airtable.com/v0/${baseId}/Consulting%20Contacts`, {
+                method: 'POST', headers,
+                body: JSON.stringify({
+                    records: [{
+                        fields: {
+                            'Name':    cand.name,
+                            'Company': [cand.companyId],
+                            'Email':   cand.email || '',
+                            'Role':    cand.role || '',
+                            'Notes':   `[${nowDateStr()} — ${agent}] AUTO-ADDED from team email: ${cand.evidence || '(no detail)'}`,
+                        },
+                    }],
+                    typecast: true,
+                }),
+            });
+            if (createRes.ok) {
+                const d = await createRes.json();
+                const newId = d.records?.[0]?.id;
+                if (newId) summary.newContactsCreated.push({ name: cand.name, companyId: cand.companyId, id: newId });
+            } else {
+                const err = await createRes.json().catch(() => ({}));
+                console.error(`Auto-create contact '${cand.name}' failed:`, err.error?.message || createRes.status);
+            }
+        } catch (err) {
+            console.error(`Auto-create contact exception (${cand.name}):`, err.message);
         }
     }
 
@@ -1328,7 +1479,11 @@ async function writeTeamDiscussion({ email: m, extracted, inbox, listings = [] }
         summary.listingNotesWritten > 0 ||
         summary.tasksCreated.length > 0 ||
         summary.meetingsCreated.length > 0 ||
-        summary.newClientsCreated.length > 0;
+        summary.newClientsCreated.length > 0 ||
+        summary.newDealsCreated.length > 0 ||
+        summary.dealsDupSkipped.length > 0 ||
+        summary.newContactsCreated.length > 0 ||
+        summary.contactsDupSkipped.length > 0;
     return summary;
 }
 
@@ -1410,6 +1565,21 @@ async function notifyOwnerConsolidated({ owner, mode, email, matchedRecords, ext
         lines.push('');
         if (teamSummary.newClientsCreated?.length > 0) {
             lines.push(`🆕 *New clients auto-created:* ${teamSummary.newClientsCreated.map(c => c.name).join(', ')}`);
+        }
+        if (teamSummary.newDealsCreated?.length > 0) {
+            lines.push(`💼 *New deals auto-created (no value/fees — fill in manually):* ${teamSummary.newDealsCreated.map(d => d.dealName).join(', ')}`);
+        }
+        if (teamSummary.dealsDupSkipped?.length > 0) {
+            lines.push(`⚠️ *Deal suggestion skipped (overlaps existing open deal — review needed):*`);
+            for (const d of teamSummary.dealsDupSkipped) {
+                lines.push(`  • Sonnet suggested "${d.dealName}" but it overlaps existing "${d.existingDealName}". Evidence: ${truncate(d.evidence || '', 160)}`);
+            }
+        }
+        if (teamSummary.newContactsCreated?.length > 0) {
+            lines.push(`👤 *New contacts auto-added:* ${teamSummary.newContactsCreated.map(c => c.name).join(', ')}`);
+        }
+        if (teamSummary.contactsDupSkipped?.length > 0) {
+            lines.push(`⚠️ *Contact suggestion skipped (matches existing — no dup added):* ${teamSummary.contactsDupSkipped.map(c => `${c.name} (matched by ${c.matchedBy})`).join(', ')}`);
         }
         if (teamSummary.clientReferences?.length > 0 && mode === 'team-discussion') {
             lines.push(`*Clients referenced:* ${teamSummary.clientReferences.map(r => r.companyName).join(', ')}`);
