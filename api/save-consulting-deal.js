@@ -59,6 +59,50 @@ export default async function handler(req) {
         return json({ error: 'companyId and dealName are required' }, 400);
     }
 
+    // ── DEDUP GUARD (added 2026-05-19) ────────────────────────────────────
+    // Before inserting a new deal, check whether an existing OPEN deal under
+    // the same company already covers the same opportunity by name. Avoids
+    // the deal-duplication mess where Sonnet extracted "Royal #1 / #2 / #3
+    // / #4" plus "Royal SB Commercial Spaces" as separate deals on MR9 even
+    // though one engagement covered the broader thesis.
+    // Trace: 2026-05-19 deal cleanup — 4 duplicate Royal deals closed.
+    const OPEN_STAGES = ['Pitching', 'Proposal Sent', 'Verbal Commitment', 'Signed', 'Active'];
+    const normalizeName = (s) => (s || '').toLowerCase().normalize('NFD')
+        .replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]/g, '');
+    const targetName = normalizeName(dealName);
+
+    try {
+        const filter = `AND(FIND('${companyId}', ARRAYJOIN({Company})), OR(${OPEN_STAGES.map(s => `{Stage}='${s}'`).join(',')}))`;
+        const dupRes = await fetch(
+            `https://api.airtable.com/v0/${baseId}/Consulting%20Deals?filterByFormula=${encodeURIComponent(filter)}&maxRecords=50`,
+            { headers: { 'Authorization': `Bearer ${apiKey}` } },
+        );
+        if (dupRes.ok) {
+            const dupData = await dupRes.json();
+            for (const rec of (dupData.records || [])) {
+                const existingName = normalizeName(rec.fields?.['Deal Name']);
+                if (!existingName || !targetName) continue;
+                // Exact match OR strong substring match either direction (catches "Royal #1" vs "Royal SB Commercial Acquisition" type overlaps when the shorter name is fully contained in the longer one and is ≥10 chars).
+                const exact = existingName === targetName;
+                const sub   = (targetName.length >= 10 && existingName.includes(targetName))
+                           || (existingName.length >= 10 && targetName.includes(existingName));
+                if (exact || sub) {
+                    return json({
+                        success: true,
+                        id: rec.id,
+                        deduped: true,
+                        matchedBy: exact ? 'exact-name' : 'substring-name',
+                        existingDealName: rec.fields?.['Deal Name'],
+                    });
+                }
+            }
+        }
+    } catch (err) {
+        // If dedup lookup fails, fall through to the original create — better
+        // to risk a duplicate than lose a real deal.
+        console.warn('[save-consulting-deal] dedup lookup failed:', err.message);
+    }
+
     const today = new Date().toISOString().slice(0, 10);
 
     const fields = {
