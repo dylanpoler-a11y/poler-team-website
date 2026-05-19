@@ -256,7 +256,8 @@ async function applyOngoingCategoryLabels(accessToken, emailIndex) {
             if (isTeamMemberEmail(fromEmail)) {
                 label = 'Team Internal';
             } else {
-                const crmMatch = emailIndex.get(fromEmail);
+                const crmRaw = emailIndex.get(fromEmail);
+                const crmMatch = Array.isArray(crmRaw) ? crmRaw[0] : crmRaw;
                 if (crmMatch) {
                     if (crmMatch.recordType === 'lead') label = 'Real Estate Lead';
                     else if (crmMatch.recordType === 'development-project') label = `Development Project - ${crmMatch.projectName || 'Unknown'}`;
@@ -943,19 +944,23 @@ function buildParticipantMatches({ m, emailIndex, pollingInboxEmail }) {
         }
     }
 
-    // Match each candidate against the CRM email index
+    // Match each candidate against the CRM email index.
+    // Note: emailIndex.get() can return EITHER a single entry OR an array
+    // (multi-project dev partners). Normalize to an array per candidate.
     const byRecordId = new Map();
     for (const c of candidates) {
-        const match = emailIndex.get(c.email);
-        if (!match) continue;
-        const existing = byRecordId.get(match.recordId);
-        if (!existing) {
-            byRecordId.set(match.recordId, { ...match, role: c.role, matchedVia: c.email });
-        } else {
-            // Keep the highest-priority role (lower number)
-            if (rolePriority[c.role] < rolePriority[existing.role]) {
-                existing.role = c.role;
-                existing.matchedVia = c.email;
+        const raw = emailIndex.get(c.email);
+        if (!raw) continue;
+        const matches = Array.isArray(raw) ? raw : [raw];
+        for (const match of matches) {
+            const existing = byRecordId.get(match.recordId);
+            if (!existing) {
+                byRecordId.set(match.recordId, { ...match, role: c.role, matchedVia: c.email });
+            } else {
+                if (rolePriority[c.role] < rolePriority[existing.role]) {
+                    existing.role = c.role;
+                    existing.matchedVia = c.email;
+                }
             }
         }
     }
