@@ -137,6 +137,58 @@ function isTeamMemberEmail(email) {
     return INTERNAL_DOMAINS.some(d => domain === d || domain.endsWith('.' + d));
 }
 
+// TRIGGER_TEAM_EMAILS — subset of TEAM_EMAILS that GATES processing.
+// Kevin's rule (2026-05-19): process an email ONLY if at least one of
+// Noel / Dylan / Rosa is somewhere in the participant set (FROM, TO, CC,
+// BCC, or forwarded-body sender/recipient). Kevin's own presence is NOT
+// sufficient — most of his inbox noise (FB ad notifications, agency
+// outreach replies, newsletters, RE leads) does NOT include another
+// team member, so it shouldn't be processed.
+//
+// Inbound: Noel/Dylan/Rosa is the sender, on TO/CC, or in the forward body.
+// Outbound: Kevin sent to/cc'd Noel/Dylan/Rosa.
+//
+// Result for filtered-out emails: label CRM_NO_TEAM so we don't refetch them
+// on every tick. No CRM write, no Slack ping.
+const TRIGGER_TEAM_EMAILS = new Set([
+    'noel@poler.org',
+    'noelpoler@gmail.com',
+    'noelpoler@fastmail.fm',
+    'dylan@poler.org',
+    'dylanpoler@gmail.com',
+    'rosa@poler.org',
+    'rosadasilvapoler@gmail.com',
+    'rosapoler@gmail.com',
+    'rosapoler@hotmail.com',
+]);
+
+function isTriggerTeamEmail(email) {
+    const e = (email || '').toLowerCase().trim();
+    return TRIGGER_TEAM_EMAILS.has(e);
+}
+
+// Check if Noel/Dylan/Rosa appears anywhere on a parsed message.
+// Returns the matching email address for logging, or null.
+function findTriggerTeamParticipant(parsed) {
+    if (!parsed) return null;
+    const check = (e) => e && isTriggerTeamEmail(typeof e === 'string' ? e : e.email);
+    // Sender
+    if (check(parsed.from)) return (parsed.from?.email || parsed.from);
+    if (check(parsed.replyTo)) return (parsed.replyTo?.email || parsed.replyTo);
+    // TO / CC / BCC arrays
+    for (const arr of [parsed.toList || [], parsed.ccList || [], parsed.bccList || []]) {
+        for (const item of arr) {
+            if (check(item)) return (item?.email || item);
+        }
+    }
+    // Forwarded-body participants (if subject was a forward)
+    const forwarded = parsed.forwardedSenders || [];
+    for (const f of forwarded) {
+        if (check(f)) return (f?.email || f);
+    }
+    return null;
+}
+
 // Domain → category map for the auto-labeling pass. Mirrors the categories
 // the historical labeling agent applied to the 6-month backfill, so new
 // emails get consistent treatment. Returns null when no match — caller
@@ -380,7 +432,7 @@ export default async function handler(req) {
     // would loop forever every 5 minutes.
     const query = reprocessMode
         ? `(in:inbox OR in:sent) newer_than:${sinceClean} label:${reprocessLabel} -label:CRM_REPROCESSED`
-        : `(in:inbox OR in:sent) -category:promotions ${skipFragment} newer_than:${sinceClean} -label:CRM_PROCESSED -label:CRM_UNMATCHED`;
+        : `(in:inbox OR in:sent) -category:promotions ${skipFragment} newer_than:${sinceClean} -label:CRM_PROCESSED -label:CRM_UNMATCHED -label:CRM_NO_TEAM`;
 
     // Cache deal/listing/client lists once per run (used for team-discussion fallback)
     let cachedClientList, cachedDealList, cachedListings;
@@ -497,6 +549,21 @@ export default async function handler(req) {
                     inboxResult.skipped++; results.skipped++;
                     await applyLabel(m.id, 'CRM_PROCESSED', accessToken).catch(e => console.error('label PROCESSED failed:', e.message));
                     continue;
+                }
+
+                // Trigger-team gate (Kevin's rule, 2026-05-19):
+                // Process ONLY if Noel / Dylan / Rosa is somewhere in the
+                // participant set. Kevin's own presence is NOT sufficient.
+                // Filtered-out emails get CRM_NO_TEAM so the cron doesn't
+                // refetch them on every tick. No CRM write, no Slack ping.
+                if (!reprocessMode) {
+                    const triggerHit = findTriggerTeamParticipant(m);
+                    if (!triggerHit) {
+                        console.log(`[trigger-team-gate] skipping ${m.id} (no Noel/Dylan/Rosa on thread): subj="${(m.subject || '').slice(0, 60)}" from="${m.from?.email}"`);
+                        inboxResult.skipped++; results.skipped++;
+                        await applyLabel(m.id, 'CRM_NO_TEAM', accessToken).catch(e => console.error('label NO_TEAM failed:', e.message));
+                        continue;
+                    }
                 }
 
                 // §8.1 — Thread continuity supersedes confidence (added 2026-05-18).
