@@ -389,7 +389,7 @@ export default async function handler(req) {
         // Edge timeout even when every email triggers Sonnet retries. Normal
         // poll keeps 20 because steady-state most messages already short-circuit.
         let messages;
-        try { messages = await listRecentMessages(accessToken, query, reprocessMode ? 4 : 20); }
+        try { messages = await listRecentMessages(accessToken, query, reprocessMode ? 4 : 6); }
         catch (err) {
             inboxResult.errors++;
             inboxResult.error = `list messages: ${err.message}`;
