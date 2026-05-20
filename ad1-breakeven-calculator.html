@@ -439,6 +439,16 @@
 
       <div class="input-row">
         <div class="input-head">
+          <span class="input-label">Related expenses per HMA</span>
+          <span class="input-value">$<span id="expense-val">20</span><span class="unit">K/deal</span></span>
+        </div>
+        <input type="range" id="expense" min="0" max="100" step="5" value="20" />
+        <div class="range-min-max"><span>$0</span><span>$100K</span></div>
+        <div class="input-hint">Legal review, diligence, onboarding, transition, brand/franchise change &mdash; per closed HMA. One-time at deal close.</div>
+      </div>
+
+      <div class="input-row">
+        <div class="input-head">
           <span class="input-label">Evaluation horizon</span>
           <span class="input-value"><span id="horizon-val">5</span><span class="unit">years</span></span>
         </div>
@@ -475,6 +485,10 @@
         <div class="wf-row neg">
           <div class="wf-label">− Hourly retainer paid</div>
           <div class="wf-value" id="wf-hourly">−$0</div>
+        </div>
+        <div class="wf-row neg">
+          <div class="wf-label">− Related expenses (<span id="wf-expense-detail">0 × $0K</span>)</div>
+          <div class="wf-value" id="wf-expense">−$0</div>
         </div>
         <div class="wf-row total">
           <div class="wf-label">= AD1 net over horizon</div>
@@ -530,9 +544,11 @@
     const weeks = +document.getElementById('weeks').value;
     const deals = +document.getElementById('deals').value;
     const feeK = +document.getElementById('fee').value;
+    const expenseK = +document.getElementById('expense').value;
     const horizon = +document.getElementById('horizon').value;
 
     const fee = feeK * 1000;
+    const expensePerDeal = expenseK * 1000;
 
     // ---- Update slider value labels ----
     document.getElementById('hours-val').textContent = hours;
@@ -540,6 +556,7 @@
     document.getElementById('weeks-val').textContent = weeks;
     document.getElementById('deals-val').textContent = deals;
     document.getElementById('fee-val').textContent = feeK;
+    document.getElementById('expense-val').textContent = expenseK;
     document.getElementById('horizon-val').textContent = horizon;
 
     // ---- Core math ----
@@ -554,19 +571,21 @@
     }
     const bonusCost = bonusPerDeal * deals;
 
+    // Related expenses (one-time per closed HMA)
+    const relatedCost = expensePerDeal * deals;
+
     // Gross HMA fees earned by AD1 per deal over horizon
     const hmaGrossPerDeal = fee * horizon;
     const hmaGrossTotal = hmaGrossPerDeal * deals;
 
-    // Net to AD1 (gross fees - bonus paid - hourly paid)
-    const adNet = hmaGrossTotal - bonusCost - hourlyCost;
+    // Net to AD1 (gross fees - bonus paid - hourly paid - related expenses)
+    const adNet = hmaGrossTotal - bonusCost - hourlyCost - relatedCost;
 
-    // Poler total earnings
+    // Poler total earnings (unchanged by related expenses — those flow to third parties)
     const polerTotal = hourlyCost + bonusCost;
 
-    // Breakeven calc: how many deals at this fee/horizon to cover hourly?
-    // Per deal AD1 net (gross - bonus) = hmaGrossPerDeal - bonusPerDeal
-    const adNetPerDeal = hmaGrossPerDeal - bonusPerDeal;
+    // Breakeven calc: how many deals to cover hourly, net of bonus + related expense per deal?
+    const adNetPerDeal = hmaGrossPerDeal - bonusPerDeal - expensePerDeal;
     let breakevenDeals = 0;
     if (adNetPerDeal > 0) {
       breakevenDeals = hourlyCost / adNetPerDeal;
@@ -578,6 +597,8 @@
     document.getElementById('wf-gross').textContent = '+' + fmtK(hmaGrossTotal);
     document.getElementById('wf-bonus').textContent = '−' + fmtK(bonusCost);
     document.getElementById('wf-hourly').textContent = '−' + fmtK(hourlyCost);
+    document.getElementById('wf-expense').textContent = '−' + fmtK(relatedCost);
+    document.getElementById('wf-expense-detail').textContent = `${deals} × $${expenseK}K`;
     document.getElementById('wf-net').textContent = (adNet >= 0 ? '' : '−') + fmtK(Math.abs(adNet));
     document.getElementById('poler-total').textContent = fmtK(polerTotal);
 
@@ -628,7 +649,7 @@
   }
 
   // Wire up sliders
-  ['hours','weeks','deals','fee','horizon'].forEach(id => {
+  ['hours','weeks','deals','fee','expense','horizon'].forEach(id => {
     document.getElementById(id).addEventListener('input', calc);
   });
 
