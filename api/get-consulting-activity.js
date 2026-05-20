@@ -35,9 +35,42 @@ export default async function handler(req) {
     if (!authorize(req, null).ok) return json({ error: 'Unauthorized' }, 401);
     if (!apiKey || !baseId) return json({ error: 'Airtable not configured' }, 500);
 
+    // Airtable filterByFormula evaluates linked-record fields by their
+    // PRIMARY-FIELD VALUE (the name), not the record ID — even though the
+    // record-API JSON output returns IDs. Filtering by ID returns 0 rows.
+    // Fix (2026-05-20): look up the company/deal name first, then filter by
+    // name. Trace: Kevin "AD1 + Royal show no activity in the side panel"
+    // — MR9 had 31 activity rows, AD1 had 8, filter never matched.
+    let companyName = '';
+    let dealName    = '';
+    if (companyId) {
+        try {
+            const compRes = await fetch(`https://api.airtable.com/v0/${baseId}/Consulting%20Clients/${companyId}`, {
+                headers: { 'Authorization': `Bearer ${apiKey}` },
+            });
+            if (compRes.ok) companyName = (await compRes.json()).fields?.Company || '';
+        } catch { /* fall through to id-based filter */ }
+    }
+    if (dealId) {
+        try {
+            const dealRes = await fetch(`https://api.airtable.com/v0/${baseId}/Consulting%20Deals/${dealId}`, {
+                headers: { 'Authorization': `Bearer ${apiKey}` },
+            });
+            if (dealRes.ok) dealName = (await dealRes.json()).fields?.['Deal Name'] || '';
+        } catch { /* fall through */ }
+    }
+    const escName = (s) => (s || '').replace(/"/g, '\\"');
     const filters = [];
-    if (companyId) filters.push(`FIND('${companyId}', ARRAYJOIN({Company}))`);
-    if (dealId)    filters.push(`FIND('${dealId}', ARRAYJOIN({Deal}))`);
+    if (companyId) {
+        filters.push(companyName
+            ? `FIND("${escName(companyName)}", ARRAYJOIN({Company}))`
+            : `FIND('${companyId}', ARRAYJOIN({Company}))`);
+    }
+    if (dealId) {
+        filters.push(dealName
+            ? `FIND("${escName(dealName)}", ARRAYJOIN({Deal}))`
+            : `FIND('${dealId}', ARRAYJOIN({Deal}))`);
+    }
 
     let allActivity = [];
     let offset = null;

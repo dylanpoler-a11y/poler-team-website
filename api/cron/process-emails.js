@@ -714,6 +714,7 @@ export default async function handler(req) {
                     try {
                         bodySummary = await writeTeamDiscussion({
                             email: m, extracted: bodyExtracted, inbox, listings: cachedListings,
+                            accessToken,
                         });
                     } catch (err) {
                         console.error(`[body-first] writeTeamDiscussion failed for msg ${m.id}:`, err.message);
@@ -1137,7 +1138,7 @@ async function writeCrmUpdate({ match, extracted, inbox, email, accessToken, isP
  *
  * Returns a summary used by the Slack notifier.
  */
-async function writeTeamDiscussion({ email: m, extracted, inbox, listings = [] }) {
+async function writeTeamDiscussion({ email: m, extracted, inbox, listings = [], accessToken }) {
     if (!extracted) return { wroteSomething: false };
 
     const apiKey = process.env.AIRTABLE_API_KEY;
@@ -1160,6 +1161,8 @@ async function writeTeamDiscussion({ email: m, extracted, inbox, listings = [] }
         dealsDupSkipped: [],         // {dealName, companyId, existingDealName, existingId, evidence}
         newContactsCreated: [],      // {name, companyId, id}
         contactsDupSkipped: [],      // {name, companyId, existingId, evidence, matchedBy}
+        attachmentsUploaded: [],     // {filename, category, companyId, companyName}
+        attachmentsFailed: [],       // {filename, reason}
         wroteSomething: false,
     };
 
@@ -1407,6 +1410,45 @@ async function writeTeamDiscussion({ email: m, extracted, inbox, listings = [] }
         }
     }
 
+    // (1.5) Attachment upload on the TEAM-DISCUSSION path.
+    // The participant-match path (isPrimary) uploads attachments above
+    // (line ~1071). The team-discussion path was previously missing this —
+    // documents Gisela / Noel / external counterparts sent attached to
+    // emails routed via the body got logged as references but the actual
+    // files were lost. Trace: handoff 2026-05-19 — "Gisela May 18 docs
+    // were extracted to AD1 Global note but actual files lost". Also
+    // Kevin's 2026-05-20 ask: "documents need to be uploaded regardless
+    // if they are confidential or not".
+    //
+    // Strategy: upload each attachment to the FIRST clientReference's
+    // company, classified via classifyByHeuristic (no Sonnet — team-
+    // discussion extract doesn't return attachmentClassifications).
+    if ((m.attachments || []).length > 0 && extracted.clientReferences.length > 0) {
+        const targetCompanyId   = extracted.clientReferences[0].companyId;
+        const targetCompanyName = extracted.clientReferences[0].companyName || targetCompanyId;
+        summary.attachmentsUploaded = summary.attachmentsUploaded || [];
+        summary.attachmentsFailed   = summary.attachmentsFailed   || [];
+        for (const att of m.attachments) {
+            try {
+                const base64 = await fetchAttachment(m.id, att.attachmentId, accessToken);
+                const category = classifyByHeuristic(att.filename, att.mimeType);
+                await uploadAirtableAttachment({
+                    recordId: targetCompanyId,
+                    field: category,
+                    filename: att.filename,
+                    contentType: att.mimeType,
+                    base64,
+                    apiKey, baseId,
+                });
+                summary.attachmentsUploaded.push({ filename: att.filename, category, companyId: targetCompanyId, companyName: targetCompanyName });
+                console.log(`[team-discussion] uploaded "${att.filename}" → ${targetCompanyName} (${category})`);
+            } catch (err) {
+                console.error(`[team-discussion] attachment upload failed (${att.filename}):`, err.message);
+                summary.attachmentsFailed.push({ filename: att.filename, reason: err.message });
+            }
+        }
+    }
+
     // (1b) Listing references → Listing Notes
     for (const lref of (extracted.listingReferences || [])) {
         try {
@@ -1483,7 +1525,8 @@ async function writeTeamDiscussion({ email: m, extracted, inbox, listings = [] }
         summary.newDealsCreated.length > 0 ||
         summary.dealsDupSkipped.length > 0 ||
         summary.newContactsCreated.length > 0 ||
-        summary.contactsDupSkipped.length > 0;
+        summary.contactsDupSkipped.length > 0 ||
+        summary.attachmentsUploaded.length > 0;
     return summary;
 }
 
@@ -1580,6 +1623,12 @@ async function notifyOwnerConsolidated({ owner, mode, email, matchedRecords, ext
         }
         if (teamSummary.contactsDupSkipped?.length > 0) {
             lines.push(`⚠️ *Contact suggestion skipped (matches existing — no dup added):* ${teamSummary.contactsDupSkipped.map(c => `${c.name} (matched by ${c.matchedBy})`).join(', ')}`);
+        }
+        if (teamSummary.attachmentsUploaded?.length > 0) {
+            lines.push(`📎 *Attachments uploaded to ${teamSummary.attachmentsUploaded[0].companyName}:* ${teamSummary.attachmentsUploaded.map(a => `${a.filename} (${a.category})`).join(', ')}`);
+        }
+        if (teamSummary.attachmentsFailed?.length > 0) {
+            lines.push(`⚠️ *Attachment upload failed:* ${teamSummary.attachmentsFailed.map(a => `${a.filename} — ${a.reason}`).join(', ')}`);
         }
         if (teamSummary.clientReferences?.length > 0 && mode === 'team-discussion') {
             lines.push(`*Clients referenced:* ${teamSummary.clientReferences.map(r => r.companyName).join(', ')}`);
