@@ -483,11 +483,18 @@ export default async function handler(req) {
             }
         }
 
-        // Reprocess batches are capped tight (8) so we stay under the 60s
-        // Edge timeout even when every email triggers Sonnet retries. Normal
-        // poll keeps 20 because steady-state most messages already short-circuit.
+        // Batch caps sized for Vercel Edge's 25s initial-response limit —
+        // every email can trigger a Sonnet extract (5-15s) so the default
+        // normal-mode cap is 2. ?cap=N overrides for manual drain runs.
+        // Trace: 2026-06-11 — after a 3-week token outage, every tick had
+        // 6+ unprocessed emails; 6×Sonnet > 25s → FUNCTION_INVOCATION_TIMEOUT
+        // on EVERY tick incl. cron-job.org's, so the backlog never drained.
+        const capRaw = parseInt(reqUrl.searchParams.get('cap') || '', 10);
+        const batchCap = Number.isFinite(capRaw) && capRaw >= 1 && capRaw <= 10
+            ? capRaw
+            : (reprocessMode ? 3 : 2);
         let messages;
-        try { messages = await listRecentMessages(accessToken, query, reprocessMode ? 4 : 6); }
+        try { messages = await listRecentMessages(accessToken, query, batchCap); }
         catch (err) {
             inboxResult.errors++;
             inboxResult.error = `list messages: ${err.message}`;
