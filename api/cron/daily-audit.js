@@ -57,18 +57,65 @@ export default async function handler(req) {
     });
 
     if (stale.length > 0) {
-        // Send health alert via the shared webhook (no per-owner — this is infra)
+        // Diagnose the CAUSE per stale inbox: try a token refresh. If it
+        // fails with invalid_grant, the Gmail refresh token is dead and the
+        // ONLY fix is re-auth — pointing at cron-job.org is a red herring.
+        // Trace: 2026-06-11 — token died ~May 27, the alert said "check
+        // cron-job.org" nightly for 2 weeks while the real fix was the
+        // oauth-start re-auth link. Now the alert says exactly what's wrong
+        // and links the fix.
+        const diagnosed = [];
+        for (const i of stale) {
+            const ageMin = i.lastPolled ? Math.round((now - Date.parse(i.lastPolled)) / 60000) : null;
+            let cause = 'unknown — token OK, cron-job.org may have stopped firing';
+            let fixUrl = 'https://cron-job.org/en/members/jobs/';
+            let fixLabel = 'Open cron-job.org';
+            try {
+                await refreshAccessToken(i.refreshToken);
+            } catch (err) {
+                if (/invalid_grant/i.test(err.message)) {
+                    cause = 'GMAIL TOKEN DEAD (invalid_grant — expired or revoked). Re-auth required.';
+                    fixUrl = `https://www.homesinsoflorida.com/api/agent/gmail-oauth-start?email=${encodeURIComponent(i.email)}&owner=${encodeURIComponent(i.owner)}`;
+                    fixLabel = `Re-authorize ${i.email}`;
+                } else {
+                    cause = `token refresh error: ${err.message.slice(0, 120)}`;
+                }
+            }
+            diagnosed.push({ ...i, ageMin, cause, fixUrl, fixLabel });
+        }
+
+        const lines = ['🚨 *CRM email-sync health alert*'];
+        for (const d of diagnosed) {
+            lines.push(`• ${d.email} (owner: ${d.owner}) — last polled ${d.ageMin == null ? 'NEVER' : `${d.ageMin} min ago`}`);
+            lines.push(`  Cause: ${d.cause}`);
+            lines.push(`  <${d.fixUrl}|${d.fixLabel} →>`);
+        }
+
+        // Slack (shared infra webhook)
         const webhookUrl = process.env.SLACK_WEBHOOK_URL;
         if (webhookUrl) {
-            const lines = ['🚨 *CRM email-sync health alert*'];
-            for (const i of stale) {
-                const ageMin = i.lastPolled ? Math.round((now - Date.parse(i.lastPolled)) / 60000) : 'never';
-                lines.push(`• ${i.email} (owner: ${i.owner}) — last polled ${ageMin === 'never' ? 'NEVER' : `${ageMin} min ago`}`);
-            }
-            lines.push('');
-            lines.push('The 5-min polling cron may have stopped firing. Check cron-job.org for the *Poler CRM email sync* job.');
-            lines.push('<https://cron-job.org/en/members/jobs/|Open cron-job.org →>');
-            await sendSlackMessage({ webhookUrl, text: lines.join('\n') });
+            await sendSlackMessage({ webhookUrl, text: lines.join('\n') }).catch(err => console.error('[daily-audit] slack failed:', err.message));
+        }
+
+        // ALSO email Kevin via Resend — Slack pings drowned in #crm-updates
+        // for 2 weeks during the 2026-05/06 outage; Kevin reads email.
+        const resendKey = process.env.RESEND_API_KEY;
+        const fromEmail = process.env.ALERT_FROM_EMAIL;
+        if (resendKey && fromEmail) {
+            const htmlBody = diagnosed.map(d => `
+                <p><strong>${d.email}</strong> (owner: ${d.owner}) — last polled ${d.ageMin == null ? 'NEVER' : `${d.ageMin} min ago`}<br>
+                Cause: ${d.cause}<br>
+                <a href="${d.fixUrl}">${d.fixLabel} →</a></p>`).join('');
+            await fetch('https://api.resend.com/emails', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    from: `Poler CRM Health <${fromEmail}>`,
+                    to: ['kevinpolermiami@gmail.com'],
+                    subject: `🚨 CRM email sync DOWN — ${diagnosed[0].cause.startsWith('GMAIL TOKEN DEAD') ? 'Gmail re-auth needed (1 click)' : 'health alert'}`,
+                    html: `<h3>CRM email-sync health alert</h3>${htmlBody}<p>The CRM stops logging client emails until this is fixed.</p>`,
+                }),
+            }).catch(err => console.error('[daily-audit] resend failed:', err.message));
         }
     }
 
