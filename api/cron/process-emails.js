@@ -466,6 +466,47 @@ export default async function handler(req) {
             inboxResult.errors++;
             inboxResult.error = `token refresh: ${err.message}`;
             results.errors++;
+            // Immediate token-death alert (Slack + Resend email), state-free
+            // rate limit: Last Polled freezes at death, so its age grows 5min
+            // per tick — alert only while age is in the 30-50min window, i.e.
+            // 1-4 pings starting ~30min after death, then the nightly
+            // daily-audit takes over. Trace: 2026-06-11 — token died ~May 27,
+            // this branch ran silently every 5min for 2 weeks while the only
+            // alert was a nightly Slack ping Kevin never saw.
+            try {
+                const polledAt = inbox.lastPolled ? Date.parse(inbox.lastPolled) : 0;
+                const ageMin = polledAt ? Math.round((Date.now() - polledAt) / 60000) : null;
+                if (ageMin !== null && ageMin >= 30 && ageMin <= 50) {
+                    const isDead = /invalid_grant/i.test(err.message);
+                    const fixUrl = `https://www.homesinsoflorida.com/api/agent/gmail-oauth-start?email=${encodeURIComponent(inbox.email)}&owner=${encodeURIComponent(inbox.owner || '')}`;
+                    const causeLine = isDead
+                        ? 'GMAIL TOKEN DEAD (invalid_grant — expired or revoked). Re-auth required.'
+                        : `Token refresh failing: ${err.message.slice(0, 120)}`;
+                    const webhookUrl = process.env.SLACK_WEBHOOK_URL;
+                    if (webhookUrl) {
+                        await sendSlackMessage({
+                            webhookUrl,
+                            text: [`🚨 *CRM email sync DOWN — ${inbox.email}*`, `Cause: ${causeLine}`, `<${fixUrl}|Re-authorize ${inbox.email} →>`].join('\n'),
+                        }).catch(e => console.error('[token-alert] slack failed:', e.message));
+                    }
+                    const resendKey = process.env.RESEND_API_KEY;
+                    const fromEmail = process.env.ALERT_FROM_EMAIL;
+                    if (resendKey && fromEmail) {
+                        await fetch('https://api.resend.com/emails', {
+                            method: 'POST',
+                            headers: { 'Authorization': `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                from: `Poler CRM Health <${fromEmail}>`,
+                                to: ['kevinpolermiami@gmail.com'],
+                                subject: `🚨 CRM email sync DOWN — ${isDead ? 'Gmail re-auth needed (1 click)' : 'token error'}`,
+                                html: `<h3>CRM email sync stopped ${ageMin} min ago</h3><p><strong>${inbox.email}</strong> (owner: ${inbox.owner})<br>Cause: ${causeLine}</p><p><a href="${fixUrl}">Re-authorize ${inbox.email} →</a></p><p>The CRM stops logging client emails until this is fixed.</p>`,
+                            }),
+                        }).catch(e => console.error('[token-alert] resend failed:', e.message));
+                    }
+                }
+            } catch (alertErr) {
+                console.error('[token-alert] alert path failed:', alertErr.message);
+            }
             results.perInbox.push(inboxResult);
             continue;
         }
