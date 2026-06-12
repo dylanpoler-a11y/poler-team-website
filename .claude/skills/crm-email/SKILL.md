@@ -185,7 +185,7 @@ Lower confidence → flag CRM_NEEDS_REVIEW.
 
 Pre-check at the top of the per-message branch (before `buildParticipantMatches`):
 1. Query Consulting Activity for any rows whose `Details` field contains `[thread: <new-message-threadId>]`.
-2. If any exist → call `upsertActivityRow` for each linked parent (companyId / projectId) with a short continuation note. Skip the participant-match flow entirely.
+2. If any exist → call `upsertActivityRow` for each linked parent (companyId / projectId) with a short continuation note. Skip the participant-match flow entirely. **The continuity path MUST still send a Slack ping** (compact "🔁 Thread continuation logged" message to the inbox owner's webhook) and stamp the ping outcome on each written row (§13). *Fix 2026-06-12: this path previously wrote rows, labeled CRM_PROCESSED, and `continue`d without ever pinging — the root cause of "CRM edited but no Slack ping".*
 3. If none → fall through to the standard ≥1-match / 0-match branching.
 
 Re-classification (full Sonnet extraction) only fires on threads with no prior CRM link OR on threads where Kevin has manually cleared the link (deleted the activity row).
@@ -228,6 +228,15 @@ Auto-create a row in `Listing Notes` when an email mentions a property address o
 **Format:** detailed bullets — full breakdown of note + tasks + reminders + new clients/deals created + attachments uploaded.
 
 **Links:** every ping ends with `<https://www.homesinsoflorida.com/crm|Open CRM →>` (Kevin's custom dashboard, not raw Airtable).
+
+**Ping-outcome recording (added 2026-06-12):** every CRM write must produce exactly ONE Slack ping, and the outcome is persisted. After the ping fires (consolidated, continuity, or NEEDS_REVIEW), the cron appends a machine-readable marker line to the `Links` long-text field of every Consulting Activity row that email wrote:
+
+```
+slackping: ok @2026-06-12T18:04:11.000Z
+slackping: fail-404 @2026-06-12T18:04:11.000Z
+```
+
+Outcomes: `ok` / `fail-<http status>` / `fail-nowebhook` / `fail-error` (`sendSlackPing` in `lib/slack.js`). Webhook failures are also `console.error`'d. The marker is parsed by the crm-sync-autoresearch optimizer's `slack_coverage` metric (`~/business/real-estate/active/execution/crm-sync-autoresearch/`), which flags rows without an `ok` marker as `write-without-slack` misses. Never strip these lines when editing Links; `mergeLinksText` preserves them.
 
 **Quiet hours:** 11pm–7am ET pings are queued. Delivered at 7am as a single "overnight digest" message.
 

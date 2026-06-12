@@ -37,7 +37,7 @@ import {
 } from '../../lib/gmail.js';
 import { getEmailIndex, getClientList, getDealList } from '../../lib/crm-contacts.js';
 import { extractEmailUpdate, extractTeamDiscussion, classifyByHeuristic } from '../../lib/email-extract.js';
-import { sendSlackMessage, getOwnerSlackWebhook } from '../../lib/slack.js';
+import { sendSlackMessage, sendSlackPing, getOwnerSlackWebhook } from '../../lib/slack.js';
 
 const ROSA_MLS_AGENT_ID = '3268052';
 const INTERNAL_DOMAINS = ['poler.org', 'homesinsoflorida.com', 'investoros1.com'];
@@ -350,12 +350,12 @@ function shouldSkipBySender(fromName, fromEmail) {
  */
 async function flagNeedsReview({ parsed, messageId, inbox, accessToken, reason }) {
     const id = (parsed && parsed.id) || messageId;
-    if (!id) return;
+    if (!id) return 'fail-noid';
     await applyLabel(id, 'CRM_NEEDS_REVIEW', accessToken)
         .catch(e => console.error('label NEEDS_REVIEW failed:', e.message));
     try {
         const webhookUrl = getOwnerSlackWebhook(inbox && inbox.owner) || process.env.SLACK_WEBHOOK_URL;
-        if (!webhookUrl) return;
+        if (!webhookUrl) return 'fail-nowebhook';
         const subject = parsed && parsed.subject ? parsed.subject : '(no subject)';
         const fromName = parsed && parsed.from && parsed.from.name ? parsed.from.name : '';
         const fromEmail = parsed && parsed.from && parsed.from.email ? parsed.from.email : '';
@@ -372,9 +372,53 @@ async function flagNeedsReview({ parsed, messageId, inbox, accessToken, reason }
             `<https://mail.google.com/mail/u/0/#all/${threadOrMsg}|Open in Gmail →> · <https://www.homesinsoflorida.com/crm|Open CRM →>`,
             `_Manual review needed — extraction failed after retries._`,
         ].filter(Boolean).join('\n');
-        await sendSlackMessage({ webhookUrl, text });
+        return await sendSlackPing({ webhookUrl, text });
     } catch (slackErr) {
         console.error('flagNeedsReview Slack failed:', slackErr.message);
+        return 'fail-error';
+    }
+}
+
+/**
+ * Persist a Slack ping outcome onto every Consulting Activity row a processed
+ * email wrote, by appending a compact machine-readable marker line to the
+ * row's `Links` long-text field:
+ *
+ *     slackping: ok @2026-06-12T18:04:11.000Z
+ *     slackping: fail-404 @2026-06-12T18:04:11.000Z
+ *
+ * Consumed by the crm-sync-autoresearch optimizer's `slack_coverage` metric
+ * (rows with an `ok` marker / all email-written rows). Links is the least
+ * human-visible field on the row, and the cron's own mergeLinksText() never
+ * drops non-URL lines, so markers survive later appends. NEVER throws — a
+ * marker failure must not break email processing. Added 2026-06-12; trace:
+ * Kevin's "CRM edited but no Slack ping" complaint (§8.1 continuity path
+ * wrote rows without ever pinging, and webhook failures were invisible).
+ */
+async function stampSlackOutcome(rowIds, outcome) {
+    const apiKey = process.env.AIRTABLE_API_KEY;
+    const baseId = process.env.AIRTABLE_BASE_ID;
+    if (!apiKey || !baseId) return;
+    const headers = { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' };
+    const marker = `slackping: ${outcome || 'fail-unknown'} @${new Date().toISOString()}`;
+    const unique = [...new Set((rowIds || []).filter(Boolean))];
+    for (const id of unique) {
+        try {
+            const cur = await fetch(`https://api.airtable.com/v0/${baseId}/Consulting%20Activity/${id}`, { headers });
+            if (!cur.ok) { console.error(`[slackping-marker] GET ${id} failed: ${cur.status}`); continue; }
+            const prevLinks = (await cur.json()).fields?.['Links'] || '';
+            const newLinks = prevLinks ? `${prevLinks}\n${marker}` : marker;
+            const patch = await fetch(`https://api.airtable.com/v0/${baseId}/Consulting%20Activity`, {
+                method: 'PATCH', headers,
+                body: JSON.stringify({ records: [{ id, fields: { 'Links': newLinks } }], typecast: true }),
+            });
+            if (!patch.ok) {
+                const err = await patch.json().catch(() => ({}));
+                console.error(`[slackping-marker] PATCH ${id} failed: ${err.error?.message || patch.status}`);
+            }
+        } catch (err) {
+            console.error(`[slackping-marker] ${id}:`, err.message);
+        }
     }
 }
 
@@ -648,9 +692,10 @@ export default async function handler(req) {
                     ];
 
                     let continuityWrites = 0;
+                    const continuityRowIds = [];
                     for (const link of continuityLinks) {
                         try {
-                            await upsertActivityRow({
+                            const up = await upsertActivityRow({
                                 companyId: link.parentType === 'company' ? link.parentId : null,
                                 projectId: link.parentType === 'project' ? link.parentId : null,
                                 threadId: m.threadId,
@@ -663,6 +708,7 @@ export default async function handler(req) {
                                 baseId: continuityBaseId,
                                 headers: continuityHeaders,
                             });
+                            if (up?.recordId) continuityRowIds.push(up.recordId);
                             continuityWrites++;
                         } catch (err) {
                             console.error(`[§8.1] continuation append failed for ${link.parentType}=${link.parentId}:`, err.message);
@@ -672,6 +718,29 @@ export default async function handler(req) {
                         inboxResult.matched++; results.matched++;
                         inboxResult.writes++; results.writes++;
                         await applyLabel(m.id, 'CRM_PROCESSED', accessToken).catch(e => console.error('label PROCESSED failed:', e.message));
+                        // FIX 2026-06-12: this path wrote to the CRM, labeled
+                        // PROCESSED, and `continue`d WITHOUT ever pinging Slack —
+                        // the root cause of Kevin's "CRM edited but no Slack
+                        // ping". Every continuation write now gets its own
+                        // compact ping + a recorded outcome marker on each row.
+                        const contOwner = inbox.owner || 'Email Bot';
+                        const contWebhook = getOwnerSlackWebhook(contOwner);
+                        const contTs = new Date().toLocaleString('en-US', {
+                            month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
+                            hour12: true, timeZone: 'America/New_York',
+                        }) + ' ET';
+                        const contText = [
+                            `🕒 ${contTs}`,
+                            `🔁 *Thread continuation logged to CRM* (${continuityWrites} record${continuityWrites > 1 ? 's' : ''})`,
+                            `*From:* ${m.from.name || m.from.email}`,
+                            m.subject ? `*Subject:* ${truncate(m.subject, 80)}` : null,
+                            (m.attachments && m.attachments.length > 0) ? `📎 ${m.attachments.length} attachment(s) — see Gmail` : null,
+                            '',
+                            '<https://www.homesinsoflorida.com/crm|Open CRM →>',
+                        ].filter(l => l !== null).join('\n');
+                        const contOutcome = await sendSlackPing({ webhookUrl: contWebhook, text: contText });
+                        if (contOutcome !== 'ok') console.error(`[§8.1] continuation Slack ping failed (${contOutcome}) for msg ${m.id}`);
+                        await stampSlackOutcome(continuityRowIds, contOutcome);
                         continue;
                     }
                     // If every continuity write failed, fall through to normal flow as a safety net.
@@ -782,7 +851,7 @@ export default async function handler(req) {
                             ? cachedClientList.find(c => c.id === firstClientId)?.owner
                             : null;
                         const slackOwner = firstClientOwner || inbox.owner || 'Email Bot';
-                        await notifyOwnerConsolidated({
+                        const tdOutcome = await notifyOwnerConsolidated({
                             owner: slackOwner,
                             mode: 'team-discussion',
                             email: m,
@@ -791,7 +860,9 @@ export default async function handler(req) {
                             teamSummary: bodySummary,
                             primaryWrite: null,
                             duplicatesCount: 0,
-                        }).catch(err => console.error('Slack ping failed:', err.message));
+                        }).catch(err => { console.error('Slack ping failed:', err.message); return 'fail-error'; });
+                        if (tdOutcome !== 'ok') console.error(`[slackping] team-discussion ping ${tdOutcome} for msg ${m.id}`);
+                        await stampSlackOutcome(bodySummary.activityRowIds, tdOutcome);
                     } else {
                         // Neither body nor participants produced anything.
                         if (internalSender) {
@@ -863,10 +934,16 @@ export default async function handler(req) {
                 } catch (err) {
                     console.error(`CRM write (primary) failed for msg ${m.id}:`, err.message);
                     inboxResult.errors++; results.errors++;
-                    await flagNeedsReview({
+                    const nrOutcome = await flagNeedsReview({
                         parsed: m, inbox, accessToken,
                         reason: `Primary CRM write failed: ${err.message}`,
                     });
+                    // bodySummary writes may already have landed before the
+                    // primary write threw — record the NEEDS_REVIEW ping
+                    // outcome on those rows so they aren't invisible misses.
+                    if (bodySummary?.activityRowIds?.length) {
+                        await stampSlackOutcome(bodySummary.activityRowIds, nrOutcome || 'fail-unknown');
+                    }
                     continue;
                 }
 
@@ -908,7 +985,7 @@ export default async function handler(req) {
                 // matched primary record (Toyosa→Noel, AD1→Dylan, etc.). Falls
                 // back to inbox owner if the matched record has no Owner set.
                 const slackOwner = primary.owner || inbox.owner || 'Email Bot';
-                await notifyOwnerConsolidated({
+                const directOutcome = await notifyOwnerConsolidated({
                     owner: slackOwner,
                     mode: 'direct',
                     email: m,
@@ -917,7 +994,13 @@ export default async function handler(req) {
                     teamSummary: bodySummary,
                     primaryWrite: primaryResult,
                     duplicatesCount: duplicateResults.length,
-                }).catch(err => console.error('Slack ping failed:', err.message));
+                }).catch(err => { console.error('Slack ping failed:', err.message); return 'fail-error'; });
+                if (directOutcome !== 'ok') console.error(`[slackping] direct ping ${directOutcome} for msg ${m.id}`);
+                await stampSlackOutcome([
+                    primaryResult?.activityRowId,
+                    ...duplicateResults.map(r => r?.activityRowId),
+                    ...((bodySummary?.activityRowIds) || []),
+                ], directOutcome);
             } catch (err) {
                 console.error(`Message ${msgRef.id} fatal:`, err.message);
                 inboxResult.errors++; results.errors++;
@@ -1043,6 +1126,7 @@ async function writeCrmUpdate({ match, extracted, inbox, email, accessToken, isP
 
     const writeSummary = {
         noteWritten: false,
+        activityRowId: null,    // Consulting Activity row id (for slackping marker)
         attachmentsUploaded: [],
         attachmentsFailed: [],
         remindersCreated: [],
@@ -1083,7 +1167,7 @@ async function writeCrmUpdate({ match, extracted, inbox, email, accessToken, isP
     } else if (match.recordType === 'consulting-contact') {
         if (!match.companyId) throw new Error('contact has no companyId');
         const title = `Email ${match.role === 'sender' ? 'from' : 'with'} ${match.recordName}: ${truncate(extracted.summary || email.subject || '(no subject)', 200)}`;
-        await upsertActivityRow({
+        const up = await upsertActivityRow({
             companyId: match.companyId,
             companyName: match.companyName,
             threadId: email.threadId,
@@ -1094,11 +1178,12 @@ async function writeCrmUpdate({ match, extracted, inbox, email, accessToken, isP
             links: extracted.links || [],
             apiKey, baseId, headers,
         });
+        writeSummary.activityRowId = up?.recordId || null;
         writeSummary.noteWritten = true;
     } else if (match.recordType === 'development-project') {
         if (!match.projectId) throw new Error('dev-project contact has no projectId');
         const title = `Email ${match.role === 'sender' ? 'from' : 'with'} ${match.recordName}: ${truncate(extracted.summary || email.subject || '(no subject)', 200)}`;
-        await upsertActivityRow({
+        const up = await upsertActivityRow({
             projectId: match.projectId,
             projectName: match.projectName,
             threadId: email.threadId,
@@ -1109,6 +1194,7 @@ async function writeCrmUpdate({ match, extracted, inbox, email, accessToken, isP
             links: extracted.links || [],
             apiKey, baseId, headers,
         });
+        writeSummary.activityRowId = up?.recordId || null;
         writeSummary.noteWritten = true;
     } else {
         throw new Error(`Unknown recordType: ${match.recordType}`);
@@ -1211,6 +1297,7 @@ async function writeTeamDiscussion({ email: m, extracted, inbox, listings = [], 
         contactsDupSkipped: [],      // {name, companyId, existingId, evidence, matchedBy}
         attachmentsUploaded: [],     // {filename, category, companyId, companyName}
         attachmentsFailed: [],       // {filename, reason}
+        activityRowIds: [],          // Consulting Activity row ids written (slackping markers)
         wroteSomething: false,
     };
 
@@ -1441,7 +1528,7 @@ async function writeTeamDiscussion({ email: m, extracted, inbox, listings = [], 
         const metaLine = [m.subject ? `Subject: "${truncate(m.subject, 100)}"` : '', m.threadId ? `[thread: ${m.threadId}]` : ''].filter(Boolean).join(' · ');
         const noteBody = `${ref.excerpt || extracted.summary}${metaLine ? `\n\n— ${metaLine}` : ''}`;
         try {
-            await upsertActivityRow({
+            const up = await upsertActivityRow({
                 companyId: ref.companyId,
                 companyName: ref.companyName,
                 threadId: m.threadId,
@@ -1452,6 +1539,7 @@ async function writeTeamDiscussion({ email: m, extracted, inbox, listings = [], 
                 links: ref.links || [],
                 apiKey, baseId, headers,
             });
+            if (up?.recordId) summary.activityRowIds.push(up.recordId);
             summary.clientNotesWritten++;
         } catch (err) {
             console.error(`Team note write failed for ${ref.companyId}:`, err.message);
@@ -1586,7 +1674,10 @@ async function writeTeamDiscussion({ email: m, extracted, inbox, listings = [], 
  */
 async function notifyOwnerConsolidated({ owner, mode, email, matchedRecords, extractedTeam, teamSummary, primaryWrite, duplicatesCount }) {
     const webhookUrl = getOwnerSlackWebhook(owner);
-    if (!webhookUrl) return;
+    if (!webhookUrl) {
+        console.error(`[slackping] no webhook for owner "${owner}" — CRM written but no ping possible`);
+        return 'fail-nowebhook';
+    }
 
     // Every Slack message starts with a timestamp so Kevin can correlate it
     // with what he sees in CRM. Uses America/New_York 12-hour format.
@@ -1717,7 +1808,9 @@ async function notifyOwnerConsolidated({ owner, mode, email, matchedRecords, ext
     lines.push('');
     lines.push('<https://www.homesinsoflorida.com/crm|Open CRM →>');
 
-    await sendSlackMessage({ webhookUrl, text: lines.join('\n') });
+    // Returns the ping OUTCOME string ('ok' | 'fail-…') so callers can stamp
+    // it onto the written Consulting Activity rows (slackping marker).
+    return await sendSlackPing({ webhookUrl, text: lines.join('\n') });
 }
 
 async function createLeadReminder({ leadRecordId, leadName, leadEmail, title, actionType, dueAt, note, agent, apiKey, baseId }) {
