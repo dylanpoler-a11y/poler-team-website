@@ -124,6 +124,155 @@ async function apiFetch(params) {
 }
 
 // ============================================================
+// LANDING-PAGE A/B (lp-ab) — conversion test on the gate-popup copy.
+// Sticky 50/50 server-config-driven variant; tracks view/lead/leave to
+// /api/lp-ab/track; auto-promotes the higher-converting copy. FULLY fail-safe:
+// any error → champion 'a' (the original copy) with no behavior change. The
+// only DOM effect is swapping the popup's title/subtitle for challenger letters.
+// Round 1 (2026-06-22): A = current copy, B = concrete value-prop copy below.
+// ============================================================
+const LP_AB = { vid: null, variant: 'a', round: 1, champion: 'a', challenger: '', loadAt: Date.now(), maxScroll: 0, sent: {}, applied: null, preview: false };
+const LP_ORIG = {}; // snapshot of original I18N entries we override, so a cross-round stale cookie can be cleanly restored to the champion baseline
+
+// Per-challenger-letter copy overrides for the gate popup. 'a' = original I18N
+// (no entry). When a letter wins, config makes it champion and everyone gets its
+// treatment — so the winning copy ships with zero code change. Add 'c', 'd'… for
+// later rounds. Each key mirrors the I18N {en,es,pt} shape so it stays trilingual.
+const LP_VARIANTS = {
+  b: {
+    leadTitle: {
+      en: 'See the full price, photos & similar homes',
+      es: 'Ve el precio, las fotos y propiedades similares',
+      pt: 'Veja o preço, as fotos e imóveis semelhantes',
+    },
+    leadSubtitle: {
+      en: "Tell us where to send it and we'll instantly unlock this property's full details — plus hand-picked Miami listings like it. Free, no obligation.",
+      es: 'Dinos a dónde enviártelo y desbloqueas al instante los detalles completos de esta propiedad — más propiedades en Miami seleccionadas para ti. Gratis y sin compromiso.',
+      pt: 'Diga para onde enviar e desbloqueie na hora os detalhes completos deste imóvel — além de imóveis em Miami selecionados para você. Grátis e sem compromisso.',
+    },
+  },
+};
+
+function lpCookie(name) {
+  const m = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)'));
+  return m ? decodeURIComponent(m[1]) : '';
+}
+function lpSetCookie(name, val, days) {
+  document.cookie = `${name}=${encodeURIComponent(val)}; Max-Age=${days * 86400}; Path=/; SameSite=Lax`;
+}
+function lpUuid() {
+  try { if (window.crypto && crypto.randomUUID) return crypto.randomUUID(); } catch (e) {}
+  return 'v-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
+}
+function lpTrack(type, extra) {
+  try {
+    if (LP_AB.preview) return;       // QA preview (?lpv=) never records events
+    if (!LP_AB.vid) return;
+    if (LP_AB.sent[type]) return;    // idempotent per page load — view/lead/leave each fire once
+    LP_AB.sent[type] = true;
+    const body = JSON.stringify(Object.assign(
+      { visitorId: LP_AB.vid, variant: LP_AB.variant, type, round: LP_AB.round }, extra || {}));
+    const url = `${OTP_BASE}/api/lp-ab/track`;
+    let beaconed = false;
+    if (type === 'leave' && navigator.sendBeacon) {
+      // text/plain is CORS-safelisted, so mobile browsers actually DELIVER it on
+      // page-exit — an application/json beacon was being silently dropped (0 leaves).
+      // The server JSON.parses string bodies. Fall back to keepalive fetch if refused.
+      try { beaconed = navigator.sendBeacon(url, new Blob([body], { type: 'text/plain' })); } catch (e) { beaconed = false; }
+    }
+    if (!beaconed) {
+      fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body, keepalive: true }).catch(() => {});
+    }
+  } catch (e) { /* tracking never breaks the page */ }
+}
+// Apply a challenger letter's copy by overriding the I18N entries (snapshotting the
+// originals the first time so we can restore). Re-render after.
+function lpSnapshotAndApply(letter) {
+  const v = LP_VARIANTS[letter];
+  if (!v) return;
+  try {
+    Object.keys(v).forEach((key) => {
+      if (!(key in LP_ORIG)) LP_ORIG[key] = I18N[key]; // capture true original once
+      I18N[key] = v[key];
+    });
+    LP_AB.applied = letter;
+    if (typeof applyTranslations === 'function') applyTranslations();
+  } catch (e) { /* leave champion copy on any failure */ }
+}
+function lpRestoreOriginal() {
+  try {
+    Object.keys(LP_ORIG).forEach((key) => { I18N[key] = LP_ORIG[key]; });
+    LP_AB.applied = null;
+  } catch (e) {}
+}
+// Reconcile the displayed gate copy with `letter` (idempotent). 'a' = original copy.
+function lpSetVariantCopy(letter) {
+  if (LP_AB.applied === letter) return;            // already showing the right copy
+  if (letter && letter !== 'a' && LP_VARIANTS[letter]) {
+    if (LP_AB.applied) lpRestoreOriginal();
+    lpSnapshotAndApply(letter);
+  } else if (LP_AB.applied) {                        // back to champion baseline
+    lpRestoreOriginal();
+    try { if (typeof applyTranslations === 'function') applyTranslations(); } catch (e) {}
+  }
+}
+// Synchronous, runs before first render: a returning visitor (sticky cookie) sees
+// THEIR variant copy immediately — no flicker even if the 10s gate already elapsed.
+function lpEarlyTreatment() {
+  try {
+    // QA preview override: ?lpv=a|b forces that variant's popup copy for a visual
+    // check, WITHOUT a cookie or any tracking — so it never skews the live data.
+    const pv = (new URLSearchParams(window.location.search).get('lpv') || '').toLowerCase();
+    if (pv === 'a' || pv === 'b') { LP_AB.preview = true; LP_AB.variant = pv; lpSetVariantCopy(pv); return; }
+    const v = (lpCookie('lp_ab') || '').toLowerCase();
+    if (v && v !== 'a' && LP_VARIANTS[v]) { LP_AB.variant = v; lpSnapshotAndApply(v); }
+  } catch (e) {}
+}
+function lpSendLeave() {
+  lpTrack('leave', { dwellMs: Date.now() - LP_AB.loadAt, maxScroll: LP_AB.maxScroll }); // lpTrack dedups
+}
+async function initLpAb() {
+  try {
+    if (LP_AB.preview) return;   // QA preview: copy already applied; no assignment, no tracking
+    LP_AB.vid = localStorage.getItem('poler_lp_vid') || lpUuid();
+    try { localStorage.setItem('poler_lp_vid', LP_AB.vid); } catch (e) {}
+
+    // max-scroll diagnostic + leave beacon (secondary metrics; primary is conversion)
+    window.addEventListener('scroll', () => {
+      const el = document.documentElement;
+      const denom = (el.scrollHeight - el.clientHeight) || 1;
+      const pct = Math.round((el.scrollTop || window.pageYOffset || 0) / denom * 100);
+      if (pct > LP_AB.maxScroll) LP_AB.maxScroll = Math.max(0, Math.min(100, pct));
+    }, { passive: true });
+    window.addEventListener('pagehide', lpSendLeave);
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') lpSendLeave(); });
+
+    const r = await fetch(`${OTP_BASE}/api/lp-ab/config`, { cache: 'no-store' });
+    const cfg = await r.json();
+    LP_AB.round = Number(cfg.round) || 1;
+    LP_AB.champion = (cfg.champion || 'a').toLowerCase();
+    LP_AB.challenger = (cfg.challenger || '').toLowerCase();
+
+    let v = (lpCookie('lp_ab') || '').toLowerCase();
+    const valid = v && (v === LP_AB.champion || v === LP_AB.challenger);
+    if (!valid) {
+      if (LP_AB.challenger && cfg.status === 'running' && (Math.random() * 100) < (Number(cfg.split) || 0)) {
+        v = LP_AB.challenger;
+      } else {
+        v = LP_AB.champion;
+      }
+      lpSetCookie('lp_ab', v, 30);
+    }
+    LP_AB.variant = v;
+    lpSetVariantCopy(v); // reconcile displayed copy with the final variant (handles a stale cross-round cookie)
+    lpTrack('view');
+  } catch (e) {
+    // fail-safe: keep whatever the early sync treatment chose; record the visit best-effort
+    try { lpTrack('view'); } catch (_) {}
+  }
+}
+
+// ============================================================
 // LEAD CAPTURE — 10-second timer then forced modal, with OTP phone verification
 // ============================================================
 function initLeadCapture() {
@@ -218,8 +367,18 @@ function initLeadCapture() {
         const email = document.getElementById('lead-email').value.trim();
         const localPhone = document.getElementById('lead-phone').value.trim();
         const ccSelect = document.getElementById('country-code');
-        const countryCode = ccSelect.value.replace(/[^+\d]/g, ''); // strip "CA" suffix etc.
-        const phone = countryCode + localPhone.replace(/\D/g, ''); // e.g. "+5511987654321"
+        const countryCode = ccSelect.value.replace(/[^+\d]/g, ''); // "+504"
+        const ccDigits = countryCode.replace(/\D/g, '');           // "504"
+        // Dedupe: the dropdown already supplies the country code, so strip it (and any
+        // intl/trunk prefix) if the lead ALSO typed it — otherwise +504 + "50432540379"
+        // stores "+50450432540379" and the dialer/WhatsApp hit a bad number.
+        let localDigits = localPhone.replace(/\D/g, '');
+        localDigits = localDigits.replace(/^00/, '');              // 00504… intl prefix
+        if (ccDigits && localDigits.startsWith(ccDigits)) {
+            localDigits = localDigits.slice(ccDigits.length);      // they typed the code too
+        }
+        localDigits = localDigits.replace(/^0+/, '');              // national trunk 0
+        const phone = countryCode + localDigits;                   // e.g. "+50432540379"
         // Extract country name from selected option text, e.g. "🇧🇷 +55 (BR)" → "BR"
         const ccText = ccSelect.options[ccSelect.selectedIndex]?.text || '';
         const isoMatch = ccText.match(/\(([A-Z]{2})\)/);
@@ -428,6 +587,9 @@ async function completeLead(overlay, pageWrap) {
             'currency': 'USD',
         });
     }
+
+    // Landing-page A/B: record the conversion for the assigned variant.
+    try { lpTrack('lead'); } catch (e) {}
 
     // Save lead to Airtable CRM and capture alert token
     const langParam = new URLSearchParams(window.location.search).get('lang') || 'en';
@@ -2602,9 +2764,11 @@ document.head.appendChild(spinStyle);
 // ============================================================
 document.addEventListener('DOMContentLoaded', () => {
     // Apply saved language preference on load
+    lpEarlyTreatment(); // landing-page A/B: apply sticky-cookie variant copy SYNC, before first render (no flicker)
     applyTranslations();
     initLanguageSelector();
 
+    initLpAb();        // landing-page A/B: assign new visitors, reconcile copy, track view
     initLeadCapture();
     initHeroProperty();
     initTabs();
