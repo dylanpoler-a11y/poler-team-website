@@ -27,6 +27,13 @@ let currentAgent  = null;   // { name, email }
 let currentView   = 'dashboard';
 let allReminders  = [];
 let filteredReminders = [];
+let allAICalls    = [];        // AI Calls tab
+let aiCallsChart  = null;
+let aiCallsLoading = false;    // in-flight guard — prevents stacked concurrent refreshes
+let aiCallsLastGood = null;    // last successful non-empty response (resilience fallback)
+let aiCallsFetchedAt = 0;      // ms timestamp of last successful fetch (client cache)
+let aiCallsFetchedKey = '';    // the from|to range that cache was fetched for
+const AI_CALLS_CACHE_MS = 60000; // re-opening AI Calls within 60s skips the network round-trip
 let allClients    = [];
 let filteredClients = [];
 let currentClient = null;
@@ -170,6 +177,10 @@ function showDashboard() {
       opt.textContent = a.name;
       agentFilter.appendChild(opt);
     });
+    // Default to the logged-in agent's own reminders (Kevin 2026-06-24) — he can
+    // switch to "All Agents" anytime; this just stops other agents' reminders
+    // cluttering his default view.
+    if (currentAgent && currentAgent.email) agentFilter.value = currentAgent.email;
   }
 
   setupEvents();
@@ -215,27 +226,49 @@ async function loadReminders() {
       const data = await res.json();
       allReminders = data.reminders || [];
       updateReminderBadge();
-      // Always re-render so the Reminders page is in sync even if the user
-      // switches into it later without an extra network round-trip
+      // Always re-render so the Reminders pages are in sync even if the user
+      // switches into them later without an extra network round-trip
       renderReminders();
+      renderSammyReminders();
     }
   } catch (err) {
     console.error('Failed to load reminders:', err);
   }
 }
 
+// Sammy (the AI agent) keeps ONE Pending reminder per active lead — hundreds of
+// rows that would drown the human Reminders view. They live on their own page.
+function isSammyReminder(r) {
+  return String(r.agentName || '').trim().toLowerCase() === 'sammy';
+}
+
 function updateReminderBadge() {
   const badge = document.getElementById('reminder-badge');
-  if (!badge) return;
   const now = Date.now();
-  const pending = allReminders.filter(r =>
-    r.status === 'Pending' && new Date(r.dueAt).getTime() <= now + 86400000 * 7
-  );
-  if (pending.length > 0) {
-    badge.textContent = pending.length;
-    badge.style.display = 'inline-flex';
-  } else {
-    badge.style.display = 'none';
+  if (badge) {
+    const pending = allReminders.filter(r =>
+      !isSammyReminder(r) && r.status === 'Pending' && new Date(r.dueAt).getTime() <= now + 86400000 * 7
+    );
+    if (pending.length > 0) {
+      badge.textContent = pending.length;
+      badge.style.display = 'inline-flex';
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+  // Sammy badge = OVERDUE only. The engine keeps a standing future reminder per
+  // lead, so "pending" is always ~100+; overdue is the actionable signal.
+  const sBadge = document.getElementById('sammy-reminder-badge');
+  if (sBadge) {
+    const overdue = allReminders.filter(r =>
+      isSammyReminder(r) && r.status === 'Pending' && new Date(r.dueAt).getTime() < now
+    );
+    if (overdue.length > 0) {
+      sBadge.textContent = overdue.length;
+      sBadge.style.display = 'inline-flex';
+    } else {
+      sBadge.style.display = 'none';
+    }
   }
 }
 
@@ -245,12 +278,15 @@ function switchView(view) {
   const views = {
     dashboard:     document.getElementById('dashboard-view'),
     reminders:     document.getElementById('reminders-view'),
+    'sammy-reminders': document.getElementById('sammy-reminders-view'),
     listings:      document.getElementById('listings-view'),
     clients:       document.getElementById('clients-view'),
     pipeline:      document.getElementById('pipeline-view'),
     'cons-tasks':  document.getElementById('cons-tasks-view'),
     opportunities: document.getElementById('opportunities-view'),
     partners:      document.getElementById('partners-view'),
+    'ai-calls':    document.getElementById('ai-calls-view'),
+    autoresearch:  document.getElementById('autoresearch-view'),
   };
 
   Object.values(views).forEach(el => { if (el) el.style.display = 'none'; });
@@ -265,6 +301,9 @@ function switchView(view) {
   if (view === 'reminders') {
     if (views.reminders) views.reminders.style.display = 'block';
     renderReminders();
+  } else if (view === 'sammy-reminders') {
+    if (views['sammy-reminders']) views['sammy-reminders'].style.display = 'block';
+    renderSammyReminders();
   } else if (view === 'clients') {
     if (views.clients) views.clients.style.display = 'block';
     renderClients();
@@ -283,9 +322,203 @@ function switchView(view) {
   } else if (view === 'listings') {
     if (views.listings) views.listings.style.display = 'block';
     loadListings();
+  } else if (view === 'ai-calls') {
+    if (views['ai-calls']) views['ai-calls'].style.display = 'block';
+    const fI = document.getElementById('ai-from');
+    if (fI && !fI.value) aiApplyRange('7d', document.querySelector('.ai-range-chip[data-range="7d"]'));
+    else loadAICalls();
+  } else if (view === 'autoresearch') {
+    if (views.autoresearch) views.autoresearch.style.display = 'block';
+    initAutoresearch();
   } else {
     if (views.dashboard) views.dashboard.style.display = 'block';
   }
+}
+
+// ─── Autoresearch dashboards (gated Vercel embeds; the /crm page is already auth-gated) ───
+const AUTORESEARCH_URLS = {
+  overview:    'https://dashboards-hub-phi.vercel.app/?key=PolerDash2026',
+  instantly:   'https://dashboards-hub-phi.vercel.app/instantly?key=PolerDash2026',
+  ads:         'https://conv-dashboard-eight.vercel.app/?key=PolerConv2026',
+  crm:         'https://dashboards-hub-phi.vercel.app/crm?key=PolerDash2026',
+  wa:          'https://dashboards-hub-phi.vercel.app/wa?key=PolerDash2026',
+  reliability: 'https://dashboards-hub-phi.vercel.app/reliability?key=PolerDash2026',
+  facebook:    'https://dashboards-hub-phi.vercel.app/facebook?key=PolerDash2026',
+  copy:        'https://dashboards-hub-phi.vercel.app/copy?key=PolerDash2026',
+};
+let _autoresearchInit = false;
+function loadAutoresearchTab(key) {
+  const iframe = document.getElementById('autoresearch-iframe');
+  if (!iframe || !AUTORESEARCH_URLS[key]) return;
+  iframe.src = AUTORESEARCH_URLS[key];
+  document.querySelectorAll('#autoresearch-subnav .ar-tab').forEach(b => {
+    b.classList.toggle('active', b.dataset.ar === key);
+  });
+}
+function initAutoresearch() {
+  if (_autoresearchInit) return;
+  _autoresearchInit = true;
+  document.querySelectorAll('#autoresearch-subnav .ar-tab').forEach(btn => {
+    btn.addEventListener('click', () => loadAutoresearchTab(btn.dataset.ar));
+  });
+  loadAutoresearchTab('overview');  // lazy-load on first open
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// AI CALLS TAB — joins ElevenLabs (calls/recordings) + CRM (checkmarks).
+// Data route: /api/agent/ai-calls ; audio: /api/agent/ai-call-audio
+// ══════════════════════════════════════════════════════════════════════════
+function aiSetActiveChip(chipEl) {
+  document.querySelectorAll('.ai-range-chip').forEach(c => c.classList.remove('active'));
+  if (chipEl) chipEl.classList.add('active');
+}
+function aiYmd(d) { const p = (n) => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`; }
+function aiApplyRange(range, chipEl) {
+  aiSetActiveChip(chipEl);
+  const now = new Date(); let from = null;
+  if (range === 'today') from = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  else if (range === '7d') { from = new Date(now); from.setDate(now.getDate() - 6); }
+  else if (range === '30d') { from = new Date(now); from.setDate(now.getDate() - 29); }
+  else if (range === 'month') from = new Date(now.getFullYear(), now.getMonth(), 1);
+  else if (range === 'all') from = null;
+  const fI = document.getElementById('ai-from'), tI = document.getElementById('ai-to');
+  if (fI) fI.value = from ? aiYmd(from) : '';
+  if (tI) tI.value = range === 'all' ? '' : aiYmd(now);
+  loadAICalls();
+}
+async function loadAICalls(force = false) {
+  if (!currentPassword) return;
+  const from = (document.getElementById('ai-from') || {}).value || '';
+  const to = (document.getElementById('ai-to') || {}).value || '';
+  const cacheKey = `${from}|${to}`;
+  // Client cache: re-opening AI Calls with the same range within the window renders
+  // the last result INSTANTLY with no network round-trip. The ↻ Refresh button
+  // (force=true) and any date change (different key) always refetch.
+  if (!force && aiCallsLastGood && cacheKey === aiCallsFetchedKey &&
+      (Date.now() - aiCallsFetchedAt) < AI_CALLS_CACHE_MS) {
+    allAICalls = aiCallsLastGood;
+    if (currentView === 'ai-calls') renderAICalls();
+    const lr = document.getElementById('ai-last-refreshed');
+    if (lr) lr.textContent = `Updated ${new Date(aiCallsFetchedAt).toLocaleTimeString()} (en caché)`;
+    return;
+  }
+  // Debounce: ignore rapid re-clicks while a fetch is already in flight.
+  if (aiCallsLoading) return;
+  aiCallsLoading = true;
+  const loading = document.getElementById('ai-calls-loading');
+  const refreshBtn = document.getElementById('ai-refresh-btn');
+  const q = new URLSearchParams({ password: currentPassword });
+  if (from) q.set('from', from);
+  if (to) q.set('to', to);
+  if (loading) loading.style.display = 'block';
+  if (refreshBtn) { refreshBtn.disabled = true; refreshBtn.textContent = 'Loading…'; }
+  try {
+    const res = await fetch(`${CRM_API_BASE}/api/agent/ai-calls?${q}`);
+    if (res.ok) {
+      const data = await res.json();
+      // Only replace the displayed data when the new result is non-empty OR there was
+      // no prior good data — never blank the table just because a rapid refresh got
+      // an empty response from a rate-limited or partial backend call.
+      const newCalls = (data && data.calls) || [];
+      const hadCalls = aiCallsLastGood && ((aiCallsLastGood.calls || []).length > 0);
+      if (newCalls.length > 0 || !hadCalls) {
+        allAICalls = data;
+        aiCallsLastGood = data;
+      } else {
+        // Empty result while we had real data — keep prior data, just update timestamp.
+        allAICalls = aiCallsLastGood;
+        const lr = document.getElementById('ai-last-refreshed');
+        if (lr) lr.textContent = `Updated ${new Date().toLocaleTimeString()} (cached)`;
+      }
+      // Stamp the client cache so re-opening AI Calls with this range skips the round-trip.
+      aiCallsFetchedAt = Date.now();
+      aiCallsFetchedKey = cacheKey;
+    } else {
+      // HTTP error — preserve whatever we last had so the table stays populated.
+      console.warn('AI calls fetch error HTTP', res.status);
+      if (!aiCallsLastGood) allAICalls = { calls: [], stats: {}, byDay: [], error: `HTTP ${res.status}` };
+      // else: leave allAICalls as-is (keeps prior render)
+    }
+  } catch (err) {
+    console.error('Failed to load AI calls:', err);
+    if (!aiCallsLastGood) allAICalls = { calls: [], stats: {}, byDay: [] };
+    // else: leave allAICalls as-is
+  } finally {
+    aiCallsLoading = false;
+    if (loading) loading.style.display = 'none';
+    if (refreshBtn) { refreshBtn.disabled = false; refreshBtn.textContent = '↻ Refresh'; }
+  }
+  if (currentView === 'ai-calls') renderAICalls();
+}
+function aiStatCard(icon, cls, number, label) {
+  return `<div class="stat-card"><div class="stat-icon ${cls}">${icon}</div><div><div class="stat-number">${number}</div><div class="stat-label">${label}</div></div></div>`;
+}
+function aiFmtTime(iso) { if (!iso) return '—'; const d = new Date(iso); return d.toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }); }
+function aiDur(s) { return s >= 60 ? `${Math.floor(s / 60)}m ${s % 60}s` : `${s}s`; }
+function aiChk(v) { return v ? '<span class="ai-chk yes">✓</span>' : '<span class="ai-chk no">—</span>'; }
+function aiEsc(s) { return String(s || '').replace(/[&<>"]/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[m])); }
+function renderAICalls() {
+  const data = allAICalls || {};
+  const calls = data.calls || [];
+  const s = data.stats || { total: 0, picked: 0, pickupRate: 0 };
+  const totalSecs = calls.reduce((a, c) => a + (c.durationSecs || 0), 0);
+  const avg = calls.length ? Math.round(totalSecs / calls.length) : 0;
+  const sr = document.getElementById('ai-stats-row');
+  if (sr) sr.innerHTML =
+    aiStatCard('📞', 'blue', s.total, 'Total calls') +
+    aiStatCard('✅', 'green', `${s.picked} <small style="font-size:0.8rem;color:var(--text-muted)">(${s.pickupRate || 0}%)</small>`, 'Picked up') +
+    aiStatCard('🚫', 'red', (s.total || 0) - (s.picked || 0), 'No answer') +
+    aiStatCard('⏱️', 'teal', `${avg}s`, 'Avg duration');
+  const rc = document.getElementById('ai-range-count'); if (rc) rc.textContent = `${calls.length} calls`;
+  const lr = document.getElementById('ai-last-refreshed'); if (lr) lr.textContent = `Updated ${new Date().toLocaleTimeString()}`;
+
+  const byDay = data.byDay || [];
+  const ctx = document.getElementById('ai-chart');
+  if (ctx && window.Chart) {
+    if (aiCallsChart) aiCallsChart.destroy();
+    aiCallsChart = new Chart(ctx, {
+      type: 'bar',
+      data: { labels: byDay.map((b) => b.date.slice(5)), datasets: [
+        { label: 'Calls', data: byDay.map((b) => b.total), backgroundColor: '#c7d2fe', borderRadius: 4 },
+        { label: 'Picked up', data: byDay.map((b) => b.picked), backgroundColor: '#1a2744', borderRadius: 4 } ] },
+      options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'top', labels: { boxWidth: 12, font: { size: 11 } } } }, scales: { x: { grid: { display: false } }, y: { beginAtZero: true, ticks: { precision: 0 } } } },
+    });
+  }
+
+  const tb = document.getElementById('ai-calls-tbody'); if (!tb) return;
+  if (!calls.length) { tb.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:2.5rem;color:var(--text-muted)">No calls in this range yet.</td></tr>'; return; }
+  tb.innerHTML = calls.map((c) => {
+    const clickable = !!c.leadId;
+    return `
+    <tr${clickable ? ` data-lead-id="${aiEsc(c.leadId)}" class="ai-call-row-clickable" title="Open lead profile"` : ''}>
+      <td>${aiFmtTime(c.startIso)}</td>
+      <td>${aiEsc(c.leadName)}</td>
+      <td>${aiEsc(c.phone) || '—'}</td>
+      <td><span class="ai-mode ${c.mode}">${(c.mode || '').replace('_', ' ')}</span></td>
+      <td>${aiDur(c.durationSecs)}</td>
+      <td>${c.pickedUp ? '<span class="ai-pickup-yes">✓ Yes</span>' : '<span class="ai-pickup-no">✗ No</span>'}</td>
+      <td>${c.hasAudio ? `<button class="ai-play" data-id="${c.conversationId}">▶ Play</button>` : '—'}</td>
+      <td class="center">${aiChk(c.checks && c.checks.noteLogged)}</td>
+      <td class="center">${aiChk(c.checks && c.checks.reminderCreated)}</td>
+      <td class="center">${aiChk(c.checks && c.checks.alertsSet)}</td>
+      <td class="center">${aiChk(c.checks && c.checks.whatsappSent)}</td>
+    </tr>`;
+  }).join('');
+  // Attach click listeners for rows that have a matched lead
+  tb.querySelectorAll('tr.ai-call-row-clickable').forEach(row => {
+    row.addEventListener('click', (e) => {
+      // Don't steal clicks on the audio play button
+      if (e.target.closest('button.ai-play, audio')) return;
+      openPanel(row.dataset.leadId);
+    });
+  });
+}
+function aiPlayAudio(btn) {
+  const id = btn.dataset.id;
+  const a = document.createElement('audio');
+  a.controls = true; a.autoplay = true;
+  a.src = `${CRM_API_BASE}/api/agent/ai-call-audio?id=${encodeURIComponent(id)}&password=${encodeURIComponent(currentPassword)}`;
+  btn.replaceWith(a);
 }
 
 // ── RENDER REMINDERS ───────────────────────────────────────────────────────
@@ -304,6 +537,7 @@ function renderReminders() {
   const filterAgent  = agentFilter ? agentFilter.value : '';
 
   filteredReminders = allReminders.filter(r => {
+    if (isSammyReminder(r)) return false;   // Sammy's live on their own page
     if (filterStatus && r.status !== filterStatus) return false;
     if (filterAgent && r.agentEmail.toLowerCase() !== filterAgent.toLowerCase()) return false;
     return true;
@@ -353,53 +587,115 @@ function renderReminders() {
 
   const now = Date.now();
 
-  tbody.innerHTML = filteredReminders.map(r => {
-    const dueDate = new Date(r.dueAt);
-    const isOverdue = r.status === 'Pending' && dueDate.getTime() < now;
-    const rowClass = isOverdue ? 'reminder-overdue' : '';
-    const actionClass = 'action-type-' + (r.actionType || 'Other').replace(/\s+/g, '-');
+  tbody.innerHTML = filteredReminders.map(r => reminderRowHtml(r, now)).join('');
+}
 
-    const dueStr = dueDate.getTime() ? formatReminderDate(dueDate) : '—';
-    const statusBadge = r.status === 'Pending'
-      ? (isOverdue ? '<span class="reminder-status-badge overdue">Overdue</span>' : '<span class="reminder-status-badge pending">Pending</span>')
-      : r.status === 'Completed'
-        ? '<span class="reminder-status-badge completed">Done</span>'
-        : '<span class="reminder-status-badge cancelled">Cancelled</span>';
+// Shared row template for the human Reminders view and Sammy's Reminders view.
+// Element ids are keyed by reminder id, and a reminder renders in exactly one
+// of the two tables, so ids never collide.
+function reminderRowHtml(r, now) {
+  const dueDate = new Date(r.dueAt);
+  const isOverdue = r.status === 'Pending' && dueDate.getTime() < now;
+  const rowClass = isOverdue ? 'reminder-overdue' : '';
+  const actionClass = 'action-type-' + (r.actionType || 'Other').replace(/\s+/g, '-');
 
-    // Format for datetime-local input (YYYY-MM-DDTHH:MM)
-    const dtLocal = dueDate.getTime() ? `${dueDate.getFullYear()}-${String(dueDate.getMonth()+1).padStart(2,'0')}-${String(dueDate.getDate()).padStart(2,'0')}T${String(dueDate.getHours()).padStart(2,'0')}:${String(dueDate.getMinutes()).padStart(2,'0')}` : '';
+  const dueStr = dueDate.getTime() ? formatReminderDate(dueDate) : '—';
+  const statusBadge = r.status === 'Pending'
+    ? (isOverdue ? '<span class="reminder-status-badge overdue">Overdue</span>' : '<span class="reminder-status-badge pending">Pending</span>')
+    : r.status === 'Completed'
+      ? '<span class="reminder-status-badge completed">Done</span>'
+      : '<span class="reminder-status-badge cancelled">Cancelled</span>';
 
-    const actions = r.status === 'Pending'
-      ? `<button class="reminder-action-btn done" onclick="completeReminder('${r.id}')">Done</button>
-         <button class="reminder-action-btn cancel" onclick="cancelReminder('${r.id}')">Cancel</button>
-         <button class="reminder-action-btn edit" onclick="toggleReminderEdit('${r.id}')">Edit</button>`
-      : '';
+  // Format for datetime-local input (YYYY-MM-DDTHH:MM)
+  const dtLocal = dueDate.getTime() ? `${dueDate.getFullYear()}-${String(dueDate.getMonth()+1).padStart(2,'0')}-${String(dueDate.getDate()).padStart(2,'0')}T${String(dueDate.getHours()).padStart(2,'0')}:${String(dueDate.getMinutes()).padStart(2,'0')}` : '';
 
-    const agentOptions = AGENTS.map(a =>
-      `<option value="${escHtml(a.name)}" ${a.name === r.agentName ? 'selected' : ''}>${escHtml(a.name)}</option>`
-    ).join('');
+  const actions = r.status === 'Pending'
+    ? `<button class="reminder-action-btn done" onclick="completeReminder('${r.id}')">Done</button>
+       <button class="reminder-action-btn cancel" onclick="cancelReminder('${r.id}')">Cancel</button>
+       <button class="reminder-action-btn edit" onclick="toggleReminderEdit('${r.id}')">Edit</button>`
+    : '';
 
-    return `
-      <tr class="${rowClass}">
-        <td class="td-muted">
-          <span id="reminder-due-text-${r.id}">${escHtml(dueStr)}</span>
-          <div id="reminder-edit-${r.id}" class="reminder-edit-row" style="display:none;">
-            <input type="datetime-local" id="reminder-dt-${r.id}" class="reminder-dt-input" value="${dtLocal}">
-            <select id="reminder-agent-${r.id}" class="reminder-dt-input" style="margin-top:4px">${agentOptions}</select>
-            <button class="reminder-action-btn done" style="margin-top:4px" onclick="saveReminderEdit('${r.id}')">Save</button>
-          </div>
-        </td>
-        <td>
-          <div class="lead-name" style="cursor:pointer" onclick="openPanelFromReminder('${escHtml(r.leadRecordId)}')">${escHtml(r.leadName || '—')}</div>
-          <div class="td-muted" style="font-size:0.75rem">${escHtml(r.leadPhone || '')}</div>
-        </td>
-        <td><span class="action-type-badge ${actionClass}">${escHtml(r.actionType || '—')}</span></td>
-        <td class="td-muted" style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escHtml(r.note)}">${escHtml(r.note || '—')}</td>
-        <td class="td-muted"><span id="reminder-agent-text-${r.id}">${escHtml(r.agentName || '—')}</span></td>
-        <td>${statusBadge}</td>
-        <td>${actions}</td>
-      </tr>`;
-  }).join('');
+  const agentOptions = AGENTS.map(a =>
+    `<option value="${escHtml(a.name)}" ${a.name === r.agentName ? 'selected' : ''}>${escHtml(a.name)}</option>`
+  ).join('');
+
+  return `
+    <tr class="${rowClass}">
+      <td class="td-muted">
+        <span id="reminder-due-text-${r.id}">${escHtml(dueStr)}</span>
+        <div id="reminder-edit-${r.id}" class="reminder-edit-row" style="display:none;">
+          <input type="datetime-local" id="reminder-dt-${r.id}" class="reminder-dt-input" value="${dtLocal}">
+          <select id="reminder-agent-${r.id}" class="reminder-dt-input" style="margin-top:4px">${agentOptions}</select>
+          <button class="reminder-action-btn done" style="margin-top:4px" onclick="saveReminderEdit('${r.id}')">Save</button>
+        </div>
+      </td>
+      <td>
+        <div class="lead-name" style="cursor:pointer" onclick="openPanelFromReminder('${escHtml(r.leadRecordId)}')">${escHtml(r.leadName || '—')}</div>
+        <div class="td-muted" style="font-size:0.75rem">${escHtml(r.leadPhone || '')}</div>
+      </td>
+      <td><span class="action-type-badge ${actionClass}">${escHtml(r.actionType || '—')}</span></td>
+      <td class="td-muted" style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escHtml(r.note)}">${escHtml(r.note || '—')}</td>
+      <td class="td-muted"><span id="reminder-agent-text-${r.id}">${escHtml(r.agentName || '—')}</span></td>
+      <td>${statusBadge}</td>
+      <td>${actions}</td>
+    </tr>`;
+}
+
+// ── RENDER SAMMY'S REMINDERS ───────────────────────────────────────────────
+// This page IS Sammy's schedule (Kevin 2026-06-12): every planned touch keeps
+// exactly one Pending reminder (followup mirror + crm-react enroll-time
+// reminders), so Pending = what Sammy does next, Completed = what it did.
+// Same table shape as the human view, but ONLY Agent Name "Sammy" rows —
+// the AI engine's next-planned-touch mirror (one Pending reminder per lead).
+function renderSammyReminders() {
+  const tbody   = document.getElementById('sammy-reminders-tbody');
+  const table   = document.getElementById('sammy-reminders-table');
+  const empty   = document.getElementById('sammy-reminders-empty');
+  const loading = document.getElementById('sammy-reminders-loading');
+  if (!tbody || !table) return;
+
+  if (loading) loading.style.display = 'none';
+
+  const statusFilter = document.getElementById('sammy-reminder-status-filter');
+  const filterStatus = statusFilter ? statusFilter.value : '';
+
+  const rows = allReminders.filter(r => {
+    if (!isSammyReminder(r)) return false;
+    if (filterStatus && r.status !== filterStatus) return false;
+    return true;
+  });
+
+  // Soonest due first so the next calls Sammy will make sit at the top.
+  rows.sort((a, b) => new Date(a.dueAt || 0) - new Date(b.dueAt || 0));
+
+  const countLabel = document.getElementById('sammy-reminders-count-label');
+  if (countLabel) {
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const endOfToday   = startOfToday + 24 * 60 * 60 * 1000;
+    let dueTodayCount = 0, overdueCount = 0;
+    rows.forEach(r => {
+      if (r.status !== 'Pending') return;
+      const due = r.dueAt ? new Date(r.dueAt).getTime() : NaN;
+      if (isNaN(due)) return;
+      if (due < Date.now()) overdueCount++;
+      else if (due < endOfToday) dueTodayCount++;
+    });
+    countLabel.textContent = `${rows.length} total · ${dueTodayCount} due later today · ${overdueCount} overdue`;
+    countLabel.style.display = 'inline-block';
+  }
+
+  if (rows.length === 0) {
+    table.style.display = 'none';
+    if (empty) empty.style.display = 'block';
+    return;
+  }
+
+  if (empty) empty.style.display = 'none';
+  table.style.display = 'table';
+
+  const now = Date.now();
+  tbody.innerHTML = rows.map(r => reminderRowHtml(r, now)).join('');
 }
 
 function formatReminderDate(date) {
@@ -603,6 +899,8 @@ function setupEvents() {
         exportCSV();
       } else if (action === 'reminders') {
         switchView('reminders');
+      } else if (action === 'sammy-reminders') {
+        switchView('sammy-reminders');
       } else if (action === 'clients') {
         switchView('clients');
       } else if (action === 'pipeline') {
@@ -613,6 +911,12 @@ function setupEvents() {
         switchView('opportunities');
       } else if (action === 'partners') {
         switchView('partners');
+      } else if (action === 'listings') {
+        switchView('listings');
+      } else if (action === 'ai-calls') {
+        switchView('ai-calls');
+      } else if (action === 'autoresearch') {
+        switchView('autoresearch');
       } else if (action === 'refresh') {
         switchView('dashboard');
         loadLeads();
@@ -620,6 +924,19 @@ function setupEvents() {
         switchView('dashboard');
       }
     });
+  });
+
+  // AI Calls view events (controls exist in DOM from load; wire once)
+  document.querySelectorAll('.ai-range-chip').forEach(c =>
+    c.addEventListener('click', () => aiApplyRange(c.dataset.range, c)));
+  const aiApplyBtn = document.getElementById('ai-apply-btn');
+  const aiRefreshBtn = document.getElementById('ai-refresh-btn');
+  if (aiApplyBtn) aiApplyBtn.addEventListener('click', () => { aiSetActiveChip(null); loadAICalls(true); });
+  if (aiRefreshBtn) aiRefreshBtn.addEventListener('click', () => loadAICalls(true));
+  const aiTbody = document.getElementById('ai-calls-tbody');
+  if (aiTbody) aiTbody.addEventListener('click', (e) => {
+    const btn = e.target.closest('.ai-play');
+    if (btn) aiPlayAudio(btn);
   });
 
   // Reminder view events
@@ -630,9 +947,24 @@ function setupEvents() {
   if (reminderAgentFilter)  reminderAgentFilter.addEventListener('change', renderReminders);
   if (refreshRemindersBtn)  refreshRemindersBtn.addEventListener('click', loadReminders);
 
+  // Sammy's Reminders view events
+  const sammyStatusFilter = document.getElementById('sammy-reminder-status-filter');
+  const refreshSammyBtn   = document.getElementById('refresh-sammy-reminders-btn');
+  if (sammyStatusFilter) sammyStatusFilter.addEventListener('change', renderSammyReminders);
+  if (refreshSammyBtn)   refreshSammyBtn.addEventListener('click', loadReminders);
+
   // Panel close
   document.getElementById('panel-close').addEventListener('click', closePanel);
   document.getElementById('panel-overlay').addEventListener('click', closePanel);
+
+  // Expand / restore the panel (more room for the Flash coach)
+  document.getElementById('panel-expand')?.addEventListener('click', togglePanelExpand);
+
+  // Close/collapse the Flash coach back to the launch button (stops the mic)
+  document.getElementById('panel-coach-close')?.addEventListener('click', resetCoachSection);
+
+  // Flash coach → CRM: log each post-call summary as a note on the lead
+  window.addEventListener('message', handleFlashMessage);
 
   // Escape key closes panel
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closePanel(); });
@@ -702,6 +1034,12 @@ function renderAll() {
 }
 
 // ── APPLY FILTERS + SORT ───────────────────────────────────────────────────
+// Buyer leads = buyer/broker contacts for one of OUR listings (Source URL = "buyer:<MLS#>").
+// They live under the Listings tab, NOT the main dashboard/table/stats/export.
+function isBuyerLead(lead) {
+  return typeof lead?.sourceUrl === 'string' && lead.sourceUrl.startsWith('buyer:');
+}
+
 function applyFilters() {
   const searchEl  = document.getElementById('search-input');
   const statusEl  = document.getElementById('status-filter');
@@ -718,6 +1056,9 @@ function applyFilters() {
   const rangeDays = { '7': 7, '30': 30, '90': 90 };
 
   filteredLeads = allLeads.filter(lead => {
+    // Buyer leads for our listings live under the Listings tab, not here
+    if (isBuyerLead(lead)) return false;
+
     // Search filter
     if (search) {
       const haystack = [lead.name, lead.email, lead.phone, lead.listingAddress, lead.assignedTo]
@@ -763,7 +1104,7 @@ function applyFilters() {
 
   const countEl = document.getElementById('lead-count');
   if (countEl) {
-    countEl.textContent = `Showing ${filteredLeads.length} of ${allLeads.length} leads`;
+    countEl.textContent = `Showing ${filteredLeads.length} of ${allLeads.filter(l => !isBuyerLead(l)).length} leads`;
   }
 }
 
@@ -835,6 +1176,16 @@ function renderTable() {
 function getAlertSummary(lead) {
   if (!lead.alertActive) return '<span class="td-muted">—</span>';
 
+  // Hard red-flag: alert has returned 0 matches multiple runs in a row.
+  // Surface this BEFORE the normal summary so Kevin can't miss it.
+  let reviewChip = '';
+  if (lead.alertNeedsReview) {
+    const reason = lead.alertLastSkipReason || `${lead.alertZeroRuns || 0} consecutive zero-result runs`;
+    reviewChip = `<span class="alert-needs-review-badge" title="${escHtml(reason)}">⚠ Needs review</span> `;
+  } else if ((lead.alertZeroRuns || 0) > 0 && lead.alertLastSkipReason) {
+    reviewChip = `<span class="alert-zero-runs-badge" title="${escHtml(lead.alertLastSkipReason)}">${lead.alertZeroRuns}× empty</span> `;
+  }
+
   const parts = [];
   if (lead.alertCities) {
     const cities = lead.alertCities.split(',').map(c => c.trim()).filter(Boolean);
@@ -851,9 +1202,9 @@ function getAlertSummary(lead) {
     else if (max) parts.push(`Up to ${max}`);
   }
 
-  if (parts.length === 0) return '<span class="alert-active-badge">Active</span>';
+  if (parts.length === 0) return `${reviewChip}<span class="alert-active-badge">Active</span>`;
   const summary = parts.join(' · ');
-  return `<span class="alert-active-badge" title="${escHtml(summary)}">✓ ${escHtml(summary.length > 35 ? summary.substring(0, 35) + '…' : summary)}</span>`;
+  return `${reviewChip}<span class="alert-active-badge" title="${escHtml(summary)}">✓ ${escHtml(summary.length > 35 ? summary.substring(0, 35) + '…' : summary)}</span>`;
 }
 
 // ── RENDER STATS ───────────────────────────────────────────────────────────
@@ -866,12 +1217,13 @@ function renderStats() {
   const hotEl     = document.getElementById('stat-hot');
   const apptEl    = document.getElementById('stat-appointments');
 
-  if (totalEl) totalEl.textContent = allLeads.length;
-  if (newEl)   newEl.textContent   = allLeads.filter(l => {
+  const dashLeads = allLeads.filter(l => !isBuyerLead(l));
+  if (totalEl) totalEl.textContent = dashLeads.length;
+  if (newEl)   newEl.textContent   = dashLeads.filter(l => {
     return now - new Date(l.createdAt).getTime() < week;
   }).length;
-  if (hotEl)   hotEl.textContent   = allLeads.filter(l => l.status === 'Hot').length;
-  if (apptEl)  apptEl.textContent  = allLeads.filter(l => l.status === 'Appointment Set').length;
+  if (hotEl)   hotEl.textContent   = dashLeads.filter(l => l.status === 'Hot').length;
+  if (apptEl)  apptEl.textContent  = dashLeads.filter(l => l.status === 'Appointment Set').length;
 }
 
 // ── OPEN LEAD PANEL ────────────────────────────────────────────────────────
@@ -923,11 +1275,19 @@ function populatePanel(lead) {
 
   // Action buttons
   const phoneRaw = (lead.phone || '').replace(/\D/g, '');
-  document.getElementById('panel-call').href      = lead.phone ? `tel:${lead.phone}` : '#';
-  document.getElementById('panel-email').href     = lead.email ? `mailto:${lead.email}` : '#';
   document.getElementById('panel-whatsapp').href  = phoneRaw
     ? `https://wa.me/${phoneRaw}`
     : '#';
+  // WhatsApp Call: open WhatsApp Desktop straight to this lead's chat via the
+  // native scheme, then Kevin taps the green call icon. No URL scheme can ring
+  // the call directly (WhatsApp has no click-to-call deep link), so this is the
+  // 1-click-to-chat + 1-tap-to-call path. The native scheme opens the desktop
+  // app in place (no blank browser tab).
+  const waCallBtn = document.getElementById('panel-wa-call');
+  if (waCallBtn) {
+    waCallBtn.href = phoneRaw ? `whatsapp://send?phone=${phoneRaw}` : '#';
+    waCallBtn.onclick = phoneRaw ? null : (e => e.preventDefault());
+  }
 
   // Property details
   document.getElementById('panel-addr').textContent  = lead.listingAddress || '—';
@@ -949,6 +1309,7 @@ function populatePanel(lead) {
   statusSelect.value = lead.status || 'New';
   document.getElementById('panel-new-note').value = '';
   renderNotesHistory(lead.notes || '');
+  renderCallHistory(lead);
 
   // Alert preferences
   document.getElementById('panel-alert-active').checked = !!lead.alertActive;
@@ -997,6 +1358,7 @@ function populatePanel(lead) {
   renderSavedProperties(lead);
   renderPropertiesViewed(lead);
   renderLeadReminders(lead);
+  renderFlashRecordings(lead);
 
   // Wire share-property button (rebind each time so it uses current lead)
   const shareBtn = document.getElementById('panel-share-property');
@@ -1004,7 +1366,68 @@ function populatePanel(lead) {
     shareBtn.onclick = () => openSharePropertyModal(lead);
   }
 
+  // Wire "Enviar 3 propiedades" button (Kevin 2026-07-02): queues a manual
+  // Sammy send — 3 fresh listings matching this lead's ALERT criteria, one
+  // WhatsApp message from the 305 (same format as the drip). The engine picks
+  // it up within ~3 min; outside 9am-8pm lead-local it waits for the morning.
+  const sendPropsBtn = document.getElementById('panel-send-props');
+  if (sendPropsBtn) {
+    sendPropsBtn.disabled = false;
+    sendPropsBtn.textContent = '🏠 Enviar 3 propiedades';
+    sendPropsBtn.onclick = () => sendMatchingProps(lead, sendPropsBtn);
+  }
+
+  // Reset + wire the Flash live-coach section for THIS lead (collapsed until clicked).
+  resetCoachSection();
+  const coachBtn = document.getElementById('panel-coach-start');
+  if (coachBtn) coachBtn.onclick = () => openFlashCoach(lead);
+
   // Panel is already opened at the top of openPanel(); nothing more to do.
+}
+
+// ── SEND 3 MATCHING PROPERTIES (Kevin 2026-07-02) ──────────────────────────
+// Queues a manual Sammy send via /api/agent/queue-props → Railway engine.
+// The engine sends 3 FRESH listings matching the lead's ALERT criteria in ONE
+// WhatsApp message from Kevin's 305 (drip format). Requires alert criteria —
+// warn upfront so Kevin fixes the profile instead of wondering why nothing sent.
+async function sendMatchingProps(lead, btn) {
+  if (!lead) return;
+  const hasCriteria = Boolean(
+    (lead.alertCities || '').trim() || Number(lead.priceMax) > 0 || Number(lead.priceMin) > 0
+    || Number(lead.alertPriceMax) > 0 || Number(lead.alertPriceMin) > 0
+    || Number(lead.alertBeds) > 0 || (lead.alertPropertyTypes || '').trim()
+  );
+  if (!hasCriteria) {
+    alert('Este lead no tiene criterios de búsqueda (ciudades/precio) en su perfil de alertas.\n\nConfigura las alertas primero — sin criterios Claudia no envía nada (evita mandar propiedades al azar).');
+    return;
+  }
+  if (!confirm(`Enviar a ${lead.name || 'este lead'} 3 propiedades nuevas que cumplan sus criterios por WhatsApp?\n\nSale en ~3 min desde el 305 (si es de noche para el lead, espera a las 9am de su hora).`)) return;
+  const prev = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = '⏳ Enviando…';
+  try {
+    const res = await fetch(`${CRM_API_BASE}/api/agent/queue-props`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: currentPassword, leadId: lead.id }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (res.ok && data.ok) {
+      btn.textContent = data.already ? '✓ Ya estaba en cola' : '✓ En cola — sale en ~3 min';
+    } else {
+      btn.textContent = '✗ Error — reintentar';
+      btn.disabled = false;
+      alert(`No se pudo encolar el envío: ${data.error || res.status}`);
+      return;
+    }
+  } catch (e) {
+    btn.textContent = '✗ Error — reintentar';
+    btn.disabled = false;
+    alert(`No se pudo encolar el envío: ${e.message}`);
+    return;
+  }
+  // Re-enable after a bit so a legit second send (days later, same session) works.
+  setTimeout(() => { btn.disabled = false; btn.textContent = prev; }, 30000);
 }
 
 // ── SHARE PROPERTY MODAL ───────────────────────────────────────────────────
@@ -1154,9 +1577,190 @@ function initShareModal() {
 
 // ── CLOSE LEAD PANEL ───────────────────────────────────────────────────────
 function closePanel() {
-  document.getElementById('lead-panel').classList.remove('open');
+  const panel = document.getElementById('lead-panel');
+  panel.classList.remove('open');
+  panel.classList.remove('panel-expanded');
   document.getElementById('panel-overlay').classList.remove('show');
+  resetCoachSection(); // blank the iframe → stops the Flash mic/stream
   activeLead = null;
+}
+
+// ── FLASH LIVE COACH (embedded iframe) ──────────────────────────────────────
+// The coach lives at Flash's /embed route. We fetch the base URL + scoped embed
+// token from the gated /api/flash-config (so the token never sits in this public
+// crm.js), then point the iframe at /embed?leadId=&key=. Lazy: only on click.
+let _flashConfig = null;
+async function getFlashConfig() {
+  if (_flashConfig) return _flashConfig;
+  const res = await fetch(`${CRM_API_BASE}/api/flash-config?password=${encodeURIComponent(currentPassword)}`);
+  if (!res.ok) throw new Error('flash-config ' + res.status);
+  _flashConfig = await res.json();
+  return _flashConfig;
+}
+
+function resetCoachSection() {
+  const iframe = document.getElementById('panel-coach-iframe');
+  const launch = document.getElementById('panel-coach-launch');
+  const closeBtn = document.getElementById('panel-coach-close');
+  if (iframe) { iframe.src = ''; iframe.style.display = 'none'; }
+  if (launch) launch.style.display = 'block';
+  if (closeBtn) closeBtn.style.display = 'none';
+}
+
+async function openFlashCoach(lead) {
+  if (!lead || !lead.id) return;
+  const iframe = document.getElementById('panel-coach-iframe');
+  const launch = document.getElementById('panel-coach-launch');
+  const btn    = document.getElementById('panel-coach-start');
+  if (!iframe) return;
+  if (btn) { btn.disabled = true; btn.textContent = 'Cargando coach…'; }
+  try {
+    const cfg = await getFlashConfig();
+    iframe.src = `${cfg.flashBaseUrl}/embed?leadId=${encodeURIComponent(lead.id)}&key=${encodeURIComponent(cfg.embedToken)}`;
+    iframe.style.display = 'block';
+    if (launch) launch.style.display = 'none';
+    const closeBtn = document.getElementById('panel-coach-close');
+    if (closeBtn) closeBtn.style.display = 'inline-block';
+  } catch (e) {
+    alert('No se pudo cargar Flash. Revisa la configuración (FLASH_EMBED_TOKEN / FLASH_BASE_URL).');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '🎯 Iniciar coaching en vivo'; }
+  }
+}
+
+function togglePanelExpand() {
+  document.getElementById('lead-panel')?.classList.toggle('panel-expanded');
+}
+
+// Render the lead's Flash call recordings (newest first) as dated audio players.
+// Source = lead.flashRecordings (JSON array of {url, recordedAt, durationSec, callId}).
+function renderFlashRecordings(lead) {
+  const section = document.getElementById('panel-recordings-section');
+  const list = document.getElementById('panel-recordings-list');
+  if (!section || !list) return;
+  let recs = [];
+  try {
+    const raw = lead && lead.flashRecordings;
+    const parsed = typeof raw === 'string' ? JSON.parse(raw || '[]') : (raw || []);
+    if (Array.isArray(parsed)) recs = parsed.filter(r => r && typeof r.url === 'string' && /^https:\/\//i.test(r.url));
+  } catch (e) { recs = []; }
+  if (!recs.length) { section.style.display = 'none'; list.innerHTML = ''; return; }
+  const esc = (s) => String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+  section.style.display = 'block';
+  list.innerHTML = recs.map(r => {
+    let when = '';
+    if (r.recordedAt && !isNaN(Date.parse(r.recordedAt))) {
+      when = new Date(r.recordedAt).toLocaleString('en-US', {
+        month: 'numeric', day: 'numeric', year: 'numeric',
+        hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'America/New_York',
+      });
+    }
+    const s = Math.max(0, Math.round(Number(r.durationSec) || 0));
+    const dur = s ? `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}` : '';
+    const meta = [when, dur].filter(Boolean).join('  ·  ') || 'Grabación';
+    return `<div style="margin-bottom:10px;">
+      <div style="font-size:12px;color:#475569;font-weight:600;margin-bottom:4px;">${esc(meta)}</div>
+      <audio controls preload="none" src="${esc(r.url)}" style="width:100%;height:36px;"></audio>
+    </div>`;
+  }).join('');
+}
+
+// Flash → CRM: when a coached call ends, Flash postMessages the summary. We verify
+// the origin, then log it as an append-only note on the lead via the audited
+// log-note endpoint (Flash itself never writes to the CRM).
+async function handleFlashMessage(event) {
+  let flashOrigin;
+  try {
+    const cfg = _flashConfig || (await getFlashConfig().catch(() => null));
+    if (!cfg) return;
+    flashOrigin = new URL(cfg.flashBaseUrl).origin;
+  } catch { return; }
+  if (event.origin !== flashOrigin) return; // only trust the configured Flash origin
+
+  const data = event.data;
+  if (!data) return;
+
+  // A coached call ended → save its recording (audio on Vercel Blob) under "Flash voice recordings".
+  if (data.type === 'flash:recording' && data.leadId && data.url) {
+    try {
+      const res = await fetch(`${CRM_API_BASE}/api/agent/save-recording`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: currentPassword, leadId: data.leadId, url: data.url, recordedAt: data.recordedAt, durationSec: data.durationSec, callId: data.callId }),
+      });
+      if (res.ok && activeLead && activeLead.id === data.leadId) {
+        const { recording } = await res.json().catch(() => ({}));
+        if (recording) {
+          let cur = [];
+          try { cur = JSON.parse(activeLead.flashRecordings || '[]'); } catch (e) { cur = []; }
+          // Only dedupe on a REAL callId — legacy rows stored callId:'' and an empty-vs-empty
+          // match would wipe every prior recording from the local list.
+          cur = Array.isArray(cur) ? cur.filter(r => r && (!recording.callId || r.callId !== recording.callId)) : [];
+          activeLead.flashRecordings = JSON.stringify([recording, ...cur]);
+          renderFlashRecordings(activeLead);
+        }
+      }
+    } catch (e) { /* best-effort — the recording upload already happened */ }
+    return;
+  }
+
+  if (data.type !== 'flash:call-ended' || !data.leadId || !data.note) return;
+
+  // Since 2026-07-03 Flash's SERVER writes the note + reminder itself right after judging
+  // (this postMessage used to be the ONLY delivery path and silently lost the note whenever
+  // the iframe died during the ~20s judge wait or the run route errored — Alfredo Carvajal).
+  // data.noteLogged / data.reminderCreated say what the server already did: when set we only
+  // refresh the panel; when missing/false we fall back to writing from here as before.
+  if (data.noteLogged) {
+    if (activeLead && activeLead.id === data.leadId) {
+      // Display-only approximation of log-note's auto-stamp; corrects itself on next lead load.
+      const stamp = new Date().toLocaleString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });
+      activeLead.notes = `[${stamp} — Flash Coach] ${data.note}\n\n${activeLead.notes || ''}`.trim();
+      renderNotesHistory(activeLead.notes);
+    }
+  } else {
+    try {
+      const res = await fetch(`${CRM_API_BASE}/api/agent/log-note`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: currentPassword, leadId: data.leadId, note: data.note, agent: 'Flash Coach' }),
+      });
+      if (res.ok && activeLead && activeLead.id === data.leadId) {
+        const { entry } = await res.json().catch(() => ({}));
+        if (entry) {
+          activeLead.notes = `${entry}\n\n${activeLead.notes || ''}`.trim();
+          renderNotesHistory(activeLead.notes);
+        }
+      }
+    } catch (e) { /* best-effort — the call already happened */ }
+  }
+
+  // Follow-up reminder recommended by the call's outcome (none for wrong-number/dead calls).
+  if (data.reminder && data.reminder.dueAt && !isNaN(Date.parse(data.reminder.dueAt))) {
+    const lead = activeLead && activeLead.id === data.leadId ? activeLead : null;
+    try {
+      if (!data.reminderCreated) {
+        const r = await fetch(`${CRM_API_BASE}/api/create-reminder`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            password: currentPassword,
+            leadRecordId: data.leadId,
+            leadName: lead ? (lead.name || '') : '',
+            leadEmail: lead ? (lead.email || '') : '',
+            leadPhone: lead ? (lead.phone || '') : '',
+            agentName: 'Flash Coach',
+            actionType: ['Call', 'WhatsApp', 'Email'].includes(data.reminder.actionType) ? data.reminder.actionType : 'Follow Up',
+            dueAt: data.reminder.dueAt,
+            note: String(data.reminder.note || 'Seguimiento post-llamada').slice(0, 200),
+          }),
+        });
+        if (!r.ok) return;
+      }
+      await loadReminders(); // refresh the global list so the panel + reminders views see it
+      if (lead) renderLeadReminders(lead);
+    } catch (e) { /* best-effort */ }
+  }
 }
 
 // ── RENDER EXISTING REMINDERS FOR A LEAD IN THE PANEL ────────────────────
@@ -1308,6 +1912,7 @@ async function syncCallNotes() {
       if (refreshedLead) {
         activeLead = refreshedLead;
         renderNotesHistory(refreshedLead.notes || '');
+        renderCallHistory(refreshedLead);
         loadAlertProfiles(refreshedLead);
         renderLeadReminders(refreshedLead);
       }
@@ -1328,12 +1933,23 @@ async function syncCallNotes() {
 // ── NOTES HISTORY ──────────────────────────────────────────────────────────
 let parsedNotes = []; // array of { header, body, raw } for editing
 
+// Author tags written by the AI engines (Sammy reply path = "Sammy (WhatsApp)",
+// engine notes = "Kevin (WhatsApp bot)", Flash coach = "Flash Coach"). Plain agent
+// names (Kevin / Rosa / Dylan / Noel) are HUMAN. AI notes render in their own
+// "AI Notes" section so they don't bunch with the agent's own notes (Kevin 2026-06-24).
+function isAINoteAuthor(a) { return /sammy|whatsapp|bot|flash/i.test(a || ''); }
+
 function renderNotesHistory(notesStr) {
   const container = document.getElementById('panel-notes-history');
+  const aiContainer = document.getElementById('panel-ai-notes-history');
+  const aiSection = document.getElementById('panel-ai-notes-section');
   if (!container) return;
+  const showAI = (has) => { if (aiSection) aiSection.style.display = has ? '' : 'none'; };
   if (!notesStr || !notesStr.trim()) {
     parsedNotes = [];
     container.innerHTML = '<p class="panel-empty-text">No notes yet</p>';
+    if (aiContainer) aiContainer.innerHTML = '';
+    showAI(false);
     return;
   }
   // Notes are stored as: "[3/18/2026, 9:30 AM — Kevin] Note text\n\n[...] ..."
@@ -1347,6 +1963,8 @@ function renderNotesHistory(notesStr) {
         <button class="note-delete-btn" onclick="deleteNote(0)">Delete</button>
       </div>
     </div>`;
+    if (aiContainer) aiContainer.innerHTML = '';
+    showAI(false);
     return;
   }
   parsedNotes = noteBlocks.map(block => {
@@ -1356,28 +1974,189 @@ function renderNotesHistory(notesStr) {
     }
     return { header: '', body: block.trim(), raw: block.trim() };
   });
-  container.innerHTML = parsedNotes.map((note, i) => {
+  const humanCards = [];
+  const aiCards = [];
+  parsedNotes.forEach((note, i) => {
     const headerMatch = note.raw.match(/^\[(.*?)\s—\s(.*?)\]\s*/);
-    if (headerMatch) {
-      const dateStr = headerMatch[1];
-      const author = headerMatch[2];
-      return `<div class="note-card" id="note-card-${i}">
+    const dateStr = headerMatch ? headerMatch[1] : '';
+    const author = headerMatch ? headerMatch[2] : '';
+    const card = headerMatch
+      ? `<div class="note-card" id="note-card-${i}">
         <div class="note-header"><span class="note-author">${escHtml(author)}</span><span class="note-date">${escHtml(dateStr)}</span></div>
         <div class="note-body" id="note-body-${i}">${escHtml(note.body)}</div>
         <div class="note-actions">
           <button class="note-edit-btn" onclick="editNote(${i})">Edit</button>
           <button class="note-delete-btn" onclick="deleteNote(${i})">Delete</button>
         </div>
+      </div>`
+      : `<div class="note-card" id="note-card-${i}">
+        <div class="note-body" id="note-body-${i}">${escHtml(note.body)}</div>
+        <div class="note-actions">
+          <button class="note-edit-btn" onclick="editNote(${i})">Edit</button>
+          <button class="note-delete-btn" onclick="deleteNote(${i})">Delete</button>
+        </div>
       </div>`;
+    (isAINoteAuthor(author) ? aiCards : humanCards).push(card);
+  });
+  container.innerHTML = humanCards.length ? humanCards.join('') : '<p class="panel-empty-text">No notes yet</p>';
+  if (aiContainer) aiContainer.innerHTML = aiCards.join('');
+  showAI(aiCards.length > 0);
+}
+
+// ── AI CALL HISTORY (lead detail panel) ───────────────────────────────────
+// Parses a lead's notes field for AI call entries, renders newest-first with
+// a ▶ Play button (inline <audio>) when a conv id is extractable.
+//
+// Recognised call note shapes (real production formats as of 2026-06-19):
+//
+//   Shape A — engine initiation note (most common):
+//     AI first_touch call #N initiated (ElevenLabs conv conv_XXXXX)
+//     AI rapport call #N initiated (ElevenLabs conv conv_XXXXX)
+//     AI reactivation call #N initiated (ElevenLabs conv conv_XXXXX)
+//     (any "AI <mode> call #N initiated" line)
+//
+//   Shape B — webhook CALL SUMMARY (older / fallback; may lack conv id):
+//     CALL SUMMARY (AI Speed-to-Lead Call): <summary text>
+//
+//   Shape C — LLAMADA IA structured block (legacy engine backstop):
+//     [LLAMADA IA — YYYY-MM-DD]
+//     Convo: ...
+//     [conv conv_XXXXX]
+//
+// Conv id extraction (covers all shapes):
+//   "ElevenLabs conv conv_XXXXX"  (Shape A)
+//   "[conv conv_XXXXX]"           (Shape B/C)
+//
+// Note blocks are delimited by "[M/D/YYYY, H:MM AM/PM — Author]" headers.
+function renderCallHistory(lead) {
+  const section = document.getElementById('panel-ai-call-history-section');
+  const container = document.getElementById('panel-ai-call-history');
+  if (!section || !container) return;
+
+  const notesStr = (lead && lead.notes) || '';
+
+  // Split into per-note blocks (same regex as renderNotesHistory)
+  const noteBlocks = notesStr
+    .split(/(?=\[[\d\/]+,\s[\d:]+\s[AP]M\s—\s)/)
+    .filter(Boolean);
+
+  const callRows = [];
+
+  for (const block of noteBlocks) {
+    // Extract the timestamp header: "[M/D/YYYY, H:MM AM/PM — Author]"
+    const headerMatch = block.match(/^\[([\d\/]+,\s[\d:]+\s[AP]M)\s—\s([^\]]+)\]\s*/);
+    const dateStr = headerMatch ? headerMatch[1] : '';
+    const body = headerMatch ? block.slice(headerMatch[0].length).trim() : block.trim();
+
+    // Skip non-call entries early
+    if (body.startsWith('[REACTIVACIÓN')) continue;
+
+    // ── Detect AI call entries ─────────────────────────────────────────────
+    // Shape A: "AI <mode> call #N initiated ..." (engine fire-time note)
+    const isInitiated = /^AI \w[\w_]* call #\d+ initiated/i.test(body);
+    // Shape B: webhook CALL SUMMARY
+    const isCallSummary = body.startsWith('CALL SUMMARY (AI Speed-to-Lead Call)');
+    // Shape C: legacy LLAMADA IA block
+    const isLlamada = body.startsWith('[LLAMADA IA');
+
+    if (!isInitiated && !isCallSummary && !isLlamada) continue;
+
+    // ── Extract conv id ────────────────────────────────────────────────────
+    // Shape A inline: "ElevenLabs conv conv_XXXXX"
+    const elMatch = block.match(/ElevenLabs conv\s+(conv_[\w]+)/);
+    // Shape B/C bracket: "[conv conv_XXXXX]"
+    const bracketMatch = block.match(/\[conv\s+(conv_[\w]+)\]/);
+    const convId = (elMatch && elMatch[1]) || (bracketMatch && bracketMatch[1]) || null;
+
+    // ── Extract mode label ─────────────────────────────────────────────────
+    let modeLabel = 'AI Call';
+    if (isInitiated) {
+      const modeMatch = body.match(/^AI ([\w_]+) call/i);
+      if (modeMatch) {
+        const raw = modeMatch[1].replace(/_/g, ' ');
+        modeLabel = raw.charAt(0).toUpperCase() + raw.slice(1) + ' Call';
+      }
+    } else if (isCallSummary) {
+      modeLabel = 'Speed-to-Lead Call';
+    } else if (isLlamada) {
+      modeLabel = 'AI Call';
     }
-    return `<div class="note-card" id="note-card-${i}">
-      <div class="note-body" id="note-body-${i}">${escHtml(note.body)}</div>
-      <div class="note-actions">
-        <button class="note-edit-btn" onclick="editNote(${i})">Edit</button>
-        <button class="note-delete-btn" onclick="deleteNote(${i})">Delete</button>
+
+    // ── Extract summary text ───────────────────────────────────────────────
+    let summary = '';
+    if (isInitiated) {
+      // The initiation note IS the summary ("AI first_touch call #3 initiated (ElevenLabs conv ...)")
+      // Strip the conv tag for display; the whole line is the description.
+      summary = body
+        .replace(/\s*\(ElevenLabs conv conv_[\w]+\)/g, '')
+        .trim();
+    } else if (isCallSummary) {
+      summary = body
+        .replace(/^CALL SUMMARY \(AI Speed-to-Lead Call\):\s*/, '')
+        .replace(/\[conv\s+conv_[\w]+\]/g, '')
+        .trim();
+    } else if (isLlamada) {
+      const convoSection = body.match(/Convo:\n([\s\S]*?)(?:Next:|$)/);
+      if (convoSection) {
+        summary = convoSection[1]
+          .replace(/^\s*-\s*/gm, '')
+          .replace(/\[conv\s+conv_[\w]+\]/g, '')
+          .trim();
+      } else {
+        summary = body
+          .replace(/\[conv\s+conv_[\w]+\]/g, '')
+          .replace(/^\[LLAMADA IA[^\]]*\]\s*/, '')
+          .trim();
+      }
+    }
+
+    // Truncate very long summaries for display (full text on hover via title)
+    const MAX = 200;
+    const displaySummary = summary.length > MAX ? summary.slice(0, MAX) + '…' : summary;
+
+    callRows.push({ dateStr, modeLabel, displaySummary, fullSummary: summary, convId });
+  }
+
+  if (callRows.length === 0) {
+    section.style.display = 'none';
+    container.innerHTML = '<p class="panel-empty-text">No AI calls yet</p>';
+    return;
+  }
+
+  section.style.display = '';
+
+  // Render newest-first (blocks are already newest-first as notes are prepended)
+  const total = callRows.length;
+  container.innerHTML = callRows.map((row, i) => {
+    const callNum = total - i;                // Call #N (newest = highest number)
+    let playHtml = '';
+    if (row.convId) {
+      playHtml = `<button class="ai-call-play-btn" data-conv-id="${escHtml(row.convId)}">▶ Play</button>`;
+    } else {
+      playHtml = `<span class="ai-call-no-recording">recording unavailable</span>`;
+    }
+    return `<div class="ai-call-card" data-call-index="${i}">
+      <div class="ai-call-card-header">
+        <span class="ai-call-label">Call #${callNum} — ${escHtml(row.modeLabel)}</span>
+        <span class="ai-call-date">${escHtml(row.dateStr)}</span>
       </div>
+      <div class="ai-call-summary" title="${escHtml(row.fullSummary)}">${escHtml(row.displaySummary)}</div>
+      ${playHtml}
     </div>`;
   }).join('');
+
+  // Wire play buttons via event delegation on the container
+  container.addEventListener('click', function handleCallPlay(e) {
+    const btn = e.target.closest('.ai-call-play-btn');
+    if (!btn) return;
+    const convId = btn.dataset.convId;
+    if (!convId) return;
+    const audio = document.createElement('audio');
+    audio.controls = true;
+    audio.autoplay = true;
+    audio.src = `${CRM_API_BASE}/api/agent/ai-call-audio?id=${encodeURIComponent(convId)}&password=${encodeURIComponent(currentPassword)}`;
+    btn.replaceWith(audio);
+  }, { once: false });
 }
 
 function editNote(index) {
@@ -1467,7 +2246,7 @@ async function saveLead() {
   let notes = activeLead.notes || '';
   if (newNote) {
     const now = new Date();
-    const dateStr = now.toLocaleString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });
+    const dateStr = now.toLocaleString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'America/New_York' });
     const agent = (currentAgent && currentAgent.name) || 'Agent';
     const entry = `[${dateStr} — ${agent}] ${newNote}`;
     notes = notes ? entry + '\n\n' + notes : entry;
@@ -1517,6 +2296,7 @@ async function saveLead() {
       }
       document.getElementById('panel-new-note').value = '';
       renderNotesHistory(notes);
+      renderCallHistory(activeLead);
       saveStatus.style.color   = '#16a34a';
       saveStatus.textContent   = 'Saved successfully';
       saveStatus.style.display = 'block';
@@ -1535,6 +2315,18 @@ async function saveLead() {
   }
 
   // Also save alert preferences in parallel
+  await persistAlertPrefs();
+
+  btn.disabled    = false;
+  btn.textContent = 'Save Changes';
+}
+
+// Persist the panel's alert prefs (incl. the full alertProfiles array) to Airtable NOW.
+// Called from the main "Save Changes" AND directly on profile add/edit/delete — a profile
+// edit used to live only in the local array until "Save Changes", so editing a profile
+// and walking away silently discarded it (root: Kevin's $5M lots edit, 2026-07-03).
+async function persistAlertPrefs() {
+  if (!activeLead) return false;
   const alertPrefs = getAlertPrefsFromPanel();
   try {
     await fetch(`${CRM_API_BASE}/api/update-preferences`, {
@@ -1561,12 +2353,11 @@ async function saveLead() {
       lead2.alertPolygon = alertPrefs.alertPolygon || '';
       lead2.alertProfiles = alertPrefs.alertProfiles || '';
     }
+    return true;
   } catch (err) {
     console.warn('Alert preferences save failed:', err);
+    return false;
   }
-
-  btn.disabled    = false;
-  btn.textContent = 'Save Changes';
 }
 
 // ── ALERT PREFERENCES HELPERS ──────────────────────────────────────────────
@@ -1717,6 +2508,7 @@ function deleteAlertProfile(index) {
   alertProfiles.splice(index, 1);
   renderProfileCards();
   hideProfileForm();
+  void persistAlertPrefs(); // deletions persist immediately too
 }
 
 // Wire up Add / Save / Cancel buttons (called once on page load)
@@ -1734,6 +2526,7 @@ function initProfileButtons() {
     }
     renderProfileCards();
     hideProfileForm();
+    void persistAlertPrefs(); // profile edits save immediately — not only on "Save Changes"
   });
   document.getElementById('alert-profile-cancel-btn').addEventListener('click', () => {
     hideProfileForm();
@@ -1952,8 +2745,12 @@ async function checkPropertyCount() {
 
     const typeMap = { 'Single Family': 'Single Family Residence', 'Condo': 'Condominium', 'Townhouse': 'Townhouse', 'Multi Family': 'Multi Family' };
     const nonRentalTypes = (profile.types || []).filter(t => t !== 'For Rent');
-    if (!isRental && nonRentalTypes.length === 1) {
-      params.set('PropertySubType', typeMap[nonRentalTypes[0]] || nonRentalTypes[0]);
+    // 'Land' lives under a different Bridge PropertyType — handled as its own query
+    // variant below (this preview showed a hard 0 for lots before, 2026-07-03).
+    const wantsLand = !isRental && nonRentalTypes.includes('Land');
+    const residentialTypes = nonRentalTypes.filter(t => t !== 'Land');
+    if (!isRental && residentialTypes.length === 1) {
+      params.set('PropertySubType', typeMap[residentialTypes[0]] || residentialTypes[0]);
     }
 
     if (profile.priceMin > 0) params.set('ListPrice.gte', String(profile.priceMin));
@@ -1978,7 +2775,28 @@ async function checkPropertyCount() {
       params.set('PoolPrivateYN', 'true');
     }
 
-    // Fetch with pagination (up to 3 pages of 200 = 600 max)
+    // Query variants: the residential query, plus (when Land is checked) two land
+    // queries under PropertyType "Land/Boat Docks" (subtypes Residential + Agriculture,
+    // excluding the lone Dockominium) with the residential-only filters stripped —
+    // vacant land has no beds/baths/living area/year built.
+    const paramVariants = [];
+    const landOnly = wantsLand && residentialTypes.length === 0;
+    if (!landOnly) paramVariants.push(params);
+    if (wantsLand) {
+      for (const landSub of ['Residential', 'Agriculture']) {
+        const lp = new URLSearchParams(params);
+        lp.set('PropertyType', 'Land/Boat Docks');
+        lp.set('PropertySubType', landSub);
+        lp.delete('BedroomsTotal.gte');
+        lp.delete('BathroomsTotalInteger.gte');
+        lp.delete('LivingArea.gte');
+        lp.delete('LivingArea.lte');
+        lp.delete('YearBuilt.gte');
+        paramVariants.push(lp);
+      }
+    }
+
+    // Fetch with pagination (up to 3 pages of 200 = 600 max, per variant)
     let allListings = [];
     async function fetchPage(p, offset) {
       p.set('offset', String(offset));
@@ -1988,25 +2806,30 @@ async function checkPropertyCount() {
     }
 
     if (cities.length > 1) {
-      const fetches = cities.map(city => {
-        const p = new URLSearchParams(params);
-        p.set('City', city);
-        return fetch(`${BRIDGE_BASE}/listings?${p}`).then(r => r.json()).then(d => d.success && d.bundle ? d.bundle : []).catch(() => []);
-      });
+      const fetches = [];
+      for (const base of paramVariants) {
+        for (const city of cities) {
+          const p = new URLSearchParams(base);
+          p.set('City', city);
+          fetches.push(fetch(`${BRIDGE_BASE}/listings?${p}`).then(r => r.json()).then(d => d.success && d.bundle ? d.bundle : []).catch(() => []));
+        }
+      }
       const results = await Promise.all(fetches);
       allListings = results.flat();
     } else {
-      // Page 1
-      let page1 = await fetchPage(new URLSearchParams(params), 0);
-      allListings = page1;
-      // Page 2 if first page was full
-      if (page1.length >= 200) {
-        let page2 = await fetchPage(new URLSearchParams(params), 200);
-        allListings = allListings.concat(page2);
-        // Page 3
-        if (page2.length >= 200) {
-          let page3 = await fetchPage(new URLSearchParams(params), 400);
-          allListings = allListings.concat(page3);
+      for (const base of paramVariants) {
+        // Page 1
+        let page1 = await fetchPage(new URLSearchParams(base), 0);
+        allListings = allListings.concat(page1);
+        // Page 2 if first page was full
+        if (page1.length >= 200) {
+          let page2 = await fetchPage(new URLSearchParams(base), 200);
+          allListings = allListings.concat(page2);
+          // Page 3
+          if (page2.length >= 200) {
+            let page3 = await fetchPage(new URLSearchParams(base), 400);
+            allListings = allListings.concat(page3);
+          }
         }
       }
     }
@@ -2592,7 +3415,7 @@ function exportCSV() {
     'Source URL', 'Notes', 'Registered', 'Last Login', 'Properties Viewed', 'Time on Site'
   ];
 
-  const rows = allLeads.map(l => [
+  const rows = allLeads.filter(l => !isBuyerLead(l)).map(l => [
     l.name,
     l.firstName,
     l.lastName,
@@ -2698,7 +3521,12 @@ async function loadConversations(email) {
       const msgCount = msgs.filter(m => m.role === 'user').length;
       const bubbles = msgs.slice(-6).map(m => {
         const cls = m.role === 'user' ? 'convo-bubble-user' : 'convo-bubble-ai';
-        return `<div class="convo-bubble ${cls}">${escHtml(m.content).slice(0, 200)}${m.content.length > 200 ? '…' : ''}</div>`;
+        // Escape first, then linkify (Kevin 2026-07-14: property links showed as
+        // plain black text). Truncation happens before linkify so a cut URL
+        // never leaves a dangling <a> tag.
+        const txt = escHtml(m.content).slice(0, 200);
+        const linked = txt.replace(/(https?:\/\/[^\s<]+)/g, (u) => `<a href="${u}" target="_blank" rel="noopener" style="color:#2563eb;word-break:break-all;">${u}</a>`);
+        return `<div class="convo-bubble ${cls}">${linked}${m.content.length > 200 ? '…' : ''}</div>`;
       }).join('');
       return `
         <div class="convo-card">
@@ -5316,6 +6144,8 @@ function openListingPanel(mlsId) {
   const input = document.getElementById('listing-new-note-text');
   if (form) form.style.display = 'none';
   if (input) input.value = '';
+  // Buyer leads tied to this listing (Source URL = "buyer:<MLS#>")
+  renderListingBuyerLeads(l.mlsId);
   // Load notes
   loadListingNotes(l.mlsId).catch(err => console.error('loadListingNotes:', err));
   document.getElementById('listing-panel').classList.add('open');
@@ -5324,6 +6154,35 @@ function openListingPanel(mlsId) {
 function closeListingPanel() {
   document.getElementById('listing-panel')?.classList.remove('open');
   activeListing = null;
+}
+
+// Buyer leads for a listing — full lead records tagged sourceUrl "buyer:<MLS#>".
+// They render here (and only here); the dashboard/table/stats/export skip them.
+function renderListingBuyerLeads(mlsId) {
+  const container = document.getElementById('listing-buyer-leads');
+  const countEl   = document.getElementById('listing-buyer-count');
+  if (!container) return;
+  const buyers = allLeads.filter(l => (l.sourceUrl || '') === `buyer:${mlsId}`);
+  if (countEl) countEl.textContent = buyers.length ? `(${buyers.length})` : '';
+  if (!buyers.length) {
+    container.innerHTML = '<p class="panel-empty-text">No buyer leads yet.</p>';
+    return;
+  }
+  const statusOrder = { 'Hot': 0, 'Appointment Set': 1, 'Warm': 2, 'Contacted': 3, 'New': 4, 'Under Contract': 5, 'Closed': 6, 'Dead': 7 };
+  buyers.sort((a, b) => (statusOrder[a.status] ?? 4) - (statusOrder[b.status] ?? 4));
+  container.innerHTML = buyers.map(b => {
+    const phone = b.phone ? `<a href="tel:${escHtml(b.phone)}" style="color:#3b82f6;text-decoration:none;">${escHtml(b.phone)}</a>` : '';
+    const email = b.email ? `<a href="mailto:${escHtml(b.email)}" style="color:#3b82f6;text-decoration:none;">${escHtml(b.email)}</a>` : '';
+    const meta  = [phone, email, b.country ? escHtml(b.country) : ''].filter(Boolean).join(' · ');
+    return `<div class="listing-buyer-row" onclick="openPanel('${escHtml(b.id)}')"
+      style="padding:8px 10px;border:1px solid rgba(0,0,0,0.07);border-radius:8px;margin-bottom:6px;cursor:pointer;background:#fff;">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+        <strong style="font-size:0.85rem;">${escHtml(b.name || '—')}</strong>
+        <span class="status-badge status-${escHtml((b.status || 'New').replace(/\s+/g, '-'))}" style="font-size:0.68rem;">${escHtml(b.status || 'New')}</span>
+      </div>
+      <div style="font-size:0.76rem;color:#6b7280;margin-top:2px;">${meta || '—'}</div>
+    </div>`;
+  }).join('');
 }
 
 async function loadListingNotes(mlsId) {
