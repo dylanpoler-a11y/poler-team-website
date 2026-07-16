@@ -1357,7 +1357,14 @@ function populatePanel(lead) {
   }
   renderSavedProperties(lead);
   renderPropertiesViewed(lead);
-  renderLeadReminders(lead);
+  renderLeadReminders(lead);  // instant paint from the cached list (no flicker)
+  // ...then re-fetch so the panel reflects reminders created AFTER this tab loaded —
+  // e.g. Flash writes a no-answer retry reminder ~7s after a call, and Sammy/teammates
+  // add their own. Rendering only from the page-load cache made the panel show NO
+  // reminder for a call just made, so Kevin re-added it by hand (Julian Niño 2026-07-16).
+  loadReminders()
+    .then(() => { if (activeLead && activeLead.id === lead.id) renderLeadReminders(activeLead); })
+    .catch(() => { /* keep the cached render */ });
   renderFlashRecordings(lead);
 
   // Wire share-property button (rebind each time so it uses current lead)
@@ -1735,32 +1742,39 @@ async function handleFlashMessage(event) {
     } catch (e) { /* best-effort — the call already happened */ }
   }
 
-  // Follow-up reminder recommended by the call's outcome (none for wrong-number/dead calls).
-  if (data.reminder && data.reminder.dueAt && !isNaN(Date.parse(data.reminder.dueAt))) {
+  // Browser FALLBACK: create the reminder here ONLY if the server didn't (legacy path;
+  // the server has been the primary writer since 2026-07-03). Never returns early on
+  // failure — the refresh below must still run.
+  if (data.reminder && data.reminder.dueAt && !isNaN(Date.parse(data.reminder.dueAt)) && !data.reminderCreated) {
     const lead = activeLead && activeLead.id === data.leadId ? activeLead : null;
     try {
-      if (!data.reminderCreated) {
-        const r = await fetch(`${CRM_API_BASE}/api/create-reminder`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            password: currentPassword,
-            leadRecordId: data.leadId,
-            leadName: lead ? (lead.name || '') : '',
-            leadEmail: lead ? (lead.email || '') : '',
-            leadPhone: lead ? (lead.phone || '') : '',
-            agentName: 'Flash Coach',
-            actionType: ['Call', 'WhatsApp', 'Email'].includes(data.reminder.actionType) ? data.reminder.actionType : 'Follow Up',
-            dueAt: data.reminder.dueAt,
-            note: String(data.reminder.note || 'Seguimiento post-llamada').slice(0, 200),
-          }),
-        });
-        if (!r.ok) return;
-      }
-      await loadReminders(); // refresh the global list so the panel + reminders views see it
-      if (lead) renderLeadReminders(lead);
-    } catch (e) { /* best-effort */ }
+      await fetch(`${CRM_API_BASE}/api/create-reminder`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          password: currentPassword,
+          leadRecordId: data.leadId,
+          leadName: lead ? (lead.name || '') : '',
+          leadEmail: lead ? (lead.email || '') : '',
+          leadPhone: lead ? (lead.phone || '') : '',
+          agentName: 'Flash Coach',
+          actionType: ['Call', 'WhatsApp', 'Email'].includes(data.reminder.actionType) ? data.reminder.actionType : 'Follow Up',
+          dueAt: data.reminder.dueAt,
+          note: String(data.reminder.note || 'Seguimiento post-llamada').slice(0, 200),
+        }),
+      });
+    } catch (e) { /* best-effort — the server is the primary writer */ }
   }
+
+  // ALWAYS refresh the panel's reminders after a coached call — the SERVER writes the
+  // reminder itself (no-answer retry, judged follow-up), completes prior ones, and on a
+  // dead-lead call sets status Dead with NO reminder. The panel must reflect the SERVER,
+  // not the postMessage: gating this on a well-formed data.reminder left the panel showing
+  // no reminder for a call just made, so Kevin re-added it by hand (Julian Niño 2026-07-16).
+  try {
+    await loadReminders();
+    if (activeLead && activeLead.id === data.leadId) renderLeadReminders(activeLead);
+  } catch (e) { /* best-effort */ }
 }
 
 // ── RENDER EXISTING REMINDERS FOR A LEAD IN THE PANEL ────────────────────
@@ -2373,13 +2387,23 @@ let editingProfileIndex = -1; // -1 = adding new, >= 0 = editing existing
 function loadAlertProfiles(lead) {
   alertProfiles = [];
   editingProfileIndex = -1;
-  // Try to load from JSON array field
+  let channels = { email: true, whatsapp: false };
+  // Try to load from JSON field — legacy array OR {channels, profiles} wrapper.
   if (lead.alertProfiles) {
     try {
       const parsed = typeof lead.alertProfiles === 'string' ? JSON.parse(lead.alertProfiles) : lead.alertProfiles;
-      if (Array.isArray(parsed)) alertProfiles = parsed;
+      if (Array.isArray(parsed)) {
+        alertProfiles = parsed;
+      } else if (parsed && typeof parsed === 'object') {
+        if (Array.isArray(parsed.profiles)) alertProfiles = parsed.profiles;
+        if (parsed.channels) channels = {
+          email: parsed.channels.email !== false,
+          whatsapp: !!parsed.channels.whatsapp,
+        };
+      }
     } catch (e) { /* ignore bad JSON */ }
   }
+  setAlertChannels(channels);
   // If no profiles but has legacy flat fields, migrate them into a profile
   if (alertProfiles.length === 0 && lead.alertCities) {
     alertProfiles.push({
@@ -2896,7 +2920,7 @@ async function checkPropertyCount() {
 }
 
 function getAlertPrefsFromPanel() {
-  // Build prefs including the full profiles array
+  // Build prefs including the full profiles array + delivery channels
   const first = alertProfiles[0] || {};
   const prefs = {
     alertActive:    document.getElementById('panel-alert-active').checked,
@@ -2909,9 +2933,36 @@ function getAlertPrefsFromPanel() {
     frequency:      document.getElementById('panel-alert-frequency').value,
     count:          Number(document.getElementById('panel-alert-count').value) || 5,
     alertPolygon:   first.polygon || '',
-    alertProfiles:  JSON.stringify(alertProfiles),
+    alertProfiles:  serializeAlertProfilesClient(alertProfiles, getAlertChannelsFromPanel()),
   };
   return prefs;
+}
+
+// ── DELIVERY CHANNELS (email / whatsapp) ─────────────────────────────────────
+// Channels live inside the Alert Profiles wrapper. Default = email-only; the
+// plain-array legacy shape is preserved (no wrapper) unless whatsapp is on / email
+// off, mirroring lib/alert-search.js serializeAlertProfiles.
+function setAlertChannels(channels) {
+  const emailCb = document.getElementById('panel-alert-channel-email');
+  const waCb    = document.getElementById('panel-alert-channel-whatsapp');
+  if (emailCb) emailCb.checked = channels.email !== false;
+  if (waCb)    waCb.checked    = !!channels.whatsapp;
+}
+
+function getAlertChannelsFromPanel() {
+  const emailCb = document.getElementById('panel-alert-channel-email');
+  const waCb    = document.getElementById('panel-alert-channel-whatsapp');
+  return {
+    email:    emailCb ? emailCb.checked : true,
+    whatsapp: waCb ? waCb.checked : false,
+  };
+}
+
+function serializeAlertProfilesClient(profiles, channels) {
+  const list = Array.isArray(profiles) ? profiles : [];
+  const ch = { email: channels.email !== false, whatsapp: !!channels.whatsapp };
+  if (ch.email === true && ch.whatsapp === false) return JSON.stringify(list);
+  return JSON.stringify({ channels: ch, profiles: list });
 }
 
 // ── ALERT MAP (MapLibre GL JS — vector tiles, smooth zoom) ────────────────
@@ -3344,12 +3395,35 @@ async function sendTestAlert() {
     });
     const data = await res.json();
     statusEl.style.display = 'block';
+    // Per-channel result (Kevin 2026-07-16): show exactly what went where.
+    const describeChannels = (ch) => {
+      const parts = [];
+      if (ch && ch.email) {
+        if (ch.email.status === 'sent') parts.push(`✉️ Email → ${ch.email.to || activeLead.email}`);
+        else if (ch.email.status === 'skipped') parts.push(`✉️ Email skipped (${ch.email.reason})`);
+        else parts.push(`✉️ Email failed`);
+      }
+      if (ch && ch.whatsapp) {
+        if (ch.whatsapp.status === 'sent') parts.push(`💬 WhatsApp → ${activeLead.phone || 'lead'}`);
+        else if (ch.whatsapp.status === 'skipped') parts.push(`💬 WhatsApp skipped (${ch.whatsapp.reason})`);
+        else {
+          const r = String(ch.whatsapp.reason || '');
+          parts.push(/63049/.test(r)
+            ? '💬 WhatsApp not delivered — Meta blocks WhatsApp alerts to US (+1) numbers; keep US leads on Email'
+            : `💬 WhatsApp failed`);
+        }
+      }
+      return parts;
+    };
     if (data.success) {
-      statusEl.style.color = '#16a34a';
-      statusEl.textContent = `Test alert sent to ${activeLead.email}`;
+      const parts = describeChannels(data.channels);
+      const anyErr = data.channels && ((data.channels.email && data.channels.email.status === 'error') || (data.channels.whatsapp && data.channels.whatsapp.status === 'error'));
+      statusEl.style.color = anyErr ? '#d97706' : '#16a34a';
+      statusEl.textContent = parts.length ? parts.join('  ·  ') : `Test alert sent (${data.propertiesSent || 0} properties)`;
     } else {
       statusEl.style.color = '#dc2626';
-      statusEl.textContent = (data.error || 'Failed to send');
+      const parts = describeChannels(data.channels);
+      statusEl.textContent = (data.error || 'Failed to send') + (parts.length ? ` — ${parts.join('  ·  ')}` : '');
     }
   } catch (err) {
     statusEl.style.display = 'block';

@@ -1,6 +1,6 @@
 /**
  * /api/send-alerts.js — Vercel Edge Function (Cron-triggered)
- * Runs daily at 9am. Finds all leads with Alert Active = true and
+ * Runs daily at 14:00 UTC. Finds all leads with Alert Active = true and
  * Alert Next Due <= today, fetches matching properties from Bridge API,
  * sends email via Resend, and updates Airtable timestamps.
  *
@@ -9,9 +9,17 @@
  * Required env vars:
  *   AIRTABLE_API_KEY, AIRTABLE_BASE_ID, CRON_SECRET,
  *   RESEND_API_KEY, ALERT_FROM_EMAIL, BRIDGE_API_TOKEN, SITE_BASE_URL
+ *
+ * Bridge search logic lives in lib/alert-search.js — shared with
+ * api/send-test-alert.js and api/agent/audit-alerts.js so all three can
+ * never drift apart.
  */
 
 export const config = { runtime: 'edge' };
+
+import { searchListingsForLead, explainDroppedBy, channelsFromLead } from '../lib/alert-search.js';
+
+const ZERO_RUNS_BEFORE_REVIEW = 3;
 
 export default async function handler(req) {
     if (req.method === 'OPTIONS') {
@@ -24,7 +32,6 @@ export default async function handler(req) {
         });
     }
 
-    // Auth: Vercel Cron sends this header automatically
     const cronSecret = process.env.CRON_SECRET;
     const authHeader = req.headers.get('authorization');
     if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
@@ -43,6 +50,7 @@ export default async function handler(req) {
     }
 
     const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    const headers = { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' };
 
     // Fetch all leads with Alert Active = true and Alert Next Due <= today
     const formula = `AND({Alert Active}=TRUE(), OR({Alert Next Due}='', {Alert Next Due}<=TODAY()))`;
@@ -97,178 +105,199 @@ export default async function handler(req) {
             polygon:   f['Alert Polygon'] || '',
             profiles:  f['Alert Profiles'] || '',
         };
+        const priorZeroRuns = Number(f['Alert Zero Runs'] || 0);
 
         try {
-            // Determine profiles to fetch — multi-profile or legacy single
-            let profilesToFetch = [];
-            if (lead.profiles) {
-                try {
-                    const parsed = JSON.parse(lead.profiles);
-                    if (Array.isArray(parsed) && parsed.length > 0) profilesToFetch = parsed;
-                } catch (e) { /* bad JSON */ }
-            }
-            // Fall back to single legacy profile if no multi-profiles
-            if (profilesToFetch.length === 0) {
-                profilesToFetch = [{
-                    types: lead.types,
-                    cities: lead.cities,
-                    priceMin: lead.priceMin,
-                    priceMax: lead.priceMax,
-                    bedsMin: lead.bedsMin,
-                    bathsMin: lead.bathsMin,
-                    polygon: lead.polygon,
-                }];
-            }
-
-            // Fetch listings for each profile and combine
-            let allListings = [];
-            for (const profile of profilesToFetch) {
-                const profileLead = {
-                    ...lead,
-                    types: profile.types || lead.types,
-                    cities: profile.cities || lead.cities,
-                    priceMin: profile.priceMin || lead.priceMin,
-                    priceMax: profile.priceMax || lead.priceMax,
-                    bedsMin: profile.bedsMin || lead.bedsMin,
-                    bathsMin: profile.bathsMin || lead.bathsMin,
-                    polygon: profile.polygon || '',
-                    features: profile.features || [],
-                    sqftMin: profile.sqftMin || 0,
-                    sqftMax: profile.sqftMax || 0,
-                    lotSizeMin: profile.lotSizeMin || 0,
-                    hoaMin: profile.hoaMin || 0,
-                    hoaMax: profile.hoaMax || 0,
-                    yearBuiltMin: profile.yearBuiltMin || 0,
-                    keywords: profile.keywords || '',
-                };
-                let profileListings = await fetchBridgeListings(bridgeToken, profileLead);
-
-                // Apply polygon filter for this profile (supports single Polygon or array of Polygons)
-                const polyStr = profile.polygon || '';
-                if (polyStr && profileListings.length > 0) {
-                    try {
-                        const geo = JSON.parse(polyStr);
-                        let rings = [];
-                        if (Array.isArray(geo)) {
-                            // New format: array of polygon geometries
-                            rings = geo.filter(g => g && g.type === 'Polygon' && g.coordinates).map(g => g.coordinates[0]);
-                        } else if (geo && geo.type === 'Polygon' && geo.coordinates) {
-                            // Legacy format: single polygon
-                            rings = [geo.coordinates[0]];
-                        }
-                        if (rings.length > 0) {
-                            profileListings = profileListings.filter(l => {
-                                const lat = l.Latitude;
-                                const lng = l.Longitude;
-                                // If listing has no coordinates, include it
-                                if (lat == null || lng == null) return true;
-                                // Property must be inside ANY of the drawn areas
-                                return rings.some(ring => pointInPolygon(lat, lng, ring));
-                            });
-                        }
-                    } catch (e) { /* invalid polygon */ }
-                }
-                allListings.push(...profileListings);
-            }
-
-            // Deduplicate by ListingId
-            const seen = new Set();
-            let listings = allListings.filter(l => {
-                const id = l.ListingId;
-                if (seen.has(id)) return false;
-                seen.add(id);
-                return true;
-            });
-
-            // Shuffle so leads get different properties each alert (not always the same top N)
-            for (let i = listings.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [listings[i], listings[j]] = [listings[j], listings[i]];
-            }
-
-            // Limit to requested count
-            listings = listings.slice(0, lead.count || 5);
+            // Exclude listings already emailed to this lead so they never see
+            // repeats (fail-safe: [] on any read error → old behavior).
+            const excludeIds = await getSentListingIds(baseId, headers, email);
+            const { listings, pickedIds, debug } = await searchListingsForLead(bridgeToken, lead, { excludeIds });
 
             if (listings.length === 0) {
-                // Still advance Alert Next Due so the lead isn't stuck as "due" forever
+                // Track the silent zero so future Luises don't go dark for a month.
+                const newZeroRuns = priorZeroRuns + 1;
+                const needsReview = newZeroRuns >= ZERO_RUNS_BEFORE_REVIEW;
+                const reasonText = explainDroppedBy(debug.droppedBy, debug) || 'no matching listings';
                 const nextDue = computeNextDue(today, lead.frequency);
+                // Update Alert Next Due first (required so the lead isn't stuck).
                 try {
                     await fetch(`https://api.airtable.com/v0/${baseId}/Leads`, {
                         method: 'PATCH',
-                        headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ records: [{ id: record.id, fields: { 'Alert Next Due': nextDue } }] }),
-                    });
-                } catch (_) { /* non-fatal */ }
-                results.skipped++;
-                results.details.push({ id: record.id, email, status: 'skipped', reason: 'no matching listings', nextDue });
-                continue;
-            }
-
-            // Ensure every email has a password — backfill older leads that
-            // were created before Access Password was generated automatically.
-            if (!lead.password) {
-                lead.password = generateFallbackPassword(lead.firstName, lead.phone);
-                // Write it back to Airtable so the same password is reused on future sends
-                try {
-                    await fetch(`https://api.airtable.com/v0/${baseId}/Leads`, {
-                        method: 'PATCH',
-                        headers: {
-                            'Authorization': `Bearer ${apiKey}`,
-                            'Content-Type': 'application/json',
-                        },
+                        headers,
                         body: JSON.stringify({
-                            records: [{ id: record.id, fields: { 'Access Password': lead.password } }],
+                            records: [{ id: record.id, fields: { 'Alert Next Due': nextDue } }],
                         }),
                     });
                 } catch (_) { /* non-fatal */ }
-            }
+                // Track zero-runs separately so missing-field errors don't
+                // block the date advance.
+                const trackFields = {
+                    'Alert Zero Runs':        newZeroRuns,
+                    'Alert Last Skip Reason': reasonText.slice(0, 250),
+                };
+                if (needsReview) trackFields['Alert Needs Review'] = true;
+                try {
+                    await fetch(`https://api.airtable.com/v0/${baseId}/Leads`, {
+                        method: 'PATCH',
+                        headers,
+                        body: JSON.stringify({ records: [{ id: record.id, fields: trackFields }] }),
+                    });
+                } catch (_) { /* non-fatal — Airtable fields may not exist yet */ }
 
-            // Build and send email
-            const html = buildAlertEmail(lead, listings, siteBase);
-            const subject = getSubject(lead.language, listings.length);
+                await logActivity(baseId, headers, {
+                    leadId: record.id,
+                    email,
+                    activityType: 'Alert Zero Result',
+                    details: {
+                        zeroRuns: newZeroRuns,
+                        droppedBy: debug.droppedBy,
+                        reason: reasonText,
+                        totalRawBridge: debug.totalRawBridge,
+                        needsReview,
+                    },
+                });
 
-            const emailRes = await fetch('https://api.resend.com/emails', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${resendKey}`,
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    from: `The Poler Team <${fromEmail}>`,
-                    to: [email],
-                    subject,
-                    html,
-                }),
-            });
-
-            if (!emailRes.ok) {
-                results.errors++;
-                const err = await emailRes.text();
-                results.details.push({ id: record.id, email, status: 'error', reason: err });
+                results.skipped++;
+                results.details.push({
+                    id: record.id, email,
+                    status: 'skipped',
+                    reason: reasonText,
+                    droppedBy: debug.droppedBy,
+                    zeroRuns: newZeroRuns,
+                    needsReview,
+                    nextDue,
+                });
                 continue;
             }
 
-            // Update Airtable: set Alert Last Sent = today, compute Alert Next Due
+            // Per-lead delivery channels (email default-on; whatsapp opt-in) —
+            // stored inside the Alert Profiles wrapper (backward-compatible).
+            const channels = channelsFromLead(lead);
+
+            let emailSent = false;
+            const channelOutcome = {};
+
+            // ── EMAIL ──────────────────────────────────────────────────────────
+            if (channels.email) {
+                // Ensure every email has a password
+                if (!lead.password) {
+                    lead.password = generateFallbackPassword(lead.firstName, lead.phone);
+                    try {
+                        await fetch(`https://api.airtable.com/v0/${baseId}/Leads`, {
+                            method: 'PATCH',
+                            headers,
+                            body: JSON.stringify({
+                                records: [{ id: record.id, fields: { 'Access Password': lead.password } }],
+                            }),
+                        });
+                    } catch (_) { /* non-fatal */ }
+                }
+
+                const html = buildAlertEmail(lead, listings, siteBase);
+                const subject = getSubject(lead.language, listings.length);
+
+                const emailRes = await fetch('https://api.resend.com/emails', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${resendKey}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        from: `The Poler Team <${fromEmail}>`,
+                        to: [email],
+                        subject,
+                        html,
+                    }),
+                });
+
+                if (!emailRes.ok) {
+                    // Email failure is only terminal when it's the sole channel;
+                    // otherwise fall through and let WhatsApp still go out.
+                    const err = await emailRes.text();
+                    channelOutcome.email = { status: 'error', reason: err };
+                    if (!channels.whatsapp) {
+                        results.errors++;
+                        results.details.push({ id: record.id, email, status: 'error', reason: err });
+                        continue;
+                    }
+                } else {
+                    emailSent = true;
+                    channelOutcome.email = { status: 'sent' };
+                }
+            }
+
+            // ── WHATSAPP ───────────────────────────────────────────────────────
+            // Best-effort — a WhatsApp failure must NEVER block the email or the loop.
+            if (channels.whatsapp) {
+                if (!lead.phone) {
+                    channelOutcome.whatsapp = { status: 'skipped', reason: 'no phone' };
+                } else {
+                    try {
+                        channelOutcome.whatsapp = await sendWhatsappAlert({ lead, listings, siteBase });
+                    } catch (waErr) {
+                        channelOutcome.whatsapp = { status: 'error', reason: waErr.message };
+                    }
+                }
+            }
+
+            const anySent = emailSent || channelOutcome.whatsapp?.status === 'sent';
+
+            if (!anySent) {
+                // Nothing went out (e.g. whatsapp-only lead whose send failed).
+                results.errors++;
+                results.details.push({
+                    id: record.id, email, status: 'error',
+                    reason: 'no channel delivered', channels: channelOutcome,
+                });
+                continue;
+            }
+
+            // Success: stamp send first (always required), then reset
+            // zero-run counters separately so missing-field errors on the
+            // new Airtable columns can't undo the stamp.
             const nextDue = computeNextDue(today, lead.frequency);
-            await fetch(`https://api.airtable.com/v0/${baseId}/Leads`, {
-                method: 'PATCH',
-                headers: {
-                    'Authorization': `Bearer ${apiKey}`,
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    records: [{
-                        id: record.id,
-                        fields: {
-                            'Alert Last Sent': today,
-                            'Alert Next Due':  nextDue,
-                        },
-                    }],
-                }),
-            });
+            try {
+                await fetch(`https://api.airtable.com/v0/${baseId}/Leads`, {
+                    method: 'PATCH',
+                    headers,
+                    body: JSON.stringify({
+                        records: [{
+                            id: record.id,
+                            fields: { 'Alert Last Sent': today, 'Alert Next Due': nextDue },
+                        }],
+                    }),
+                });
+            } catch (_) { /* non-fatal */ }
+            try {
+                await fetch(`https://api.airtable.com/v0/${baseId}/Leads`, {
+                    method: 'PATCH',
+                    headers,
+                    body: JSON.stringify({
+                        records: [{
+                            id: record.id,
+                            fields: {
+                                'Alert Zero Runs':        0,
+                                'Alert Last Skip Reason': '',
+                                'Alert Needs Review':     false,
+                            },
+                        }],
+                    }),
+                });
+            } catch (_) { /* non-fatal — Airtable fields may not exist yet */ }
+
+            // Record which listings were sent so future runs can exclude them
+            // (this is the memory that prevents repeats). Best-effort, never throws.
+            if (pickedIds && pickedIds.length) {
+                await logActivity(baseId, headers, {
+                    leadId: record.id,
+                    email,
+                    activityType: 'Alert Sent',
+                    details: { ids: pickedIds, count: pickedIds.length, date: today },
+                });
+            }
 
             results.sent++;
-            results.details.push({ id: record.id, email, status: 'sent', properties: listings.length, nextDue });
+            results.details.push({ id: record.id, email, status: 'sent', properties: listings.length, fresh: debug.totalFresh, nextDue, channels: channelOutcome });
 
         } catch (err) {
             results.errors++;
@@ -284,7 +313,70 @@ export default async function handler(req) {
     });
 }
 
-// ── FALLBACK PASSWORD (for leads created before Access Password was auto-set) ─
+// ── SENT-LISTING HISTORY (best-effort, never throws) ───────────────────────────
+// Reads this lead's recent "Alert Sent" activity rows and unions the ListingIds
+// that have already been emailed, so the next send can exclude them. Capped so
+// the exclusion set stays bounded (oldest sent eventually cycle back in).
+const SENT_HISTORY_CAP = 400;
+
+async function getSentListingIds(baseId, headers, email) {
+    try {
+        if (!email) return [];
+        const ids = new Set();
+        const formula = `AND({Lead Email}='${email.replace(/'/g, "\\'")}', {Activity Type}='Alert Sent')`;
+        const params = new URLSearchParams({
+            filterByFormula: formula,
+            pageSize: '100',
+            'sort[0][field]': 'Timestamp',
+            'sort[0][direction]': 'desc',
+        });
+        let offset = null;
+        for (let page = 0; page < 4 && ids.size < SENT_HISTORY_CAP; page++) {
+            if (offset) params.set('offset', offset);
+            const res = await fetch(
+                `https://api.airtable.com/v0/${baseId}/Lead Activity?${params}`,
+                { headers: { 'Authorization': headers.Authorization } }
+            );
+            if (!res.ok) break;
+            const data = await res.json();
+            for (const rec of (data.records || [])) {
+                let det = rec.fields?.Details;
+                if (typeof det === 'string') { try { det = JSON.parse(det); } catch { det = null; } }
+                for (const id of (det?.ids || [])) {
+                    ids.add(id);
+                    if (ids.size >= SENT_HISTORY_CAP) break;
+                }
+            }
+            if (!data.offset) break;
+            offset = data.offset;
+        }
+        return Array.from(ids);
+    } catch (_) {
+        return []; // fail-safe: no exclusion → prior behavior, never blocks a send
+    }
+}
+
+// ── ACTIVITY LOG (best-effort, never throws) ───────────────────────────────────
+
+async function logActivity(baseId, headers, { leadId, email, activityType, details }) {
+    try {
+        const fields = {
+            'Lead Email':    email || '',
+            'Activity Type': activityType,
+            'Details':       typeof details === 'string' ? details : JSON.stringify(details),
+            'Timestamp':     new Date().toISOString(),
+        };
+        if (leadId) fields['Lead Record ID'] = [leadId];
+        await fetch(`https://api.airtable.com/v0/${baseId}/Lead Activity`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ records: [{ fields }] }),
+        });
+    } catch (_) { /* non-fatal */ }
+}
+
+// ── FALLBACK PASSWORD ─────────────────────────────────────────────────────────
+
 function generateFallbackPassword(firstName, phone) {
     const safeName = (firstName || 'User').toString();
     const namePrefix = safeName.substring(0, 3).charAt(0).toUpperCase() + safeName.substring(1, 3).toLowerCase();
@@ -296,290 +388,17 @@ function generateFallbackPassword(firstName, phone) {
 // ── COMPUTE NEXT DUE DATE ─────────────────────────────────────────────────────
 
 function computeNextDue(fromDateStr, frequency) {
-    const d = new Date(fromDateStr + 'T12:00:00Z'); // noon to avoid timezone issues
+    const d = new Date(fromDateStr + 'T12:00:00Z');
     const freqDays = {
-        'Daily':       1,
+        'Daily':        1,
         'Every 3 Days': 3,
-        'Weekly':      7,
-        'Bi-Weekly':   14,
-        'Monthly':     30,
+        'Weekly':       7,
+        'Bi-Weekly':    14,
+        'Monthly':      30,
     };
     const days = freqDays[frequency] || 7;
     d.setDate(d.getDate() + days);
     return d.toISOString().split('T')[0];
-}
-
-// ── BRIDGE API ────────────────────────────────────────────────────────────────
-
-const SOUTH_FL_CITIES = [
-    { name: 'Miami Beach', lat: 25.790, lng: -80.130 },
-    { name: 'Sunny Isles Beach', lat: 25.951, lng: -80.123 },
-    { name: 'Aventura', lat: 25.956, lng: -80.139 },
-    { name: 'Hallandale Beach', lat: 25.981, lng: -80.148 },
-    { name: 'Hollywood', lat: 26.011, lng: -80.149 },
-    { name: 'Fort Lauderdale', lat: 26.122, lng: -80.137 },
-    { name: 'North Miami Beach', lat: 25.933, lng: -80.162 },
-    { name: 'North Miami', lat: 25.890, lng: -80.186 },
-    { name: 'Miami', lat: 25.761, lng: -80.191 },
-    { name: 'Coral Gables', lat: 25.721, lng: -80.268 },
-    { name: 'Doral', lat: 25.819, lng: -80.355 },
-    { name: 'Hialeah', lat: 25.857, lng: -80.278 },
-    { name: 'Miami Gardens', lat: 25.942, lng: -80.245 },
-    { name: 'Bal Harbour', lat: 25.891, lng: -80.127 },
-    { name: 'Surfside', lat: 25.878, lng: -80.126 },
-    { name: 'Bay Harbor Islands', lat: 25.887, lng: -80.131 },
-    { name: 'Key Biscayne', lat: 25.693, lng: -80.163 },
-    { name: 'Pompano Beach', lat: 26.237, lng: -80.124 },
-    { name: 'Boca Raton', lat: 26.358, lng: -80.083 },
-    { name: 'Deerfield Beach', lat: 26.318, lng: -80.099 },
-    { name: 'Lauderdale By The Sea', lat: 26.192, lng: -80.096 },
-    { name: 'Oakland Park', lat: 26.172, lng: -80.132 },
-    { name: 'Wilton Manors', lat: 26.160, lng: -80.139 },
-    { name: 'Homestead', lat: 25.468, lng: -80.477 },
-    { name: 'Palmetto Bay', lat: 25.621, lng: -80.325 },
-    { name: 'Pinecrest', lat: 25.665, lng: -80.308 },
-];
-
-function getCitiesNearPoint(lat, lng) {
-    const maxDist = 15; // km
-    const nearby = SOUTH_FL_CITIES
-        .map(c => ({ name: c.name, dist: Math.sqrt(Math.pow((c.lat - lat) * 111, 2) + Math.pow((c.lng - lng) * 111 * Math.cos(lat * Math.PI / 180), 2)) }))
-        .filter(c => c.dist < maxDist)
-        .sort((a, b) => a.dist - b.dist)
-        .slice(0, 8)
-        .map(c => c.name);
-    return nearby.length > 0 ? nearby : ['Miami Beach', 'Sunny Isles Beach', 'Aventura', 'North Miami Beach', 'Fort Lauderdale'];
-}
-
-function toTitleCase(str) {
-    return str.toLowerCase().replace(/(?:^|\s)\S/g, c => c.toUpperCase());
-}
-
-// Ray-casting point-in-polygon test
-// ring is GeoJSON format: [[lng, lat], [lng, lat], ...]
-function pointInPolygon(lat, lng, ring) {
-    let inside = false;
-    for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
-        const xi = ring[i][1], yi = ring[i][0]; // lat, lng
-        const xj = ring[j][1], yj = ring[j][0];
-        if ((yi > lng) !== (yj > lng) && lat < (xj - xi) * (lng - yi) / (yj - yi) + xi) {
-            inside = !inside;
-        }
-    }
-    return inside;
-}
-
-async function fetchBridgeListings(token, lead) {
-    const cities = (lead.cities || '').split(',').map(s => s.trim()).filter(Boolean).map(toTitleCase);
-    const count = lead.count || 5;
-    const hasPolygon = !!(lead.polygon);
-    const hasFeatures = (lead.features || []).length > 0;
-    const hasKeywords = !!(lead.keywords);
-    const needsClientFilter = hasPolygon || hasFeatures || hasKeywords;
-
-    const typeMap = {
-        'Single Family': 'Single Family Residence',
-        'Condo':         'Condominium',
-        'Townhouse':     'Townhouse',
-        'Multi Family':  'Multi Family',
-    };
-    const isRental = (lead.types || []).includes('For Rent');
-
-    // Request all fields needed for feature filtering
-    const FEATURE_FIELDS = [
-        'ListingId','ListingKey','ListPrice','City','PropertySubType',
-        'BedroomsTotal','BathroomsTotalInteger','LivingArea','LotSizeSquareFeet',
-        'AssociationFee','YearBuilt','Latitude','Longitude','PublicRemarks',
-        'UnparsedAddress','WaterfrontYN','WaterfrontFeatures','View','PoolFeatures',
-        'PatioAndPorchFeatures','CommunityFeatures','AssociationAmenities',
-        'MIAMIRE_Restrictions','ArchitecturalStyle','Media','ListOfficeName',
-        'ModificationTimestamp',
-    ].join(',');
-
-    const baseParams = new URLSearchParams({
-        access_token:   token,
-        limit:          String(needsClientFilter ? 100 : count * 2),
-        sortBy:         'ModificationTimestamp',
-        order:          'desc',
-        PropertyType:   isRental ? 'Residential Lease' : 'Residential',
-        StandardStatus: 'Active',
-        fields:         FEATURE_FIELDS,
-    });
-
-    // Push waterfront filter to API level
-    const waterfrontFeats = (lead.features || []).filter(f => f.startsWith('Waterfront'));
-    if (waterfrontFeats.length > 0) baseParams.set('WaterfrontYN', 'true');
-
-    // Push pool filter to API level
-    if ((lead.features || []).includes('Pool')) baseParams.set('PoolPrivateYN', 'true');
-
-    if (lead.priceMin > 0) baseParams.set('ListPrice.gte', String(lead.priceMin));
-    if (lead.priceMax > 0) baseParams.set('ListPrice.lte', String(lead.priceMax));
-    if (lead.bedsMin > 0) baseParams.set('BedroomsTotal.gte', String(lead.bedsMin));
-    if (lead.bathsMin > 0) baseParams.set('BathroomsTotalInteger.gte', String(lead.bathsMin));
-    if (lead.sqftMin > 0) baseParams.set('LivingArea.gte', String(lead.sqftMin));
-    if (lead.sqftMax > 0) baseParams.set('LivingArea.lte', String(lead.sqftMax));
-    if (lead.lotSizeMin > 0) baseParams.set('LotSizeSquareFeet.gte', String(lead.lotSizeMin));
-    if (lead.hoaMin > 0) baseParams.set('AssociationFee.gte', String(lead.hoaMin));
-    if (lead.hoaMax > 0) baseParams.set('AssociationFee.lte', String(lead.hoaMax));
-    if (lead.yearBuiltMin > 0) baseParams.set('YearBuilt.gte', String(lead.yearBuiltMin));
-
-    // When polygon exists but no cities, derive cities from polygon center
-    let polygonCities = [];
-    if (hasPolygon && cities.length === 0) {
-        try {
-            const geo = JSON.parse(lead.polygon);
-            let allCoords = [];
-            if (Array.isArray(geo)) {
-                allCoords = geo.flatMap(g => g.coordinates ? g.coordinates[0] : []);
-            } else if (geo && geo.coordinates) {
-                allCoords = geo.coordinates[0];
-            }
-            if (allCoords.length > 0) {
-                const lats = allCoords.map(c => c[1]);
-                const lngs = allCoords.map(c => c[0]);
-                const centerLat = (Math.min(...lats) + Math.max(...lats)) / 2;
-                const centerLng = (Math.min(...lngs) + Math.max(...lngs)) / 2;
-                polygonCities = getCitiesNearPoint(centerLat, centerLng);
-            }
-        } catch (e) { /* invalid polygon */ }
-    }
-
-    // Map property types to API values (exclude 'For Rent' — it controls PropertyType, not PropertySubType)
-    const mappedTypes = (lead.types || []).filter(t => t !== 'For Rent').map(t => typeMap[t] || t).filter(Boolean);
-    const effectiveCities = cities.length > 0 ? cities : (polygonCities.length > 0 ? polygonCities : [null]);
-
-    // Build one request per city × type combination for targeted results
-    const requests = [];
-    for (const city of effectiveCities) {
-        if (mappedTypes.length > 0) {
-            for (const subType of mappedTypes) {
-                const p = new URLSearchParams(baseParams);
-                p.set('PropertySubType', subType);
-                if (city) p.set('City', city);
-                requests.push(
-                    fetch(`https://api.bridgedataoutput.com/api/v2/miamire/listings?${p}`)
-                        .then(r => r.ok ? r.json() : { bundle: [] })
-                        .then(d => (d.success !== false && Array.isArray(d.bundle)) ? d.bundle : [])
-                        .catch(() => [])
-                );
-            }
-        } else {
-            // No type filter — fetch all residential
-            const p = new URLSearchParams(baseParams);
-            if (city) p.set('City', city);
-            requests.push(
-                fetch(`https://api.bridgedataoutput.com/api/v2/miamire/listings?${p}`)
-                    .then(r => r.ok ? r.json() : { bundle: [] })
-                    .then(d => (d.success !== false && Array.isArray(d.bundle)) ? d.bundle : [])
-                    .catch(() => [])
-            );
-        }
-    }
-
-    const results = await Promise.all(requests);
-    let allListings = results.flat();
-    allListings.sort((a, b) => new Date(b.ModificationTimestamp || 0) - new Date(a.ModificationTimestamp || 0));
-
-    // Deduplicate
-    const seen = new Set();
-    const unique = [];
-    for (const l of allListings) {
-        if (!seen.has(l.ListingId)) {
-            seen.add(l.ListingId);
-            unique.push(l);
-        }
-        if (!needsClientFilter && unique.length >= count) break;
-    }
-
-    // Client-side feature filtering
-    let filtered = unique;
-    const features = lead.features || [];
-    if (features.length > 0) {
-        filtered = filtered.filter(l => features.every(feat => matchesFeature(l, feat)));
-    }
-
-    // Client-side keyword filtering — search description + architecture/community fields
-    if (lead.keywords) {
-        const kws = lead.keywords.toLowerCase().split(',').map(s => s.trim()).filter(Boolean);
-        if (kws.length > 0) {
-            const joinField = v => v ? (Array.isArray(v) ? v.join(' ') : String(v)) : '';
-            filtered = filtered.filter(l => {
-                const searchText = [
-                    l.PublicRemarks || '',
-                    joinField(l.ArchitecturalStyle),
-                    joinField(l.CommunityFeatures),
-                    joinField(l.AssociationAmenities),
-                    joinField(l.MIAMIRE_Restrictions),
-                ].join(' ').toLowerCase();
-                return kws.some(kw => searchText.includes(kw));
-            });
-        }
-    }
-
-    return filtered;
-}
-
-// Check if a listing matches a feature tag
-function matchesFeature(listing, feature) {
-    const arrContains = (arr, ...terms) => {
-        if (!Array.isArray(arr)) return false;
-        const lower = arr.map(s => (s || '').toLowerCase());
-        return terms.some(t => lower.some(v => v.includes(t.toLowerCase())));
-    };
-    const remarks = (listing.PublicRemarks || '').toLowerCase();
-    switch (feature) {
-        case 'Waterfront / Ocean View':
-            return listing.WaterfrontYN === true
-                || arrContains(listing.View, 'ocean', 'water', 'bay', 'intracoastal', 'lake')
-                || arrContains(listing.WaterfrontFeatures, 'ocean', 'water', 'bay', 'lake', 'canal');
-        case 'Waterfront / Beach':
-            return arrContains(listing.WaterfrontFeatures, 'ocean', 'beach')
-                || arrContains(listing.View, 'ocean', 'beach', 'direct ocean');
-        case 'Waterfront / Bay':
-            return arrContains(listing.WaterfrontFeatures, 'bay', 'intracoastal')
-                || arrContains(listing.View, 'bay', 'intracoastal');
-        case 'Waterfront / Lake':
-            return arrContains(listing.WaterfrontFeatures, 'lake')
-                || arrContains(listing.View, 'lake')
-                || remarks.includes('lake');
-        case 'Waterfront / Canal':
-            return arrContains(listing.WaterfrontFeatures, 'canal')
-                || arrContains(listing.View, 'canal');
-        case 'Balcony / Terrace':
-            return arrContains(listing.PatioAndPorchFeatures, 'balcony', 'terrace', 'deck', 'lanai');
-        case 'Pool':
-            return Array.isArray(listing.PoolFeatures) && listing.PoolFeatures.length > 0;
-        case 'Short-Term Rental Allowed': {
-            const restrictions = listing.MIAMIRE_Restrictions || [];
-            const hasDaily = arrContains(restrictions, 'Daily Rentals Allowed');
-            const noRestrictions = arrContains(restrictions, 'No Restrictions');
-            const noDaily = arrContains(restrictions, 'No Daily Rentals');
-            const strInRemarks = remarks.includes('short term rental') || remarks.includes('short-term rental') || remarks.includes('airbnb') || remarks.includes('vrbo') || remarks.includes('daily rental') || remarks.includes('hotel program') || remarks.includes('nightly rental');
-            if (noDaily) return false;
-            if (hasDaily || noRestrictions || strInRemarks) return true;
-            return false;
-        }
-        case 'Gated Community':
-            return arrContains(listing.CommunityFeatures || listing.AssociationAmenities, 'gated', 'guard', 'security')
-                || remarks.includes('gated') || remarks.includes('guard gate') || remarks.includes('private community');
-        case 'Golf Course':
-            return arrContains(listing.CommunityFeatures || listing.AssociationAmenities, 'golf')
-                || remarks.includes('golf');
-        case 'Large Lot':
-            return (listing.LotSizeSquareFeet && listing.LotSizeSquareFeet >= 21780); // 0.5 acres
-        case 'High Rise':
-            return arrContains(listing.ArchitecturalStyle, 'high rise', 'highrise');
-        case 'Penthouse':
-            return arrContains(listing.ArchitecturalStyle, 'penthouse')
-                || remarks.includes('penthouse');
-        case 'No HOA': {
-            const fee = parseFloat(listing.AssociationFee);
-            return !fee || fee === 0;
-        }
-        default:
-            return true;
-    }
 }
 
 // ── EMAIL TEMPLATE ────────────────────────────────────────────────────────────
@@ -597,9 +416,6 @@ function buildAlertEmail(lead, listings, siteBase) {
     const lang = lead.language || 'en';
     const i18n = getEmailStrings(lang);
 
-    // Auto-login auth params — appended to every URL in this email so that
-    // clicking ANY link/button logs the lead in automatically on any device.
-    // Front-end strips these from the URL immediately after reading them.
     const authParams = [];
     if (lead.email)    authParams.push(`e=${encodeURIComponent(lead.email)}`);
     if (lead.password) authParams.push(`p=${encodeURIComponent(lead.password)}`);
@@ -622,7 +438,9 @@ function buildAlertEmail(lead, listings, siteBase) {
         const baths = listing.BathroomsTotalInteger || '—';
         const sqft = listing.LivingArea
             ? Number(listing.LivingArea).toLocaleString('en-US') + ' sqft'
-            : '';
+            : (listing.LotSizeSquareFeet
+                ? Number(listing.LotSizeSquareFeet).toLocaleString('en-US') + ' sqft lot'
+                : ''); // land listings: show lot size where a house shows living area
         const mlsId = listing.ListingId || '';
         const listingUrl = appendAuth(`${siteBase}/listing?id=${mlsId}`);
 
@@ -769,6 +587,127 @@ function getEmailStrings(lang) {
         },
     };
     return strings[lang] || strings.en;
+}
+
+// ── WHATSAPP ALERT ─────────────────────────────────────────────────────────────
+
+// PURE — no network. Builds the Twilio Content-template payload for a lead.
+// shareUrlFn(listing) -> tokenized listing URL (string, resolved by the caller).
+// Returns { templateSid, vars, toPhone, templateKey } or null when nothing to send.
+// Template pick by listing count: n>=5 -> PROPS5 (5 slots), n>=3 -> PROPS3 (3 slots),
+// else PROPS1 (1 slot); listings are sliced to the slot count so Twilio never sees
+// an empty {{n}} (which it rejects). English (_EN) template when the lead's language
+// starts with "en", otherwise the Spanish template.
+export function buildWhatsappAlert(lead, listings, shareUrlFn) {
+    const list = (listings || []).filter(Boolean);
+    if (list.length === 0) return null;
+
+    const isEnglish = String(lead.language || '').toLowerCase().startsWith('en');
+    const suffix = isEnglish ? '_EN' : '';
+
+    let slots, tplKey;
+    if (list.length >= 5)      { slots = 5; tplKey = 'PROPS5'; }
+    else if (list.length >= 3) { slots = 3; tplKey = 'PROPS3'; }
+    else                       { slots = 1; tplKey = 'PROPS1'; }
+
+    const chosen = list.slice(0, slots);
+    const templateKey = `${tplKey}${suffix}`;
+    const templateSid = process.env[`TWILIO_WA_TPL_${templateKey}`] || '';
+
+    const vars = { '1': lead.firstName || 'there' };
+    chosen.forEach((listing, i) => {
+        const label = whatsappListingLabel(listing);
+        const url = shareUrlFn(listing) || '';
+        // One property per slot, collapsed to a SINGLE line — Meta rejects
+        // newlines inside a template variable.
+        vars[String(i + 2)] = `${label}: ${url}`.replace(/\s+/g, ' ').trim();
+    });
+
+    const toPhone = String(lead.phone || '').replace(/\D/g, '');
+    return { templateSid, vars, toPhone, templateKey };
+}
+
+function whatsappListingLabel(listing) {
+    const beds  = listing.BedroomsTotal;
+    const baths = listing.BathroomsTotalInteger;
+    const type  = listing.PropertySubType || '';
+    const city  = listing.City || '';
+    const price = listing.ListPrice ? '$' + Number(listing.ListPrice).toLocaleString('en-US') : '';
+    const bb = [beds ? `${beds}BR` : '', baths ? `${baths}BA` : ''].filter(Boolean).join('/');
+    const head = [bb, type].filter(Boolean).join(' ');
+    const loc = [head, city].filter(Boolean).join(', ');
+    return [loc, price].filter(Boolean).join(' — ');
+}
+
+// Network wrapper around buildWhatsappAlert. Resolves one tokenized, popup-bypassing
+// URL per listing via /api/agent/share-property, then sends the approved template
+// from Claudia's 954 line. Never throws to the caller in a way that blocks the loop.
+export async function sendWhatsappAlert({ lead, listings, siteBase }) {
+    const accountSid = process.env.TWILIO_ACCOUNT_SID;
+    const authTok    = process.env.TWILIO_AUTH_TOKEN;
+    const fromWa     = process.env.TWILIO_WHATSAPP_FROM;
+    const agentToken = process.env.AGENT_API_TOKEN;
+    if (!accountSid || !authTok || !fromWa) {
+        return { status: 'skipped', reason: 'twilio not configured' };
+    }
+
+    const slots = listings.length >= 5 ? 5 : listings.length >= 3 ? 3 : 1;
+    const chosen = listings.slice(0, slots);
+
+    const urlMap = new Map();
+    for (const listing of chosen) {
+        const mlsId = listing.ListingId;
+        if (!mlsId) continue;
+        try {
+            const r = await fetch(`${siteBase}/api/agent/share-property`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${agentToken}`,
+                },
+                body: JSON.stringify({ leadId: lead.id, mlsId, channel: 'whatsapp' }),
+            });
+            if (r.ok) {
+                const d = await r.json();
+                if (d.url) urlMap.set(mlsId, d.url);
+            }
+        } catch (_) { /* skip this listing's link; fall back below */ }
+    }
+
+    const payload = buildWhatsappAlert(
+        lead,
+        chosen,
+        (l) => urlMap.get(l.ListingId) || `${siteBase}/listing?id=${l.ListingId}`,
+    );
+    if (!payload) return { status: 'skipped', reason: 'no listings' };
+    if (!payload.toPhone) return { status: 'skipped', reason: 'no phone' };
+    if (!payload.templateSid) return { status: 'skipped', reason: `missing template ${payload.templateKey}` };
+
+    const form = new URLSearchParams({
+        To: `whatsapp:+${payload.toPhone}`,
+        From: fromWa,
+        ContentSid: payload.templateSid,
+        ContentVariables: JSON.stringify(payload.vars),
+    });
+
+    const twRes = await fetch(
+        `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`,
+        {
+            method: 'POST',
+            headers: {
+                'Authorization': 'Basic ' + btoa(`${accountSid}:${authTok}`),
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: form.toString(),
+        },
+    );
+
+    if (!twRes.ok) {
+        const err = await twRes.text();
+        return { status: 'error', reason: (err || '').slice(0, 250) };
+    }
+    const d = await twRes.json().catch(() => ({}));
+    return { status: 'sent', sid: d.sid || null, template: payload.templateKey, count: chosen.length };
 }
 
 function json(data, status = 200) {
