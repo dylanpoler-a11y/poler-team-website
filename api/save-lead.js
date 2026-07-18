@@ -9,6 +9,8 @@
 
 export const config = { runtime: 'edge' };
 
+import { sendCapiEvent } from './_capi.js';
+
 // ISO 2-letter code → country name (matches listing.html dropdown)
 const ISO_COUNTRY = {
     US:'United States',AL:'Albania',AG:'Antigua and Barbuda',AR:'Argentina',AW:'Aruba',
@@ -73,7 +75,7 @@ function detectCountry(phone) {
     return '';
 }
 
-export default async function handler(req) {
+export default async function handler(req, context) {
     if (req.method === 'OPTIONS') {
         return new Response(null, {
             headers: {
@@ -102,7 +104,7 @@ export default async function handler(req) {
         return json({ error: 'Invalid request body' }, 400);
     }
 
-    const {
+    let {
         first = '',
         last  = '',
         email = '',
@@ -121,9 +123,26 @@ export default async function handler(req) {
         countryIso     = '',
     } = body;
 
+    // The MCP create_lead tool (api/mcp.js + poler-team-mcp) sends firstName/lastName —
+    // accept both shapes so agent-created leads don't lose their name.
+    if (!first && typeof body.firstName === 'string') first = body.firstName;
+    if (!last  && typeof body.lastName  === 'string') last  = body.lastName;
+
     // Build UTM summary string for CRM (e.g. "facebook / cpc / miami-luxury-q1")
     const utmParts = [utm_source, utm_medium, utm_campaign].filter(Boolean);
     const utmSummary = utmParts.length ? utmParts.join(' / ') : '';
+
+    // ── TCPA / WhatsApp consent record ──
+    // Exact disclosure text shown on the form (mirror of i18n.js `consentDisclosure`).
+    // Clicking submit = the affirmative act; we store time + IP + exact text as the record.
+    const CONSENT_TEXT = {
+        en: 'By submitting, you agree to be contacted by The Poler Team via call, text, and WhatsApp — including by automated or AI-assisted means — at the number provided. Consent isn’t required to buy or sell.',
+        es: 'Al enviar, aceptas recibir llamadas, mensajes de texto y WhatsApp de The Poler Team, incluyendo por medios automatizados o asistidos por IA, al número que proporcionas. El consentimiento no es necesario para comprar o vender.',
+        pt: 'Ao enviar, você concorda em receber ligações, mensagens de texto e WhatsApp da The Poler Team, inclusive por meios automatizados ou assistidos por IA, no número fornecido. O consentimento não é necessário para comprar ou vender.',
+    };
+    const consentLang = CONSENT_TEXT[language] ? language : 'en';
+    const consentIp = (req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || '').split(',')[0].trim();
+    const consentRecord = `${new Date().toISOString()} | IP: ${consentIp || 'unknown'} | lang: ${consentLang} | src: ${sourceUrl || 'listing'} | "${CONSENT_TEXT[consentLang]}"`;
 
     // Generate a unique token for lead self-service preferences page
     const tokenArray = new Uint8Array(24);
@@ -152,19 +171,26 @@ export default async function handler(req) {
         'Access Password': accessPassword,
         'Preferred Language': language,
         ...(timeline && { 'Timeline': timeline }),
+        ...(typeof body.notes === 'string' && body.notes.trim() && { 'Notes': body.notes }),
     };
 
-    // Detect country: prefer ISO code from dropdown, fallback to phone prefix
-    const country = (countryIso && ISO_COUNTRY[countryIso.toUpperCase()]) || detectCountry(phone);
+    // Detect country: explicit full name (MCP create_lead) > ISO code from dropdown > phone prefix
+    const country = (typeof body.country === 'string' && body.country.trim())
+        || (countryIso && ISO_COUNTRY[countryIso.toUpperCase()])
+        || detectCountry(phone);
 
-    // Auto-assign agent: Portuguese/Brazil → Rosa, others → 50/50 Kevin/Rosa
-    let assignedTo = '';
-    if (country === 'Brazil' || language === 'pt' || country === 'Portugal') {
+    // Auto-assign agent: explicit (MCP create_lead) > Portuguese/Brazil → Rosa > 75/25 Kevin/Rosa
+    let assignedTo = (typeof body.assignedTo === 'string' && body.assignedTo.trim()) || '';
+    if (assignedTo) {
+        // explicit assignment from an agent tool — keep as-is
+    } else if (country === 'Brazil' || language === 'pt' || country === 'Portugal') {
         assignedTo = 'Rosa';
     } else {
-        // 50/50 split between Kevin and Rosa (deterministic hash)
+        // 75/25 split Kevin/Rosa (Kevin's instruction 2026-07-15 — was 50/50).
+        // Deterministic hash so a duplicate submit assigns the same agent:
+        // hash % 4 → 0,1,2 = Kevin (75%), 3 = Rosa (25%).
         const hash = (email || first || last || phone || '').split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
-        assignedTo = hash % 2 === 0 ? 'Kevin' : 'Rosa';
+        assignedTo = hash % 4 === 3 ? 'Rosa' : 'Kevin';
     }
     coreFields['Assigned To'] = assignedTo;
 
@@ -188,28 +214,27 @@ export default async function handler(req) {
         'Content-Type':  'application/json',
     };
 
-    // Try with UTM fields first; if Airtable rejects unknown fields, retry without
-    let res = await fetch(airtableUrl, {
+    // Write order degrades gracefully on missing optional columns: full → drop UTM (keep
+    // consent) → core only. Consent persists whenever its column exists, independent of UTM,
+    // and lead capture NEVER breaks on a missing optional column.
+    const postFields = (fields) => fetch(airtableUrl, {
         method: 'POST',
         headers,
-        body: JSON.stringify({ records: [{ fields: { ...coreFields, ...utmFields } }] }),
+        body: JSON.stringify({ records: [{ fields }] }),
     });
+    const isUnknownField = async (r) => ((await r.clone().json().catch(() => ({}))).error?.type === 'UNKNOWN_FIELD_NAME');
 
+    let res = await postFields({ ...coreFields, ...utmFields, 'TCPA Consent': consentRecord });
+    if (!res.ok && await isUnknownField(res)) {
+        res = await postFields({ ...coreFields, ...utmFields });   // drop consent col if absent, keep UTM
+        if (!res.ok && await isUnknownField(res)) {
+            res = await postFields(coreFields);                    // last resort — core only
+        }
+    }
     if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        if (err.error?.type === 'UNKNOWN_FIELD_NAME') {
-            // UTM fields don't exist in Airtable yet — retry with core fields only
-            res = await fetch(airtableUrl, {
-                method: 'POST',
-                headers,
-                body: JSON.stringify({ records: [{ fields: coreFields }] }),
-            });
-        }
-        if (!res.ok) {
-            const retryErr = await res.json().catch(() => ({}));
-            // Still return password so the user sees their credentials even if CRM save failed
-            return json({ error: retryErr.error?.message || 'Failed to save lead', password: accessPassword, token: alertToken }, 500);
-        }
+        const retryErr = await res.json().catch(() => ({}));
+        // Still return password so the user sees their credentials even if CRM save failed
+        return json({ error: retryErr.error?.message || 'Failed to save lead', password: accessPassword, token: alertToken }, 500);
     }
 
     const data = await res.json();
@@ -251,7 +276,7 @@ export default async function handler(req) {
             first, last, email, phone,
             listingAddress, listingPrice,
             sourceUrl, country, assignedTo,
-            timeline, utmSummary,
+            timeline, utmSummary, consentRecord,
         });
         emailPromises.push(
             fetch('https://api.resend.com/emails', {
@@ -274,6 +299,36 @@ export default async function handler(req) {
         // Await both before returning — Edge runtime kills pending fetches on response
         await Promise.allSettled(emailPromises);
     }
+
+    // Server-side Meta Conversions API mirror of the browser 'Lead' pixel event (listing.js
+    // completeLead()). No-ops entirely unless META_CAPI_ACCESS_TOKEN is set. A CAPI failure
+    // must NEVER break the lead save, which has already fully succeeded by this point.
+    // Prefer context.waitUntil (Vercel Edge prod) so the CAPI fetch runs AFTER the response
+    // is sent — zero added latency. If waitUntil is ever absent, fall back to awaiting so the
+    // event is never silently dropped (token-less it returns instantly anyway). The trailing
+    // .catch(()=>{}) guarantees a late CAPI error can never surface.
+    const _capiCall = sendCapiEvent({
+        eventName: 'Lead',
+        eventId: body.metaEventId || 'srv-' + (data.records?.[0]?.id || Date.now()),
+        eventSourceUrl: body.pageUrl || sourceUrl || req.headers.get('referer') || '',
+        userData: {
+            email,
+            phone,
+            firstName: first,
+            lastName:  last,
+            country:   countryIso,
+            fbp:       body.fbp,
+            fbc:       body.fbc,
+        },
+        customData: {
+            content_category: 'Real Estate',
+            currency: 'USD',
+            value: Number(body.listPrice) || Number(listingPrice) || 0,
+        },
+        req,
+    }).catch(() => {});
+    if (typeof context?.waitUntil === 'function') { context.waitUntil(_capiCall); }
+    else { try { await _capiCall; } catch (_) {} }
 
     return json({ success: true, id: data.records?.[0]?.id, token: alertToken, password: accessPassword });
 }
@@ -314,7 +369,7 @@ function buildWelcomeEmail(firstName, email, password, lang) {
 </td></tr></table></body></html>`;
 }
 
-function buildNotificationEmail({ first, last, email, phone, listingAddress, listingPrice, sourceUrl, country, assignedTo, timeline, utmSummary }) {
+function buildNotificationEmail({ first, last, email, phone, listingAddress, listingPrice, sourceUrl, country, assignedTo, timeline, utmSummary, consentRecord }) {
     const name = `${first} ${last}`.trim() || 'Unknown';
     const price = listingPrice ? `$${Number(listingPrice).toLocaleString()}` : '—';
     const row = (label, value) => value
@@ -338,6 +393,7 @@ function buildNotificationEmail({ first, last, email, phone, listingAddress, lis
       ${row('Listing Price', listingAddress ? price : '')}
       ${row('Source', utmSummary)}
       ${row('Page URL', sourceUrl ? `<a href="${sourceUrl}" style="color:#3b82f6;word-break:break-all;">${sourceUrl}</a>` : '')}
+      ${row('Consent', consentRecord ? `<span style="font-size:11px;color:#64748b;word-break:break-word;">${consentRecord}</span>` : '')}
     </table>
     <div style="margin-top:24px;text-align:center;">
       <a href="https://www.homesinsoflorida.com/crm" style="display:inline-block;padding:12px 32px;background:#1a2744;color:#fff;text-decoration:none;border-radius:8px;font-size:14px;font-weight:600;">Open CRM →</a>

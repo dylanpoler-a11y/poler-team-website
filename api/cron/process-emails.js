@@ -2038,6 +2038,7 @@ function nowDateStr() {
     return new Date().toLocaleString('en-US', {
         month: 'numeric', day: 'numeric', year: 'numeric',
         hour: 'numeric', minute: '2-digit', hour12: true,
+        timeZone: 'America/New_York', // server runs UTC — stamp notes in Kevin's ET
     });
 }
 

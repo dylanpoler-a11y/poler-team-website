@@ -83,6 +83,21 @@ const TOOLS = [
         endpoint: { method: 'POST', path: '/api/agent/log-note' },
     },
     {
+        name: 'update_note',
+        description: 'EDIT an existing note in a lead\'s Notes via exact find/replace. `find` must match exactly once (409 otherwise — then append with log_note instead). Use to revise a prior note (e.g. "awaiting reply" → conversation summary) without stacking duplicates.',
+        inputSchema: {
+            type: 'object',
+            properties: {
+                leadId:  { type: 'string' },
+                find:    { type: 'string', description: 'Exact existing note text to replace (must occur exactly once)' },
+                replace: { type: 'string', description: 'New text that takes its place' },
+                agent:   { type: 'string' },
+            },
+            required: ['leadId', 'find', 'replace'],
+        },
+        endpoint: { method: 'POST', path: '/api/agent/update-note' },
+    },
+    {
         name: 'log_call',
         description: 'Log a phone-call summary as a Lead Activity entry.',
         inputSchema: {
@@ -111,8 +126,26 @@ const TOOLS = [
         endpoint: { method: 'POST', path: '/api/agent/set-alert-active' },
     },
     {
+        name: 'set_alert_channels',
+        description: 'Choose HOW a lead receives their property alerts: email, WhatsApp, or both. Use when Kevin says "send X\'s properties by WhatsApp / email / both". WhatsApp alerts come from Claudia\'s 954 line on the same schedule + same listings as email. NOTE: WhatsApp needs the lead to have a phone on file, and (Meta policy) WhatsApp property alerts only DELIVER to non-US (+1 blocked) numbers — keep US-based leads on email. Preserves the lead\'s search criteria; only changes the delivery channel. To also set the search criteria/frequency use update_alerts.',
+        inputSchema: {
+            type: 'object',
+            properties: {
+                leadId:   { type: 'string', description: 'Airtable record id (rec...)' },
+                email:    { type: 'boolean', description: 'Send alerts by email (default true if omitted)' },
+                whatsapp: { type: 'boolean', description: 'Send alerts by WhatsApp from Claudia\'s 954 (default false if omitted)' },
+            },
+            required: ['leadId'],
+        },
+        endpoint: { method: 'POST', path: '/api/agent/update-alerts' },
+        argRemap: ({ leadId, email, whatsapp }) => ({
+            leadId,
+            profile: { channels: { email: email !== false, whatsapp: !!whatsapp } },
+        }),
+    },
+    {
         name: 'update_alerts',
-        description: 'Update lead alert preferences. profile keys: active, cities[], priceMin, priceMax, bedsMin, bathsMin, propertyTypes[], frequency, count.',
+        description: 'Update lead alert preferences. profile keys: active, cities[], priceMin, priceMax, bedsMin, bathsMin, propertyTypes[], frequency, count, channels{email,whatsapp} (delivery channels; default email-only — setting one preserves existing profiles).',
         inputSchema: {
             type: 'object',
             properties: {
@@ -492,7 +525,7 @@ const TOOLS = [
     // ── ROUND 3: MLS SEARCH + LEAD CONTEXT + UTILITIES ────────────────────
     {
         name: 'search_properties',
-        description: 'Search the South Florida MLS for active listings. Returns photos, price, beds, baths, sqft, $/sqft, address, etc. Use when a user asks "find me waterfront condos in Miami Beach between $2M-$5M with 3+ beds" or any property search.',
+        description: 'Search the South Florida MLS for listings. Returns photos, price, beds, baths, sqft, $/sqft, address, construction status, etc. Use when a user asks "find me waterfront condos in Miami Beach between $2M-$5M with 3+ beds" or any property search. To search NEW-DEVELOPMENT / PRECONSTRUCTION inventory, set preconstruction=true (or use the dedicated search_preconstructions tool).',
         inputSchema: {
             type: 'object',
             properties: {
@@ -508,12 +541,73 @@ const TOOLS = [
                 pool:         { type: 'boolean' },
                 yearBuiltMin: { type: 'number', description: 'Earliest YearBuilt, e.g. 2020 for "modern / newly built"' },
                 yearBuiltMax: { type: 'number' },
+                preconstruction:   { type: 'boolean', description: 'true → only new-development / preconstruction (New Construction OR Under Construction)' },
+                constructionStatus:{ type: 'string', description: 'Narrow to ONE stage: "New Construction" or "Under Construction"' },
+                status:       { type: 'string', description: 'Comma-sep StandardStatus, default Active. Active/Pending/ActiveUnderContract/"Coming Soon"/Closed' },
                 listingId:    { type: 'string' },
                 limit:        { type: 'number' },
                 sort:         { type: 'string' },
             },
         },
         endpoint: { method: 'GET', path: '/api/agent/search-properties' },
+    },
+    {
+        name: 'search_preconstructions',
+        description: 'Search South Florida PRECONSTRUCTION / new-development listings (condos & homes still New Construction or Under Construction, e.g. towers completing 2026-2028). Same filters as search_properties — city, price, beds, baths, sqft, propertyType, waterfront, pool — plus completion-year via yearBuiltMin/Max. Each result includes constructionStatus + completionYear. Use whenever a client wants preconstruction / pre-construction / new-development / off-plan inventory.',
+        inputSchema: {
+            type: 'object',
+            properties: {
+                city:         { type: 'string', description: 'Comma-separated cities, e.g. "Miami,Miami Beach,Sunny Isles,Brickell,Aventura"' },
+                priceMin:     { type: 'number' },
+                priceMax:     { type: 'number' },
+                bedsMin:      { type: 'number' },
+                bathsMin:     { type: 'number' },
+                sqftMin:      { type: 'number' },
+                sqftMax:      { type: 'number' },
+                propertyType: { type: 'string', description: 'SFH / Condo / Townhome OR full PropertySubType string' },
+                waterfront:   { type: 'boolean' },
+                pool:         { type: 'boolean' },
+                constructionStatus:{ type: 'string', description: 'Narrow to ONE stage: "New Construction" (built, brand-new) or "Under Construction" (still being built)' },
+                yearBuiltMin: { type: 'number', description: 'Earliest completion year, e.g. 2026' },
+                yearBuiltMax: { type: 'number', description: 'Latest completion year' },
+                limit:        { type: 'number', description: 'Default 25, max 100' },
+                sort:         { type: 'string', description: 'newest (default) / price_low / price_high / sqft' },
+            },
+        },
+        endpoint: { method: 'GET', path: '/api/agent/search-properties' },
+        argRemap: (args = {}) => ({ ...args, preconstruction: 'true' }),
+    },
+    {
+        name: 'search_preconstruction_buildings',
+        description: 'Search The Poler Team\'s CURATED new-development BUILDINGS directory — whole preconstruction towers selling off-plan (e.g. Baccarat, Waldorf Astoria, Cipriani, 1428 Brickell, Okan, Lofty) with developer, delivery year, pricing-from, deposit structure, features & views. Use this (NOT search_preconstructions, which returns individual MLS units) when a client wants to compare preconstruction PROJECTS / new-development condos to buy off-plan, like the Brickell/Downtown options we present in a preconstruction deck.',
+        inputSchema: {
+            type: 'object',
+            properties: {
+                area:            { type: 'string', description: 'Comma-sep areas, e.g. "Brickell,Downtown Miami"' },
+                priceMin:        { type: 'number', description: 'Min entry price (building starting price)' },
+                priceMax:        { type: 'number', description: 'Max entry price (building starting price)' },
+                deliveryYearMax: { type: 'number', description: 'Only towers delivering on/before this year' },
+                deliveryYearMin: { type: 'number', description: 'Only towers delivering on/after this year' },
+                bedsMin:         { type: 'number', description: 'Tower offers at least this bedroom count' },
+                developer:       { type: 'string', description: 'Developer name (substring match), e.g. "Related"' },
+                waterfront:      { type: 'boolean' },
+                shortTermRental: { type: 'boolean', description: 'true → daily / short-term-rental-friendly towers only' },
+                badge:           { type: 'string', description: 'TOP PICK / BEST VALUE / BEST INVESTMENT / MOST EXCLUSIVE / EARLIEST DELIVERY / TALLEST IN FLORIDA' },
+                sort:            { type: 'string', description: 'price_low (default) / price_high / delivery / name' },
+            },
+        },
+        endpoint: { method: 'GET', path: '/api/preconstructions' },
+    },
+    {
+        name: 'get_preconstruction_building',
+        description: 'Get the full curated profile of ONE preconstruction building by its id (from search_preconstruction_buildings) — all fields: developer, architecture, interiors, stories, units, bedrooms, sqft range, pricing, delivery, deposit structure, features, views, construction status.',
+        inputSchema: {
+            type: 'object',
+            properties: { buildingId: { type: 'string', description: 'Building id, e.g. "baccarat-residences-miami"' } },
+            required: ['buildingId'],
+        },
+        endpoint: { method: 'GET', path: '/api/preconstructions' },
+        argRemap: ({ buildingId }) => ({ id: buildingId }),
     },
     {
         name: 'get_lead_preferences',

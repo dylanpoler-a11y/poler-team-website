@@ -42,11 +42,15 @@ export default async function handler(req) {
         return json({ error: 'Airtable not configured' }, 500);
     }
 
-    // Paginate through all records
+    // Paginate through ALL records. Previously capped at 10 pages (1000 records)
+    // — combined with the ascending "Due At" sort, that silently truncated the
+    // newest/future-dated reminders once the table grew past 1000 rows (Sammy
+    // creates a standing reminder per lead). Loop until Airtable stops returning
+    // an offset; the 200-page bound (20k records) is just a runaway safety net.
     let allReminders = [];
     let offset = null;
 
-    for (let page = 0; page < 10; page++) {
+    for (let page = 0; page < 200; page++) {
         const params = new URLSearchParams({
             'sort[0][field]':     'Due At',
             'sort[0][direction]': 'asc',

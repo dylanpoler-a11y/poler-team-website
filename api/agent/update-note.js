@@ -1,13 +1,21 @@
 /**
- * /api/agent/log-note.js — Vercel Edge Function
- * Append a single timestamped note to a lead's Notes field.
+ * /api/agent/update-note.js — Vercel Edge Function
+ * EDIT an existing note in a lead's Notes blob via exact find/replace.
  *
- * Body: { leadId, note, agent? }
+ * Built 2026-07-01 (Kevin: Sammy must be able to EDIT its "awaiting reply" note
+ * once the lead replies, instead of stacking a new note per message). The Notes
+ * field is a single text blob (see log-note.js), so an "edit" is a literal
+ * find/replace that must match EXACTLY ONCE — anything else is refused so a bad
+ * match can never corrupt history. Callers fall back to log-note (append) on 409.
+ *
+ * Body: { leadId, find, replace, agent? }
+ *   find    — the exact existing note BODY text to replace (must occur exactly once)
+ *   replace — the new text that takes its place
  * Auth: Authorization: Bearer <AGENT_API_TOKEN>  (or password)
  *
- * Format matches the existing CRM convention:
- *   [M/D/YYYY, h:MM AM — agent] note text
- *   followed by previous notes (newest on top)
+ * Responses:
+ *   200 { success: true, matches: 1 }
+ *   409 { error: 'find text must match exactly once', matches: N }  → caller appends
  */
 
 export const config = { runtime: 'edge' };
@@ -36,9 +44,9 @@ export default async function handler(req) {
     if (!authorize(req, body).ok) return json({ error: 'Unauthorized' }, 401);
     if (!apiKey || !baseId) return json({ error: 'Airtable not configured' }, 500);
 
-    const { leadId, note, agent = 'Agent' } = body;
-    if (!leadId || !note?.trim()) {
-        return json({ error: 'leadId and note are required' }, 400);
+    const { leadId, find, replace } = body;
+    if (!leadId || !find?.trim() || typeof replace !== 'string' || !replace.trim()) {
+        return json({ error: 'leadId, find and replace are required' }, 400);
     }
 
     const headers = { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' };
@@ -48,15 +56,13 @@ export default async function handler(req) {
     if (!cur.ok) return json({ error: 'Lead not found' }, 404);
     const existing = (await cur.json()).fields?.['Notes'] || '';
 
-    // Build prefix matching the saveLead() convention in crm.js
-    const now = new Date();
-    const dateStr = now.toLocaleString('en-US', {
-        month: 'numeric', day: 'numeric', year: 'numeric',
-        hour: 'numeric', minute: '2-digit', hour12: true,
-        timeZone: 'America/New_York', // server runs UTC — stamp notes in Kevin's ET
-    });
-    const entry = `[${dateStr} — ${agent}] ${note.trim()}`;
-    const newNotes = existing ? `${entry}\n\n${existing}` : entry;
+    // The find text must occur EXACTLY once — otherwise refuse (caller appends instead).
+    const matches = existing.split(find).length - 1;
+    if (matches !== 1) {
+        return json({ error: 'find text must match exactly once', matches }, 409);
+    }
+
+    const newNotes = existing.replace(find, replace);
 
     const patchRes = await fetch(`https://api.airtable.com/v0/${baseId}/Leads`, {
         method: 'PATCH',
@@ -69,7 +75,7 @@ export default async function handler(req) {
         return json({ error: err.error?.message || 'Failed to update notes' }, 500);
     }
 
-    return json({ success: true, entry });
+    return json({ success: true, matches: 1 });
 }
 
 function json(data, status = 200) {

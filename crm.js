@@ -5,8 +5,9 @@
 
 // ── CONFIG ─────────────────────────────────────────────────────────────────
 const CRM_API_BASE = 'https://poler-team-website-two.vercel.app';
-const BRIDGE_TOKEN = 'fceef76441eaf7579daff17411bffca2';
-const BRIDGE_BASE  = 'https://api.bridgedataoutput.com/api/v2/miamire';
+// Bridge MLS calls go through the server-side proxy (api/bridge/listings.js) —
+// the access token lives in the Vercel env, never in this public file. (2026-07-17)
+const BRIDGE_BASE  = '/api/bridge';
 const STATUSES = ['New','Contacted','Warm','Hot','Appointment Set','Under Contract','Closed','Dead'];
 
 const AGENTS = [
@@ -300,7 +301,10 @@ function switchView(view) {
 
   if (view === 'reminders') {
     if (views.reminders) views.reminders.style.display = 'block';
-    renderReminders();
+    renderReminders();   // instant paint from cache…
+    loadReminders();     // …then refetch so reminders created out-of-band
+                         // (Flash follow-ups, Sammy, another device) appear
+                         // without a full page reload. 2026-07-16.
   } else if (view === 'sammy-reminders') {
     if (views['sammy-reminders']) views['sammy-reminders'].style.display = 'block';
     renderSammyReminders();
@@ -539,7 +543,17 @@ function renderReminders() {
   filteredReminders = allReminders.filter(r => {
     if (isSammyReminder(r)) return false;   // Sammy's live on their own page
     if (filterStatus && r.status !== filterStatus) return false;
-    if (filterAgent && r.agentEmail.toLowerCase() !== filterAgent.toLowerCase()) return false;
+    // Agent filter: hide a reminder ONLY when it is explicitly owned by a
+    // DIFFERENT human agent. Reminders with a blank Agent Email — every Flash
+    // Coach follow-up + any manually-created one that never got an email set —
+    // are team follow-ups and MUST stay visible under any agent selection.
+    // (The filter auto-selects the logged-in agent on load, so a strict
+    // email-equality test silently hid all 48 Flash-Coach call reminders and
+    // the handful of blank-email manual ones from Kevin's page. 2026-07-16.)
+    if (filterAgent) {
+      const remEmail = (r.agentEmail || '').trim().toLowerCase();
+      if (remEmail && remEmail !== filterAgent.toLowerCase()) return false;
+    }
     return true;
   });
 
@@ -961,7 +975,7 @@ function setupEvents() {
   document.getElementById('panel-expand')?.addEventListener('click', togglePanelExpand);
 
   // Close/collapse the Flash coach back to the launch button (stops the mic)
-  document.getElementById('panel-coach-close')?.addEventListener('click', resetCoachSection);
+  document.getElementById('panel-coach-close')?.addEventListener('click', finalizeCoachSection);
 
   // Flash coach → CRM: log each post-call summary as a note on the lead
   window.addEventListener('message', handleFlashMessage);
@@ -1231,9 +1245,15 @@ function openPanel(id) {
   const lead = allLeads.find(l => String(l.id) === String(id));
   if (!lead) { console.warn('[openPanel] lead not found for id:', id); return; }
   activeLead = lead;
+  // NEVER carry a map property selection from one lead to another — a
+  // wrong-lead send is a client-facing disaster. (Kevin 2026-07-17.)
+  resetMapSelection();
 
   // OPEN THE PANEL FIRST — never let a data-population error keep it hidden.
-  document.getElementById('lead-panel').classList.add('open');
+  // Default = the EXPANDED (wide) view (Kevin 2026-07-17); the ⛶ button shrinks it.
+  const panelEl = document.getElementById('lead-panel');
+  panelEl.classList.add('open');
+  panelEl.classList.add('panel-expanded');
   const overlay = document.getElementById('panel-overlay');
   if (overlay) overlay.classList.add('show');
 
@@ -1384,8 +1404,13 @@ function populatePanel(lead) {
     sendPropsBtn.onclick = () => sendMatchingProps(lead, sendPropsBtn);
   }
 
-  // Reset + wire the Flash live-coach section for THIS lead (collapsed until clicked).
-  resetCoachSection();
+  // Wire the Flash live-coach section for THIS lead (collapsed until clicked). Switching
+  // to a DIFFERENT lead tears the old coach down through finalize (call ended → note,
+  // reminder + alerts land); re-opening the SAME lead leaves a live coach untouched.
+  const coachFrameEl = document.getElementById('panel-coach-iframe');
+  const coachOnThisLead = coachFrameEl && coachFrameEl.src &&
+    coachFrameEl.src.indexOf('leadId=' + encodeURIComponent(lead.id)) !== -1;
+  if (!coachOnThisLead) finalizeCoachSection();
   const coachBtn = document.getElementById('panel-coach-start');
   if (coachBtn) coachBtn.onclick = () => openFlashCoach(lead);
 
@@ -1408,7 +1433,7 @@ async function sendMatchingProps(lead, btn) {
     alert('Este lead no tiene criterios de búsqueda (ciudades/precio) en su perfil de alertas.\n\nConfigura las alertas primero — sin criterios Claudia no envía nada (evita mandar propiedades al azar).');
     return;
   }
-  if (!confirm(`Enviar a ${lead.name || 'este lead'} 3 propiedades nuevas que cumplan sus criterios por WhatsApp?\n\nSale en ~3 min desde el 305 (si es de noche para el lead, espera a las 9am de su hora).`)) return;
+  if (!confirm(`Enviar a ${lead.name || 'este lead'} 3 propiedades nuevas que cumplan sus criterios por WhatsApp?\n\nSale en ~3 min desde el 954 de Claudia (si es de noche para el lead, espera a las 9am de su hora).`)) return;
   const prev = btn.textContent;
   btn.disabled = true;
   btn.textContent = '⏳ Enviando…';
@@ -1588,7 +1613,8 @@ function closePanel() {
   panel.classList.remove('open');
   panel.classList.remove('panel-expanded');
   document.getElementById('panel-overlay').classList.remove('show');
-  resetCoachSection(); // blank the iframe → stops the Flash mic/stream
+  finalizeCoachSection(); // Flash treats the close as call-ended: mic off + note/reminder/alerts
+  resetMapSelection();
   activeLead = null;
 }
 
@@ -1614,6 +1640,30 @@ function resetCoachSection() {
   if (closeBtn) closeBtn.style.display = 'none';
 }
 
+// Closing/switching the panel while the coach is live = THE CALL ENDED (Kevin 2026-07-17).
+// Tell Flash to finalize — it stops the mic instantly and submits the call, so the summary
+// note + follow-up reminder + alert updates land server-side exactly as if "Detener" was
+// pressed — then keep the (hidden) iframe alive for a grace window so the submit and the
+// recording upload can finish before the document is destroyed. Every teardown path
+// (panel close, overlay click, Esc, coach ✕, switching to another lead) goes through here.
+let _coachBlankTimer = null;
+const COACH_FINALIZE_GRACE_MS = 25000;
+function finalizeCoachSection() {
+  const iframe = document.getElementById('panel-coach-iframe');
+  if (!iframe || !iframe.src) { resetCoachSection(); return; }
+  try {
+    iframe.contentWindow.postMessage({ type: 'flash:finalize' }, new URL(iframe.src).origin);
+  } catch (e) { /* fire-and-forget — the grace-window blank still releases the mic */ }
+  // UI returns to the launch state immediately; the doc dies quietly after the grace window.
+  iframe.style.display = 'none';
+  const launch = document.getElementById('panel-coach-launch');
+  const closeBtn = document.getElementById('panel-coach-close');
+  if (launch) launch.style.display = 'block';
+  if (closeBtn) closeBtn.style.display = 'none';
+  clearTimeout(_coachBlankTimer);
+  _coachBlankTimer = setTimeout(resetCoachSection, COACH_FINALIZE_GRACE_MS);
+}
+
 async function openFlashCoach(lead) {
   if (!lead || !lead.id) return;
   const iframe = document.getElementById('panel-coach-iframe');
@@ -1622,6 +1672,8 @@ async function openFlashCoach(lead) {
   if (!iframe) return;
   if (btn) { btn.disabled = true; btn.textContent = 'Cargando coach…'; }
   try {
+    // A pending grace-window blank from a just-finalized call must never kill THIS session.
+    clearTimeout(_coachBlankTimer);
     const cfg = await getFlashConfig();
     iframe.src = `${cfg.flashBaseUrl}/embed?leadId=${encodeURIComponent(lead.id)}&key=${encodeURIComponent(cfg.embedToken)}`;
     iframe.style.display = 'block';
@@ -2569,6 +2621,14 @@ function initProfileButtons() {
 // ── Property preview markers on the map ──
 let previewMarkers = [];
 
+// ── Map property selection (Kevin 2026-07-17: select-on-map → send Email/WhatsApp) ──
+// Map of mlsId (String(ListingId)) -> listing object. Module-level so the popup
+// toggle button and the floating action bar share one source of truth. MUST be
+// reset whenever the panel switches leads — see resetMapSelection(), called from
+// openPanel()/closePanel() — never carry a selection from one lead to another.
+let selectedMapProps = new Map();
+const MAX_MAP_SELECTION = 5;
+
 function clearPreviewMarkers() {
   previewMarkers.forEach(m => m.remove());
   previewMarkers = [];
@@ -2590,21 +2650,32 @@ function plotPreviewMarkers(listings) {
       ? (l.ListPrice / 1000000).toFixed(1) + 'M'
       : Math.round(l.ListPrice / 1000) + 'K') : '';
 
+    const mlsId = String(l.ListingId || '');
+    const isSelected = mlsId && selectedMapProps.has(mlsId);
+
     const el = document.createElement('div');
-    el.className = 'preview-marker';
+    el.className = 'preview-marker' + (isSelected ? ' selected' : '');
     el.innerHTML = price;
+
+    const popup = new maplibregl.Popup({ offset: 20, maxWidth: '280px' })
+      .setHTML(buildPreviewPopupHtml(l));
 
     const marker = new maplibregl.Marker({ element: el })
       .setLngLat([lng, lat])
-      .setPopup(new maplibregl.Popup({ offset: 20, maxWidth: '240px' }).setHTML(
-        `<div style="font-size:0.8rem;">
-          <b style="color:#1a2744;">${price}</b><br>
-          <span style="color:#475569;">${escHtml(l.UnparsedAddress || l.City || '')}</span><br>
-          <span style="color:#6b7280;font-size:0.72rem;">${l.BedroomsTotal || '—'} bd · ${l.BathroomsTotalInteger || '—'} ba · ${l.LivingArea ? l.LivingArea.toLocaleString() + ' sf' : ''}</span><br>
-          <a href="https://homesinsoflorida.com/listing?id=${l.ListingId}" target="_blank" style="color:#2563eb;font-size:0.72rem;">View listing →</a>
-        </div>`
-      ))
+      .setPopup(popup)
       .addTo(alertMap);
+
+    // Wire the "Seleccionar/Quitar" button each time the popup opens — its DOM
+    // is (re)built by setHTML, so a plain addEventListener at construction time
+    // wouldn't survive a later re-render. The button is the PRIMARY toggle;
+    // the marker itself only gets a distinct .selected style (gold), not an
+    // independent click target — its own pointer-events are disabled so pans
+    // pass through to the canvas (see .preview-marker in crm.css).
+    popup.on('open', () => {
+      const popupEl = popup.getElement && popup.getElement();
+      const btn = popupEl && popupEl.querySelector('.map-popup-select-btn');
+      if (btn) btn.addEventListener('click', () => toggleMapPropSelection(l, marker, btn));
+    });
 
     previewMarkers.push(marker);
     bounds.extend([lng, lat]);
@@ -2613,6 +2684,211 @@ function plotPreviewMarkers(listings) {
 
   if (hasBounds) {
     alertMap.fitBounds(bounds, { padding: 50, maxZoom: 13 });
+  }
+
+  ensureMapSelectBar();
+  renderMapSelectionBar();
+}
+
+// ── Rich property popup (Kevin 2026-07-17) ──
+// All remote MLS text goes through escHtml() — Bridge data is untrusted input.
+function buildPreviewPopupHtml(l) {
+  const mlsId = String(l.ListingId || '');
+  const price = l.ListPrice ? '$' + Number(l.ListPrice).toLocaleString('en-US') : 'Price TBD';
+  const photo = (Array.isArray(l.Media) && l.Media.length && l.Media[0].MediaURL) ? l.Media[0].MediaURL : '';
+  const address = l.UnparsedAddress || l.City || 'South Florida';
+  const beds = l.BedroomsTotal != null ? l.BedroomsTotal : '—';
+  const baths = l.BathroomsTotalInteger != null ? l.BathroomsTotalInteger : '—';
+  const sqft = l.LivingArea ? Number(l.LivingArea).toLocaleString('en-US') + ' sf' : '';
+  const subType = l.PropertySubType || '';
+  const year = l.YearBuilt || '';
+  const subYear = [subType, year].filter(Boolean).join(' · ');
+  const isSelected = mlsId && selectedMapProps.has(mlsId);
+  const viewUrl = `https://www.homesinsoflorida.com/listing?mls=${encodeURIComponent(mlsId)}`;
+
+  return `
+    <div class="map-popup-card">
+      ${photo
+        ? `<img class="map-popup-photo" src="${escHtml(photo)}" alt="${escHtml(address)}" loading="lazy" />`
+        : `<div class="map-popup-photo map-popup-photo-empty">Sin foto</div>`}
+      <div class="map-popup-body">
+        <div class="map-popup-price">${escHtml(price)}</div>
+        <div class="map-popup-specs">${escHtml(String(beds))} hab · ${escHtml(String(baths))} baños${sqft ? ' · ' + escHtml(sqft) : ''}</div>
+        <div class="map-popup-address">${escHtml(address)}</div>
+        ${subYear ? `<div class="map-popup-meta">${escHtml(subYear)}</div>` : ''}
+        <div class="map-popup-mls">MLS# ${escHtml(mlsId || '—')}</div>
+        <div class="map-popup-actions">
+          <a href="${escHtml(viewUrl)}" target="_blank" rel="noopener noreferrer" class="map-popup-view-btn">Ver listing</a>
+          <button type="button" class="map-popup-select-btn${isSelected ? ' is-selected' : ''}" data-mls="${escHtml(mlsId)}">${isSelected ? '✓ Quitar' : '+ Seleccionar'}</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function toggleMapPropSelection(listing, marker, btnEl) {
+  const mlsId = String(listing.ListingId || '');
+  if (!mlsId) return;
+
+  if (selectedMapProps.has(mlsId)) {
+    selectedMapProps.delete(mlsId);
+    if (btnEl) { btnEl.textContent = '+ Seleccionar'; btnEl.classList.remove('is-selected'); }
+    const el = marker && marker.getElement && marker.getElement();
+    if (el) el.classList.remove('selected');
+  } else {
+    if (selectedMapProps.size >= MAX_MAP_SELECTION) {
+      alert('Máximo 5 propiedades por envío');
+      return;
+    }
+    selectedMapProps.set(mlsId, listing);
+    if (btnEl) { btnEl.textContent = '✓ Quitar'; btnEl.classList.add('is-selected'); }
+    const el = marker && marker.getElement && marker.getElement();
+    if (el) el.classList.add('selected');
+  }
+  renderMapSelectionBar();
+}
+
+// ── Floating select→send action bar (lives inside #alert-map) ──
+function ensureMapSelectBar() {
+  const container = document.getElementById('alert-map');
+  if (!container) return null;
+  let bar = document.getElementById('map-select-bar');
+  if (!bar) {
+    bar = document.createElement('div');
+    bar.id = 'map-select-bar';
+    bar.className = 'map-select-bar';
+    container.appendChild(bar);
+  }
+  return bar;
+}
+
+function renderMapSelectionBar() {
+  const bar = document.getElementById('map-select-bar');
+  if (!bar) return;
+  const n = selectedMapProps.size;
+  if (n === 0) {
+    bar.style.display = 'none';
+    bar.innerHTML = '';
+    return;
+  }
+  const hasEmail = !!(activeLead && activeLead.email);
+  const hasPhone = !!(activeLead && activeLead.phone);
+  bar.style.display = 'flex';
+  bar.innerHTML = `
+    <span class="map-select-bar-count">${n} seleccionada${n === 1 ? '' : 's'}</span>
+    <button type="button" id="map-select-send-email" class="map-select-bar-btn" ${hasEmail ? '' : 'disabled title="Este lead no tiene email"'}>✉️ Email</button>
+    <button type="button" id="map-select-send-wa" class="map-select-bar-btn" ${hasPhone ? '' : 'disabled title="Este lead no tiene teléfono"'}>💬 WhatsApp 954</button>
+    <button type="button" id="map-select-clear" class="map-select-bar-clear" title="Limpiar selección">✕</button>
+  `;
+  const emailBtn = document.getElementById('map-select-send-email');
+  const waBtn = document.getElementById('map-select-send-wa');
+  const clearBtn = document.getElementById('map-select-clear');
+  if (emailBtn) emailBtn.addEventListener('click', () => sendSelectedMapProps({ email: true, whatsapp: false }));
+  if (waBtn) waBtn.addEventListener('click', () => sendSelectedMapProps({ email: false, whatsapp: true }));
+  if (clearBtn) clearBtn.addEventListener('click', () => resetMapSelection());
+}
+
+// Clears selection state + UI, WITHOUT touching activeLead. Called on ✕ and
+// after a successful send. Distinct from resetMapSelection() (lead-switch hook)
+// only in that it doesn't need to run on every openPanel — same effect either way.
+function clearMapSelectionOnly() {
+  previewMarkers.forEach(m => {
+    const el = m.getElement && m.getElement();
+    if (el) el.classList.remove('selected');
+    const popup = m.getPopup && m.getPopup();
+    if (popup && popup.isOpen && popup.isOpen()) popup.remove();
+  });
+  selectedMapProps.clear();
+  renderMapSelectionBar();
+}
+
+// Full reset — selection data + visible markers + the bar itself. Hooked into
+// openPanel() (new lead) and closePanel() so a selection NEVER carries across
+// leads (wrong-lead send would be client-facing disaster).
+function resetMapSelection() {
+  selectedMapProps.clear();
+  clearPreviewMarkers();
+  const bar = document.getElementById('map-select-bar');
+  if (bar) { bar.style.display = 'none'; bar.innerHTML = ''; }
+}
+
+function describeMapSendChannels(ch, lead) {
+  const parts = [];
+  if (ch && ch.email) {
+    if (ch.email.status === 'sent') parts.push(`✉️ Email → ${ch.email.to || (lead && lead.email) || ''}`);
+    else if (ch.email.status === 'skipped') parts.push(`✉️ Email omitido (${ch.email.reason || 'sin email'})`);
+    else parts.push(`✉️ Email falló${ch.email.reason ? ': ' + ch.email.reason : ''}`);
+  }
+  if (ch && ch.whatsapp) {
+    const w = ch.whatsapp;
+    if (w.status === 'sent') {
+      parts.push(`💬 WhatsApp → ${(lead && lead.phone) || 'lead'}`);
+    } else if (w.status === 'partial') {
+      parts.push('💬 WhatsApp parcial — algunos envíos fallaron (ver detalle abajo)');
+    } else if (w.status === 'skipped') {
+      parts.push(`💬 WhatsApp omitido (${w.reason || 'sin teléfono'})`);
+    } else {
+      const reasons = (w.sends || [w]).map(s => String(s.reason || '')).join(' ');
+      parts.push(/63049/.test(reasons)
+        ? '💬 WhatsApp no entregado — Meta bloquea plantillas de WhatsApp a números de EE.UU. (+1); deja esos leads solo en Email'
+        : '💬 WhatsApp falló');
+    }
+  }
+  return parts;
+}
+
+async function sendSelectedMapProps(channels) {
+  if (!activeLead) return;
+  let lead = activeLead;
+  const mlsIds = Array.from(selectedMapProps.keys());
+  if (mlsIds.length === 0) return;
+  if (channels.email && !lead.email) { alert('Este lead no tiene email — no se puede enviar por Email.'); return; }
+  if (channels.whatsapp && !lead.phone) { alert('Este lead no tiene teléfono — no se puede enviar por WhatsApp.'); return; }
+
+  const channelLabel = channels.email ? 'Email' : 'WhatsApp (954)';
+  const n = mlsIds.length;
+  if (!confirm(`Enviar a ${lead.name || 'este lead'} ${n} propiedad${n === 1 ? '' : 'es'} seleccionada${n === 1 ? '' : 's'} por ${channelLabel}?`)) return;
+  if (!activeLead) return;             // panel closed mid-confirm
+  lead = activeLead; // re-captured post-confirm — multi-window race guard (cold QA 2026-07-17)
+
+  const bar = document.getElementById('map-select-bar');
+  const barButtons = bar ? bar.querySelectorAll('.map-select-bar-btn, .map-select-bar-clear') : [];
+  barButtons.forEach(b => { b.disabled = true; });
+
+  try {
+    const res = await fetch(`${CRM_API_BASE}/api/agent/send-map-props`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        password: currentPassword,
+        leadId: lead.id,
+        mlsIds,
+        channels,
+        agentName: currentAgent ? currentAgent.name : 'Kevin',
+      }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (res.ok && data.ok) {
+      const parts = describeMapSendChannels(data.channels, lead);
+      alert(parts.length ? parts.join('\n') : 'Enviado.');
+      clearMapSelectionOnly();
+      // Refresh the lead's notes in the panel (mirrors the granola-sync
+      // refresh pattern: reload leads, re-render notes for this lead).
+      try {
+        await loadLeads();
+        const refreshedLead = allLeads.find(x => x.id === lead.id);
+        if (refreshedLead) {
+          activeLead = refreshedLead;
+          renderNotesHistory(refreshedLead.notes || '');
+        }
+      } catch (_) { /* non-fatal */ }
+    } else {
+      const parts = describeMapSendChannels(data.channels, lead);
+      alert(`No se pudo enviar: ${data.error || res.status}` + (parts.length ? `\n${parts.join('\n')}` : ''));
+      barButtons.forEach(b => { b.disabled = false; });
+    }
+  } catch (e) {
+    alert(`No se pudo enviar: ${e.message}`);
+    barButtons.forEach(b => { b.disabled = false; });
   }
 }
 
@@ -2721,7 +2997,6 @@ async function checkPropertyCount() {
 
     const isRental = (profile.types || []).includes('For Rent');
     const params = new URLSearchParams({
-      access_token: BRIDGE_TOKEN,
       limit: '200',
       PropertyType: isRental ? 'Residential Lease' : 'Residential',
       StandardStatus: 'Active',
@@ -3773,7 +4048,7 @@ function closePropertyModal() {
 }
 
 async function fetchBridgeListing(params) {
-  const qs = new URLSearchParams({ access_token: BRIDGE_TOKEN, ...params, limit: 1 }).toString();
+  const qs = new URLSearchParams({ ...params, limit: 1 }).toString();
   const res = await fetch(`${BRIDGE_BASE}/listings?${qs}`);
   const data = await res.json();
   return data.success && data.bundle && data.bundle[0] ? data.bundle[0] : null;

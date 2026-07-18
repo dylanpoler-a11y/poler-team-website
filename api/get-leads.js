@@ -42,11 +42,15 @@ export default async function handler(req) {
         return json({ error: 'Airtable not configured' }, 500);
     }
 
-    // Paginate through all records (Airtable max 100/page)
+    // Paginate through ALL records (Airtable max 100/page). Was capped at 10
+    // pages (1,000 records) — same silent-truncation bug fixed in
+    // get-reminders.js 2026-07-16: sorted newest-first, the OLDEST leads would
+    // silently vanish from the CRM once the table passed 1,000 rows. The
+    // 200-page bound (20k) is just a runaway safety net. (Audit 2026-07-17.)
     let allLeads = [];
     let offset   = null;
 
-    for (let page = 0; page < 10; page++) {
+    for (let page = 0; page < 200; page++) {
         const params = new URLSearchParams({
             'sort[0][field]':     'Created At',
             'sort[0][direction]': 'desc',
@@ -83,6 +87,7 @@ export default async function handler(req) {
             listingPrice:   r.fields['Listing Price']   || 0,
             status:         r.fields['Status']          || 'New',
             notes:          r.fields['Notes']           || '',
+            flashRecordings: r.fields['Flash Recordings'] || '[]',
             createdAt:      r.fields['Created At']      || r.createdTime || '',
             // Alert preferences
             alertActive:        !!r.fields['Alert Active'],
@@ -100,6 +105,9 @@ export default async function handler(req) {
             accessPassword:     r.fields['Access Password'] || '',
             alertPolygon:       r.fields['Alert Polygon'] || '',
             alertProfiles:      r.fields['Alert Profiles'] || '[]',
+            alertNeedsReview:    !!r.fields['Alert Needs Review'],
+            alertZeroRuns:       Number(r.fields['Alert Zero Runs'] || 0),
+            alertLastSkipReason: r.fields['Alert Last Skip Reason'] || '',
             preferredLanguage:  r.fields['Preferred Language'] || 'en',
             country:            r.fields['Country'] || '',
             timeline:           r.fields['Timeline'] || '',

@@ -16,6 +16,7 @@
 export const config = { runtime: 'edge' };
 
 import { authorize } from './_auth.js';
+import { parseAlertProfiles, serializeAlertProfiles } from '../lib/alert-search.js';
 
 export default async function handler(req) {
     if (req.method === 'OPTIONS') {
@@ -108,15 +109,12 @@ export default async function handler(req) {
             polygon: '', // Can't draw polygon from voice — use cities instead
         };
 
-        // Merge with existing profiles
-        let existingProfiles = [];
-        try {
-            const raw = leadFields['Alert Profiles'] || '';
-            if (raw) existingProfiles = JSON.parse(raw);
-        } catch (e) { /* ignore */ }
-
+        // Merge with existing profiles — unwrap the Alert Profiles field (legacy
+        // array OR {channels, profiles} wrapper) and preserve the lead's channels.
+        const parsedExisting = parseAlertProfiles(leadFields['Alert Profiles'] || '');
+        const existingProfiles = parsedExisting.profiles.slice();
         existingProfiles.push(profile);
-        updates['Alert Profiles'] = JSON.stringify(existingProfiles);
+        updates['Alert Profiles'] = serializeAlertProfiles(existingProfiles, parsedExisting.channels);
         updates['Alert Active'] = true;
     }
 

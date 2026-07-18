@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <meta name="robots" content="noindex, nofollow">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Poler Team CRM</title>
@@ -10,6 +11,29 @@
   <link rel="stylesheet" href="crm.css?v=20260515c" />
   <!-- MapLibre GL JS for alert map drawing (vector tiles — smooth zooming) -->
   <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.1.2/dist/maplibre-gl.css" />
+  <!-- Chart.js for the AI Calls tab graph -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <style>
+    /* AI Calls tab — supplemental (reuses crm.css for the rest) */
+    .ai-range-chips{display:flex;gap:4px;flex-wrap:wrap}
+    .ai-range-chip{padding:0.5rem 0.8rem;background:#fff;border:1px solid var(--border);border-radius:8px;font-size:0.8rem;cursor:pointer;color:var(--text);font-family:inherit}
+    .ai-range-chip.active{background:var(--navy);border-color:var(--navy);color:#fff}
+    .ai-date{padding:0.5rem 0.6rem;border:1px solid var(--border);border-radius:8px;font-size:0.8rem;font-family:inherit;color:var(--text)}
+    .ai-chart-card{background:#fff;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,0.06);border:1px solid rgba(0,0,0,0.04);padding:1.25rem 1.5rem;margin-bottom:1.75rem}
+    .ai-chart-card h3{font-size:0.95rem;color:var(--navy);margin-bottom:0.75rem;font-weight:600}
+    .ai-mode{font-size:0.7rem;padding:2px 8px;border-radius:99px;border:1px solid var(--border);font-weight:600;white-space:nowrap}
+    .ai-mode.first_touch{color:#1d4ed8;background:#eff6ff}
+    .ai-mode.rapport{color:#7c3aed;background:#f5f3ff}
+    .ai-mode.inbound{color:#047857;background:#f0fdf4}
+    .ai-chk{font-size:1rem}.ai-chk.yes{color:#2ea043}.ai-chk.no{color:#d1d5db}
+    .ai-pickup-yes{color:#2ea043;font-weight:700}.ai-pickup-no{color:#9ca3af;font-weight:600}
+    .ai-play{background:#fff;border:1px solid var(--border);border-radius:7px;padding:4px 10px;font-size:0.78rem;cursor:pointer;color:var(--navy);font-family:inherit}
+    .ai-play:hover{background:#f3f4f6}
+    tr.ai-call-row-clickable{cursor:pointer}
+    tr.ai-call-row-clickable:hover{background:rgba(26,39,68,0.04)}
+    #ai-calls-table td.center,#ai-calls-table th.center{text-align:center}
+    #ai-calls-table audio{height:32px;max-width:220px;vertical-align:middle}
+  </style>
 </head>
 <body>
 
@@ -59,8 +83,17 @@
           <a class="nav-item" data-action="reminders" href="#">
             <span class="nav-icon">🔔</span> Reminders <span id="reminder-badge" class="reminder-badge" style="display:none;">0</span>
           </a>
+          <a class="nav-item" data-action="sammy-reminders" href="#">
+            <span class="nav-icon">🤖</span> Claudia's Reminders <span id="sammy-reminder-badge" class="reminder-badge" style="display:none;">0</span>
+          </a>
           <a class="nav-item" data-action="listings" href="#">
             <span class="nav-icon">🏠</span> Listings
+          </a>
+          <a class="nav-item" data-action="ai-calls" href="#">
+            <span class="nav-icon">📞</span> AI Calls
+          </a>
+          <a class="nav-item" data-action="autoresearch" href="#">
+            <span class="nav-icon">🧪</span> Autoresearch
           </a>
           <div class="sidebar-section-divider">Consulting</div>
           <a class="nav-item" data-action="clients" href="#">
@@ -251,6 +284,130 @@
             </table>
           </div>
         </div><!-- /reminders-view -->
+
+        <!-- ═══════ SAMMY'S REMINDERS VIEW ═══════ -->
+        <div id="sammy-reminders-view" style="display:none;">
+          <div class="crm-header">
+            <h1>Claudia's Reminders <span id="sammy-reminders-count-label" class="reminders-count-label"></span></h1>
+            <div class="header-right">
+              <select id="sammy-reminder-status-filter" class="filter-select">
+                <option value="">All</option>
+                <option value="Pending" selected>Pending</option>
+                <option value="Completed">Completed</option>
+                <option value="Cancelled">Cancelled</option>
+              </select>
+              <button id="refresh-sammy-reminders-btn" class="refresh-btn">↻ Refresh</button>
+            </div>
+          </div>
+
+          <div class="table-card">
+            <div id="sammy-reminders-loading" style="display:none;">
+              <div class="loading-spinner"></div>
+              <div>Loading reminders…</div>
+            </div>
+            <div id="sammy-reminders-empty" style="display:none;">No Claudia reminders found.</div>
+            <table class="leads-table" id="sammy-reminders-table" style="display:none;">
+              <thead>
+                <tr>
+                  <th>Due</th>
+                  <th>Lead</th>
+                  <th>Action</th>
+                  <th>Note</th>
+                  <th>Agent</th>
+                  <th>Status</th>
+                  <th style="width:140px">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="sammy-reminders-tbody"></tbody>
+            </table>
+          </div>
+        </div><!-- /sammy-reminders-view -->
+
+        <!-- ═══════ AI CALLS VIEW ═══════ -->
+        <div id="ai-calls-view" style="display:none;">
+          <div class="crm-header">
+            <h1>AI Calls — Claudia</h1>
+            <div class="header-right">
+              <span id="ai-last-refreshed"></span>
+              <button id="ai-refresh-btn" class="refresh-btn">↻ Refresh</button>
+            </div>
+          </div>
+
+          <div class="filters-bar">
+            <div class="ai-range-chips">
+              <button class="ai-range-chip" data-range="today">Today</button>
+              <button class="ai-range-chip active" data-range="7d">7 days</button>
+              <button class="ai-range-chip" data-range="30d">30 days</button>
+              <button class="ai-range-chip" data-range="month">This month</button>
+              <button class="ai-range-chip" data-range="all">All</button>
+            </div>
+            <input type="date" id="ai-from" class="ai-date" />
+            <span style="color:var(--text-muted);font-size:0.8rem">to</span>
+            <input type="date" id="ai-to" class="ai-date" />
+            <button id="ai-apply-btn" class="refresh-btn">Apply</button>
+            <span id="ai-range-count" style="margin-left:auto;font-size:0.8rem;color:var(--text-muted);font-weight:500"></span>
+          </div>
+
+          <div class="stats-row" id="ai-stats-row"></div>
+
+          <div class="ai-chart-card">
+            <h3>Calls &amp; pickups over time</h3>
+            <canvas id="ai-chart" height="80"></canvas>
+          </div>
+
+          <div class="table-card">
+            <div id="ai-calls-loading" style="display:none;">
+              <div class="loading-spinner"></div>
+              <div>Loading calls…</div>
+            </div>
+            <table class="leads-table" id="ai-calls-table">
+              <thead>
+                <tr>
+                  <th>Date / Time</th>
+                  <th>Lead</th>
+                  <th>Phone</th>
+                  <th>Type</th>
+                  <th>Duration</th>
+                  <th>Picked up</th>
+                  <th>Recording</th>
+                  <th class="center">Note</th>
+                  <th class="center">Reminder</th>
+                  <th class="center">Alerts</th>
+                  <th class="center">WhatsApp</th>
+                </tr>
+              </thead>
+              <tbody id="ai-calls-tbody">
+                <tr><td colspan="11" style="text-align:center;padding:2.5rem;color:var(--text-muted)">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div><!-- /ai-calls-view -->
+
+        <!-- ═══════ AUTORESEARCH VIEW ═══════ -->
+        <div id="autoresearch-view" style="display:none;">
+          <div class="crm-header">
+            <h1>Autoresearch</h1>
+            <div class="header-right" style="font-size:13px;color:var(--color-text-muted);">Self-optimizing routines · live dashboards</div>
+          </div>
+          <div id="autoresearch-subnav" style="display:flex;gap:8px;flex-wrap:wrap;margin:0 0 14px;">
+            <button class="ar-tab active" data-ar="overview">Overview</button>
+            <button class="ar-tab" data-ar="facebook">Facebook DM</button>
+            <button class="ar-tab" data-ar="reliability">Routine Reliability</button>
+            <button class="ar-tab" data-ar="instantly">Cold Email</button>
+            <button class="ar-tab" data-ar="copy">Copy A/B</button>
+            <button class="ar-tab" data-ar="ads">Meta Ads CPL</button>
+            <button class="ar-tab" data-ar="crm">CRM Sync</button>
+            <button class="ar-tab" data-ar="wa">WhatsApp / Claudia</button>
+          </div>
+          <iframe id="autoresearch-iframe" title="Autoresearch dashboard" referrerpolicy="no-referrer"
+            style="width:100%;height:1200px;border:1px solid #e5e7eb;border-radius:8px;background:#0b0f17;"></iframe>
+          <style>
+            #autoresearch-subnav .ar-tab{font:600 13px var(--font-body);padding:7px 14px;border-radius:8px;
+              border:1px solid #1a2744;background:#fff;color:#1a2744;cursor:pointer;transition:.12s;}
+            #autoresearch-subnav .ar-tab:hover{background:#eef1f6;}
+            #autoresearch-subnav .ar-tab.active{background:#1a2744;color:#fff;border-color:#1a2744;}
+          </style>
+        </div><!-- /autoresearch-view -->
 
         <!-- ═══════ CONSULTING CLIENTS VIEW ═══════ -->
         <div id="clients-view" style="display:none;">
@@ -587,6 +744,14 @@
             <a id="listing-panel-url" target="_blank" rel="noopener" class="alert-action-btn" style="display:inline-block;text-decoration:none;text-align:center;margin-top:0.5rem;">View listing page →</a>
           </div>
           <div class="panel-section">
+            <div class="panel-section-title">
+              Buyer Leads <span id="listing-buyer-count" style="color:#9ca3af;font-weight:400;"></span>
+            </div>
+            <div id="listing-buyer-leads">
+              <p class="panel-empty-text">No buyer leads yet.</p>
+            </div>
+          </div>
+          <div class="panel-section">
             <div class="panel-section-title" style="display:flex;justify-content:space-between;align-items:center;">
               Notes
               <button id="listing-add-note-toggle" type="button" class="alert-action-btn" style="padding:4px 10px;font-size:12px;">+ Add Note</button>
@@ -617,7 +782,10 @@
     <!-- Panel Header -->
     <div class="panel-header">
       <span style="font-size:0.875rem;font-weight:600;color:#1a2744;">Lead Details</span>
-      <button id="panel-close" class="panel-close" aria-label="Close panel">✕</button>
+      <div style="display:flex;align-items:center;gap:0.25rem;">
+        <button id="panel-expand" class="panel-close" aria-label="Expand panel" title="Agrandar / reducir panel">⛶</button>
+        <button id="panel-close" class="panel-close" aria-label="Close panel">✕</button>
+      </div>
     </div>
 
     <!-- Lead Info -->
@@ -672,18 +840,41 @@
 
     <!-- Quick Action Buttons -->
     <div class="panel-actions">
-      <a id="panel-call" href="#" class="action-btn">
-        📞 Call
-      </a>
-      <a id="panel-email" href="#" class="action-btn">
-        ✉️ Email
-      </a>
       <a id="panel-whatsapp" href="#" class="action-btn whatsapp" target="_blank" rel="noopener">
         💬 WhatsApp
+      </a>
+      <a id="panel-wa-call" href="#" class="action-btn whatsapp" title="Opens WhatsApp to this lead — tap the green call icon to ring">
+        📞 WhatsApp Call
       </a>
       <button type="button" id="panel-share-property" class="action-btn" style="background:#c8a55a;color:#0a0a0a;border:none;cursor:pointer;">
         🔗 Share Property
       </button>
+      <button type="button" id="panel-send-props" class="action-btn" title="Claudia envía por WhatsApp 3 propiedades nuevas que cumplen los criterios de alerta de este lead (mismo formato que el drip)" style="background:#1a7f4b;color:#fff;border:none;cursor:pointer;">
+        🏠 Enviar 3 propiedades
+      </button>
+    </div>
+
+    <!-- Flash live coach (lazy-loaded iframe — boots Deepgram/mic only on click) -->
+    <div class="panel-section" id="panel-coach-section">
+      <div class="panel-section-title" style="display:flex;align-items:center;justify-content:space-between;">
+        <span>🎯 Coach en vivo (Flash)</span>
+        <button type="button" id="panel-coach-close" style="display:none;background:none;border:1px solid #e5e7eb;border-radius:6px;padding:3px 10px;font-size:12px;font-weight:600;cursor:pointer;color:#475569;">✕ Cerrar</button>
+      </div>
+      <div id="panel-coach-launch">
+        <button type="button" id="panel-coach-start" class="action-btn" style="width:100%;background:#1a2744;color:#fff;border:none;cursor:pointer;">
+          🎯 Iniciar coaching en vivo
+        </button>
+        <p id="panel-coach-hint" style="margin:0.5rem 0 0;font-size:11px;color:#718096;line-height:1.5;">
+          Pon la llamada en altavoz junto a la computadora. Flash escucha y te aconseja en vivo, ya conociendo a este lead. Al colgar, guarda una nota y la grabación de la llamada en el CRM. Usa ⛶ para agrandar el panel.
+        </p>
+      </div>
+      <iframe id="panel-coach-iframe" title="Flash coach" allow="microphone" referrerpolicy="no-referrer"
+        style="display:none;width:100%;height:900px;border:1px solid #e5e7eb;border-radius:8px;background:#0f0f12;margin-top:0.5rem;"></iframe>
+    </div>
+
+    <div class="panel-section" id="panel-recordings-section" style="display:none;">
+      <div class="panel-section-title">🎙️ Flash voice recordings</div>
+      <div id="panel-recordings-list"></div>
     </div>
 
     <!-- Share Property Modal -->
@@ -762,6 +953,7 @@
               <label><input type="checkbox" value="Condo"> Condo</label>
               <label><input type="checkbox" value="Townhouse"> Townhouse</label>
               <label><input type="checkbox" value="Multi Family"> Multi Family</label>
+              <label><input type="checkbox" value="Land"> Land / Lots</label>
               <label><input type="checkbox" value="For Rent"> For Rent</label>
             </div>
           </div>
@@ -906,6 +1098,14 @@
           </select>
         </div>
 
+        <div class="panel-field">
+          <div class="panel-field-label">Send Via</div>
+          <div class="alert-checkbox-group" id="panel-alert-channels">
+            <label><input type="checkbox" id="panel-alert-channel-email" checked> Email</label>
+            <label><input type="checkbox" id="panel-alert-channel-whatsapp"> WhatsApp</label>
+          </div>
+        </div>
+
         <div class="alert-action-row">
           <button id="panel-alert-send-now" class="alert-action-btn" type="button">Send Test Alert</button>
           <button id="panel-alert-copy-link" class="alert-action-btn secondary" type="button">Copy Link</button>
@@ -943,7 +1143,7 @@
 
     <!-- Notes Section (multi-note) -->
     <div class="panel-section">
-      <div class="panel-section-title">Notes</div>
+      <div class="panel-section-title">My Notes</div>
       <textarea
         id="panel-new-note"
         class="panel-notes"
@@ -955,11 +1155,18 @@
       <div id="panel-notes-history" class="notes-history"></div>
     </div>
 
-    <!-- AI Conversations Section -->
-    <div class="panel-section">
-      <div class="panel-section-title">AI Conversations</div>
-      <div id="panel-conversations" class="panel-conversations-wrap">
-        <p class="panel-empty-text">No conversations yet</p>
+    <!-- AI Notes Section (Sammy / WhatsApp bot / Flash) — read split from the same
+         Notes field by author tag; populated by renderNotesHistory() -->
+    <div class="panel-section" id="panel-ai-notes-section" style="display:none;">
+      <div class="panel-section-title">🤖 AI Notes <span style="font-weight:400;color:#718096;font-size:12px;">(Claudia)</span></div>
+      <div id="panel-ai-notes-history" class="notes-history"></div>
+    </div>
+
+    <!-- AI Call History Section -->
+    <div class="panel-section" id="panel-ai-call-history-section" style="display:none;">
+      <div class="panel-section-title">📞 AI Call History</div>
+      <div id="panel-ai-call-history" class="ai-call-history-wrap">
+        <p class="panel-empty-text">No AI calls yet</p>
       </div>
     </div>
 
@@ -1677,6 +1884,6 @@
   </div>
 
   <script src="https://unpkg.com/maplibre-gl@4.1.2/dist/maplibre-gl.js"></script>
-  <script src="crm.js?v=20260515c" defer></script>
+  <script src="crm.js?v=20260612c" defer></script>
 </body>
 </html>

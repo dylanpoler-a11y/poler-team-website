@@ -13,6 +13,12 @@
  *   pool               — "true" filters to private-pool-only
  *   yearBuiltMin       — integer, only listings with YearBuilt >= this
  *   yearBuiltMax       — integer, only listings with YearBuilt <= this
+ *   preconstruction    — "true" → only new-development inventory (New Construction
+ *                        OR Under Construction per miamire PropertyCondition)
+ *   constructionStatus — "New Construction" | "Under Construction" — narrow to one
+ *                        stage (overrides preconstruction)
+ *   status             — comma-sep StandardStatus list (default Active). Accepts
+ *                        Active/Pending/ActiveUnderContract/"Coming Soon"/Closed
  *   listingId          — fetch one specific MLS#
  *   limit              — default 25, max 100
  *   sort               — "newest" (default), "price_low", "price_high", "sqft"
@@ -35,13 +41,31 @@ const FEATURE_FIELDS = [
     'PatioAndPorchFeatures','CommunityFeatures','AssociationAmenities',
     'MIAMIRE_Restrictions','ArchitecturalStyle','Media','ListOfficeName',
     'ModificationTimestamp','PropertyType','StandardStatus','PhotosCount',
-    'FeedTypes',
+    'FeedTypes','PropertyCondition','NewConstructionYN',
 ].join(',');
+
+// miamire MLS marks preconstruction / new-development inventory via the
+// PropertyCondition array. Verified live 2026-07-10: the only values in use are
+// "New Construction" (~4,155 active) and "Under Construction" (~1,188 active);
+// "Preconstruction"/"Proposed"/"To Be Built" return 0. NewConstructionYN is a
+// separate boolean (~3,289 active) that overlaps but is NOT identical.
+const PRECON_CONDITIONS = ['New Construction', 'Under Construction'];
+const STATUS_ALIAS = {
+    'active': 'Active', 'pending': 'Pending', 'closed': 'Closed',
+    'undercontract': 'ActiveUnderContract', 'activeundercontract': 'ActiveUnderContract',
+    'comingsoon': 'Coming Soon', 'coming soon': 'Coming Soon',
+};
 
 const PROPERTY_TYPE_ALIAS = {
     'sfh':       'Single Family Residence',
     'sf':        'Single Family Residence',
     'house':     'Single Family Residence',
+    // Airtable alert-profile vocabulary (Alert Property Types multi-select) — the
+    // drip/blast/button engines pass these values verbatim; an unmapped value
+    // becomes a PropertySubType Bridge doesn't know and the send silently finds
+    // 0 matches (Cristian Rojas 2026-07-13). Keep in sync with lib/alert-search.js TYPE_MAP.
+    'single family': 'Single Family Residence',
+    'multi family':  'Multi Family',
     'condo':     'Condominium',
     'condominium': 'Condominium',
     'townhome':  'Townhouse',
@@ -73,9 +97,16 @@ export default async function handler(req) {
         limit:          String(Math.min(parseInt(q.get('limit') || '25', 10) || 25, 100)),
         sortBy:         'ModificationTimestamp',
         order:          'desc',
-        StandardStatus: 'Active',
         fields:         FEATURE_FIELDS,
     });
+
+    // Status — defaults to Active (for-sale). Accepts a comma-separated list of
+    // Active / Pending / ActiveUnderContract / "Coming Soon" / Closed (aliases ok).
+    const statusRaw = (q.get('status') || '').split(',').map(s => s.trim()).filter(Boolean);
+    const statuses = statusRaw.map(s => STATUS_ALIAS[s.toLowerCase()] || s);
+    if (statuses.length === 1)      params.set('StandardStatus', statuses[0]);
+    else if (statuses.length > 1)   params.set('StandardStatus.in', statuses.join(','));
+    else                            params.set('StandardStatus', 'Active');
 
     // Sort
     const sort = q.get('sort');
@@ -83,13 +114,15 @@ export default async function handler(req) {
     if (sort === 'price_high') { params.set('sortBy', 'ListPrice'); params.set('order', 'desc'); }
     if (sort === 'sqft')       { params.set('sortBy', 'LivingArea'); params.set('order', 'desc'); }
 
-    // PropertyType
+    // PropertyType — FOR-SALE only, always. PropertyType=Residential is set even
+    // when a PropertySubType filter is given: subtypes like "Condominium" also
+    // exist under "Residential Lease", so dropping the Residential guard let
+    // RENTALS leak into lead sends (Kevin 2026-07-02, Carlos Dennis drip).
+    params.set('PropertyType', 'Residential');
     const propTypeRaw = q.get('propertyType');
     if (propTypeRaw) {
         const normalized = PROPERTY_TYPE_ALIAS[propTypeRaw.toLowerCase()] || propTypeRaw;
         params.set('PropertySubType', normalized);
-    } else {
-        params.set('PropertyType', 'Residential');
     }
 
     // Specific listing
@@ -127,6 +160,20 @@ export default async function handler(req) {
     if (q.get('waterfront') === 'true') params.set('WaterfrontYN', 'true');
     if (q.get('pool') === 'true')       params.set('PoolPrivateYN', 'true');
 
+    // Preconstruction / new-development filter.
+    //   preconstruction=true  → New Construction OR Under Construction
+    //   constructionStatus=…  → narrow to ONE stage ("New Construction" |
+    //                           "Under Construction"); overrides preconstruction.
+    const conStatusRaw = (q.get('constructionStatus') || '').trim();
+    const conStatus = STATUS_ALIAS[conStatusRaw.toLowerCase()] // reuse spacing/case norms
+        || PRECON_CONDITIONS.find(c => c.toLowerCase() === conStatusRaw.toLowerCase())
+        || conStatusRaw;
+    if (conStatus) {
+        params.set('PropertyCondition', conStatus);           // array-contains match
+    } else if (q.get('preconstruction') === 'true') {
+        params.set('PropertyCondition.in', PRECON_CONDITIONS.join(','));
+    }
+
     const res = await fetch(
         `https://api.bridgedataoutput.com/api/v2/miamire/listings?${params}`
     );
@@ -152,6 +199,10 @@ export default async function handler(req) {
         waterfrontFeatures: r.WaterfrontFeatures || [],
         pool:         (r.PoolFeatures || []).length > 0,
         yearBuilt:    r.YearBuilt || null,
+        constructionStatus: r.PropertyCondition || [],
+        preconstruction: (r.PropertyCondition || []).some(c => PRECON_CONDITIONS.includes(c)) || !!r.NewConstructionYN,
+        newConstruction: !!r.NewConstructionYN,
+        completionYear: (((r.PropertyCondition || []).some(c => PRECON_CONDITIONS.includes(c))) && r.YearBuilt) ? r.YearBuilt : null,
         hoa:          r.AssociationFee || null,
         description:  (r.PublicRemarks || '').slice(0, 600),
         photos:       (r.Media || []).slice(0, 6).map(m => m.MediaURL || m.MediaThumbnailURL).filter(Boolean),

@@ -19,6 +19,8 @@
 
 export const config = { runtime: 'edge' };
 
+import { parseAlertProfiles } from '../lib/alert-search.js';
+
 export default async function handler(req) {
     if (req.method === 'OPTIONS') {
         return new Response(null, {
@@ -70,7 +72,9 @@ export default async function handler(req) {
 
         const savedMlsIds      = safeParse(record.fields['Saved Properties'], []);
         const propertiesViewed = safeParse(record.fields['Properties Viewed'], []);
-        const alertProfiles    = safeParse(record.fields['Alert Profiles'], []);
+        // Unwrap the Alert Profiles field (legacy array OR {channels, profiles}
+        // wrapper) so callers always receive a plain profiles array as before.
+        const alertProfiles    = parseAlertProfiles(record.fields['Alert Profiles']).profiles;
 
         // Pull recent search activity from Lead Activity table
         const activityFormula = encodeURIComponent(
