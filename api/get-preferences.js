@@ -12,6 +12,7 @@
 export const config = { runtime: 'edge' };
 
 import { authorize } from './_auth.js';
+import { channelsFromLead } from '../lib/alert-search.js';
 
 export default async function handler(req) {
     if (req.method === 'OPTIONS') {
@@ -93,6 +94,9 @@ export default async function handler(req) {
             alertCount:       f['Alert Count'] || 5,
             alertLastSent:    f['Alert Last Sent'] || '',
             alertNextDue:     f['Alert Next Due'] || '',
+            alertProfiles:    f['Alert Profiles'] || '[]',
+            channels:         channelsFromLead({ profiles: f['Alert Profiles'] || '' }),
+            phone:            f['Phone'] || '',
             preferredLanguage: f['Preferred Language'] || 'en',
         },
     });

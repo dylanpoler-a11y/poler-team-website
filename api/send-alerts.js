@@ -646,7 +646,11 @@ export async function sendWhatsappAlert({ lead, listings, siteBase }) {
     const accountSid = process.env.TWILIO_ACCOUNT_SID;
     const authTok    = process.env.TWILIO_AUTH_TOKEN;
     const fromWa     = process.env.TWILIO_WHATSAPP_FROM;
-    const agentToken = process.env.AGENT_API_TOKEN;
+    // Machine token for the internal share-property call. The old code sent the
+    // ENTIRE comma-separated AGENT_API_TOKEN list as one Bearer string — never a
+    // valid member — so the tokenized popup-bypass links silently never generated
+    // and leads got popup-gated fallback links. (Audit 2026-07-17.)
+    const agentToken = (process.env.SAMMY_ENGINE_TOKEN || (process.env.AGENT_API_TOKEN || '').split(',')[0]).trim();
     if (!accountSid || !authTok || !fromWa) {
         return { status: 'skipped', reason: 'twilio not configured' };
     }
@@ -677,7 +681,7 @@ export async function sendWhatsappAlert({ lead, listings, siteBase }) {
     const payload = buildWhatsappAlert(
         lead,
         chosen,
-        (l) => urlMap.get(l.ListingId) || `${siteBase}/listing?id=${l.ListingId}`,
+        (l) => urlMap.get(l.ListingId) || `${siteBase}/listing?mls=${l.ListingId}`,  // ?mls= is the listing page's real param (?id= 404'd the detail view)
     );
     if (!payload) return { status: 'skipped', reason: 'no listings' };
     if (!payload.toPhone) return { status: 'skipped', reason: 'no phone' };

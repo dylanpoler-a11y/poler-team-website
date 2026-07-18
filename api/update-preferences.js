@@ -16,6 +16,7 @@
 export const config = { runtime: 'edge' };
 
 import { authorize } from './_auth.js';
+import { parseAlertProfiles, serializeAlertProfiles } from '../lib/alert-search.js';
 
 export default async function handler(req) {
     if (req.method === 'OPTIONS') {
@@ -90,6 +91,26 @@ export default async function handler(req) {
     if (prefs.buyTimeline !== undefined)      fields['Buy Timeline']         = prefs.buyTimeline;
     if (prefs.alertPolygon !== undefined)     fields['Alert Polygon']        = String(prefs.alertPolygon);
     if (prefs.alertProfiles !== undefined)   fields['Alert Profiles']       = String(prefs.alertProfiles);
+
+    // Delivery channels (email/whatsapp). The /preferences page sends just
+    // { channels } — merge into the existing Alert Profiles wrapper so the lead's
+    // saved profiles are preserved. Skipped if the caller already sent a fully
+    // serialized alertProfiles string (which carries its own channels).
+    if (prefs.channels !== undefined && prefs.alertProfiles === undefined) {
+        let curRaw = '';
+        try {
+            const cur = await fetch(`https://api.airtable.com/v0/${baseId}/Leads/${recordId}`, {
+                headers: { 'Authorization': `Bearer ${apiKey}` },
+            });
+            if (cur.ok) curRaw = (await cur.json()).fields?.['Alert Profiles'] || '';
+        } catch (_) { /* fall through with defaults */ }
+        const parsed = parseAlertProfiles(curRaw);
+        const ch = {
+            email:    prefs.channels.email !== false,
+            whatsapp: !!prefs.channels.whatsapp,
+        };
+        fields['Alert Profiles'] = serializeAlertProfiles(parsed.profiles, ch);
+    }
 
     // If activating alerts and no next due date is set, set it to now (send on next cron run)
     if (prefs.alertActive && !prefs.alertNextDue) {

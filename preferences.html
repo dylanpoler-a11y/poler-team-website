@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <meta name="robots" content="noindex, nofollow">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Property Alert Preferences — The Poler Team</title>
@@ -81,6 +82,7 @@
             <label><input type="checkbox" value="Condo"> <span data-i18n="prefCondo">Condo</span></label>
             <label><input type="checkbox" value="Townhouse"> <span data-i18n="prefTownhouse">Townhouse</span></label>
             <label><input type="checkbox" value="Multi Family"> <span data-i18n="prefMultiFamily">Multi Family</span></label>
+            <label><input type="checkbox" value="Land"> <span data-i18n="prefLand">Land / Lots</span></label>
           </div>
         </div>
 
@@ -145,6 +147,16 @@
             <option value="8">8</option>
             <option value="10">10</option>
           </select>
+        </div>
+
+        <!-- Delivery channels -->
+        <div class="pref-field">
+          <label class="pref-label" data-i18n="prefDelivery">Send Alerts Via</label>
+          <div class="checkbox-group" id="pref-channels">
+            <label><input type="checkbox" id="pref-channel-email" checked> <span data-i18n="prefChannelEmail">Email</span></label>
+            <label><input type="checkbox" id="pref-channel-whatsapp"> <span data-i18n="prefChannelWhatsapp">WhatsApp</span></label>
+          </div>
+          <div id="pref-channel-phone-note" class="pref-channel-note" style="display:none;" data-i18n="prefWhatsappNeedsPhone">A phone number is needed to receive WhatsApp alerts. Contact your agent to add one.</div>
         </div>
 
       </div>

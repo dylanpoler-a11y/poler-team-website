@@ -220,7 +220,10 @@ function getSubject(lang, count) {
     return subjects[lang] || subjects.en;
 }
 
-function buildAlertEmail(lead, listings, siteBase) {
+// Exported (2026-07-17, Kevin CRM-map send feature) so api/agent/send-map-props.js
+// can reuse the exact same alert-email card layout/login-link logic for a
+// hand-picked listing set — minimal change, no logic touched.
+export function buildAlertEmail(lead, listings, siteBase) {
     const lang = lead.language || 'en';
     const i18n = getEmailStrings(lang);
 

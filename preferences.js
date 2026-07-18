@@ -51,6 +51,7 @@ const PREF_I18N = {
     prefCondo: { en: 'Condo', es: 'Condominio', pt: 'Apartamento' },
     prefTownhouse: { en: 'Townhouse', es: 'Casa Adosada', pt: 'Sobrado' },
     prefMultiFamily: { en: 'Multi Family', es: 'Multifamiliar', pt: 'Multifamiliar' },
+    prefLand: { en: 'Land / Lots', es: 'Terreno / Lote', pt: 'Terreno / Lote' },
     prefCities: { en: 'Cities', es: 'Ciudades', pt: 'Cidades' },
     prefCitiesPlaceholder: {
         en: 'Miami Beach, Sunny Isles, Aventura…',
@@ -69,6 +70,14 @@ const PREF_I18N = {
     prefBiWeekly: { en: 'Bi-Weekly', es: 'Quincenal', pt: 'Quinzenal' },
     prefMonthly: { en: 'Monthly', es: 'Mensual', pt: 'Mensal' },
     prefCount: { en: 'Properties Per Alert', es: 'Propiedades Por Alerta', pt: 'Imóveis Por Alerta' },
+    prefDelivery: { en: 'Send Alerts Via', es: 'Enviar Alertas Por', pt: 'Enviar Alertas Por' },
+    prefChannelEmail: { en: 'Email', es: 'Correo', pt: 'E-mail' },
+    prefChannelWhatsapp: { en: 'WhatsApp', es: 'WhatsApp', pt: 'WhatsApp' },
+    prefWhatsappNeedsPhone: {
+        en: 'A phone number is needed to receive WhatsApp alerts. Contact your agent to add one.',
+        es: 'Se necesita un número de teléfono para recibir alertas por WhatsApp. Contacta a tu agente para agregarlo.',
+        pt: 'É necessário um número de telefone para receber alertas por WhatsApp. Fale com seu corretor para adicionar um.',
+    },
     prefSave: { en: 'Save Preferences', es: 'Guardar Preferencias', pt: 'Salvar Preferências' },
     prefSaving: { en: 'Saving…', es: 'Guardando…', pt: 'Salvando…' },
     prefSaved: { en: '✓ Preferences saved!', es: '✓ Preferencias guardadas!', pt: '✓ Preferências salvas!' },
@@ -84,6 +93,7 @@ const PREF_I18N = {
 
 let currentLang = 'en';
 let token = '';
+let leadHasPhone = false;
 
 // ── INIT ────────────────────────────────────────────────────────────────────
 
@@ -136,9 +146,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         toggleFields(this.checked);
     });
 
+    // WhatsApp channel → show the "phone needed" note when relevant
+    document.getElementById('pref-channel-whatsapp').addEventListener('change', updateWhatsappPhoneNote);
+
     // Save handler
     document.getElementById('pref-save').addEventListener('click', savePreferences);
 });
+
+// Show a note when WhatsApp is checked but the lead has no phone on file.
+function updateWhatsappPhoneNote() {
+    const waChecked = document.getElementById('pref-channel-whatsapp').checked;
+    const note = document.getElementById('pref-channel-phone-note');
+    if (note) note.style.display = (waChecked && !leadHasPhone) ? 'block' : 'none';
+}
 
 // ── POPULATE FORM ───────────────────────────────────────────────────────────
 
@@ -167,6 +187,13 @@ function populateForm(prefs, name) {
     document.getElementById('pref-baths').value = prefs.alertBaths || '';
     document.getElementById('pref-frequency').value = prefs.alertFrequency || 'Weekly';
     document.getElementById('pref-count').value = prefs.alertCount || '5';
+
+    // Delivery channels (default email-only when unset)
+    const channels = prefs.channels || { email: true, whatsapp: false };
+    document.getElementById('pref-channel-email').checked = channels.email !== false;
+    document.getElementById('pref-channel-whatsapp').checked = !!channels.whatsapp;
+    leadHasPhone = !!(prefs.phone && String(prefs.phone).trim());
+    updateWhatsappPhoneNote();
 
     // Set language from preferences if available
     if (prefs.preferredLanguage && prefs.preferredLanguage !== currentLang) {
@@ -200,6 +227,10 @@ async function savePreferences() {
         frequency:      document.getElementById('pref-frequency').value,
         count:          Number(document.getElementById('pref-count').value) || 5,
         preferredLanguage: currentLang,
+        channels: {
+            email:    document.getElementById('pref-channel-email').checked,
+            whatsapp: document.getElementById('pref-channel-whatsapp').checked,
+        },
     };
 
     try {

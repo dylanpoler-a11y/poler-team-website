@@ -324,6 +324,13 @@ main {
     height: 16px;
 }
 
+.pref-channel-note {
+    margin-top: 8px;
+    font-size: 13px;
+    color: #b45309;
+    line-height: 1.4;
+}
+
 /* ── SAVE BUTTON ─────────────────────────────────────────── */
 
 .pref-save-btn {

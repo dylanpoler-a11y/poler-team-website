@@ -12,10 +12,19 @@
  *     priceMax?: number,
  *     bedsMin?: number,
  *     bathsMin?: number,
- *     propertyTypes?: ['Condo', 'Single Family', ...],
+ *     propertyTypes?: ['Condo', 'Single Family', 'Land', ...],
  *     features?: ['Pool', 'Waterfront', ...],
  *     frequency?: 'Daily' | 'Every 3 Days' | 'Weekly' | 'Bi-Weekly' | 'Monthly',
- *     count?: number   // properties per alert
+ *     count?: number,  // properties per alert
+ *     channels?: { email?: bool, whatsapp?: bool },  // delivery channels (default email-only).
+ *                      // Stored inside the Alert Profiles wrapper; setting one preserves profiles.
+ *     profiles?: [     // MULTI-PROFILE (e.g. a house budget AND a land budget):
+ *       { name?, types: ['Single Family'|'Condo'|'Townhouse'|'Multi Family'|'Land'|'For Rent'],
+ *         cities: 'Miramar, Homestead',  // comma-separated STRING (engine format)
+ *         priceMin?, priceMax?, bedsMin?, bathsMin? }
+ *     ]                // stored as JSON in 'Alert Profiles'; when present the alert
+ *                      // engine uses it INSTEAD of the flat fields (lib/alert-search.js).
+ *                      // Pass [] to clear back to the flat single profile.
  *   }
  * }
  *
@@ -25,6 +34,7 @@
 export const config = { runtime: 'edge' };
 
 import { authorize } from '../_auth.js';
+import { parseAlertProfiles, serializeAlertProfiles } from '../../lib/alert-search.js';
 
 export default async function handler(req) {
     if (req.method === 'OPTIONS') {
@@ -53,7 +63,10 @@ export default async function handler(req) {
 
     const fields = {};
     if (profile.active !== undefined) fields['Alert Active'] = !!profile.active;
-    if (Array.isArray(profile.cities)) fields['Alert Cities'] = profile.cities.join('\n');
+    // Comma+space, NEVER newline (Kevin 2026-07-16): newline-joined values render as one
+    // glued word in the CRM panel's single-line input ("Boca RatonFort Lauderdale") and the
+    // email engine's comma-only split treated the whole thing as ONE unmatchable city.
+    if (Array.isArray(profile.cities)) fields['Alert Cities'] = profile.cities.map(c => String(c).trim()).filter(Boolean).join(', ');
     if (profile.priceMin !== undefined) fields['Alert Price Min'] = Number(profile.priceMin) || 0;
     if (profile.priceMax !== undefined) fields['Alert Price Max'] = Number(profile.priceMax) || 0;
     if (profile.bedsMin !== undefined) fields['Alert Beds Min'] = Number(profile.bedsMin) || 0;
@@ -61,6 +74,29 @@ export default async function handler(req) {
     if (Array.isArray(profile.propertyTypes)) fields['Alert Property Types'] = profile.propertyTypes;
     if (profile.frequency !== undefined) fields['Alert Frequency'] = profile.frequency;
     if (profile.count !== undefined) fields['Alert Count'] = Number(profile.count) || 5;
+
+    // Alert Profiles wrapper: profiles[] and/or channels{email,whatsapp}. When only
+    // one is provided, preserve the other from the record's current value so a
+    // channel toggle never drops profiles (and vice-versa).
+    const wantsProfiles = Array.isArray(profile.profiles);
+    const wantsChannels = profile.channels && typeof profile.channels === 'object';
+    if (wantsProfiles || wantsChannels) {
+        let curRaw = '';
+        try {
+            const cur = await fetch(`https://api.airtable.com/v0/${baseId}/Leads/${leadId}`, {
+                headers: { 'Authorization': `Bearer ${apiKey}` },
+            });
+            if (cur.ok) curRaw = (await cur.json()).fields?.['Alert Profiles'] || '';
+        } catch (_) { /* fall through with defaults */ }
+        const parsed = parseAlertProfiles(curRaw);
+        const nextProfiles = wantsProfiles
+            ? profile.profiles.slice(0, 5).filter(p => p && typeof p === 'object')
+            : parsed.profiles;
+        const nextChannels = wantsChannels
+            ? { email: profile.channels.email !== false, whatsapp: !!profile.channels.whatsapp }
+            : parsed.channels;
+        fields['Alert Profiles'] = serializeAlertProfiles(nextProfiles, nextChannels);
+    }
 
     if (Object.keys(fields).length === 0) {
         return json({ error: 'profile must contain at least one field to update' }, 400);
