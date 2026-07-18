@@ -15,6 +15,8 @@
     <link rel="preconnect" href="https://api.bridgedataoutput.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="listing.css">
+    <!-- PREVIEW ONLY: elevation layer (folds into listing.css on approval) -->
+    <link rel="stylesheet" href="listing-redesign.css">
     <!-- Speed: MapLibre powers a below-the-fold map; load its CSS without blocking first render. -->
     <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.1.2/dist/maplibre-gl.css" media="print" onload="this.media='all'" />
     <noscript><link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.1.2/dist/maplibre-gl.css" /></noscript>
@@ -558,7 +560,7 @@
                 <a href="listing?city=Miami Beach" class="neighborhood-card" style="background-image:url('https://images.unsplash.com/photo-1535498730771-e735b998cd64?w=600&q=80')">
                     <div class="neighborhood-overlay"><span>Miami Beach</span></div>
                 </a>
-                <a href="listing?city=Sunny Isles Beach" class="neighborhood-card" style="background-image:url('https://images.unsplash.com/photo-1545153996-e01b9adb5c07?w=600&q=80')">
+                <a href="listing?city=Sunny Isles Beach" class="neighborhood-card" style="background-image:url('https://images.unsplash.com/photo-1506966953602-c20cc11f75e3?w=600&q=80')">
                     <div class="neighborhood-overlay"><span>Sunny Isles Beach</span></div>
                 </a>
                 <a href="listing?city=Fort Lauderdale" class="neighborhood-card" style="background-image:url('https://images.unsplash.com/photo-1570129477492-45c003edd2be?w=600&q=80')">
@@ -620,7 +622,7 @@
         </div>
         <div class="lp-footer-inner">
             <img src="logo-white.png" alt="The Poler Team" class="lp-footer-logo">
-            <p class="lp-footer-copy" data-i18n="footerCopy">&copy; 2025 The Poler Team &mdash; Optimar International Realty. All rights reserved.</p>
+            <p class="lp-footer-copy" data-i18n="footerCopy">&copy; 2026 The Poler Team &mdash; Optimar International Realty. All rights reserved.</p>
             <a href="index.html" class="lp-footer-back" data-i18n="backToMain">&#8592; Back to Main Site</a>
         </div>
     </footer>
@@ -687,5 +689,71 @@
 <script defer src="https://unpkg.com/maplibre-gl@4.1.2/dist/maplibre-gl.js"></script>
 <script src="i18n.js"></script>
 <script src="listing.js"></script>
+
+<!-- ============================================================
+     REVEAL SYSTEM (ported from the Trump Royale / Via Ventura kits)
+     Content is fully visible without JS; lp-ready gates the hidden
+     state; IntersectionObserver adds .in on scroll + a safety sweep
+     force-reveals anything above the fold so anchor jumps never
+     leave a section blank. Auto-tags static sections so the markup
+     stays identical to listing.html.
+     ============================================================ -->
+<script>
+(function () {
+  var d = document, root = d.documentElement;
+  var SELECTORS = [
+    '.search-hero-inner > *',
+    '.social-proof-inner > *',
+    '.filter-bar',
+    '.results-header',
+    '.neighborhood-title',
+    '.neighborhood-grid > .neighborhood-card',
+    '.agent-banner',
+    '.save-search-inner',
+    '.footer-columns > .footer-col',
+    '.lp-footer-inner'
+  ];
+  var els = [];
+  SELECTORS.forEach(function (s) {
+    d.querySelectorAll(s).forEach(function (el) {
+      if (!el.classList.contains('reveal')) { el.classList.add('reveal'); els.push(el); }
+    });
+  });
+  // image frames get the scale-settle variant
+  d.querySelectorAll('.neighborhood-card').forEach(function (el) { el.classList.add('rz'); });
+
+  // gate the hidden state ONLY once JS is running (no-JS => everything visible)
+  root.classList.add('lp-ready');
+
+  if ('IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+      });
+    }, { threshold: 0.12, rootMargin: '0px 0px -10% 0px' });
+    els.forEach(function (el) { io.observe(el); });
+  } else {
+    els.forEach(function (el) { el.classList.add('in'); });
+  }
+
+  // Safety sweep: reveal anything at/above the current fold so anchor jumps
+  // (nav "smooth scroll" links) never leave skipped sections stuck hidden.
+  var pend = false;
+  function sweep() {
+    pend = false;
+    var vh = window.innerHeight || 800;
+    for (var i = 0; i < els.length; i++) {
+      var el = els[i];
+      if (!el.classList.contains('in') && el.getBoundingClientRect().top < vh * 0.95) {
+        el.classList.add('in');
+      }
+    }
+  }
+  window.addEventListener('scroll', function () {
+    if (!pend) { pend = true; requestAnimationFrame(sweep); }
+  }, { passive: true });
+  requestAnimationFrame(sweep);
+})();
+</script>
 </body>
 </html>

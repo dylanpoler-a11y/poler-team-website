@@ -201,8 +201,8 @@
     <script>
     'use strict';
 
-    const API_TOKEN = 'fceef76441eaf7579daff17411bffca2';
-    const API_BASE  = 'https://api.bridgedataoutput.com/api/v2/miamire';
+    // Bridge calls ride the server-side proxy (api/bridge/listings.js) — no token in public HTML. (2026-07-17)
+    const API_BASE  = '/api/bridge';
 
     let allStrListings = [];
     let buildings = {};
@@ -216,7 +216,6 @@
             let all = [];
             for (let offset = 0; offset < 600; offset += 200) {
                 const params = new URLSearchParams({
-                    access_token: API_TOKEN,
                     limit: '200',
                     offset: String(offset),
                     PropertyType: 'Residential',

@@ -22,8 +22,10 @@ const EMAILJS_WELCOME_TEMPLATE = 'template_5t3k1w7';    // Intro email → new l
 // ============================================================
 // BRIDGE API CONFIG
 // ============================================================
-const API_TOKEN  = 'fceef76441eaf7579daff17411bffca2';
-const API_BASE   = 'https://api.bridgedataoutput.com/api/v2/miamire';
+// Bridge MLS calls go through our server-side proxy (api/bridge/listings.js)
+// — the access token lives in the Vercel env, never in this public file.
+// (Security audit 2026-07-17; the token was hardcoded here before.)
+const API_BASE   = '/api/bridge';
 const OTP_BASE   = 'https://poler-team-website-two.vercel.app'; // Vercel project with Twilio env vars
 const PAGE_SIZE  = 12;
 
@@ -102,10 +104,26 @@ function getPhoto(listing) {
     return m[0].MediaURL;
 }
 
+// Per-listing hero override: MLS ListingId -> 0-based index (into the
+// Order-sorted photo list) to promote to the FIRST/hero slot + open the gallery
+// on. Some MLS feeds lead with an unappealing aerial, and MediaCategory is
+// uniformly "Photo" in this feed so the front elevation can't be auto-detected.
+// 2026-06-24: A11917133 (2839 NE 35th St, $3.349M) led with a canal aerial —
+// Kevin wants the front-elevation shot (gallery photo #5 = index 4). Add a row
+// here for any future ad-destination listing whose first MLS photo is weak.
+const HERO_PHOTO_OVERRIDE = { 'A11917133': 4 };
+
 function getAllPhotos(listing) {
     const m = listing && listing.Media;
     if (!m || !m.length) return [];
-    return m.sort((a, b) => (a.Order || 0) - (b.Order || 0)).map(x => x.MediaURL);
+    const urls = m.slice()
+        .sort((a, b) => (a.Order || 0) - (b.Order || 0))
+        .map(x => x.MediaURL);
+    const ov = HERO_PHOTO_OVERRIDE[listing && listing.ListingId];
+    if (Number.isInteger(ov) && ov > 0 && ov < urls.length) {
+        urls.unshift(urls.splice(ov, 1)[0]);  // promote the chosen photo to hero
+    }
+    return urls;
 }
 
 function statsStr(listing) {
@@ -117,7 +135,7 @@ function statsStr(listing) {
 }
 
 async function apiFetch(params) {
-    const qs = new URLSearchParams({ access_token: API_TOKEN, ...params }).toString();
+    const qs = new URLSearchParams(params).toString();
     const res = await fetch(`${API_BASE}/listings?${qs}`);
     if (!res.ok) throw new Error(`API error ${res.status}`);
     return res.json();
@@ -276,7 +294,9 @@ async function initLpAb() {
 // LEAD CAPTURE — 10-second timer then forced modal, with OTP phone verification
 // ============================================================
 function initLeadCapture() {
-    leadCaptured = !!localStorage.getItem('poler_lead_v1');
+    // Guarded (2026-07-17): an unguarded localStorage throw here aborted the
+    // entire boot chain incl. the popup wiring (see i18n.js getLang note).
+    try { leadCaptured = !!localStorage.getItem('poler_lead_v1'); } catch (e) { leadCaptured = false; }
     if (leadCaptured) return;
 
     // Recognize returning leads from alert emails (URL has ?t=TOKEN)
@@ -354,17 +374,68 @@ function initLeadCapture() {
     const submitBtn = document.getElementById('lead-submit-btn');
     const submitTxt = document.getElementById('lead-submit-text');
 
-    // For Brazil visitors: update button text (no OTP needed)
-    // The disclaimer is auto-translated by i18n to not mention OTP for Portuguese
-    if (skipOtp) {
+    // 2-step form: Step 1 = name + email, Step 2 = phone + timeline.
+    // The Meta/Google conversion pixel + Airtable save fire ONCE, on Step 2 completion
+    // (completeLead). OTP is disabled, so the old OTP "step 2" markup stays unused.
+    let leadStep = 1;
+
+    // Reveal the contact step (phone + timeline) and swap the copy/button for Step 2.
+    function goToContactStep() {
+        const f1 = document.getElementById('lead-fields-1');
+        const f2 = document.getElementById('lead-fields-2');
+        if (f1) f1.style.display = 'none';
+        if (f2) f2.style.display = 'block';
+        const consent = document.getElementById('lead-consent');
+        if (consent) consent.style.display = 'block';
+        const titleEl = document.getElementById('lead-title');
+        const subEl   = document.getElementById('lead-subtitle');
+        const indEl   = document.getElementById('lead-step-indicator');
+        // Keep data-i18n in sync so a language switch re-translates correctly.
+        if (titleEl) { titleEl.setAttribute('data-i18n', 'contactTitle');   titleEl.textContent = t('contactTitle'); }
+        if (subEl)   { subEl.setAttribute('data-i18n', 'contactSubtitle');  subEl.textContent   = t('contactSubtitle'); }
+        if (indEl)   { indEl.setAttribute('data-i18n', 'step2of2');         indEl.textContent   = t('step2of2'); }
+        submitTxt.setAttribute('data-i18n', 'submitAndContinue');
         submitTxt.textContent = t('submitAndContinue');
+        leadStep = 2;
+        setTimeout(() => { try { document.getElementById('lead-phone').focus(); } catch (e) {} }, 60);
     }
 
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const first = document.getElementById('lead-first').value.trim();
-        const last  = document.getElementById('lead-last').value.trim();
+        const errBox = document.getElementById('lead-error');
+
+        // ── STEP 1: name + email → reveal the contact step ──
+        if (leadStep === 1) {
+            const name  = document.getElementById('lead-name').value.trim();
+            const email = document.getElementById('lead-email').value.trim();
+            if (!name || !email) {
+                showLeadError('lead-error', t('errFillAll'));
+                return;
+            }
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                showLeadError('lead-error', t('errInvalidEmail'));
+                return;
+            }
+            if (errBox) errBox.style.display = 'none';
+            goToContactStep();
+            return;
+        }
+
+        // ── STEP 2: phone + timeline → save the full lead ──
+        const name  = document.getElementById('lead-name').value.trim();
         const email = document.getElementById('lead-email').value.trim();
+        // Re-validate Step 1 inputs (defense against DOM tampering / a skipped Step 1) —
+        // never save a nameless/emailless lead.
+        if (!name || !email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            submitBtn.disabled = false;
+            showLeadError('lead-error', t('errFillAll'));
+            return;
+        }
+        // Split the single Full Name field into first / last for the CRM.
+        const nameParts = name.split(/\s+/).filter(Boolean);
+        const first = nameParts.shift() || name;
+        const last  = nameParts.join(' ');
+
         const localPhone = document.getElementById('lead-phone').value.trim();
         const ccSelect = document.getElementById('country-code');
         const countryCode = ccSelect.value.replace(/[^+\d]/g, ''); // "+504"
@@ -379,22 +450,17 @@ function initLeadCapture() {
         }
         localDigits = localDigits.replace(/^0+/, '');              // national trunk 0
         const phone = countryCode + localDigits;                   // e.g. "+50432540379"
-        // Extract country name from selected option text, e.g. "🇧🇷 +55 (BR)" → "BR"
         const ccText = ccSelect.options[ccSelect.selectedIndex]?.text || '';
         const isoMatch = ccText.match(/\(([A-Z]{2})\)/);
         const countryIso = isoMatch ? isoMatch[1] : '';
 
-        if (!first || !last || !email || !localPhone) {
+        if (!localPhone) {
             showLeadError('lead-error', t('errFillAll'));
             return;
         }
         const timeline = document.getElementById('lead-timeline')?.value || '';
         if (!timeline) {
             showLeadError('lead-error', t('errSelectTimeline') || 'Please select when you plan to buy');
-            return;
-        }
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-            showLeadError('lead-error', t('errInvalidEmail'));
             return;
         }
         const digitsOnly = localPhone.replace(/\D/g, '');
@@ -404,58 +470,14 @@ function initLeadCapture() {
         }
 
         submitBtn.disabled = true;
-        document.getElementById('lead-error').style.display = 'none';
-
-        // ── Brazil visitors: skip OTP, go straight to lead capture ──
-        if (skipOtp) {
-            submitTxt.textContent = t('submitting');
-            leadFormData = { first, last, email, phone, normalizedPhone: phone, countryIso };
-            try {
-                await completeLead(overlay, pageWrap);
-            } catch (err) {
-                submitBtn.disabled = false;
-                submitTxt.textContent = t('submitAndContinue');
-                showLeadError('lead-error', t('errNetwork'));
-            }
-            return;
-        }
-
-        // ── Standard flow: send OTP ─────────────────────────────────
-        submitTxt.textContent = t('sendingCode');
-
+        if (errBox) errBox.style.display = 'none';
+        submitTxt.textContent = t('submitting');
+        leadFormData = { first, last, email, phone, normalizedPhone: phone, countryIso };
         try {
-            const res  = await fetch(`${OTP_BASE}/api/send-otp`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ phone }),
-            });
-            const data = await res.json();
-
-            if (!res.ok) {
-                submitBtn.disabled = false;
-                submitTxt.textContent = t('sendVerification');
-                showLeadError('lead-error', data.error || t('errSendCode'));
-                return;
-            }
-
-            // Store lead info for step 2
-            leadFormData = { first, last, email, phone, normalizedPhone: data.phone, countryIso };
-
-            // Show OTP step
-            document.getElementById('lead-step-1').style.display = 'none';
-            const step2 = document.getElementById('lead-step-2');
-            step2.style.display = 'block';
-            const masked = phone.replace(/(\d{3})\d{4}(\d{3,4})$/, '$1****$2');
-            document.getElementById('otp-subtitle').textContent =
-                t('otpSubtitle', { phone: masked });
-
-            initOtpDigits();
-            startResendTimer();
-            document.querySelector('.otp-digit').focus();
-
+            await completeLead(overlay, pageWrap);
         } catch (err) {
             submitBtn.disabled = false;
-            submitTxt.textContent = t('sendVerification');
+            submitTxt.textContent = t('submitAndContinue');
             showLeadError('lead-error', t('errNetwork'));
         }
     });
@@ -565,9 +587,22 @@ function initOtpDigits() {
     });
 }
 
+// Read one cookie's value out of document.cookie (used for Meta's _fbp/_fbc click-id cookies).
+function getCookieValue(name) {
+    const escaped = name.replace(/([.$?*|{}()[\]\\/+^])/g, '\\$1');
+    const match = document.cookie.match(new RegExp('(?:^|; )' + escaped + '=([^;]*)'));
+    return match ? decodeURIComponent(match[1]) : '';
+}
+
 // ── Shared lead completion — save to CRM, send emails, fire pixel, unlock page
 async function completeLead(overlay, pageWrap) {
     const { first, last, email, phone } = leadFormData;
+
+    // Shared dedup id between the browser Meta Pixel event (below) and the server-side
+    // Conversions API mirror fired from /api/save-lead (see api/_capi.js) — lets Meta
+    // de-duplicate the two into a single event instead of double-counting the lead.
+    const metaEventId = (typeof crypto !== 'undefined' && crypto.randomUUID && crypto.randomUUID())
+        || (String(Date.now()) + Math.random().toString(16).slice(2));
 
     // Fire Meta Pixel Lead event for ad conversion tracking
     if (typeof fbq === 'function') {
@@ -576,7 +611,7 @@ async function completeLead(overlay, pageWrap) {
             content_category: 'Real Estate',
             value: heroListing ? (heroListing.ListPrice || 0) : 0,
             currency: 'USD',
-        });
+        }, { eventID: metaEventId });
     }
 
     // Fire Google Ads conversion event
@@ -595,6 +630,15 @@ async function completeLead(overlay, pageWrap) {
     const langParam = new URLSearchParams(window.location.search).get('lang') || 'en';
     try {
         const timeline = document.getElementById('lead-timeline')?.value || '';
+
+        // Meta CAPI (server-side) — pass along the browser's click-id cookies so
+        // api/save-lead.js can fire a deduped, attributed server-side 'Lead' event.
+        const capiFbp = getCookieValue('_fbp');
+        let capiFbc = getCookieValue('_fbc');
+        if (!capiFbc && utmData.fbclid) {
+            capiFbc = `fb.1.${Date.now()}.${utmData.fbclid}`;
+        }
+
         const saveRes = await fetch(`${OTP_BASE}/api/save-lead`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -612,6 +656,11 @@ async function completeLead(overlay, pageWrap) {
                 language:       langParam,
                 timeline,
                 ...utmData,
+                metaEventId,
+                fbp:            capiFbp,
+                fbc:            capiFbc,
+                pageUrl:        window.location.href,
+                listPrice:      heroListing ? (heroListing.ListPrice || 0) : 0,
             }),
         });
         const saveData = await saveRes.json();
@@ -646,7 +695,9 @@ async function completeLead(overlay, pageWrap) {
         console.warn('EmailJS send failed:', emailErr);
     }
 
-    localStorage.setItem('poler_lead_v1', email);
+    // Guarded (2026-07-17): this ran AFTER the CRM save but BEFORE unlockPage()
+    // — a storage throw left the lead saved server-side yet still locked out.
+    try { localStorage.setItem('poler_lead_v1', email); } catch (e) { /* in-memory flag below suffices */ }
     leadCaptured = true;
 
     // Fire Google Ads conversion tracking
@@ -727,7 +778,8 @@ function showLeadModal(overlay, pageWrap) {
     pageWrap.classList.add('blurred');
     overlay.classList.add('active');
     overlay.setAttribute('aria-hidden', 'false');
-    document.getElementById('lead-first').focus();
+    const nameEl = document.getElementById('lead-name');
+    if (nameEl) nameEl.focus();
 }
 
 function unlockPage(overlay, pageWrap) {
@@ -872,7 +924,8 @@ function renderHero(container, listing) {
     const brokerageName = listing.ListOfficeName || '';
     const agentLicense = listing.ListAgentStateLicenseNumber || '';
     const listDate     = listing.ListingContractDate || '';
-    const dom          = listing.DaysOnMarket != null ? listing.DaysOnMarket : (listing.CumulativeDaysOnMarket || '');
+    const domNum       = computeDaysOnMarket(listing);
+    const dom          = domNum != null ? domNum : '';
     const garage       = listing.GarageSpaces || listing.ParkingTotal || '';
     const hasPool      = !!(listing.PoolYN || (listing.PoolFeatures && listing.PoolFeatures.length));
     const hasWaterfront = !!listing.WaterfrontYN;
@@ -886,7 +939,7 @@ function renderHero(container, listing) {
     const thumbPhotos = photos.slice(1, 5);
 
     const mainPhotoHtml = mainPhoto
-        ? `<img class="lp-photo-main-img" src="${mainPhoto}" alt="${address}" loading="eager">`
+        ? `<img class="lp-photo-main-img" src="${mainPhoto}" alt="${address}" loading="eager" fetchpriority="high">`
         : `<div class="lp-photo-placeholder"><svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M3 21h18M5 21V7l8-4v18M13 21V3l6 4v14"/></svg></div>`;
 
     const thumbsHtml = thumbPhotos.map((url, i) => {
@@ -947,9 +1000,7 @@ function renderHero(container, listing) {
         </div>` : '';
 
     // ---------- Listing details ----------
-    const listDateFormatted = listDate
-        ? new Date(listDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
-        : '';
+    const listDateFormatted = fmtListDate(listDate, { month: 'long', day: 'numeric', year: 'numeric' });
 
     const listingRows = [
         listDateFormatted ? [listDateFormatted, 'Listed']: null,
@@ -1441,6 +1492,48 @@ function buildSearchParams() {
     return params;
 }
 
+// Newest-to-market first. Sort by the SAME date shown on the card
+// (ListingContractDate → OnMarketDate → OriginalEntryTimestamp), descending.
+// We used to sort by DaysOnMarket ascending, but DOM is unreliable for
+// re-listed luxury properties (it resets / goes cumulative), so it disagreed
+// with the displayed "Listed" date and made the list look out of order.
+// Parse an MLS date string to a LOCAL Date. Bridge sends date-only fields
+// ("2026-07-09") which `new Date()` reads as UTC midnight — in Eastern time
+// that renders as the PREVIOUS evening, so "Listed Jul 9" showed as "Jul 8"
+// and a listing that came on today looked a day old. Anchor date-only values
+// to local midnight; pass full timestamps (with a "T") through untouched.
+function parseListingDate(d) {
+    if (!d) return null;
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(d).trim());
+    const dt = m ? new Date(+m[1], +m[2] - 1, +m[3]) : new Date(d);
+    return isNaN(dt.getTime()) ? null : dt;
+}
+function fmtListDate(d, opts) {
+    const dt = parseListingDate(d);
+    return dt ? dt.toLocaleDateString('en-US', opts) : '';
+}
+function listedTime(l) {
+    const dt = parseListingDate(l.ListingContractDate || l.OnMarketDate || l.OriginalEntryTimestamp || '');
+    return dt ? dt.getTime() : -Infinity; // undated listings sink to the bottom
+}
+function byNewestListed(a, b) { return listedTime(b) - listedTime(a); }
+
+// Days on market, computed LIVE from the listed date — never trust Bridge's
+// DaysOnMarket field, which is a snapshot frozen at ingest and does NOT
+// re-increment day to day (a listing that came on yesterday kept reading "0").
+// Falls back to Bridge's field only when the listing has no usable date.
+// Returns a number, or null when nothing is knowable.
+function computeDaysOnMarket(l) {
+    const t = listedTime(l);
+    if (t !== -Infinity && !isNaN(t)) {
+        const days = Math.floor((Date.now() - t) / 86400000);
+        return days < 0 ? 0 : days; // guard against future-dated / clock skew
+    }
+    const bridge = (l.DaysOnMarket != null) ? l.DaysOnMarket
+                 : (l.CumulativeDaysOnMarket != null ? l.CumulativeDaysOnMarket : null);
+    return bridge;
+}
+
 async function fetchCuratedListings() {
     const grid      = document.getElementById('results-grid');
     const countEl   = document.getElementById('results-count');
@@ -1466,12 +1559,20 @@ async function fetchCuratedListings() {
           ];
 
     try {
+        // Sort the FETCH by entry date (not ModificationTimestamp — price-change
+        // touches on old listings were crowding brand-new listings out of the
+        // small pool, so "newest on market" showed 2+ day-old listings while
+        // DOM-0 listings existed). Fetch deep (40/bucket) because the miamire
+        // feed spans Palm Beach+ — non-South-FL cities eat slots before the
+        // city filter below.
         const results = await Promise.allSettled(
             ranges.map(r => apiFetch({
                 ...r,
                 StandardStatus: 'Active',
                 PropertyType: isRent ? 'Residential Lease' : 'Residential',
-                limit: 8,
+                sortBy: 'OriginalEntryTimestamp',
+                order: 'desc',
+                limit: 40,
             }))
         );
 
@@ -1485,12 +1586,10 @@ async function fetchCuratedListings() {
         // Filter to South Florida cities only
         all = all.filter(l => l.City && SOUTH_FL_CITIES.includes(l.City));
 
-        // Sort by newest first (days on market ascending, or by modification date descending)
-        all.sort((a, b) => {
-            const domA = a.DaysOnMarket != null ? a.DaysOnMarket : 9999;
-            const domB = b.DaysOnMarket != null ? b.DaysOnMarket : 9999;
-            return domA - domB;
-        });
+        // Sort newest-to-market first (by listing date shown on the card),
+        // then cap — "featured" stays a short list even with the deeper fetch.
+        all.sort(byNewestListed);
+        all = all.slice(0, 24);
 
         grid.innerHTML = '';
 
@@ -1534,8 +1633,8 @@ async function fetchListings(params, offset = 0) {
         });
         const results = await Promise.all(requests);
         allListings = results.flat();
-        // Sort by price desc after merge
-        allListings.sort((a, b) => (b.ListPrice || 0) - (a.ListPrice || 0));
+        // Sort newest-to-market first after merge (re-sorted again in runSearch)
+        allListings.sort(byNewestListed);
     } else {
         if (cities && cities.length === 1) params.City = cities[0];
         if (statusList) params.StandardStatus = statusList[0];
@@ -1579,8 +1678,8 @@ function renderCard(listing) {
 
     const statusClass = status === 'Active' ? 'status-active' : status === 'Pending' ? 'status-pending' : 'status-other';
 
-    // NEW badge for listings <= 7 days on market
-    const dom = listing.DaysOnMarket;
+    // NEW badge for listings <= 7 days on market (computed live, not Bridge's stale field)
+    const dom = computeDaysOnMarket(listing);
     const isNew = dom != null && dom <= 7;
 
     // Price per sqft
@@ -1637,8 +1736,9 @@ function renderListItem(listing) {
     const beds = listing.BedroomsTotal || '—';
     const baths = listing.BathroomsTotalInteger || '—';
     const sqft = listing.LivingArea ? Number(listing.LivingArea).toLocaleString() : '—';
-    const dom = listing.DaysOnMarket != null ? listing.DaysOnMarket : '—';
-    const isNew = listing.DaysOnMarket != null && listing.DaysOnMarket <= 7;
+    const domNum = computeDaysOnMarket(listing);
+    const dom = domNum != null ? domNum : '—';
+    const isNew = domNum != null && domNum <= 7;
     const ppsfVal = (listing.ListPrice && listing.LivingArea) ? '$' + Math.round(listing.ListPrice / listing.LivingArea).toLocaleString() : '';
     const status = listing.StandardStatus || 'Active';
     const statusClass = status === 'Active' ? 'status-active' : status === 'Pending' ? 'status-pending' : 'status-other';
@@ -1647,7 +1747,7 @@ function renderListItem(listing) {
     const lot = listing.LotSizeSquareFeet ? Number(listing.LotSizeSquareFeet).toLocaleString() + ' sqft lot' : '';
     const hoa = listing.AssociationFee ? '$' + Number(listing.AssociationFee).toLocaleString() + '/mo HOA' : '';
     const listDate = listing.ListingContractDate || listing.OnMarketDate || '';
-    const listDateStr = listDate ? new Date(listDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+    const listDateStr = fmtListDate(listDate, { month: 'short', day: 'numeric', year: 'numeric' });
 
     const imgHtml = photo
         ? `<img class="lv-photo" src="${photo}" alt="${address}" loading="lazy">`
@@ -1663,7 +1763,7 @@ function renderListItem(listing) {
         <div class="lv-info">
             <div class="lv-top-row">
                 <div class="lv-price">${price}</div>
-                <div class="lv-dom">${dom !== '—' ? dom + ' days on market' : ''}${listDateStr ? ' · Listed ' + listDateStr : ''}</div>
+                <div class="lv-dom">${dom !== '—' ? dom + ' day' + (dom !== 1 ? 's' : '') + ' on market' : ''}${listDateStr ? ' · Listed ' + listDateStr : ''}</div>
             </div>
             <div class="lv-address">${address}</div>
             <div class="lv-stats-row">
@@ -1794,12 +1894,8 @@ async function runSearch(append = false) {
             return;
         }
 
-        // Sort by newest first (days on market ascending)
-        listings.sort((a, b) => {
-            const domA = a.DaysOnMarket != null ? a.DaysOnMarket : 9999;
-            const domB = b.DaysOnMarket != null ? b.DaysOnMarket : 9999;
-            return domA - domB;
-        });
+        // Sort newest-to-market first (by listing date shown on the card)
+        listings.sort(byNewestListed);
 
         if (!append) window._currentListings = listings;
         else window._currentListings = (window._currentListings || []).concat(listings);
@@ -1978,12 +2074,8 @@ function initSearchBar() {
             const params = { limit: PAGE_SIZE, sortBy: 'ModificationTimestamp', order: 'desc', StandardStatus: 'Active', PropertyType: isRent ? 'Residential Lease' : 'Residential', PostalCode: val };
             lastQuery = { ...params };
             const listings = await fetchListings(params);
-            // Sort newest first
-            listings.sort((a, b) => {
-                const domA = a.DaysOnMarket != null ? a.DaysOnMarket : 9999;
-                const domB = b.DaysOnMarket != null ? b.DaysOnMarket : 9999;
-                return domA - domB;
-            });
+            // Sort newest-to-market first (by listing date shown on the card)
+            listings.sort(byNewestListed);
             grid.innerHTML = '';
             window._currentListings = listings;
             if (!listings.length) { document.getElementById('no-results').style.display = 'block'; countEl.textContent = 'No results found'; return; }
@@ -2381,7 +2473,13 @@ document.head.appendChild(spinStyle);
         messages: [],          // { role: 'user'|'assistant', content: string }
         streaming: false,
         greeted: false,
-        sessionId: crypto.randomUUID(),
+        // Guarded like metaEventId in completeLead(): crypto.randomUUID is MISSING on
+        // older Android WebViews / FB in-app browsers — an unguarded call here THROWS
+        // during script load (this IIFE runs at parse time) and kills everything below
+        // it, including the lead-popup wiring at the bottom of the file. That crash was
+        // the root cause of the 7/8–7/14 conversion collapse ($2.98 → $5.39 CPL).
+        sessionId: (typeof crypto !== 'undefined' && crypto.randomUUID && crypto.randomUUID())
+            || ('s-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10)),
     };
 
     // ── DOM refs (set after DOMContentLoaded) ───────────────

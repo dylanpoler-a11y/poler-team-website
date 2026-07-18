@@ -12,6 +12,7 @@ const I18N = {
     navBuy: { en: 'Buy', es: 'Comprar', pt: 'Comprar' },
     navRent: { en: 'Rent', es: 'Alquilar', pt: 'Alugar' },
     navSTR: { en: 'Short-Term Rentals', es: 'Alquileres Cortos', pt: 'Aluguéis Curtos' },
+    navPrecon: { en: 'Preconstruction', es: 'Preconstrucción', pt: 'Pré-construção' },
     navValuation: { en: 'Home Valuation', es: 'Valoración', pt: 'Avaliação' },
     navAdvSearch: { en: 'Advanced Search', es: 'Búsqueda Avanzada', pt: 'Busca Avançada' },
     navAbout: { en: 'About', es: 'Nosotros', pt: 'Sobre' },
@@ -131,6 +132,11 @@ const I18N = {
         es: 'Le enviaremos un código por mensaje de texto para verificar su número. Sin spam, nunca.',
         pt: 'Suas informações estão seguras conosco. Sem spam, nunca.',
     },
+    consentDisclosure: {
+        en: 'By submitting, you agree to be contacted by The Poler Team via call, text, and WhatsApp — including by automated or AI-assisted means — at the number provided. Consent isn’t required to buy or sell.',
+        es: 'Al enviar, aceptas recibir llamadas, mensajes de texto y WhatsApp de The Poler Team, incluyendo por medios automatizados o asistidos por IA, al número que proporcionas. El consentimiento no es necesario para comprar o vender.',
+        pt: 'Ao enviar, você concorda em receber ligações, mensagens de texto e WhatsApp da The Poler Team, inclusive por meios automatizados ou assistidos por IA, no número fornecido. O consentimento não é necessário para comprar ou vender.',
+    },
     submitAndContinue: {
         en: 'Submit & Continue',
         es: 'Enviar y Continuar',
@@ -140,6 +146,62 @@ const I18N = {
         en: 'Submitting…',
         es: 'Enviando…',
         pt: 'Enviando…',
+    },
+    fullName: {
+        en: 'Full Name',
+        es: 'Nombre Completo',
+        pt: 'Nome Completo',
+    },
+    continueBtn: {
+        en: 'Continue',
+        es: 'Continuar',
+        pt: 'Continuar',
+    },
+    contactTitle: {
+        en: 'Almost there!',
+        es: '¡Ya casi!',
+        pt: 'Quase lá!',
+    },
+    contactSubtitle: {
+        en: 'Where should we send the property details?',
+        es: '¿A dónde te enviamos los detalles de la propiedad?',
+        pt: 'Para onde enviamos os detalhes do imóvel?',
+    },
+    step1of2: {
+        en: 'Step 1 of 2',
+        es: 'Paso 1 de 2',
+        pt: 'Passo 1 de 2',
+    },
+    step2of2: {
+        en: 'Step 2 of 2',
+        es: 'Paso 2 de 2',
+        pt: 'Passo 2 de 2',
+    },
+    timelineLabel: {
+        en: 'When do you plan to buy?',
+        es: '¿Cuándo planeas comprar?',
+        pt: 'Quando você planeja comprar?',
+    },
+    tl0to3:  { en: '0-3 Mo',  es: '0-3 meses',  pt: '0-3 meses' },
+    tl3to6:  { en: '3-6 Mo',  es: '3-6 meses',  pt: '3-6 meses' },
+    tl6to12: { en: '6-12 Mo', es: '6-12 meses', pt: '6-12 meses' },
+    tl12plus:{ en: '12+ Mo',  es: '12+ meses',  pt: '12+ meses' },
+
+    // ── Social-proof testimonials (data-i18n-html keeps the <span> attribution) ──
+    spQuote1: {
+        en: '"Found our dream condo in Sunny Isles in two weeks." <span>— Carlos R., Colombia</span>',
+        es: '"Encontramos el condominio de nuestros sueños en Sunny Isles en dos semanas." <span>— Carlos R., Colombia</span>',
+        pt: '"Encontramos o apartamento dos nossos sonhos em Sunny Isles em duas semanas." <span>— Carlos R., Colômbia</span>',
+    },
+    spQuote2: {
+        en: '"Rosa made the whole process easy from Brazil." <span>— Luiz F., Brazil</span>',
+        es: '"Rosa hizo que todo el proceso fuera fácil desde Brasil." <span>— Luiz F., Brasil</span>',
+        pt: '"Rosa tornou todo o processo fácil desde o Brasil." <span>— Luiz F., Brasil</span>',
+    },
+    spQuote3: {
+        en: '"Best experience buying property in Miami." <span>— Ivan C., New York</span>',
+        es: '"La mejor experiencia comprando una propiedad en Miami." <span>— Ivan C., Nueva York</span>',
+        pt: '"A melhor experiência comprando um imóvel em Miami." <span>— Ivan C., Nova York</span>',
     },
 
     // ── Lead Capture Modal — Step 2 (OTP) ───────────────────
@@ -261,6 +323,11 @@ const I18N = {
         en: 'Please enter a valid phone number.',
         es: 'Por favor, ingrese un número de teléfono válido.',
         pt: 'Por favor, insira um número de telefone válido.',
+    },
+    errSelectTimeline: {
+        en: 'Please select when you plan to buy.',
+        es: 'Por favor, selecciona cuándo planeas comprar.',
+        pt: 'Por favor, selecione quando você planeja comprar.',
     },
     errSendCode: {
         en: 'Could not send code. Please try again.',
@@ -467,18 +534,25 @@ const I18N = {
 
 // ── Helper: get current language ────────────────────────────
 // Priority: 1) ?lang= URL param  2) localStorage  3) default 'en'
+// GUARDED (2026-07-17): localStorage THROWS (SecurityError) on privacy-hardened
+// / MDM-managed mobile browsers. getLang() runs inside the DOMContentLoaded
+// boot chain BEFORE the lead-popup wiring — an unguarded throw there aborts the
+// whole boot and kills lead capture (same failure class as the 2026-07-15
+// crypto.randomUUID CPL-doubling incident). In-memory fallback keeps the page
+// fully functional; language just won't persist across reloads.
+var _langMem = null;
 function getLang() {
     const urlParams = new URLSearchParams(window.location.search);
     const urlLang = urlParams.get('lang');
     if (urlLang && ['en', 'es', 'pt'].includes(urlLang)) {
         // Persist the URL param so language sticks on subsequent pages
-        localStorage.setItem('poler_lang', urlLang);
+        try { localStorage.setItem('poler_lang', urlLang); } catch (e) { _langMem = urlLang; }
         return urlLang;
     }
-    return localStorage.getItem('poler_lang') || 'en';
+    try { return localStorage.getItem('poler_lang') || _langMem || 'en'; } catch (e) { return _langMem || 'en'; }
 }
 function setLang(lang) {
-    localStorage.setItem('poler_lang', lang);
+    try { localStorage.setItem('poler_lang', lang); } catch (e) { _langMem = lang; }
 }
 
 // ── Helper: get translated string ───────────────────────────
