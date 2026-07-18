@@ -23,6 +23,8 @@ receiver.html
 .env*.local
 
 # Secrets
+.env
+.env.*
 .env.production
 .env.development.local
 .env.local

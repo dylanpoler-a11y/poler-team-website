@@ -3,6 +3,12 @@
   "buildCommand": null,
   "outputDirectory": null,
   "cleanUrls": true,
+  "rewrites": [
+    {
+      "source": "/via-ventura",
+      "destination": "/api/vv-ab/route"
+    }
+  ],
   "redirects": [
     {
       "source": "/thelauderdalehotel",
