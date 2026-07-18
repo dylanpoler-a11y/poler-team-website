@@ -1,0 +1,546 @@
+/* ============================================================
+   via-ventura.css — Via Ventura community landing page
+   Matches design tokens from listing.css / index.html
+   ============================================================ */
+
+:root {
+    --navy:           #1a2744;
+    --navy-light:     #243656;
+    --navy-dark:      #111c33;
+    --gold:           #c9a961;
+    --bg:             #f7f8fa;
+    --bg-card:        #ffffff;
+    --bg-alt:         #eef1f6;
+    --text:           #1a1a2e;
+    --text-muted:     #6b7280;
+    --text-light:     #9ca3af;
+    --border:         #e5e7eb;
+    --font-heading:   'Playfair Display', Georgia, serif;
+    --font-body:      'Inter', -apple-system, sans-serif;
+    --radius:         12px;
+    --shadow-sm:      0 1px 4px rgba(0,0,0,0.06);
+    --shadow:         0 4px 16px rgba(26,39,68,0.08);
+    --shadow-md:      0 12px 32px rgba(26,39,68,0.10);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+    font-family: var(--font-body);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 16px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+}
+img { display: block; max-width: 100%; }
+a { color: inherit; text-decoration: none; }
+ul { list-style: none; }
+
+/* ==================== NAV ==================== */
+.vv-nav {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(255,255,255,0.96);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 48px;
+}
+.vv-nav-logo img { height: 48px; }
+.vv-nav-links { display: flex; gap: 32px; align-items: center; }
+.vv-nav-links a {
+    font-size: 14px; font-weight: 500;
+    color: var(--text); transition: color 0.2s;
+}
+.vv-nav-links a:hover { color: var(--navy); }
+.vv-nav-cta {
+    background: var(--navy); color: #fff !important;
+    padding: 10px 18px; border-radius: 8px;
+    font-weight: 600;
+}
+.vv-nav-cta:hover { background: var(--navy-dark); }
+
+/* ==================== HERO ==================== */
+.vv-hero {
+    background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%);
+    color: #fff;
+    padding: 96px 48px 112px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+.vv-hero::before {
+    content: "";
+    position: absolute; inset: 0;
+    background:
+        radial-gradient(circle at 20% 30%, rgba(201,169,97,0.10), transparent 40%),
+        radial-gradient(circle at 80% 70%, rgba(201,169,97,0.08), transparent 50%);
+    pointer-events: none;
+}
+.vv-hero-inner { position: relative; max-width: 800px; margin: 0 auto; }
+.vv-hero-eyebrow {
+    font-size: 13px; letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--gold); margin-bottom: 20px;
+}
+.vv-hero-title {
+    font-family: var(--font-heading);
+    font-size: 84px; font-weight: 700;
+    letter-spacing: -2px; line-height: 1;
+    margin-bottom: 16px;
+}
+.vv-hero-sub {
+    font-family: var(--font-heading);
+    font-style: italic;
+    font-size: 24px; color: rgba(255,255,255,0.88);
+    margin-bottom: 28px;
+}
+.vv-hero-lede {
+    font-size: 19px; line-height: 1.65;
+    color: rgba(255,255,255,0.84);
+    max-width: 640px; margin: 0 auto 40px;
+}
+.vv-hero-actions { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+
+/* ==================== BUTTONS ==================== */
+.vv-btn {
+    display: inline-block;
+    padding: 14px 28px;
+    border-radius: 10px;
+    font-family: var(--font-body);
+    font-size: 15px; font-weight: 600;
+    letter-spacing: 0.3px;
+    transition: all 0.2s;
+    cursor: pointer; border: none;
+}
+.vv-btn-primary {
+    background: var(--gold); color: var(--navy);
+}
+.vv-btn-primary:hover {
+    background: #b89651; transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(201,169,97,0.3);
+}
+.vv-btn-ghost {
+    background: transparent; color: #fff;
+    border: 1.5px solid rgba(255,255,255,0.5);
+}
+.vv-btn-ghost:hover { border-color: #fff; background: rgba(255,255,255,0.08); }
+.vv-btn-block { display: block; width: 100%; padding: 16px; font-size: 16px; }
+
+/* ==================== QUICK STATS ==================== */
+.vv-stats {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 16px; padding: 56px 48px;
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border);
+}
+.vv-stat { text-align: center; }
+.vv-stat-num {
+    font-family: var(--font-heading);
+    font-size: 48px; font-weight: 700;
+    color: var(--navy); line-height: 1;
+    margin-bottom: 8px;
+}
+.vv-stat-lbl {
+    font-size: 13px; letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+/* ==================== SECTIONS ==================== */
+.vv-section { padding: 88px 48px; max-width: 1200px; margin: 0 auto; }
+.vv-section-alt { max-width: none; background: var(--bg-card); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+.vv-section-alt > * { max-width: 1200px; margin-left: auto; margin-right: auto; }
+
+.vv-section-head { text-align: center; margin-bottom: 56px; }
+.vv-eyebrow {
+    font-size: 12px; letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--gold); font-weight: 600;
+    margin-bottom: 12px;
+}
+.vv-h2 {
+    font-family: var(--font-heading);
+    font-size: 44px; font-weight: 700;
+    color: var(--navy); line-height: 1.15;
+    letter-spacing: -1px;
+    max-width: 720px; margin: 0 auto;
+}
+.vv-section-lede {
+    font-size: 18px; color: var(--text-muted);
+    max-width: 680px; margin: 16px auto 0;
+    line-height: 1.65;
+}
+
+.vv-prose { max-width: 760px; margin: 0 auto; }
+.vv-prose p {
+    font-size: 17px; line-height: 1.75;
+    color: var(--text); margin-bottom: 20px;
+}
+
+/* ==================== NEIGHBORHOOD CARDS ==================== */
+.vv-cards {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+}
+.vv-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 32px;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.3s;
+}
+.vv-card:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-4px);
+    border-color: var(--gold);
+}
+.vv-card-tag {
+    display: inline-block;
+    font-size: 11px; letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--gold); font-weight: 600;
+    border: 1px solid var(--gold);
+    padding: 4px 10px; border-radius: 4px;
+    margin-bottom: 16px;
+}
+.vv-card-title {
+    font-family: var(--font-heading);
+    font-size: 32px; font-weight: 700;
+    color: var(--navy); margin-bottom: 4px;
+}
+.vv-card-meta {
+    font-size: 13px; color: var(--text-muted);
+    margin-bottom: 20px;
+}
+.vv-card-specs { margin-bottom: 20px; }
+.vv-card-specs li {
+    display: flex; justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+}
+.vv-card-specs li:last-child { border-bottom: none; }
+.vv-card-specs li span:first-child { color: var(--text-muted); }
+.vv-card-specs li span:last-child { color: var(--text); font-weight: 500; text-align: right; }
+.vv-card-blurb {
+    font-size: 14px; color: var(--text-muted);
+    line-height: 1.65;
+}
+
+/* ==================== AMENITIES ==================== */
+.vv-amenities {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 20px; max-width: 980px; margin: 0 auto;
+}
+.vv-amenity {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px 20px;
+    text-align: center;
+    font-size: 14px;
+    color: var(--text);
+    transition: all 0.2s;
+}
+.vv-amenity:hover {
+    border-color: var(--gold);
+    box-shadow: var(--shadow);
+}
+.vv-amenity-icon {
+    font-size: 28px;
+    color: var(--navy);
+    margin-bottom: 8px;
+}
+
+/* ==================== LOCATION ==================== */
+.vv-location-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 32px;
+}
+.vv-loc-block {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 32px;
+}
+.vv-loc-block h4 {
+    font-family: var(--font-heading);
+    font-size: 22px; font-weight: 700;
+    color: var(--navy); margin-bottom: 16px;
+}
+.vv-loc-block ul li {
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 15px;
+    display: flex; justify-content: space-between; align-items: center;
+}
+.vv-loc-block ul li:last-child { border-bottom: none; }
+.vv-loc-sub { font-size: 13px; color: var(--text-muted); margin-bottom: 10px; }
+.vv-loc-sub-2 { font-size: 13px; color: var(--text-muted); margin-top: 12px; font-style: italic; }
+.vv-grade {
+    background: var(--navy); color: #fff;
+    font-size: 11px; font-weight: 700;
+    padding: 2px 8px; border-radius: 4px;
+    letter-spacing: 0.5px;
+}
+
+/* ==================== MARKET ==================== */
+.vv-market {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 24px; max-width: 960px; margin: 0 auto;
+}
+.vv-market-card {
+    text-align: center;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 40px 24px;
+    box-shadow: var(--shadow-sm);
+}
+.vv-market-num {
+    font-family: var(--font-heading);
+    font-size: 56px; font-weight: 700;
+    color: var(--navy); line-height: 1;
+    margin-bottom: 12px;
+}
+.vv-market-lbl {
+    font-size: 14px; color: var(--text-muted);
+    line-height: 1.55;
+}
+.vv-disclaimer {
+    text-align: center;
+    font-size: 12px; color: var(--text-light);
+    margin-top: 24px; font-style: italic;
+}
+
+/* ==================== COMPS ==================== */
+.vv-comps .vv-section-head { margin-bottom: 40px; }
+.vv-comp-block {
+    max-width: 1000px;
+    margin: 0 auto 32px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px 32px;
+    box-shadow: var(--shadow-sm);
+}
+.vv-comp-head {
+    display: flex; flex-wrap: wrap;
+    align-items: baseline; justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 18px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+}
+.vv-comp-head h3 {
+    font-family: var(--font-heading);
+    font-size: 24px; font-weight: 700;
+    color: var(--navy);
+}
+.vv-comp-stats {
+    font-size: 13px; color: var(--text-muted);
+    font-weight: 500;
+}
+.vv-comp-table-wrap { overflow-x: auto; }
+.vv-comp-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+.vv-comp-table thead th {
+    text-align: left;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 1.2px;
+    padding: 8px 12px;
+    border-bottom: 1.5px solid var(--border);
+}
+.vv-comp-table tbody td {
+    padding: 14px 12px;
+    border-bottom: 1px solid var(--border-light, #f3f4f6);
+    color: var(--text);
+}
+.vv-comp-table tbody tr:last-child td { border-bottom: none; }
+.vv-comp-table tbody tr:hover { background: var(--bg); }
+.vv-comp-table td:nth-child(5),
+.vv-comp-table td:nth-child(6) { font-weight: 600; color: var(--navy); }
+.vv-tag {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 3px 9px;
+    border-radius: 4px;
+}
+.vv-tag-sold {
+    background: var(--navy);
+    color: #fff;
+}
+.vv-tag-active {
+    background: var(--gold);
+    color: var(--navy);
+}
+.vv-comp-footnote {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-top: 12px;
+    text-align: right;
+    font-style: italic;
+}
+.vv-disclaimer-link {
+    color: var(--navy);
+    text-decoration: underline;
+    text-decoration-color: var(--gold);
+    text-underline-offset: 3px;
+}
+.vv-disclaimer-link:hover { color: var(--gold); }
+
+/* ==================== ROSA ==================== */
+.vv-rosa {
+    max-width: 1200px; margin: 0 auto;
+}
+.vv-rosa-grid {
+    display: grid; grid-template-columns: 1fr 1.2fr;
+    gap: 56px; align-items: center;
+}
+.vv-rosa-photo {
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+    aspect-ratio: 4/5;
+    background: var(--bg-alt);
+}
+.vv-rosa-photo img { width: 100%; height: 100%; object-fit: cover; object-position: center top; }
+.vv-rosa-text .vv-eyebrow { text-align: left; }
+.vv-rosa-text .vv-h2 { text-align: left; font-size: 52px; max-width: 100%; margin-bottom: 24px; }
+.vv-rosa-text p {
+    font-size: 17px; line-height: 1.75;
+    color: var(--text); margin-bottom: 16px;
+}
+.vv-rosa-list {
+    margin: 28px 0;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    padding: 20px 0;
+}
+.vv-rosa-list li {
+    padding: 8px 0;
+    font-size: 15px;
+    color: var(--text);
+}
+.vv-rosa-list li::before {
+    content: "◆";
+    color: var(--gold);
+    margin-right: 12px;
+    font-size: 11px;
+    vertical-align: middle;
+}
+.vv-rosa-cta { display: flex; gap: 12px; flex-wrap: wrap; }
+.vv-rosa-cta .vv-btn-ghost { color: var(--navy); border-color: var(--navy); }
+.vv-rosa-cta .vv-btn-ghost:hover { background: var(--navy); color: #fff; }
+
+/* ==================== CONTACT FORM ==================== */
+.vv-contact { max-width: 600px; }
+.vv-form {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 40px;
+    box-shadow: var(--shadow);
+}
+.vv-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+.vv-form input, .vv-form select {
+    width: 100%;
+    padding: 14px 16px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg);
+    font-family: var(--font-body);
+    font-size: 15px;
+    color: var(--text);
+    margin-bottom: 12px;
+    transition: border-color 0.2s, background 0.2s;
+}
+.vv-form input:focus, .vv-form select:focus {
+    outline: none;
+    border-color: var(--navy);
+    background: #fff;
+}
+.vv-form select { cursor: pointer; }
+.vv-form-note {
+    text-align: center;
+    font-size: 12px; color: var(--text-muted);
+    margin-top: 16px;
+}
+.vv-form-status {
+    margin-top: 16px;
+    text-align: center;
+    font-size: 14px;
+    min-height: 20px;
+}
+.vv-form-status.success { color: #047857; }
+.vv-form-status.error { color: #b91c1c; }
+
+/* ==================== FOOTER ==================== */
+.vv-footer {
+    background: var(--navy);
+    color: rgba(255,255,255,0.85);
+    padding: 56px 48px 40px;
+    margin-top: 80px;
+}
+.vv-footer-inner {
+    max-width: 1100px; margin: 0 auto;
+    display: flex; flex-direction: column; align-items: center;
+    text-align: center;
+    gap: 16px;
+}
+.vv-footer-logo {
+    height: 80px;
+    filter: brightness(0) invert(1);
+    opacity: 0.95;
+}
+.vv-footer-meta div { font-size: 14px; line-height: 2; }
+.vv-footer-meta a { color: var(--gold); }
+.vv-footer-fineprint {
+    font-size: 11px;
+    color: rgba(255,255,255,0.5);
+    max-width: 640px;
+    margin-top: 16px;
+    line-height: 1.6;
+}
+
+/* ==================== RESPONSIVE ==================== */
+@media (max-width: 900px) {
+    .vv-nav { padding: 12px 20px; }
+    .vv-nav-links { gap: 16px; }
+    .vv-nav-links a:not(.vv-nav-cta) { display: none; }
+    .vv-hero { padding: 64px 24px 80px; }
+    .vv-hero-title { font-size: 56px; }
+    .vv-hero-sub { font-size: 18px; }
+    .vv-hero-lede { font-size: 16px; }
+    .vv-section { padding: 56px 24px; }
+    .vv-section-alt { padding-left: 0; padding-right: 0; }
+    .vv-section-alt > * { padding-left: 24px; padding-right: 24px; }
+    .vv-h2 { font-size: 32px; }
+    .vv-stats { grid-template-columns: repeat(2, 1fr); padding: 32px 24px; gap: 24px; }
+    .vv-stat-num { font-size: 36px; }
+    .vv-cards { grid-template-columns: 1fr; }
+    .vv-amenities { grid-template-columns: repeat(2, 1fr); }
+    .vv-location-grid { grid-template-columns: 1fr; }
+    .vv-market { grid-template-columns: 1fr; }
+    .vv-rosa-grid { grid-template-columns: 1fr; }
+    .vv-rosa-text .vv-h2 { font-size: 36px; }
+    .vv-form-row { grid-template-columns: 1fr; }
+    .vv-form { padding: 24px; }
+    .vv-comp-block { padding: 20px; }
+    .vv-comp-head { flex-direction: column; align-items: flex-start; }
+    .vv-comp-head h3 { font-size: 20px; }
+    .vv-comp-table { font-size: 12px; min-width: 560px; }
+    .vv-comp-table thead th, .vv-comp-table tbody td { padding: 8px 6px; }
+}

@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Via Ventura A/B — Live KPIs</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body { background:#0b0f1a; }
+  .pulse { animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+  .bar { transition: width .6s cubic-bezier(.22,1,.36,1); }
+</style>
+</head>
+<body class="text-gray-200 font-sans antialiased">
+<div class="max-w-5xl mx-auto px-4 py-6">
+
+  <!-- Header -->
+  <div class="flex items-center justify-between mb-5 flex-wrap gap-3">
+    <div>
+      <h1 class="text-2xl font-bold text-white tracking-tight">Via Ventura — A/B Test</h1>
+      <p class="text-xs text-gray-500 mt-0.5" id="sub">loading…</p>
+    </div>
+    <div class="flex items-center gap-2">
+      <span class="w-2 h-2 rounded-full bg-emerald-400 pulse"></span>
+      <span class="text-xs text-gray-400">Live · auto-refresh 15s</span>
+    </div>
+  </div>
+
+  <!-- Recommendation -->
+  <div id="rec" class="rounded-xl border border-gray-800 bg-gray-900 p-4 mb-5 text-sm text-gray-300">…</div>
+
+  <!-- Variant cards -->
+  <div class="grid sm:grid-cols-2 gap-4 mb-5">
+    <div id="card-a" class="rounded-2xl border border-gray-800 bg-gray-900 p-5"></div>
+    <div id="card-b" class="rounded-2xl border border-gray-800 bg-gray-900 p-5"></div>
+  </div>
+
+  <!-- Time-on-site comparison -->
+  <div class="rounded-2xl border border-gray-800 bg-gray-900 p-5 mb-5">
+    <h2 class="text-sm font-semibold text-gray-300 mb-4">Median time on site — the metric we're optimizing</h2>
+    <div id="convbars" class="space-y-3"></div>
+  </div>
+
+  <!-- History -->
+  <div class="rounded-2xl border border-gray-800 bg-gray-900 p-5">
+    <h2 class="text-sm font-semibold text-gray-300 mb-3">Round history</h2>
+    <div id="history" class="text-sm text-gray-400">No completed rounds yet.</div>
+  </div>
+
+  <p class="text-[11px] text-gray-600 mt-5 leading-relaxed">
+    KPIs: median time-on-site (primary), conversion rate (tiebreak), scroll-to-form %, call/text taps, bounce %.
+    Winner auto-promotes at 20 visitors per arm. At that sample a time gap can still be noise —
+    the confidence badge tells you when a result is solid vs. a coin-flip. Search-bot traffic is filtered out.
+  </p>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const HERO = { a: 'Identity hero — "What’s Your Home Worth?"', b: 'Money hero — "$1,475,000 just sold"' };
+const CONF = {
+  significant: ['Significant','bg-emerald-500/15 text-emerald-300 border-emerald-500/30'],
+  directional: ['Directional','bg-yellow-500/15 text-yellow-300 border-yellow-500/30'],
+  tie:         ['Coin-flip','bg-gray-500/15 text-gray-300 border-gray-500/30'],
+  collecting:  ['Collecting','bg-blue-500/15 text-blue-300 border-blue-500/30'],
+  awaiting_challenger: ['Round done','bg-purple-500/15 text-purple-300 border-purple-500/30'],
+};
+function stat(label, val, sub){ return `<div><div class="text-[11px] uppercase tracking-wide text-gray-500">${label}</div><div class="text-lg font-semibold text-white">${val}</div>${sub?`<div class="text-[11px] text-gray-500">${sub}</div>`:''}</div>`; }
+
+function card(key, v, cfg, winner, leader){
+  const isLeader = leader === key && v && v.viewers >= cfg.threshold;
+  const live = (key === cfg.champion || key === cfg.challenger);
+  const prog = Math.min(100, Math.round(100*(v?v.viewers:0)/cfg.threshold));
+  const ring = isLeader ? 'border-yellow-500/60 ring-1 ring-yellow-500/30' : 'border-gray-800';
+  return `
+  <div class="flex items-center justify-between mb-1">
+    <div class="text-xs uppercase tracking-widest text-gray-500">Variant ${key.toUpperCase()}${key===cfg.champion?' · champion':''}${key===cfg.challenger?' · challenger':''}</div>
+    ${isLeader?'<span class="text-[10px] font-bold text-yellow-300 bg-yellow-500/15 border border-yellow-500/30 rounded px-2 py-0.5">LEADING</span>':''}
+  </div>
+  <div class="text-sm text-gray-400 mb-4">${HERO[key]||(live?'':'(retired)')}</div>
+  <div class="flex items-baseline gap-2 mb-3">
+    <div class="text-5xl font-bold ${isLeader?'text-yellow-300':'text-white'}">${v?v.medianDwellSec:0}<span class="text-2xl text-gray-500">s</span></div>
+    <div class="text-xs text-gray-500">median time on site<br>${v?v.dwellN:0} visit${(v&&v.dwellN===1)?'':'s'} measured</div>
+  </div>
+  <div class="h-1.5 bg-gray-800 rounded mb-1 overflow-hidden"><div class="bar h-full ${prog>=100?'bg-emerald-500':'bg-blue-500'}" style="width:${prog}%"></div></div>
+  <div class="text-[11px] text-gray-500 mb-4">${v?v.viewers:0} / ${cfg.threshold} visitors to decision</div>
+  <div class="grid grid-cols-2 gap-3">
+    ${stat('Conversion', (v?v.convRate:0)+'%',(v?v.leads:0)+' lead / '+(v?v.viewers:0)+' visit')}
+    ${stat('Reached form', (v?v.scrollToFormPct:0)+'%')}
+    ${stat('Call/text taps', v?v.callTaps:0)}
+    ${stat('Bounce', (v?v.bouncePct:0)+'%','&lt;10s, no scroll')}
+  </div>`;
+}
+
+let _maxDwell = 1;
+function convbar(key, v, leader){
+  const secs = v?v.medianDwellSec:0;
+  const w = Math.min(100, Math.round(100*secs/_maxDwell)); // scale to the leader
+  const col = leader===key ? 'bg-yellow-400' : 'bg-gray-500';
+  return `<div class="flex items-center gap-3">
+    <div class="w-16 text-xs text-gray-400">Var ${key.toUpperCase()}</div>
+    <div class="flex-1 h-5 bg-gray-800 rounded overflow-hidden"><div class="bar h-full ${col}" style="width:${w}%"></div></div>
+    <div class="w-20 text-right text-sm font-semibold text-white">${secs}s</div>
+  </div>`;
+}
+
+async function load(){
+  try {
+    const d = await fetch('/api/vv-ab/report', {cache:'no-store'}).then(r=>r.json());
+    const cfg = d.config, A = d.variants.a, B = d.variants.b;
+    $('sub').innerHTML = `Round ${cfg.round} · status <b class="text-gray-300">${cfg.status}</b> · ${cfg.split}/${100-cfg.split} split · threshold ${cfg.threshold}/arm · updated ${new Date(d.generatedAt).toLocaleTimeString()}`;
+    const [clabel, cstyle] = CONF[d.confidence] || CONF.collecting;
+    $('rec').innerHTML = `<div class="flex items-start gap-3"><span class="shrink-0 text-[10px] font-bold border rounded px-2 py-0.5 ${cstyle}">${clabel}</span><div>${d.recommendation||''} ${d.pValue<1?`<span class="text-gray-500">(p=${d.pValue})</span>`:''}</div></div>`;
+    $('card-a').innerHTML = card('a', A, cfg, d.winner, d.winner);
+    $('card-b').innerHTML = B ? card('b', B, cfg, d.winner, d.winner) : '<div class="text-gray-500 text-sm">No active challenger — awaiting next variant.</div>';
+    _maxDwell = Math.max(1, A?A.medianDwellSec:0, B?B.medianDwellSec:0);
+    $('convbars').innerHTML = convbar('a',A,d.winner) + (B?convbar('b',B,d.winner):'');
+    if (d.history && d.history.length){
+      $('history').innerHTML = '<table class="w-full text-sm"><thead><tr class="text-[11px] uppercase tracking-wide text-gray-500 text-left"><th class="py-1">Round</th><th>A time</th><th>B time</th><th>Winner</th><th>When</th></tr></thead><tbody>'+
+        d.history.slice().reverse().map(h=>`<tr class="border-t border-gray-800"><td class="py-2">${h.round}</td><td>${h.a.medianDwellSec}s (${h.a.convRate}% conv)</td><td>${h.b.medianDwellSec}s (${h.b.convRate}% conv)</td><td class="text-yellow-300 font-semibold">${h.winner.toUpperCase()}</td><td class="text-gray-500">${new Date(h.ts).toLocaleDateString()}</td></tr>`).join('')+
+        '</tbody></table>';
+    }
+  } catch(e){ $('rec').textContent = 'Error loading report: '+e; }
+}
+load(); setInterval(load, 15000);
+</script>
+</body>
+</html>

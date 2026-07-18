@@ -1,0 +1,504 @@
+/* ==========================================================================
+   vv-kit.css — Via Ventura QR landing pages (vv-a + vv-b), 2026-07 redesign.
+   Dark cinematic register ported from the Hausmann House / Trump Royale kits,
+   tuned to the Poler door-hanger brand (navy · champagne gold · Playfair).
+   The legacy page keeps via-ventura.css — this file is vv-a/vv-b only.
+   ========================================================================== */
+
+:root {
+  --ink: #0c1017;
+  --ink-2: #111624;
+  --ink-3: #182031;
+  --navy: #1a2744;
+  --gold: #c9a961;
+  --gold-soft: #dcc48f;
+  --cream: #f3efe7;
+  --stone: #b0aa9c;
+  --stone-dim: #8e897d;
+  --line: rgba(201, 169, 97, 0.24);
+  --line-soft: rgba(243, 239, 231, 0.1);
+  --serif: 'Playfair Display', Georgia, serif;
+  --sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--ink);
+  color: var(--cream);
+  font-family: var(--sans);
+  font-weight: 300;
+  font-size: 16px;
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+img { max-width: 100%; display: block; }
+a { color: var(--gold); text-decoration: none; }
+h1, h2, h3 { font-family: var(--serif); font-weight: 600; line-height: 1.14; text-wrap: balance; }
+section { scroll-margin-top: 88px; }
+a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 3px;
+}
+
+.vv-wrap { max-width: 1080px; margin: 0 auto; padding: 0 22px; }
+.vv-section { padding: clamp(4.5rem, 11vw, 7rem) 0; }
+.vv-rule { width: 56px; height: 1px; background: var(--gold); margin: 24px 0; }
+.vv-eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.38em;
+  text-transform: uppercase;
+  color: var(--gold);
+  font-weight: 500;
+}
+.vv-h2 { font-size: clamp(1.9rem, 4.6vw, 2.75rem); letter-spacing: -0.01em; }
+.vv-lede { color: var(--stone); font-size: 16px; max-width: 62ch; text-wrap: pretty; }
+
+/* section-head rhythm: eyebrow sits tight over the heading, lede breathes below */
+.vv-eyebrow + .vv-h2 { margin-top: 14px; }
+.vv-h2 + .vv-lede, .vv-rule + .vv-lede { margin-top: 16px; }
+.vv-hoods-list { margin-top: clamp(36px, 6vw, 56px); }
+.vv-contact-head .vv-lede { margin-left: auto; margin-right: auto; }
+.vv-amenity figcaption { margin-top: 14px; }
+
+/* ==================== NAV ==================== */
+.vv-nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px clamp(18px, 4vw, 36px);
+  transition: background 0.35s ease, border-color 0.35s ease;
+  border-bottom: 1px solid transparent;
+}
+.vv-nav.scrolled {
+  background: rgba(12, 16, 23, 0.94);
+  border-bottom-color: var(--line-soft);
+}
+.vv-nav-logo img { height: 46px; width: auto; }
+.vv-nav-links { display: flex; align-items: center; gap: clamp(16px, 3vw, 30px); }
+.vv-nav-links a {
+  color: var(--cream);
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  opacity: 0.85;
+  transition: opacity 0.2s;
+}
+.vv-nav-links a:hover { opacity: 1; }
+.vv-nav-cta {
+  border: 1px solid var(--gold);
+  color: var(--gold) !important;
+  opacity: 1 !important;
+  padding: 9px 18px;
+  font-size: 11px !important;
+  letter-spacing: 0.22em !important;
+  text-transform: uppercase;
+  font-weight: 500 !important;
+  transition: background 0.25s, color 0.25s;
+  white-space: nowrap;
+}
+.vv-nav-cta:hover { background: var(--gold); color: var(--ink) !important; }
+@media (max-width: 680px) {
+  .vv-nav-links a:not(.vv-nav-cta) { display: none; }
+}
+
+/* ==================== HERO ==================== */
+.vv-hero {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100svh;
+  max-height: 1060px;
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+}
+.vv-hero-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 58% 46%;
+  filter: brightness(0.82) saturate(1.04);
+}
+.vv-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg,
+    rgba(12, 16, 23, 0.42) 0%,
+    rgba(12, 16, 23, 0.05) 36%,
+    rgba(12, 16, 23, 0.55) 68%,
+    var(--ink) 100%);
+}
+.vv-hero-inner {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  padding-bottom: clamp(56px, 9vh, 92px);
+}
+.vv-hero-eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.38em;
+  text-transform: uppercase;
+  color: var(--gold-soft);
+  font-weight: 500;
+}
+.vv-hero-title {
+  font-size: clamp(3.3rem, 10.5vw, 5.7rem);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 14px;
+}
+.vv-hero-sub {
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: clamp(1.2rem, 2.8vw, 1.7rem);
+  color: var(--gold-soft);
+  margin-top: 10px;
+}
+.vv-hero-lede {
+  margin-top: 20px;
+  max-width: 56ch;
+  font-size: 15.5px;
+  color: var(--cream);
+  opacity: 0.92;
+  text-wrap: pretty;
+}
+.vv-hero-actions { margin-top: 32px; display: flex; gap: 14px; flex-wrap: wrap; }
+
+/* Variant B — sold-number-dominant hero */
+.vv-hero-bignum {
+  font-family: var(--serif);
+  font-weight: 700;
+  color: var(--gold);
+  font-size: clamp(3.6rem, 13vw, 6rem);
+  line-height: 0.98;
+  letter-spacing: -0.01em;
+  margin-top: 16px;
+}
+.vv-hero-title-b {
+  font-size: clamp(1.5rem, 4.2vw, 2.4rem);
+  font-weight: 600;
+  margin-top: 14px;
+  max-width: 22ch;
+}
+
+/* ==================== BUTTONS ==================== */
+.vv-btn {
+  display: inline-block;
+  padding: 15px 32px;
+  border: 1px solid var(--gold);
+  font-family: var(--sans);
+  font-size: 12px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  font-weight: 500;
+  color: var(--cream);
+  background: transparent;
+  cursor: pointer;
+  text-align: center;
+  transition: background 0.25s, color 0.25s, border-color 0.25s;
+}
+.vv-btn:hover { background: var(--gold); color: var(--ink); }
+.vv-btn-primary { background: var(--gold); color: var(--ink); }
+.vv-btn-primary:hover { background: var(--gold-soft); border-color: var(--gold-soft); color: var(--ink); }
+.vv-btn-block { display: block; width: 100%; }
+@media (max-width: 480px) {
+  .vv-hero-actions .vv-btn { flex: 1 1 100%; }
+}
+
+/* ==================== STATS BAND ==================== */
+.vv-stats {
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  background: var(--ink);
+}
+.vv-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+}
+.vv-stat {
+  padding: clamp(28px, 5vw, 44px) 18px;
+  text-align: center;
+}
+.vv-stat:nth-child(2) { border-left: 1px solid var(--line-soft); }
+.vv-stat:nth-child(3) { border-top: 1px solid var(--line-soft); }
+.vv-stat:nth-child(4) { border-top: 1px solid var(--line-soft); border-left: 1px solid var(--line-soft); }
+.vv-stat-num {
+  font-family: var(--serif);
+  font-weight: 600;
+  font-size: clamp(1.7rem, 3.6vw, 2.15rem);
+  color: var(--gold-soft);
+  line-height: 1.1;
+}
+.vv-stat-lbl { margin-top: 8px; font-size: 13px; color: var(--stone); }
+@media (min-width: 760px) {
+  .vv-stats-grid { grid-template-columns: repeat(4, 1fr); }
+  .vv-stat:nth-child(3) { border-top: none; border-left: 1px solid var(--line-soft); }
+  .vv-stat:nth-child(4) { border-top: none; }
+}
+
+/* ==================== COMMUNITY (prose + figure) ==================== */
+.vv-community { background: var(--ink-2); }
+.vv-community-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: clamp(36px, 6vw, 68px);
+  align-items: center;
+}
+@media (min-width: 860px) {
+  .vv-community-grid { grid-template-columns: 1.05fr 0.95fr; }
+}
+.vv-prose p { color: var(--stone); margin-top: 18px; font-size: 15.5px; text-wrap: pretty; }
+.vv-prose p strong { color: var(--cream); font-weight: 500; }
+.vv-figure { position: relative; }
+.vv-figure .vv-figure-frame { overflow: hidden; border: 1px solid var(--line); }
+.vv-figure img { width: 100%; height: 100%; object-fit: cover; }
+.vv-figure-tall .vv-figure-frame { aspect-ratio: 4 / 5; max-height: 560px; }
+.vv-figure figcaption {
+  margin-top: 12px;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--stone-dim);
+}
+
+/* ==================== NEIGHBORHOODS ==================== */
+.vv-hoods-head { max-width: 640px; }
+.vv-hood {
+  border-top: 1px solid var(--line);
+  padding: clamp(36px, 6vw, 56px) 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: clamp(20px, 4vw, 56px);
+}
+.vv-hood:last-of-type { border-bottom: 1px solid var(--line); }
+@media (min-width: 820px) {
+  .vv-hood { grid-template-columns: 0.9fr 1.1fr; }
+}
+.vv-hood-tag {
+  font-size: 11px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--gold);
+  font-weight: 500;
+}
+.vv-hood-name {
+  font-size: clamp(2rem, 5.4vw, 3rem);
+  margin-top: 10px;
+  letter-spacing: 0.01em;
+}
+.vv-hood-meta { margin-top: 8px; font-size: 14px; color: var(--stone); font-style: italic; font-family: var(--serif); }
+.vv-hood-specs { list-style: none; }
+.vv-hood-specs li {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--line-soft);
+  font-size: 14px;
+}
+.vv-hood-specs li span:first-child { color: var(--stone-dim); flex-shrink: 0; }
+.vv-hood-specs li span:last-child { color: var(--cream); text-align: right; font-weight: 400; }
+.vv-hood-blurb { margin-top: 18px; color: var(--stone); font-size: 15px; text-wrap: pretty; }
+
+/* ==================== AMENITY BAND ==================== */
+.vv-amenity { padding: 0; }
+.vv-amenity .vv-figure-frame { border-left: none; border-right: none; }
+.vv-amenity img { height: clamp(300px, 52vw, 520px); }
+.vv-amenity figcaption { padding: 0 22px; }
+
+/* ==================== COMPS (ledger) ==================== */
+.vv-comps-intro { max-width: 640px; }
+.vv-comp-group { margin-top: clamp(36px, 6vw, 52px); }
+.vv-comp-group-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px 18px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--line);
+}
+.vv-comp-group-head h3 { font-size: clamp(1.25rem, 2.6vw, 1.5rem); font-weight: 600; }
+.vv-comp-range { font-size: 13px; color: var(--stone); }
+.vv-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+  padding: 15px 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+.vv-row-main { min-width: 0; }
+.vv-row-addr { font-size: 15px; font-weight: 400; color: var(--cream); }
+.vv-row-meta { font-size: 13px; color: var(--stone-dim); margin-top: 2px; }
+.vv-row-price { text-align: right; flex-shrink: 0; }
+.vv-row-num {
+  font-family: var(--serif);
+  font-weight: 600;
+  font-size: 19px;
+  color: var(--cream);
+  line-height: 1.2;
+}
+.vv-sold .vv-row-num { color: var(--gold-soft); }
+.vv-row-psf { font-size: 12px; color: var(--stone-dim); margin-top: 2px; }
+.vv-row-hot {
+  background: rgba(201, 169, 97, 0.07);
+  border: 1px solid var(--gold);
+  padding: 15px 16px;
+  margin: 10px -16px 0;
+}
+.vv-row-hot .vv-row-num { color: var(--gold); font-size: 22px; }
+.vv-row-hot .vv-row-addr { font-weight: 500; }
+@media (max-width: 480px) {
+  .vv-row-hot { margin: 10px 0 0; }
+}
+.vv-comp-footnote { margin-top: 14px; font-size: 13px; color: var(--stone-dim); }
+.vv-comp-footnote a { border-bottom: 1px solid var(--line); padding-bottom: 1px; }
+.vv-disclaimer { margin-top: clamp(32px, 6vw, 48px); font-size: 13px; color: var(--stone-dim); }
+.vv-disclaimer a { border-bottom: 1px solid var(--line); padding-bottom: 1px; }
+
+/* ==================== ROSA ==================== */
+.vv-rosa { background: var(--ink-2); }
+.vv-rosa-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: clamp(32px, 6vw, 64px);
+  align-items: center;
+}
+@media (min-width: 820px) {
+  .vv-rosa-grid { grid-template-columns: 0.8fr 1.2fr; }
+}
+.vv-rosa-photo { overflow: hidden; border: 1px solid var(--line); aspect-ratio: 4 / 5; max-width: 420px; }
+.vv-rosa-photo img { width: 100%; height: 100%; object-fit: cover; }
+.vv-rosa-text p { color: var(--stone); margin-top: 16px; font-size: 15.5px; text-wrap: pretty; }
+.vv-rosa-list { list-style: none; margin-top: 22px; }
+.vv-rosa-list li {
+  padding: 10px 0 10px 26px;
+  position: relative;
+  border-bottom: 1px solid var(--line-soft);
+  font-size: 14.5px;
+  color: var(--cream);
+}
+.vv-rosa-list li::before {
+  content: "—";
+  position: absolute;
+  left: 0;
+  color: var(--gold);
+}
+.vv-rosa-cta { margin-top: 28px; display: flex; gap: 14px; flex-wrap: wrap; }
+@media (max-width: 480px) {
+  .vv-rosa-cta .vv-btn { flex: 1 1 100%; }
+}
+
+/* ==================== LEAD FORM ==================== */
+.vv-contact-head { max-width: 640px; margin: 0 auto; text-align: center; }
+.vv-contact-head .vv-rule { margin-left: auto; margin-right: auto; }
+.vv-form { max-width: 620px; margin: clamp(32px, 6vw, 48px) auto 0; }
+.vv-form-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+@media (min-width: 560px) {
+  .vv-form-row { grid-template-columns: 1fr 1fr; }
+}
+.vv-form input,
+.vv-form select {
+  width: 100%;
+  margin-bottom: 14px;
+  padding: 15px 16px;
+  background: var(--ink-3);
+  border: 1px solid var(--line-soft);
+  color: var(--cream);
+  font-family: var(--sans);
+  font-size: 16px;
+  font-weight: 300;
+  border-radius: 0;
+  transition: border-color 0.25s, box-shadow 0.25s;
+}
+.vv-form-row input { margin-bottom: 0; }
+.vv-form-row { margin-bottom: 14px; }
+.vv-form input::placeholder { color: var(--stone); opacity: 1; }
+.vv-form select { appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23c9a961' stroke-width='1.5'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 16px center; padding-right: 42px; }
+.vv-form select:invalid { color: var(--stone); }
+.vv-form input:focus,
+.vv-form select:focus {
+  outline: none;
+  border-color: var(--gold);
+  box-shadow: 0 0 0 1px var(--gold);
+}
+.vv-form .vv-btn-block { margin-top: 6px; padding: 17px 32px; }
+.vv-form-note { margin-top: 14px; font-size: 12.5px; color: var(--stone-dim); text-align: center; }
+.vv-form-status { margin-top: 14px; font-size: 14.5px; text-align: center; min-height: 22px; }
+.vv-form-status.success { color: var(--gold-soft); }
+.vv-form-status.error { color: #e6a0a0; }
+
+/* ==================== FOOTER ==================== */
+.vv-footer {
+  border-top: 1px solid var(--line);
+  padding: clamp(44px, 8vw, 64px) 0 40px;
+  text-align: center;
+}
+.vv-footer-logo { height: 44px; width: auto; margin: 0 auto 20px; }
+.vv-footer-meta { font-size: 14px; color: var(--stone); line-height: 2; }
+.vv-footer-meta a { color: var(--gold-soft); }
+.vv-footer-fineprint {
+  margin: 26px auto 0;
+  max-width: 640px;
+  font-size: 11.5px;
+  line-height: 1.8;
+  color: var(--stone-dim);
+}
+
+/* ==========================================================================
+   REVEAL SYSTEM — ported from the Hausmann / Trump Royale kits.
+   Fully visible if JS never runs; html.vv-ready (added by inline JS) gates
+   the hidden initial state; IntersectionObserver adds .in on scroll.
+   ========================================================================== */
+.hero-line, .reveal { opacity: 1; transform: none; }
+
+@keyframes vvHeroRise { from { opacity: 0; transform: translateY(32px); } to { opacity: 1; transform: none; } }
+@keyframes vvHeroZoom { from { transform: scale(1.07); } to { transform: scale(1); } }
+
+@media (prefers-reduced-motion: no-preference) {
+  html.vv-ready .hero-line { animation: vvHeroRise 0.95s var(--ease-out) both; }
+  html.vv-ready .hero-line.l1 { animation-delay: 0.1s; }
+  html.vv-ready .hero-line.l2 { animation-delay: 0.24s; }
+  html.vv-ready .hero-line.l3 { animation-delay: 0.4s; }
+  html.vv-ready .hero-line.l4 { animation-delay: 0.54s; }
+  html.vv-ready .hero-line.l5 { animation-delay: 0.68s; }
+  html.vv-ready .vv-hero-bg { animation: vvHeroZoom 2.8s var(--ease-out) both; }
+
+  html.vv-ready .reveal {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: opacity 1s var(--ease-out), transform 1.05s var(--ease-out);
+    will-change: opacity, transform;
+  }
+  html.vv-ready .reveal.in { opacity: 1; transform: none; }
+
+  /* image scale-settle inside revealing frames */
+  html.vv-ready .reveal.rz img { transform: scale(1.06); transition: transform 1.4s var(--ease-out); }
+  html.vv-ready .reveal.rz.in img { transform: none; }
+
+  /* staggers */
+  html.vv-ready .vv-stats-grid .vv-stat:nth-child(2) { transition-delay: 0.08s; }
+  html.vv-ready .vv-stats-grid .vv-stat:nth-child(3) { transition-delay: 0.16s; }
+  html.vv-ready .vv-stats-grid .vv-stat:nth-child(4) { transition-delay: 0.24s; }
+  html.vv-ready .vv-hood .vv-hood-body { transition-delay: 0.12s; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.vv-ready .reveal { opacity: 0; transition: opacity 0.7s ease; }
+  html.vv-ready .reveal.in { opacity: 1; }
+}
