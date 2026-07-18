@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+
+# Internal tools & dashboards — not for search
+Disallow: /crm
+Disallow: /crm.html
+Disallow: /preferences
+Disallow: /preferences.html
+Disallow: /lpdash
+Disallow: /vvdash
+Disallow: /api/
+
+Sitemap: https://www.homesinsoflorida.com/sitemap.xml
