@@ -1298,15 +1298,37 @@ function populatePanel(lead) {
   document.getElementById('panel-whatsapp').href  = phoneRaw
     ? `https://wa.me/${phoneRaw}`
     : '#';
-  // WhatsApp Call: open WhatsApp Desktop straight to this lead's chat via the
-  // native scheme, then Kevin taps the green call icon. No URL scheme can ring
-  // the call directly (WhatsApp has no click-to-call deep link), so this is the
-  // 1-click-to-chat + 1-tap-to-call path. The native scheme opens the desktop
-  // app in place (no blank browser tab).
-  const waCallBtn = document.getElementById('panel-wa-call');
-  if (waCallBtn) {
-    waCallBtn.href = phoneRaw ? `whatsapp://send?phone=${phoneRaw}` : '#';
-    waCallBtn.onclick = phoneRaw ? null : (e => e.preventDefault());
+  // Hilo Claudia (Kevin 2026-07-20): open the same token-gated conversation
+  // page that every Slack ping links, for THIS lead — so mid-call he can see
+  // where Claudia's WhatsApp thread stands (sent? answered?). The link is
+  // minted server-side per click (api/agent/thread-link derives the view
+  // token; it never ships in this public file). Window opened SYNCHRONOUSLY
+  // on click so popup blockers don't eat it, then pointed at the URL.
+  const threadBtn = document.getElementById('panel-claudia-thread');
+  if (threadBtn) {
+    threadBtn.style.display = phoneRaw ? '' : 'none';
+    threadBtn.onclick = async () => {
+      const forLead = activeLead;
+      if (!forLead || !forLead.id) return;
+      const win = window.open('about:blank', '_blank');
+      try {
+        const res = await fetch(`${CRM_API_BASE}/api/agent/thread-link`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: currentPassword, leadId: forLead.id }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && data.url) {
+          if (win) win.location = data.url; else window.open(data.url, '_blank');
+        } else {
+          if (win) win.close();
+          alert(`No pude abrir el hilo: ${data.error || res.status}`);
+        }
+      } catch (e) {
+        if (win) win.close();
+        alert(`No pude abrir el hilo: ${e.message}`);
+      }
+    };
   }
 
   // Property details
@@ -2949,6 +2971,10 @@ function matchesFeatureLocal(listing, feature) {
       const fee = parseFloat(listing.AssociationFee);
       return !fee || fee === 0;
     }
+    case 'Preconstruction':
+      // Mirrors lib/alert-search.js PRECON_CONDITIONS — the only two PropertyCondition
+      // values the miamire feed uses for new development (probed 2026-07-10).
+      return arrContains(listing.PropertyCondition, 'New Construction', 'Under Construction');
     default:
       return true;
   }
@@ -2992,7 +3018,7 @@ async function checkPropertyCount() {
       'WaterfrontYN','WaterfrontFeatures','View','PoolFeatures',
       'PatioAndPorchFeatures','CommunityFeatures','AssociationAmenities',
       'MIAMIRE_Restrictions','ArchitecturalStyle','ListingKey',
-      'Media','ListOfficeName',
+      'Media','ListOfficeName','PropertyCondition',
     ].join(',');
 
     const isRental = (profile.types || []).includes('For Rent');
@@ -3072,6 +3098,12 @@ async function checkPropertyCount() {
     // Push pool filter to API level
     if ((profile.features || []).includes('Pool')) {
       params.set('PoolPrivateYN', 'true');
+    }
+
+    // Push preconstruction to API level (mirrors lib/alert-search.js searchProfile) —
+    // client-side filtering alone would count from a mostly-resale fetch window.
+    if ((profile.features || []).includes('Preconstruction')) {
+      params.set('PropertyCondition.in', 'New Construction,Under Construction');
     }
 
     // Query variants: the residential query, plus (when Land is checked) two land

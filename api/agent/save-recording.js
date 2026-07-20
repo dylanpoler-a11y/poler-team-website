@@ -33,11 +33,13 @@ export default async function handler(req) {
     const { leadId, url, recordedAt, durationSec, callId } = body;
     if (!leadId || !url) return json({ error: 'leadId and url are required' }, 400);
 
-    // Only accept https Vercel Blob URLs — defense in depth (the postMessage is also origin-checked).
+    // Only accept https URLs from Flash's storage hosts — defense in depth (the postMessage
+    // is also origin-checked). Vercel Blob = pre-2026-07-20 recordings; Cloudinary = current
+    // (switched when the flash-blob store got suspended and playback + uploads died).
     let u;
     try { u = new URL(url); } catch { return json({ error: 'invalid url' }, 400); }
-    if (u.protocol !== 'https:' || !/^[a-z0-9-]+\.public\.blob\.vercel-storage\.com$/.test(u.host)) {
-        return json({ error: 'url must be an https Vercel Blob URL' }, 400);
+    if (u.protocol !== 'https:' || !/^([a-z0-9-]+\.public\.blob\.vercel-storage\.com|res\.cloudinary\.com)$/.test(u.host)) {
+        return json({ error: 'url must be an https Vercel Blob or Cloudinary URL' }, 400);
     }
 
     const headers = { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' };

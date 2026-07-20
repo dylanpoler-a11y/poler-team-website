@@ -13,7 +13,13 @@
  *     bedsMin?: number,
  *     bathsMin?: number,
  *     propertyTypes?: ['Condo', 'Single Family', 'Land', ...],
- *     features?: ['Pool', 'Waterfront', ...],
+ *     features?: ['Pool', 'Preconstruction', 'Short-Term Rental Allowed', ...],
+ *                      // Same vocabulary as the CRM panel's Features checkboxes
+ *                      // (lib/alert-search.js matchesFeature). 'Preconstruction' =
+ *                      // new-development units only (PropertyCondition New/Under
+ *                      // Construction). Stored on the FIRST wrapper profile (one is
+ *                      // synthesized from the flat fields if none exists) because
+ *                      // there is no flat Airtable features column.
  *     frequency?: 'Daily' | 'Every 3 Days' | 'Weekly' | 'Bi-Weekly' | 'Monthly',
  *     count?: number,  // properties per alert
  *     channels?: { email?: bool, whatsapp?: bool },  // delivery channels (default email-only).
@@ -21,7 +27,7 @@
  *     profiles?: [     // MULTI-PROFILE (e.g. a house budget AND a land budget):
  *       { name?, types: ['Single Family'|'Condo'|'Townhouse'|'Multi Family'|'Land'|'For Rent'],
  *         cities: 'Miramar, Homestead',  // comma-separated STRING (engine format)
- *         priceMin?, priceMax?, bedsMin?, bathsMin? }
+ *         priceMin?, priceMax?, bedsMin?, bathsMin?, features? }
  *     ]                // stored as JSON in 'Alert Profiles'; when present the alert
  *                      // engine uses it INSTEAD of the flat fields (lib/alert-search.js).
  *                      // Pass [] to clear back to the flat single profile.
@@ -80,18 +86,45 @@ export default async function handler(req) {
     // channel toggle never drops profiles (and vice-versa).
     const wantsProfiles = Array.isArray(profile.profiles);
     const wantsChannels = profile.channels && typeof profile.channels === 'object';
-    if (wantsProfiles || wantsChannels) {
+    // Flat features can only live inside the wrapper (no flat Airtable column) — fold
+    // them into profile #1. When the caller sends profiles[] too, those win untouched:
+    // features there belong per-profile.
+    const wantsFeatures = !wantsProfiles && Array.isArray(profile.features);
+    if (wantsProfiles || wantsChannels || wantsFeatures) {
         let curRaw = '';
+        let curFields = {};
         try {
             const cur = await fetch(`https://api.airtable.com/v0/${baseId}/Leads/${leadId}`, {
                 headers: { 'Authorization': `Bearer ${apiKey}` },
             });
-            if (cur.ok) curRaw = (await cur.json()).fields?.['Alert Profiles'] || '';
+            if (cur.ok) {
+                curFields = (await cur.json()).fields || {};
+                curRaw = curFields['Alert Profiles'] || '';
+            }
         } catch (_) { /* fall through with defaults */ }
         const parsed = parseAlertProfiles(curRaw);
-        const nextProfiles = wantsProfiles
+        let nextProfiles = wantsProfiles
             ? profile.profiles.slice(0, 5).filter(p => p && typeof p === 'object')
             : parsed.profiles;
+        if (wantsFeatures) {
+            const feats = profile.features.map(f => String(f).trim()).filter(Boolean).slice(0, 15);
+            if (nextProfiles.length > 0) {
+                nextProfiles = nextProfiles.map((p, i) => (i === 0 ? { ...p, features: feats } : p));
+            } else {
+                // Flat-only lead: synthesize the single profile the engine would have
+                // built from the flat fields (profilesFromLead), request values first,
+                // stored values as fallback, plus the features.
+                nextProfiles = [{
+                    types:    Array.isArray(profile.propertyTypes) ? profile.propertyTypes : (curFields['Alert Property Types'] || []),
+                    cities:   fields['Alert Cities'] !== undefined ? fields['Alert Cities'] : (curFields['Alert Cities'] || ''),
+                    priceMin: profile.priceMin !== undefined ? (Number(profile.priceMin) || 0) : (curFields['Alert Price Min'] || 0),
+                    priceMax: profile.priceMax !== undefined ? (Number(profile.priceMax) || 0) : (curFields['Alert Price Max'] || 0),
+                    bedsMin:  profile.bedsMin  !== undefined ? (Number(profile.bedsMin)  || 0) : (curFields['Alert Beds Min']  || 0),
+                    bathsMin: profile.bathsMin !== undefined ? (Number(profile.bathsMin) || 0) : (curFields['Alert Baths Min'] || 0),
+                    features: feats,
+                }];
+            }
+        }
         const nextChannels = wantsChannels
             ? { email: profile.channels.email !== false, whatsapp: !!profile.channels.whatsapp }
             : parsed.channels;

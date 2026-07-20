@@ -145,7 +145,7 @@ const TOOLS = [
     },
     {
         name: 'update_alerts',
-        description: 'Update lead alert preferences. profile keys: active, cities[], priceMin, priceMax, bedsMin, bathsMin, propertyTypes[], frequency, count, channels{email,whatsapp} (delivery channels; default email-only — setting one preserves existing profiles).',
+        description: 'Update lead alert preferences. profile keys: active, cities[], priceMin, priceMax, bedsMin, bathsMin, propertyTypes[], features[], frequency, count, channels{email,whatsapp} (delivery channels; default email-only — setting one preserves existing profiles). To alert on PRECONSTRUCTION / new-development units (client wants preconstrucciones), include "Preconstruction" in features — the engine then only sends New/Under Construction MLS listings. Other features: Pool, Short-Term Rental Allowed, Penthouse, High Rise, Gated Community, Golf Course, Large Lot, No HOA, Balcony / Terrace, Waterfront / Ocean View|Beach|Bay|Lake|Canal.',
         inputSchema: {
             type: 'object',
             properties: {

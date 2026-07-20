@@ -18,10 +18,21 @@ export const config = { runtime: 'edge' };
 const json = (data, status = 200) =>
     new Response(JSON.stringify(data), {
         status,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
     });
 
 export default async function handler(req) {
+    // CORS: any endpoint the CRM/browser calls is CROSS-ORIGIN — the CRM runs on
+    // www.homesinsoflorida.com but fetches CRM_API_BASE (poler-team-website-two).
+    // A JSON POST triggers a preflight, so you MUST answer OPTIONS and echo the
+    // header on every response, or the browser reports "Failed to fetch".
+    if (req.method === 'OPTIONS') {
+        return new Response(null, { headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'POST, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        } });
+    }
     if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
     let body = {};
     try { body = await req.json(); } catch { /* empty body ok */ }
