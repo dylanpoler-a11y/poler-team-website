@@ -348,6 +348,10 @@ function initLanguageSelector() {
 /* ---- URL <-> STATE ---- */
 function readStateFromURL() {
   var p = new URLSearchParams(location.search);
+  // ?building=<id> — deep link from property-alert emails/WhatsApp straight to ONE
+  // tower's card (the api already supports id=). Cleared as soon as the visitor
+  // touches any filter so they can browse the full directory from there.
+  STATE.building = p.get('building') || '';
   STATE.areas = (p.get('area') || '').split(',').map(function (s) { return s.trim(); }).filter(Boolean);
   STATE.priceMax = p.get('priceMax') || '';
   STATE.deliveryYearMax = p.get('deliveryYearMax') || '';
@@ -368,6 +372,7 @@ function setVal(id, v) { var el = document.getElementById(id); if (el) el.value 
 
 function buildQuery() {
   var p = new URLSearchParams();
+  if (STATE.building) { p.set('building', STATE.building); return p; }
   if (STATE.areas.length) p.set('area', STATE.areas.join(','));
   if (STATE.priceMax) p.set('priceMax', STATE.priceMax);
   if (STATE.deliveryYearMax) p.set('deliveryYearMax', STATE.deliveryYearMax);
@@ -393,11 +398,11 @@ function wireControls() {
 }
 function bind(id, setter) {
   var el = document.getElementById(id);
-  if (el) el.addEventListener('change', function () { setter(el.value); fetchAndRender(); });
+  if (el) el.addEventListener('change', function () { STATE.building = ''; setter(el.value); fetchAndRender(); });
 }
 function bindCheck(id, setter) {
   var el = document.getElementById(id);
-  if (el) el.addEventListener('change', function () { setter(el.checked); fetchAndRender(); });
+  if (el) el.addEventListener('change', function () { STATE.building = ''; setter(el.checked); fetchAndRender(); });
 }
 
 /* ---- area chips ---- */
@@ -417,6 +422,7 @@ function buildAreaChips(areas) {
       var i = STATE.areas.indexOf(a);
       if (i === -1) STATE.areas.push(a); else STATE.areas.splice(i, 1);
       chip.classList.toggle('active');
+      STATE.building = '';
       fetchAndRender();
     });
   });
@@ -427,7 +433,10 @@ var lastBuildings = [];
 var lastCount = 0;
 function fetchAndRender() {
   pushURL();
-  var url = '/api/preconstructions' + (buildQuery().toString() ? '?' + buildQuery().toString() : '');
+  // A ?building deep link fetches that single tower via the api's id= param.
+  var url = STATE.building
+    ? '/api/preconstructions?id=' + encodeURIComponent(STATE.building)
+    : '/api/preconstructions' + (buildQuery().toString() ? '?' + buildQuery().toString() : '');
   fetch(url, { headers: { 'Accept': 'application/json' } })
     .then(function (r) { if (!r.ok) throw new Error('http ' + r.status); return r.json(); })
     .then(function (data) {

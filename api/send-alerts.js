@@ -107,6 +107,37 @@ export default async function handler(req) {
         };
         const priorZeroRuns = Number(f['Alert Zero Runs'] || 0);
 
+        // CRITERIA GATE (2026-07-23, Yasser Lenis): the signup funnel auto-sets Alert
+        // Active with ZERO criteria, and a blank profile queries Bridge with NO city
+        // filter → "5 newest listings anywhere" garbage every week. Same rule as the
+        // Sammy drip (Carlos Dennis 2026-07-02): no criteria, no send. Next Due still
+        // advances so the lead re-enters the queue once someone actually sets a profile.
+        let hasProfileCriteria = false;
+        try {
+            const parsedP = JSON.parse(lead.profiles || '[]');
+            const arr = Array.isArray(parsedP) ? parsedP : (Array.isArray(parsedP?.profiles) ? parsedP.profiles : []);
+            hasProfileCriteria = arr.some(p => p && (
+                (p.cities && String(p.cities).trim()) || Number(p.priceMin) > 0 || Number(p.priceMax) > 0 ||
+                Number(p.bedsMin) > 0 || (Array.isArray(p.types) && p.types.length)
+            ));
+        } catch (_) { /* unparseable = no profile criteria */ }
+        const hasCriteria = !!(String(lead.cities).trim() || lead.priceMin > 0 || lead.priceMax > 0 ||
+            lead.bedsMin > 0 || (Array.isArray(lead.types) && lead.types.length) ||
+            String(lead.polygon).trim() || hasProfileCriteria);
+        if (!hasCriteria) {
+            const nextDue = computeNextDue(today, lead.frequency);
+            try {
+                await fetch(`https://api.airtable.com/v0/${baseId}/Leads`, {
+                    method: 'PATCH',
+                    headers,
+                    body: JSON.stringify({ records: [{ id: record.id, fields: { 'Alert Next Due': nextDue, 'Alert Last Skip Reason': 'no alert criteria configured (auto-activated by signup)' } }] }),
+                });
+            } catch (_) { /* non-fatal */ }
+            results.skipped++;
+            results.details.push({ id: record.id, email, status: 'skipped', reason: 'no alert criteria configured', nextDue });
+            continue;
+        }
+
         try {
             // Exclude listings already emailed to this lead so they never see
             // repeats (fail-safe: [] on any read error → old behavior).
@@ -360,19 +391,25 @@ async function getSentListingIds(baseId, headers, email) {
 
 async function logActivity(baseId, headers, { leadId, email, activityType, details }) {
     try {
+        // NO 'Lead Record ID' here — the Lead Activity table has no such field, and
+        // including it 422s (UNKNOWN_FIELD_NAME) the WHOLE write. That silent failure
+        // erased the alert no-repeat memory for 3 weeks (José Bendayan round 2,
+        // 2026-08-06): every send "succeeded" while zero Alert Sent rows landed.
+        // Rows are keyed by Lead Email — getSentListingIds queries on that alone.
         const fields = {
             'Lead Email':    email || '',
             'Activity Type': activityType,
             'Details':       typeof details === 'string' ? details : JSON.stringify(details),
             'Timestamp':     new Date().toISOString(),
         };
-        if (leadId) fields['Lead Record ID'] = [leadId];
-        await fetch(`https://api.airtable.com/v0/${baseId}/Lead Activity`, {
+        const res = await fetch(`https://api.airtable.com/v0/${baseId}/Lead Activity`, {
             method: 'POST',
             headers,
             body: JSON.stringify({ records: [{ fields }] }),
         });
-    } catch (_) { /* non-fatal */ }
+        // Still non-fatal, but LOUD: a failed dedup write must show in Vercel logs.
+        if (!res.ok) console.error(`logActivity ${activityType} failed ${res.status}: ${(await res.text()).slice(0, 200)}`);
+    } catch (err) { console.error(`logActivity ${activityType} error: ${err.message}`); }
 }
 
 // ── FALLBACK PASSWORD ─────────────────────────────────────────────────────────
@@ -428,21 +465,30 @@ function buildAlertEmail(lead, listings, siteBase) {
 
     const propertyCards = listings.map(listing => {
         const photo = getListingPhoto(listing);
+        // Curated precon towers (PreconTower pseudo-listings): "Desde $" entry
+        // pricing, delivery year in the sqft slot, /preconstruction link, no MLS#.
+        // Keep in sync with the send-test-alert.js copy of this builder.
+        const isTower = !!listing.PreconTower;
+        const isEn = (lead.language || 'en').startsWith('en');
         const price = listing.ListPrice
-            ? '$' + Number(listing.ListPrice).toLocaleString('en-US')
+            ? (isTower ? (isEn ? 'From ' : 'Desde ') : '') + '$' + Number(listing.ListPrice).toLocaleString('en-US')
             : 'Price TBD';
         const address = listing.UnparsedAddress || listing.City || 'South Florida';
         const city = listing.City || '';
         const state = listing.StateOrProvince || 'FL';
         const beds = listing.BedroomsTotal || '—';
         const baths = listing.BathroomsTotalInteger || '—';
-        const sqft = listing.LivingArea
-            ? Number(listing.LivingArea).toLocaleString('en-US') + ' sqft'
-            : (listing.LotSizeSquareFeet
-                ? Number(listing.LotSizeSquareFeet).toLocaleString('en-US') + ' sqft lot'
-                : ''); // land listings: show lot size where a house shows living area
-        const mlsId = listing.ListingId || '';
-        const listingUrl = appendAuth(`${siteBase}/listing?id=${mlsId}`);
+        const sqft = isTower
+            ? (listing.PreconDelivery ? (isEn ? 'Delivery ' : 'Entrega ') + listing.PreconDelivery : 'Preconstrucción')
+            : (listing.LivingArea
+                ? Number(listing.LivingArea).toLocaleString('en-US') + ' sqft'
+                : (listing.LotSizeSquareFeet
+                    ? Number(listing.LotSizeSquareFeet).toLocaleString('en-US') + ' sqft lot'
+                    : '')); // land listings: show lot size where a house shows living area
+        const mlsId = isTower ? '' : (listing.ListingId || '');
+        const listingUrl = isTower
+            ? appendAuth(`${siteBase}${listing.PreconUrl}`)
+            : appendAuth(`${siteBase}/listing?id=${listing.ListingId || ''}`);
 
         return `
         <tr><td style="padding:0 0 20px;">
@@ -628,6 +674,13 @@ export function buildWhatsappAlert(lead, listings, shareUrlFn) {
 }
 
 function whatsappListingLabel(listing) {
+    // Curated precon towers: "Preconstrucción Okan Tower, Downtown Miami — desde $522,000 (entrega 2027)"
+    if (listing.PreconTower) {
+        const from = listing.ListPrice ? 'desde $' + Number(listing.ListPrice).toLocaleString('en-US') : '';
+        const del  = listing.PreconDelivery ? `(entrega ${listing.PreconDelivery})` : '';
+        const loc  = ['Preconstrucción ' + (listing.UnparsedAddress || ''), listing.City || ''].filter(Boolean).join(', ');
+        return [loc, [from, del].filter(Boolean).join(' ')].filter(Boolean).join(' — ');
+    }
     const beds  = listing.BedroomsTotal;
     const baths = listing.BathroomsTotalInteger;
     const type  = listing.PropertySubType || '';
@@ -655,6 +708,16 @@ export async function sendWhatsappAlert({ lead, listings, siteBase }) {
         return { status: 'skipped', reason: 'twilio not configured' };
     }
 
+    // US (+1) pre-check — Meta blocks Marketing-category WhatsApp templates to US
+    // numbers (Twilio 63049, policy since Apr 2025). Twilio still ACCEPTS the send
+    // (201 "queued") and only fails it async, so without this check we'd report
+    // 'sent' for a message that never arrives (Eduardo Vera, 2026-08-04: test +
+    // two weekly alerts all 63049'd while the CRM showed success). Fail fast and
+    // honestly — before wasting share-property link generation — keep US on Email.
+    if (/^1\d{10}$/.test(String(lead.phone || '').replace(/\D/g, ''))) {
+        return { status: 'error', reason: 'US (+1) number — Meta blocks WhatsApp marketing templates to US numbers (63049); use Email for this lead' };
+    }
+
     const slots = listings.length >= 5 ? 5 : listings.length >= 3 ? 3 : 1;
     const chosen = listings.slice(0, slots);
 
@@ -662,6 +725,13 @@ export async function sendWhatsappAlert({ lead, listings, siteBase }) {
     for (const listing of chosen) {
         const mlsId = listing.ListingId;
         if (!mlsId) continue;
+        // Towers link straight to their /preconstruction card — they aren't MLS
+        // listings, so share-property (which mints /listing?mls= tokens) can't
+        // apply. The directory page has no lead-capture popup to bypass.
+        if (listing.PreconTower) {
+            urlMap.set(mlsId, `${siteBase}${listing.PreconUrl}`);
+            continue;
+        }
         try {
             const r = await fetch(`${siteBase}/api/agent/share-property`, {
                 method: 'POST',

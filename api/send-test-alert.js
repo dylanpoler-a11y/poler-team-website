@@ -239,21 +239,32 @@ export function buildAlertEmail(lead, listings, siteBase) {
 
     const propertyCards = listings.map(listing => {
         const photo = getListingPhoto(listing);
+        // Curated precon towers (PreconTower pseudo-listings from lib/alert-search):
+        // entry pricing ("Desde $X"), delivery year instead of sqft, link to the
+        // /preconstruction directory card, and no MLS# (towers aren't MLS listings).
+        const isTower = !!listing.PreconTower;
+        const desde = (lead.language || 'en').startsWith('en') ? 'From ' : 'Desde ';
         const price = listing.ListPrice
-            ? '$' + Number(listing.ListPrice).toLocaleString('en-US')
+            ? (isTower ? desde : '') + '$' + Number(listing.ListPrice).toLocaleString('en-US')
             : 'Price TBD';
         const address = listing.UnparsedAddress || listing.City || 'South Florida';
         const city = listing.City || '';
         const state = listing.StateOrProvince || 'FL';
         const beds = listing.BedroomsTotal || '—';
         const baths = listing.BathroomsTotalInteger || '—';
-        const sqft = listing.LivingArea
-            ? Number(listing.LivingArea).toLocaleString('en-US') + ' sqft'
-            : (listing.LotSizeSquareFeet
-                ? Number(listing.LotSizeSquareFeet).toLocaleString('en-US') + ' sqft lot'
-                : ''); // land listings: show lot size where a house shows living area
-        const mlsId = listing.ListingId || '';
-        const listingUrl = appendAuth(`${siteBase}/listing?id=${mlsId}`);
+        const sqft = isTower
+            ? (listing.PreconDelivery
+                ? ((lead.language || 'en').startsWith('en') ? 'Delivery ' : 'Entrega ') + listing.PreconDelivery
+                : 'Preconstrucción')
+            : (listing.LivingArea
+                ? Number(listing.LivingArea).toLocaleString('en-US') + ' sqft'
+                : (listing.LotSizeSquareFeet
+                    ? Number(listing.LotSizeSquareFeet).toLocaleString('en-US') + ' sqft lot'
+                    : '')); // land listings: show lot size where a house shows living area
+        const mlsId = isTower ? '' : (listing.ListingId || '');
+        const listingUrl = isTower
+            ? appendAuth(`${siteBase}${listing.PreconUrl}`)
+            : appendAuth(`${siteBase}/listing?id=${listing.ListingId || ''}`);
 
         return `
         <tr><td style="padding:0 0 20px;">

@@ -1011,10 +1011,20 @@ function setupEvents() {
 
   // Alert preference controls
   document.getElementById('panel-alert-active').addEventListener('change', function () {
+    _alertFormTouched = true;
     toggleAlertFields(this.checked);
   });
   document.getElementById('panel-alert-send-now').addEventListener('click', sendTestAlert);
   document.getElementById('panel-alert-copy-link').addEventListener('click', copyPreferencesLink);
+  // Any edit inside the alert section marks the form TOUCHED — "Save Changes" only
+  // persists alert prefs when this is set. Root: Yasser Lenis 2026-07-23 — a CRM tab
+  // whose page-load cache predated Claudia's alert write showed a BLANK alert form, and
+  // Save Changes wrote those blanks over the real profile (silent wipe).
+  const alertFields = document.getElementById('panel-alert-fields');
+  if (alertFields) {
+    alertFields.addEventListener('input', () => { _alertFormTouched = true; });
+    alertFields.addEventListener('change', () => { _alertFormTouched = true; });
+  }
   initProfileButtons();
 
   // Table column sorting
@@ -1154,7 +1164,7 @@ function renderTable() {
 
     const isDead = statusVal === 'Dead';
     return `
-      <tr data-id="${escHtml(lead.id)}"${isDead ? ' style="opacity:0.45;color:#94a3b8;"' : ''}>
+      <tr data-id="${escHtml(lead.id)}"${isDead ? ' class="lead-dead"' : ''}>
         <td class="td-muted" style="font-size:0.8rem">${i + 1}</td>
         <td>
           <div class="lead-cell">
@@ -1241,6 +1251,31 @@ function renderStats() {
 }
 
 // ── OPEN LEAD PANEL ────────────────────────────────────────────────────────
+// The panel form's contents come from the page-load lead cache — a tab that stays open
+// for days shows (and on Save, WRITES BACK) values other systems have since changed.
+// After the cache paint, re-pull the lead list and re-hydrate the open panel with the
+// live record — unless Kevin already started editing the alert form (never clobber
+// in-progress edits). Same staleness class as the 2026-07-16 reminders fix.
+let _panelRefreshSeq = 0;
+async function refreshLeadInPanel(id) {
+  const seq = ++_panelRefreshSeq;
+  try {
+    const res = await fetch(`${CRM_API_BASE}/api/get-leads?password=${encodeURIComponent(currentPassword)}`);
+    if (!res.ok) return;
+    const data = await res.json();
+    const fresh = (data.leads || []).find(l => String(l.id) === String(id));
+    if (!fresh) return;
+    const idx = allLeads.findIndex(l => String(l.id) === String(id));
+    if (idx >= 0) allLeads[idx] = fresh;
+    // Only re-hydrate if this is still the open lead, no newer refresh superseded us,
+    // and the alert form is untouched.
+    if (seq === _panelRefreshSeq && activeLead && String(activeLead.id) === String(id) && !_alertFormTouched) {
+      activeLead = fresh;
+      populatePanel(fresh);
+    }
+  } catch (e) { /* stale render survives — same as before this refresh existed */ }
+}
+
 function openPanel(id) {
   const lead = allLeads.find(l => String(l.id) === String(id));
   if (!lead) { console.warn('[openPanel] lead not found for id:', id); return; }
@@ -1262,9 +1297,12 @@ function openPanel(id) {
   } catch (err) {
     console.error('[openPanel] error populating panel for lead', lead?.id, lead?.name, err);
   }
+  // Cache paint done — now re-hydrate from the live record (stale-tab guard).
+  void refreshLeadInPanel(id);
 }
 
 function populatePanel(lead) {
+  _alertFormTouched = false; // fresh hydration — nothing edited yet
   // Name & date
   document.getElementById('panel-name').textContent       = lead.name || '—';
   document.getElementById('panel-date').textContent       = 'Registered ' + relativeTime(lead.createdAt);
@@ -1713,17 +1751,21 @@ function togglePanelExpand() {
   document.getElementById('lead-panel')?.classList.toggle('panel-expanded');
 }
 
-// Render the lead's Flash call recordings (newest first) as dated audio players.
-// Source = lead.flashRecordings (JSON array of {url, recordedAt, durationSec, callId}).
+// Render the lead's Flash call recordings (newest first): dated audio players plus,
+// when the call archived a transcript, an open/copy row for it (the copy link is how
+// Kevin sends a transcript to anyone — Kevin 2026-07-21).
+// Source = lead.flashRecordings (JSON array of {url, transcriptUrl?, recordedAt, durationSec, callId}).
 function renderFlashRecordings(lead) {
   const section = document.getElementById('panel-recordings-section');
   const list = document.getElementById('panel-recordings-list');
   if (!section || !list) return;
+  const httpsOk = (v) => typeof v === 'string' && /^https:\/\//i.test(v);
   let recs = [];
   try {
     const raw = lead && lead.flashRecordings;
     const parsed = typeof raw === 'string' ? JSON.parse(raw || '[]') : (raw || []);
-    if (Array.isArray(parsed)) recs = parsed.filter(r => r && typeof r.url === 'string' && /^https:\/\//i.test(r.url));
+    // A transcript can land before (or without) its audio — keep entries that have either.
+    if (Array.isArray(parsed)) recs = parsed.filter(r => r && (httpsOk(r.url) || httpsOk(r.transcriptUrl)));
   } catch (e) { recs = []; }
   if (!recs.length) { section.style.display = 'none'; list.innerHTML = ''; return; }
   const esc = (s) => String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
@@ -1739,11 +1781,59 @@ function renderFlashRecordings(lead) {
     const s = Math.max(0, Math.round(Number(r.durationSec) || 0));
     const dur = s ? `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}` : '';
     const meta = [when, dur].filter(Boolean).join('  ·  ') || 'Grabación';
+    const audio = httpsOk(r.url)
+      ? `<audio controls preload="none" src="${esc(r.url)}" style="width:100%;height:36px;"></audio>`
+      : '';
+    const transcript = httpsOk(r.transcriptUrl)
+      ? `<div style="font-size:12px;margin-top:3px;">📄 <a href="${esc(r.transcriptUrl)}" target="_blank" rel="noopener noreferrer" style="color:var(--color-accent);font-weight:600;">Transcripción</a>
+           · <a href="#" onclick="return copyFlashTranscript(this, '${esc(r.transcriptUrl)}')" style="color:#475569;">copiar enlace</a></div>`
+      : '';
     return `<div style="margin-bottom:10px;">
       <div style="font-size:12px;color:#475569;font-weight:600;margin-bottom:4px;">${esc(meta)}</div>
-      <audio controls preload="none" src="${esc(r.url)}" style="width:100%;height:36px;"></audio>
+      ${audio}${transcript}
     </div>`;
   }).join('');
+}
+
+// Copy a transcript URL for sending (WhatsApp/email/wherever). Inline handler helper.
+function copyFlashTranscript(el, url) {
+  try {
+    navigator.clipboard.writeText(url).then(() => {
+      const prev = el.textContent;
+      el.textContent = '✓ copiado';
+      setTimeout(() => { el.textContent = prev; }, 1500);
+    });
+  } catch (e) { /* clipboard unavailable — the open link still works */ }
+  return false;
+}
+
+// One call produces up to TWO asset saves (audio recording + text transcript) that fire
+// within seconds of each other. save-recording merges them by callId, but its Airtable
+// read-modify-write would race if both POSTs ran concurrently — chain them so the second
+// save always reads the first save's result. Updates the open panel on success.
+let _flashSaveChain = Promise.resolve();
+function saveFlashCallAsset(fields) {
+  _flashSaveChain = _flashSaveChain.then(async () => {
+    try {
+      const res = await fetch(`${CRM_API_BASE}/api/agent/save-recording`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(Object.assign({ password: currentPassword }, fields)),
+      });
+      if (res.ok && activeLead && activeLead.id === fields.leadId) {
+        const { recording } = await res.json().catch(() => ({}));
+        if (recording) {
+          let cur = [];
+          try { cur = JSON.parse(activeLead.flashRecordings || '[]'); } catch (e) { cur = []; }
+          // Only dedupe on a REAL callId — legacy rows stored callId:'' and an empty-vs-empty
+          // match would wipe every prior recording from the local list.
+          cur = Array.isArray(cur) ? cur.filter(r => r && (!recording.callId || r.callId !== recording.callId)) : [];
+          activeLead.flashRecordings = JSON.stringify([recording, ...cur]);
+          renderFlashRecordings(activeLead);
+        }
+      }
+    } catch (e) { /* best-effort — the upload itself already happened */ }
+  });
 }
 
 // Flash → CRM: when a coached call ends, Flash postMessages the summary. We verify
@@ -1761,27 +1851,16 @@ async function handleFlashMessage(event) {
   const data = event.data;
   if (!data) return;
 
-  // A coached call ended → save its recording (audio on Vercel Blob) under "Flash voice recordings".
+  // A coached call ended → save its recording (audio) and/or transcript (text) under
+  // "Flash voice recordings". The two arrive as SEPARATE messages for the same callId;
+  // saveFlashCallAsset serializes the POSTs so the endpoint's read-modify-write on the
+  // Airtable field can never interleave and drop one of them.
   if (data.type === 'flash:recording' && data.leadId && data.url) {
-    try {
-      const res = await fetch(`${CRM_API_BASE}/api/agent/save-recording`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password: currentPassword, leadId: data.leadId, url: data.url, recordedAt: data.recordedAt, durationSec: data.durationSec, callId: data.callId }),
-      });
-      if (res.ok && activeLead && activeLead.id === data.leadId) {
-        const { recording } = await res.json().catch(() => ({}));
-        if (recording) {
-          let cur = [];
-          try { cur = JSON.parse(activeLead.flashRecordings || '[]'); } catch (e) { cur = []; }
-          // Only dedupe on a REAL callId — legacy rows stored callId:'' and an empty-vs-empty
-          // match would wipe every prior recording from the local list.
-          cur = Array.isArray(cur) ? cur.filter(r => r && (!recording.callId || r.callId !== recording.callId)) : [];
-          activeLead.flashRecordings = JSON.stringify([recording, ...cur]);
-          renderFlashRecordings(activeLead);
-        }
-      }
-    } catch (e) { /* best-effort — the recording upload already happened */ }
+    saveFlashCallAsset({ leadId: data.leadId, url: data.url, recordedAt: data.recordedAt, durationSec: data.durationSec, callId: data.callId });
+    return;
+  }
+  if (data.type === 'flash:transcript' && data.leadId && data.url) {
+    saveFlashCallAsset({ leadId: data.leadId, transcriptUrl: data.url, recordedAt: data.recordedAt, durationSec: data.durationSec, callId: data.callId });
     return;
   }
 
@@ -2413,8 +2492,14 @@ async function saveLead() {
 // Called from the main "Save Changes" AND directly on profile add/edit/delete — a profile
 // edit used to live only in the local array until "Save Changes", so editing a profile
 // and walking away silently discarded it (root: Kevin's $5M lots edit, 2026-07-03).
-async function persistAlertPrefs() {
+// TOUCHED GATE (2026-07-23, Yasser Lenis): "Save Changes" only writes alert prefs when
+// the alert form was actually edited this open — an untouched (possibly stale-cache)
+// form must never overwrite what Claudia/Flash/preferences wrote since the page loaded.
+// Direct profile add/edit/delete calls pass force=true (they ARE deliberate edits).
+let _alertFormTouched = false;
+async function persistAlertPrefs(force = false) {
   if (!activeLead) return false;
+  if (!force && !_alertFormTouched) return true; // untouched form — nothing to persist
   const alertPrefs = getAlertPrefsFromPanel();
   try {
     await fetch(`${CRM_API_BASE}/api/update-preferences`, {
@@ -2606,7 +2691,7 @@ function deleteAlertProfile(index) {
   alertProfiles.splice(index, 1);
   renderProfileCards();
   hideProfileForm();
-  void persistAlertPrefs(); // deletions persist immediately too
+  void persistAlertPrefs(true); // deletions persist immediately too (deliberate edit — bypass touched gate)
 }
 
 // Wire up Add / Save / Cancel buttons (called once on page load)
@@ -2624,7 +2709,7 @@ function initProfileButtons() {
     }
     renderProfileCards();
     hideProfileForm();
-    void persistAlertPrefs(); // profile edits save immediately — not only on "Save Changes"
+    void persistAlertPrefs(true); // profile edits save immediately — deliberate edit, bypass touched gate
   });
   document.getElementById('alert-profile-cancel-btn').addEventListener('click', () => {
     hideProfileForm();
@@ -3215,7 +3300,36 @@ async function checkPropertyCount() {
       return true;
     });
 
-    countNum.textContent = allListings.length;
+    // Precon profiles ALSO source the curated /preconstruction towers (the engine
+    // sends towers first, MLS New/Under Construction as backfill — 2026-08-05).
+    // Mirror the engine's tower filter so the count matches what the lead gets;
+    // towers have no lat/lng, so the map keeps plotting only the MLS units.
+    let towerCount = 0;
+    if ((profile.features || []).includes('Preconstruction')) {
+      try {
+        const pcRes = await fetch('/api/preconstructions');
+        const pcData = await pcRes.json();
+        const pCities = String(profile.cities || '').split(/[,\n]/).map(s => s.trim().toLowerCase()).filter(Boolean);
+        const pMax = Number(profile.priceMax) || 0;
+        const pBeds = Number(profile.bedsMin) || 0;
+        towerCount = (pcData.buildings || []).filter(t => {
+          if (!t.priceFrom) return false;
+          if (pCities.length) {
+            const area = String(t.area || '').toLowerCase();
+            const cty = String(t.city || '').toLowerCase();
+            if (!pCities.some(c => area.includes(c) || cty.includes(c) || c.includes(area))) return false;
+          }
+          if (pMax && t.priceFrom > pMax) return false;
+          if (pBeds && Array.isArray(t.bedrooms) && t.bedrooms.length && Math.max(...t.bedrooms) < pBeds) return false;
+          return true;
+        }).length;
+      } catch (_) { /* tower count is additive best-effort; MLS count still shows */ }
+    }
+
+    if (fetchId !== countFetchId) return;
+    countNum.textContent = towerCount > 0
+      ? `${towerCount + allListings.length} (${towerCount} precon towers + ${allListings.length} MLS)`
+      : allListings.length;
     plotPreviewMarkers(allListings);
 
   } catch (err) {

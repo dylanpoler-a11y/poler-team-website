@@ -466,6 +466,22 @@ body {
   background: #f7f8fa;
 }
 
+/* Dead leads — one continuous line struck through the whole row, NO greying
+   (Kevin 2026-08-04: "take off the graying, I just want the line"). Replaces the old
+   inline `opacity:.45;color:#94a3b8` on the <tr>. The line is a td background-image,
+   not text-decoration, so it runs unbroken across cell gaps instead of striking each
+   cell's text separately. Styling dead rows = edit this rule, not the row template in
+   crm.js renderTable(). */
+.leads-table tbody tr.lead-dead td {
+  background-image: linear-gradient(
+    to bottom,
+    transparent calc(50% - 1px),
+    rgba(220, 38, 38, 0.55) calc(50% - 1px),
+    rgba(220, 38, 38, 0.55) calc(50% + 1px),
+    transparent calc(50% + 1px)
+  );
+}
+
 .leads-table td {
   padding: 0.875rem 1rem;
   font-size: 0.875rem;

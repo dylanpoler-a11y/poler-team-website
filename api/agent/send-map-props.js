@@ -286,19 +286,21 @@ async function logMapPropsNote({ siteBase, leadId, note, agentName }) {
 async function logMapSendActivity(baseId, apiKey, { leadId, email, activityType, details }) {
     try {
         const headers = { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' };
+        // NO 'Lead Record ID' — the Lead Activity table has no such field; including
+        // it 422s the whole write silently (the 2026-08-06 no-repeat-memory outage).
         const fields = {
             'Lead Email':    email || '',
             'Activity Type': activityType,
             'Details':       typeof details === 'string' ? details : JSON.stringify(details),
             'Timestamp':     new Date().toISOString(),
         };
-        if (leadId) fields['Lead Record ID'] = [leadId];
-        await fetch(`https://api.airtable.com/v0/${baseId}/Lead Activity`, {
+        const res = await fetch(`https://api.airtable.com/v0/${baseId}/Lead Activity`, {
             method: 'POST',
             headers,
             body: JSON.stringify({ records: [{ fields }] }),
         });
-    } catch (_) { /* non-fatal */ }
+        if (!res.ok) console.error(`logMapSendActivity failed ${res.status}: ${(await res.text()).slice(0, 200)}`);
+    } catch (err) { console.error(`logMapSendActivity error: ${err.message}`); }
 }
 
 function generateFallbackPassword(firstName, phone) {

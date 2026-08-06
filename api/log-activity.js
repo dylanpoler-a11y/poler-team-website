@@ -58,20 +58,25 @@ export default async function handler(req) {
         const now = new Date().toISOString();
 
         // 1. Log to Lead Activity table
+        // NO 'Lead Record ID' — the Lead Activity table has no such field; including
+        // it 422s the whole write silently (the 2026-08-06 no-repeat-memory outage).
+        // Rows are keyed by Lead Email.
         const activityFields = {
             'Lead Email': leadEmail,
             'Activity Type': activityType,
             'Details': typeof details === 'string' ? details : JSON.stringify(details || {}),
             'Timestamp': now,
         };
-        if (leadId) activityFields['Lead Record ID'] = [leadId];
 
         const tableUrl = `https://api.airtable.com/v0/${baseId}/Lead Activity`;
-        await fetch(tableUrl, {
-            method: 'POST',
-            headers,
-            body: JSON.stringify({ records: [{ fields: activityFields }] }),
-        }).catch(() => {});
+        try {
+            const actRes = await fetch(tableUrl, {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({ records: [{ fields: activityFields }] }),
+            });
+            if (!actRes.ok) console.error(`log-activity write failed ${actRes.status}: ${(await actRes.text()).slice(0, 200)}`);
+        } catch (err) { console.error(`log-activity write error: ${err.message}`); }
 
         // 2. Update Lead record: Last Login + Properties Viewed
         if (leadId && activityType === 'Property View' && details) {
