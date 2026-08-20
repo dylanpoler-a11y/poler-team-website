@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Short-Term Rental Buildings — South Florida | The Poler Team</title>
+    <meta name="robots" content="index, follow">
     <meta name="description" content="Find buildings that allow Airbnb and short-term rentals in South Florida. Browse available units in STR-allowed condos.">
     <link rel="icon" href="favicon.ico">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -12,22 +13,24 @@
     <link rel="stylesheet" href="listing.css">
     <style>
         .str-hero {
-            background: linear-gradient(135deg, #1a2744 0%, #243656 60%, #2d4a6f 100%);
-            padding: 3rem 0 2rem; text-align: center; color: #fff;
+            background:
+                linear-gradient(135deg, rgba(26,39,68,0.9) 0%, rgba(36,54,86,0.84) 55%, rgba(45,74,111,0.78) 100%),
+                url('https://images.unsplash.com/photo-1506966953602-c20cc11f75e3?w=1600&q=75&fm=jpg') center/cover no-repeat;
+            padding: 2rem 0 1.5rem; text-align: center; color: #fff;
         }
         .str-hero h1 { font-family: var(--font-heading); font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem; }
-        .str-hero p { font-size: 1rem; color: rgba(255,255,255,0.7); max-width: 600px; margin: 0 auto; }
-        .str-stats { display: flex; justify-content: center; gap: 2.5rem; margin-top: 1.5rem; }
+        .str-hero p { font-size: 1rem; color: rgba(255,255,255,0.85); max-width: 600px; margin: 0 auto; }
+        .str-stats { display: flex; justify-content: center; gap: 2.5rem; margin-top: 1.1rem; }
         .str-stat { text-align: center; }
-        .str-stat-num { font-size: 1.8rem; font-weight: 800; color: var(--orange); }
-        .str-stat-label { font-size: 0.75rem; color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: 0.05em; }
+        .str-stat-num { font-size: 1.8rem; font-weight: 800; color: #fff; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+        .str-stat-label { font-size: 0.75rem; color: rgba(255,255,255,0.78); text-transform: uppercase; letter-spacing: 0.05em; }
         .str-filters {
-            max-width: 1200px; margin: 1.5rem auto 0; padding: 0 1.5rem;
+            max-width: 1200px; margin: 1.1rem auto 0; padding: 0 1.5rem;
             display: flex; flex-wrap: wrap; gap: 0.75rem; justify-content: center;
         }
         .str-filter-select {
-            padding: 0.5rem 0.9rem; border: 1.5px solid rgba(255,255,255,0.2);
-            border-radius: 8px; background: rgba(255,255,255,0.1); color: #fff;
+            padding: 0.5rem 0.9rem; border: 1.5px solid rgba(255,255,255,0.32);
+            border-radius: 8px; background: rgba(255,255,255,0.12); color: #fff;
             font-size: 0.84rem; cursor: pointer; outline: none;
         }
         .str-filter-select option { background: var(--navy); color: #fff; }
@@ -37,7 +40,7 @@
             background: #fff; border: 1px solid var(--border); border-radius: 12px;
             overflow: hidden; margin-bottom: 1.25rem; transition: box-shadow 0.2s;
         }
-        .str-building-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
+        .str-building-card:hover { box-shadow: 0 6px 20px rgba(26,39,68,0.12); border-color: #d1d5db; }
         .str-building-header {
             display: flex; align-items: center; padding: 1rem 1.25rem; cursor: pointer;
             gap: 1rem; background: #fafbfc;
@@ -90,6 +93,38 @@
             .str-building-header { flex-wrap: wrap; }
             .str-unit { flex-wrap: wrap; }
         }
+    
+    /* PREVIEW: single-row nav + full-bleed (fold into page CSS on approval) */
+    .lp-nav-inner { max-width: none; padding: 0 1.25rem; display: flex; align-items: center; gap: 0.75rem; }
+    .lp-nav-logo { height: 30px; display: block; }
+    .lp-logo-link { flex-shrink: 0; display: flex; align-items: center; padding: 0.4rem 0; }
+    .lp-nav-links { display: flex; align-items: center; flex: 1 1 auto; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+    .lp-nav-links::-webkit-scrollbar { display: none; }
+    .lp-nav-right { display: flex; align-items: center; gap: 0.6rem; flex-shrink: 0; margin-left: auto; padding: 0.4rem 0; }
+    .lp-nav-phone { font-weight: 700; color: rgba(255,255,255,0.92); font-variant-numeric: tabular-nums; }
+    .lp-nav-phone:hover { color: #fff; }
+    .lp-call-btn { background: rgba(255,255,255,0.12); color: #fff; border: 1.5px solid rgba(255,255,255,0.3); border-radius: 6px; padding: 0.4rem 0.95rem; }
+    .lp-call-btn:hover { background: rgba(255,255,255,0.22); border-color: rgba(255,255,255,0.5); }
+    .lang-selector-btn { background: transparent; border-color: rgba(255,255,255,0.3); color: #fff; }
+
+    .str-content { max-width: none; padding: 2rem 1.25rem 4rem; }
+    .str-filters { max-width: none; padding: 0 1.25rem; }
+    
+    /* Polish pass (impeccable, 2026-08-19) */
+    .str-unit-price, .str-building-meta strong { font-variant-numeric: tabular-nums; }
+    .str-building-header:focus-visible, .str-unit:focus-visible,
+    .str-filter-select:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+    .str-building-header:focus-visible, .str-unit:focus-visible { outline-color: var(--navy); }
+    .str-building-header:active { background: #e9edf3; }
+    @media (prefers-reduced-motion: no-preference) {
+        .str-building-card { animation: strRise 0.4s cubic-bezier(0.16,1,0.3,1) backwards; }
+        .str-building-card:nth-child(1) { animation-delay: 0.02s; }
+        .str-building-card:nth-child(2) { animation-delay: 0.06s; }
+        .str-building-card:nth-child(3) { animation-delay: 0.10s; }
+        .str-building-card:nth-child(4) { animation-delay: 0.14s; }
+        .str-building-card:nth-child(5) { animation-delay: 0.18s; }
+    }
+    @keyframes strRise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 
     <!-- Meta Pixel -->
@@ -109,27 +144,28 @@
 </head>
 <body>
     <header class="lp-header">
-        <div class="lp-header-inner">
-            <a href="listing" class="lp-logo-link">
-                <img src="logo.png" alt="The Poler Team" class="lp-logo">
-            </a>
-            <div class="lp-header-right">
-                <span class="lp-tagline">South Florida Luxury Real Estate</span>
-                <a href="tel:+19542354046" class="lp-call-btn">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 014.68 11.6 19.79 19.79 0 011.61 3a2 2 0 012-2.18h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L7.91 8.09a16 16 0 006 6l.91-.91a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
-                    Call Us
-                </a>
-            </div>
-        </div>
         <nav class="lp-nav">
             <div class="lp-nav-inner">
-                <a href="listing" class="lp-nav-link">Home</a>
-                <a href="listing" class="lp-nav-link">Buy</a>
-                <a href="listing" class="lp-nav-link">Rent</a>
-                <a href="str" class="lp-nav-link active">Short-Term Rentals</a>
-                <a href="listing" class="lp-nav-link">Home Valuation</a>
-                <a href="index.html#about" class="lp-nav-link">About</a>
-                <a href="https://wa.me/19542354046" class="lp-nav-link" target="_blank">Contact</a>
+                <a href="index.html" class="lp-logo-link">
+                    <img src="logo-white.png" alt="The Poler Team" class="lp-nav-logo">
+                </a>
+                <div class="lp-nav-links">
+                    <a href="/" class="lp-nav-link" data-i18n="navHome">Home</a>
+                <a href="listing" class="lp-nav-link" data-i18n="navListings">Listings</a>
+                    <a href="preconstruction" class="lp-nav-link" data-i18n="navPrecon">Preconstruction</a>
+                    <a href="str" class="lp-nav-link active" data-i18n="navSTR">Short-Term Rentals</a>
+                    <a href="home-valuation" class="lp-nav-link" data-i18n="navValuation">Home Valuation</a>
+                    <a href="/#hp-meet" class="lp-nav-link" data-i18n="navAbout">About</a>
+                    <a href="listing?signup=1" class="lp-nav-link" data-i18n="navContact">Contact</a>
+                    <a href="tel:+19542354046" class="lp-nav-link lp-nav-phone">(954) 235-4046</a>
+                </div>
+                <div class="lp-nav-right">
+                    
+                    <a href="listing?signup=1" class="lp-call-btn">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 014.68 11.6 19.79 19.79 0 011.61 3a2 2 0 012-2.18h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L7.91 8.09a16 16 0 006 6l.91-.91a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+                        <span data-i18n="callUs">Call Us</span>
+                    </a>
+                </div>
             </div>
         </nav>
     </header>
@@ -139,15 +175,15 @@
         <p>Find buildings in South Florida that allow Airbnb & short-term rentals. Click any building to see available units.</p>
         <div class="str-stats">
             <div class="str-stat">
-                <div class="str-stat-num" id="str-building-count">—</div>
+                <div class="str-stat-num" id="str-building-count">-</div>
                 <div class="str-stat-label">Buildings</div>
             </div>
             <div class="str-stat">
-                <div class="str-stat-num" id="str-unit-count">—</div>
+                <div class="str-stat-num" id="str-unit-count">-</div>
                 <div class="str-stat-label">Available Units</div>
             </div>
             <div class="str-stat">
-                <div class="str-stat-num" id="str-price-range">—</div>
+                <div class="str-stat-num" id="str-price-range">-</div>
                 <div class="str-stat-label">Price Range</div>
             </div>
         </div>
@@ -193,7 +229,7 @@
     <footer class="lp-footer">
         <div class="lp-footer-inner">
             <img src="logo-white.png" alt="The Poler Team" class="lp-footer-logo">
-            <p class="lp-footer-copy">&copy; 2025 The Poler Team — Optimar International Realty. All rights reserved.</p>
+            <p class="lp-footer-copy">&copy; 2026 The Poler Team · Optimar International Realty. All rights reserved.</p>
             <a href="listing" class="lp-footer-back">&larr; Back to Properties</a>
         </div>
     </footer>
@@ -293,9 +329,9 @@
             const prices = filtered.map(l => l.ListPrice).filter(Boolean).sort((a, b) => a - b);
             const low = prices[0] >= 1000000 ? '$' + (prices[0] / 1000000).toFixed(1) + 'M' : '$' + Math.round(prices[0] / 1000) + 'K';
             const high = prices[prices.length - 1] >= 1000000 ? '$' + (prices[prices.length - 1] / 1000000).toFixed(1) + 'M' : '$' + Math.round(prices[prices.length - 1] / 1000) + 'K';
-            document.getElementById('str-price-range').textContent = low + ' — ' + high;
+            document.getElementById('str-price-range').textContent = low + ' - ' + high;
         } else {
-            document.getElementById('str-price-range').textContent = '—';
+            document.getElementById('str-price-range').textContent = '-';
         }
 
         if (!sorted.length) {
@@ -310,7 +346,7 @@
             const maxPrice = Math.max(...bldg.units.map(u => u.ListPrice || 0));
             const priceStr = minPrice === maxPrice
                 ? formatPrice(minPrice)
-                : formatPrice(minPrice) + ' — ' + formatPrice(maxPrice);
+                : formatPrice(minPrice) + ' - ' + formatPrice(maxPrice);
             const beds = [...new Set(bldg.units.map(u => u.BedroomsTotal).filter(Boolean))].sort((a,b) => a-b);
             const bedsStr = beds.length ? beds.join(', ') + ' bed' : '';
 
@@ -331,7 +367,7 @@
                         <div class="str-unit-info">
                             <div class="str-unit-price">${formatPrice(u.ListPrice)}</div>
                             <div class="str-unit-addr">${esc(u.UnparsedAddress || '')}</div>
-                            <div class="str-unit-stats">${u.BedroomsTotal || '—'} bd · ${u.BathroomsTotalInteger || '—'} ba · ${u.LivingArea ? Number(u.LivingArea).toLocaleString() + ' sqft' : ''}</div>
+                            <div class="str-unit-stats">${u.BedroomsTotal || '-'} bd · ${u.BathroomsTotalInteger || '-'} ba · ${u.LivingArea ? Number(u.LivingArea).toLocaleString() + ' sqft' : ''}</div>
                         </div>
                         ${domStr ? `<span class="str-unit-dom ${isNew ? 'new' : 'normal'}">${isNew ? 'NEW · ' : ''}${domStr}</span>` : ''}
                     </div>`;
@@ -369,7 +405,7 @@
     }
 
     function formatPrice(p) {
-        if (!p) return '—';
+        if (!p) return '-';
         return '$' + Number(p).toLocaleString('en-US');
     }
 
@@ -383,5 +419,6 @@
     </script>
 
     <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
+<script src="nav.js" defer></script>
 </body>
 </html>

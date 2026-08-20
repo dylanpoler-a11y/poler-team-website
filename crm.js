@@ -888,11 +888,125 @@ async function createReminderFromPanel() {
   btn.textContent = 'Create Reminder';
 }
 
+// ── ADD CONTACT (manual CRM entry) ─────────────────────────────────────────
+// Kevin adds people he already knows (referrals, WhatsApp contacts, past clients).
+// Both outbound emails save-lead can fire are OFF unless he ticks them, so adding a
+// contact never surprises them with a "here's your password" message.
+function openAddLeadModal() {
+  const m = document.getElementById('add-lead-modal'); if (!m) return;
+  ['add-lead-first','add-lead-last','add-lead-phone','add-lead-email',
+   'add-lead-country','add-lead-listing','add-lead-notes'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  document.getElementById('add-lead-language').value = 'en';
+  document.getElementById('add-lead-assigned').value = 'Kevin';
+  document.getElementById('add-lead-timeline').value = '';
+  document.getElementById('add-lead-status').value = 'Contacted';
+  document.getElementById('add-lead-status-warning').style.display = 'none';
+  delete document.getElementById('add-lead-create').dataset.confirmedDupe;
+  document.getElementById('add-lead-welcome').checked = false;
+  document.getElementById('add-lead-notify').checked  = false;
+  document.getElementById('add-lead-error').style.display = 'none';
+  m.style.display = 'flex';
+  document.getElementById('add-lead-first').focus();
+}
+
+function closeAddLeadModal() {
+  const m = document.getElementById('add-lead-modal'); if (m) m.style.display = 'none';
+}
+
+async function submitAddLead() {
+  const errEl = document.getElementById('add-lead-error');
+  const btn   = document.getElementById('add-lead-create');
+  const val   = id => (document.getElementById(id)?.value || '').trim();
+
+  const first = val('add-lead-first');
+  const email = val('add-lead-email');
+  if (!first) { errEl.textContent = 'First name is required.'; errEl.style.display = 'block'; return; }
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    errEl.textContent = 'That email address does not look valid.'; errEl.style.display = 'block'; return;
+  }
+
+  // Warn on a duplicate before writing — allLeads is already loaded for this tab.
+  const phoneDigits = val('add-lead-phone').replace(/\D/g, '');
+  const dupe = (allLeads || []).find(l =>
+    (email && (l.email || '').toLowerCase() === email.toLowerCase()) ||
+    (phoneDigits.length >= 7 && (l.phone || '').replace(/\D/g, '').endsWith(phoneDigits.slice(-7)))
+  );
+  // The confirmation is bound to the SPECIFIC duplicate, not a bare "already warned" bit.
+  // A plain flag would carry over when the user edits the email mid-modal and hits a
+  // DIFFERENT existing contact — the second one would then be written with no warning.
+  const dupeKey = dupe ? (dupe.id || dupe.email || dupe.phone || dupe.name || '?') : '';
+  if (dupe && btn.dataset.confirmedDupe !== dupeKey) {
+    btn.dataset.confirmedDupe = dupeKey;
+    errEl.textContent = `Already in the CRM as "${dupe.name || dupe.email || dupe.phone}". Click again to add anyway.`;
+    errEl.style.display = 'block';
+    return;
+  }
+
+  errEl.style.display = 'none';
+  btn.disabled = true;
+  btn.textContent = 'Adding…';
+
+  try {
+    const res = await fetch(`${CRM_API_BASE}/api/save-lead`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        password: currentPassword,
+        manualEntry: true,
+        sendWelcomeEmail: document.getElementById('add-lead-welcome').checked,
+        notifyTeam:       document.getElementById('add-lead-notify').checked,
+        firstName:      first,
+        lastName:       val('add-lead-last'),
+        email,
+        phone:          val('add-lead-phone'),
+        country:        val('add-lead-country'),
+        language:       document.getElementById('add-lead-language').value,
+        assignedTo:     document.getElementById('add-lead-assigned').value,
+        timeline:       document.getElementById('add-lead-timeline').value,
+        status:         document.getElementById('add-lead-status').value,
+        listingAddress: val('add-lead-listing'),
+        notes:          val('add-lead-notes'),
+        sourceUrl:      'CRM — added manually',
+      }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.success) {
+      errEl.textContent = data.error || `Failed to add contact (${res.status}).`;
+      errEl.style.display = 'block';
+      return;
+    }
+    delete btn.dataset.confirmedDupe;
+    closeAddLeadModal();
+    await loadLeads();
+  } catch (err) {
+    errEl.textContent = 'Network error: ' + err.message;
+    errEl.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Add Contact';
+  }
+}
+
 // ── EVENT SETUP ────────────────────────────────────────────────────────────
 function setupEvents() {
   // Header refresh button
   document.getElementById('refresh-btn').addEventListener('click', loadLeads);
   document.getElementById('resync-email-btn')?.addEventListener('click', resyncEmailInbox);
+
+  // Add Contact (manual entry)
+  document.getElementById('add-lead-btn')?.addEventListener('click', openAddLeadModal);
+  document.getElementById('add-lead-close')?.addEventListener('click', closeAddLeadModal);
+  document.getElementById('add-lead-create')?.addEventListener('click', submitAddLead);
+  document.getElementById('add-lead-modal')?.addEventListener('click', (e) => {
+    if (e.target.id === 'add-lead-modal') closeAddLeadModal();
+  });
+  // Surface the automation consequence the moment "New" is picked.
+  document.getElementById('add-lead-status')?.addEventListener('change', (e) => {
+    const w = document.getElementById('add-lead-status-warning');
+    if (w) w.style.display = e.target.value === 'New' ? 'block' : 'none';
+  });
 
   // Filters
   document.getElementById('search-input').addEventListener('input', applyFilters);

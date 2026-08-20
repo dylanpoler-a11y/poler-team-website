@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Preconstruction &amp; New Developments — The Poler Team</title>
+    <title>Preconstruction & New Developments — The Poler Team</title>
     <meta name="description" content="Exclusive South Florida preconstruction & new-development towers — Brickell, Downtown Miami & beyond. Lock in today's pricing before delivery.">
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="https://www.homesinsoflorida.com/preconstruction">
@@ -41,55 +41,66 @@
     gtag('config', 'AW-17910762846');
     </script>
     <!-- End Google Ads tag -->
+<style>
+    /* PREVIEW: single-row nav + full-bleed (fold into page CSS on approval) */
+    .lp-nav-inner { max-width: none; padding: 0 1.25rem; display: flex; align-items: center; gap: 0.75rem; }
+    .lp-nav-logo { height: 30px; display: block; }
+    .lp-logo-link { flex-shrink: 0; display: flex; align-items: center; padding: 0.4rem 0; }
+    .lp-nav-links { display: flex; align-items: center; flex: 1 1 auto; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+    .lp-nav-links::-webkit-scrollbar { display: none; }
+    .lp-nav-right { display: flex; align-items: center; gap: 0.6rem; flex-shrink: 0; margin-left: auto; padding: 0.4rem 0; }
+    .lp-nav-phone { font-weight: 700; color: rgba(255,255,255,0.92); font-variant-numeric: tabular-nums; }
+    .lp-nav-phone:hover { color: #fff; }
+    .lp-call-btn { background: rgba(255,255,255,0.12); color: #fff; border: 1.5px solid rgba(255,255,255,0.3); border-radius: 6px; padding: 0.4rem 0.95rem; }
+    .lp-call-btn:hover { background: rgba(255,255,255,0.22); border-color: rgba(255,255,255,0.5); }
+    .lang-selector-btn { background: transparent; border-color: rgba(255,255,255,0.3); color: #fff; }
+
+    .pc-main { max-width: none; padding: 1.75rem 1.25rem 3.5rem; }
+    .pc-filter-inner { max-width: none; padding-left: 1.25rem; padding-right: 1.25rem; }
+    .pc-filterbar { border-top: none; }
+</style>
 </head>
 <body>
 
 <!-- HEADER -->
 <header class="lp-header">
-    <div class="lp-header-inner">
-        <a href="index.html" class="lp-logo-link">
-            <img src="logo.png" alt="The Poler Team" class="lp-logo">
-        </a>
-        <div class="lp-header-right">
-            <span class="lp-tagline" data-i18n="tagline">South Florida Luxury Real Estate</span>
-
-            <!-- Language Selector -->
-            <div class="lang-selector" id="lang-selector">
-                <button class="lang-selector-btn" id="lang-selector-btn" aria-label="Select language" aria-expanded="false">
-                    <span id="lang-btn-text">🇺🇸 EN</span>
-                    <svg class="lang-chevron" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
-                </button>
-                <div class="lang-dropdown" id="lang-dropdown">
-                    <button class="lang-option active" data-lang="en">🇺🇸 English</button>
-                    <button class="lang-option" data-lang="es">🇪🇸 Español</button>
-                    <button class="lang-option" data-lang="pt">🇵🇹 Português</button>
+        <nav class="lp-nav">
+            <div class="lp-nav-inner">
+                <a href="index.html" class="lp-logo-link">
+                    <img src="logo-white.png" alt="The Poler Team" class="lp-nav-logo">
+                </a>
+                <div class="lp-nav-links">
+                    <a href="/" class="lp-nav-link" data-i18n="navHome">Home</a>
+                <a href="listing" class="lp-nav-link" data-i18n="navListings">Listings</a>
+                    <a href="preconstruction" class="lp-nav-link active" data-i18n="navPrecon">Preconstruction</a>
+                    <a href="str" class="lp-nav-link" data-i18n="navSTR">Short-Term Rentals</a>
+                    <a href="home-valuation" class="lp-nav-link" data-i18n="navValuation">Home Valuation</a>
+                    <a href="/#hp-meet" class="lp-nav-link" data-i18n="navAbout">About</a>
+                    <a href="listing?signup=1" class="lp-nav-link" data-i18n="navContact">Contact</a>
+                    <a href="tel:+19542354046" class="lp-nav-link lp-nav-phone">(954) 235-4046</a>
+                </div>
+                <div class="lp-nav-right">
+                    <div class="lang-selector" id="lang-selector">
+                        <button class="lang-selector-btn" id="lang-selector-btn" aria-label="Select language" aria-expanded="false">
+                            <span id="lang-btn-text">🇺🇸 EN</span>
+                            <svg class="lang-chevron" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                        </button>
+                        <div class="lang-dropdown" id="lang-dropdown">
+                            <button class="lang-option active" data-lang="en">🇺🇸 English</button>
+                            <button class="lang-option" data-lang="es">🇪🇸 Español</button>
+                            <button class="lang-option" data-lang="pt">🇵🇹 Português</button>
+                        </div>
+                    </div>
+                    <a href="listing?signup=1" class="lp-call-btn">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 014.68 11.6 19.79 19.79 0 011.61 3a2 2 0 012-2.18h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L7.91 8.09a16 16 0 006 6l.91-.91a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+                        <span data-i18n="callUs">Call Us</span>
+                    </a>
                 </div>
             </div>
-
-            <a href="tel:+13057997290" class="lp-call-btn">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 014.68 11.6 19.79 19.79 0 011.61 3a2 2 0 012-2.18h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L7.91 8.09a16 16 0 006 6l.91-.91a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
-                <span data-i18n="callUs">Call Us</span>
-            </a>
-        </div>
-    </div>
-    <nav class="lp-nav">
-        <div class="lp-nav-inner">
-            <a href="listing" class="lp-nav-link" data-i18n="navHome">Home</a>
-            <a href="preconstruction" class="lp-nav-link active" data-i18n="navPrecon">Preconstruction</a>
-            <a href="str" class="lp-nav-link" data-i18n="navSTR">Short-Term Rentals</a>
-        </div>
-    </nav>
-</header>
+        </nav>
+    </header>
 
 <!-- HERO BAND -->
-<section class="pc-hero">
-    <div class="pc-hero-inner">
-        <span class="pc-hero-eyebrow" data-i18n="heroEyebrow">New Developments</span>
-        <h1 class="pc-hero-title" data-i18n="heroTitle">Exclusive Preconstruction Options</h1>
-        <p class="pc-hero-sub" data-i18n="heroSubtitle">New-development towers in Brickell, Downtown Miami &amp; beyond — lock in today's pricing before delivery.</p>
-        <p class="pc-hero-contact" data-i18n="contactLine">All preconstruction inquiries handled by Rosa Poler, The Poler Team.</p>
-    </div>
-</section>
 
 <!-- FILTER BAR (sticky) -->
 <section class="pc-filterbar" id="pc-filterbar">
@@ -168,5 +179,6 @@
 </footer>
 
 <script src="preconstruction.js"></script>
+<script src="nav.js" defer></script>
 </body>
 </html>

@@ -30,17 +30,20 @@ export default async function handler(req) {
     if (!authorize(req, body).ok) return json({ error: 'Unauthorized' }, 401);
     if (!apiKey || !baseId) return json({ error: 'Airtable not configured' }, 500);
 
-    const { leadId, url, recordedAt, durationSec, callId } = body;
-    if (!leadId || !url) return json({ error: 'leadId and url are required' }, 400);
+    const { leadId, url, transcriptUrl, recordedAt, durationSec, callId } = body;
+    if (!leadId || (!url && !transcriptUrl)) return json({ error: 'leadId and url or transcriptUrl are required' }, 400);
 
     // Only accept https URLs from Flash's storage hosts — defense in depth (the postMessage
     // is also origin-checked). Vercel Blob = pre-2026-07-20 recordings; Cloudinary = current
     // (switched when the flash-blob store got suspended and playback + uploads died).
-    let u;
-    try { u = new URL(url); } catch { return json({ error: 'invalid url' }, 400); }
-    if (u.protocol !== 'https:' || !/^([a-z0-9-]+\.public\.blob\.vercel-storage\.com|res\.cloudinary\.com)$/.test(u.host)) {
-        return json({ error: 'url must be an https Vercel Blob or Cloudinary URL' }, 400);
-    }
+    // transcriptUrl (2026-07-21) = the call's plain-text transcript, same hosts.
+    const validHost = (v) => {
+        let u;
+        try { u = new URL(v); } catch { return false; }
+        return u.protocol === 'https:' && /^([a-z0-9-]+\.public\.blob\.vercel-storage\.com|res\.cloudinary\.com)$/.test(u.host);
+    };
+    if (url && !validHost(url)) return json({ error: 'url must be an https Vercel Blob or Cloudinary URL' }, 400);
+    if (transcriptUrl && !validHost(transcriptUrl)) return json({ error: 'transcriptUrl must be an https Vercel Blob or Cloudinary URL' }, 400);
 
     const headers = { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' };
 
@@ -51,11 +54,17 @@ export default async function handler(req) {
     let list = [];
     try { const p = JSON.parse(existingRaw); if (Array.isArray(p)) list = p; } catch { /* start fresh */ }
 
+    // The audio and the transcript of ONE call arrive as SEPARATE saves (two uploads,
+    // two postMessages) — merge by callId, never let the later save drop the earlier
+    // field. crm.js additionally serializes the two POSTs so the read-modify-write
+    // here can't interleave.
+    const prior = callId ? list.find((r) => r && r.callId === String(callId).slice(0, 64)) : null;
     const entry = {
-        url: String(url),
-        recordedAt: recordedAt && !Number.isNaN(Date.parse(recordedAt)) ? recordedAt : new Date().toISOString(),
-        durationSec: Math.max(0, Math.round(Number(durationSec) || 0)),
+        url: url ? String(url) : (prior && prior.url) || '',
+        recordedAt: recordedAt && !Number.isNaN(Date.parse(recordedAt)) ? recordedAt : (prior && prior.recordedAt) || new Date().toISOString(),
+        durationSec: Math.max(0, Math.round(Number(durationSec) || 0)) || (prior && prior.durationSec) || 0,
         callId: callId ? String(callId).slice(0, 64) : '',
+        ...((transcriptUrl || (prior && prior.transcriptUrl)) ? { transcriptUrl: transcriptUrl ? String(transcriptUrl) : prior.transcriptUrl } : {}),
     };
     const deduped = entry.callId ? list.filter((r) => r && r.callId !== entry.callId) : list.filter(Boolean);
     list = [entry, ...deduped].slice(0, MAX);

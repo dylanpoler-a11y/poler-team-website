@@ -20,102 +20,54 @@ Static HTML/CSS/JS website — no build step, no framework. Vercel serves the fi
 
 ### File Structure
 
+Condensed — **full tree → [`docs/file-structure.md`](docs/file-structure.md).**
+
 ```
-/
-├── CLAUDE.md               # This file — project context for Claude Code
-├── .gitignore
-├── vercel.json             # Cron config for daily alerts
-│
-├── # Listing Landing Page (homesinsoflorida.com/listing)
-├── listing.html            # Listing page HTML (lead capture popup, property display)
-├── listing.js              # Listing page logic (10-sec timer, OTP verification, alerts)
-├── listing.css             # Listing page styles
-├── i18n.js                 # Trilingual translations (EN/ES/PT)
-│
-├── # CRM Dashboard (homesinsoflorida.com/crm)
-├── crm.html                # CRM dashboard HTML
-├── crm.js                  # CRM logic (leads table, filters, lead details panel)
-├── crm.css                 # CRM styles
-│
-├── # Alert Preferences (homesinsoflorida.com/preferences)
-├── preferences.html        # Lead alert preferences page
-├── preferences.js          # Preferences logic
-├── preferences.css         # Preferences styles
-│
-├── # Other Pages
-├── index.html              # Main landing page (Poler Team branding — DO NOT MODIFY without explicit request)
-├── styles.css              # Main page styles (DO NOT MODIFY without explicit request)
-├── script.js               # Main page JS (DO NOT MODIFY without explicit request)
-├── privacy.html            # Privacy policy
-│
-├── # API Functions (Vercel serverless)
-├── api/
-│   ├── save-lead.js        # Saves new leads to Airtable
-│   ├── get-leads.js        # Fetches leads for CRM
-│   ├── update-lead.js      # Updates lead fields (status, agent, notes, etc.)
-│   ├── send-alerts.js      # Daily cron: sends property alert emails via Resend
-│   ├── send-test-alert.js  # Sends test alert email for a single lead
-│   ├── send-otp.js         # Sends OTP verification code
-│   ├── verify-otp.js       # Verifies OTP code
-│   ├── generate-token.js   # Generates alert tokens for leads
-│   ├── get-preferences.js  # Fetches lead alert preferences
-│   ├── update-preferences.js # Updates lead alert preferences
-│   ├── create-reminder.js  # Creates CRM reminders
-│   ├── get-reminders.js    # Fetches CRM reminders
-│   ├── update-reminder.js  # Updates CRM reminders
-│   ├── chat.js             # AI chatbot API
-│   ├── get-activity.js     # Lead activity log
-│   ├── log-activity.js     # Logs lead activity
-│   ├── save-conversation.js # Saves chat conversations
-│   └── get-conversations.js # Fetches chat conversations
-│
-├── # Assets
-├── logo.png / logo-white.png / pt-circle.png
-├── favicon.ico / favicon-192.png / favicon-512.png / apple-touch-icon.png
-├── team-*.jpg, ig-post-*.jpg, *.mp4  # Team/media assets
+listing.html / listing.js      # Listing landing page + lead-capture popup
+index.html                     # homesinsoflorida.com home
+crm.html / crm.js              # The CRM UI (sidebar nav + all views)
+api/                           # Vercel functions — one file per endpoint
+  _auth.js                     #   shared auth (Bearer AGENT_API_TOKEN | CRM_PASSWORD)
+  _leadgen.js                  #   Lead Generation helpers (agency positive replies)
+  get|save|update-lead*.js     #   RE leads (Airtable `Leads`)
+  *-consulting-*.js            #   Consulting module
+  *-leadgen-*.js               #   Lead Generation module
+  send-alerts.js               #   daily property alerts (vercel.json cron)
+  agent/                       #   agent-facing endpoints (ai-calls, save-recording, oauth)
+  mcp.js                       #   hosted MCP — ~50 `mcp__poler-crm__*` tools
+lib/                           # shared server helpers (crm-contacts, email-extract)
+docs/                          # OMs, PDFs, reference docs (incl. the two split-out above)
+.claude/skills/                # 7 project-scoped skills — see the Skills section
 ```
+
+## Skills — invoke by task, don't improvise
+
+**This repo owns 7 project-scoped skills** in `.claude/skills/`. They auto-load for sessions under this directory and NOWHERE else — if you're working from `real-estate/` or `agency/`, read the SKILL.md by path instead.
+
+| Task | Skill |
+|---|---|
+| Adding ANY endpoint under `api/` or `api/agent/` | **`new-agent-endpoint`** — scaffolds it on the `_auth.js` convention. Use it every time; hand-rolled endpoints drift. |
+| Changing the email→CRM pipeline (`api/cron/process-emails.js`) — classification, routing, what gets written | **`crm-email`** |
+| Meta or Google ad campaigns, CPL optimization, creatives | **`real-estate-ads-manager`** |
+| Google Search Ads specifically (Eric Preston methodology) | **`google-ads-eric-preston`** |
+| Organic social — IG/FB posts, captions, content calendar | **`social-media-manager`** |
+| LinkedIn posting + engagement | **`linkedin-engagement`** |
+| Sourcing distressed/motivated-seller boutique hotels (Miami-Dade + Broward) | **`distressed-hotel-finder`** |
+
+Global skills that apply here too: **`crm-note-format`** (mandatory for every CRM note — humans, Claude, and the runtime writers), **`managing-email`** (draft into the session, never an inbox draft; explicit send order = send, no second ask), **`new-claude-md`** for this file, `systematic-debugging`, `ui-ux-pro-max` / `impeccable` for CRM UI work, and the `qa` subagent before anything ships to the live CRM.
 
 ## Design System
 
-| Token | Value |
-|-------|-------|
-| Navy (primary) | `#1a2744` — `var(--color-navy)` / `var(--color-accent)` |
-| Navy light | `#243656` — `var(--color-accent-light)` |
-| Navy dark | `#111c33` — `var(--color-accent-dark)` |
-| Background | `#f8f9fb` — `var(--color-bg)` |
-| Card bg | `#ffffff` — `var(--color-bg-card)` |
-| Text primary | `#1a2744` — `var(--color-text)` |
-| Text muted | `#718096` — `var(--color-text-muted)` |
-| Heading font | `Playfair Display` — `var(--font-heading)` |
-| Body font | `Inter` — `var(--font-body)` |
+Navy `#1a2744` primary · `Playfair Display` headings · `Inter` body · bg `#f8f9fb`. All values are CSS variables (`--color-navy`, `--font-heading`, …) — **never hardcode a hex.** Full token table → [`docs/design-system.md`](docs/design-system.md).
 
 ## Key Features
 
-### Lead Capture (listing.js)
-- 10-second countdown timer → locks page with modal
-- **2-STEP form (2026-06-24):** Step 1 = Full Name (`#lead-name`) + email (`#lead-fields-1`); Step 2 = phone + timeline (`#lead-fields-2`). `goToContactStep()` reveals Step 2 + swaps title/subtitle/indicator/button copy. The single name field is split on whitespace into First/Last for the CRM. Conversion pixel (`fbq Lead` + gtag) + `/api/save-lead` fire ONCE, on Step 2 completion (`completeLead`) — Step 1 saves nothing. Bail-out (Step-1-only) email capture is NOT built yet (would need a quiet dedupe endpoint; `save-lead` always creates + notifies). i18n keys: fullName, continueBtn, contactTitle, contactSubtitle, step1of2, step2of2, timelineLabel, errSelectTimeline.
-- OTP phone verification is DISABLED (`skipOtp=true`); the old `#lead-step-2` OTP markup + otp-* handlers are dead but left in place.
-- Country detection via ISO code from dropdown
-- Returning leads from alert emails bypass popup via `?t=TOKEN` parameter
-- Leads saved to Airtable via `/api/save-lead`
+- **Lead capture** (`listing.js`) — popup → `/api/save-lead`; auto-generates the lead's access password.
+- **Property alerts** (`api/send-alerts.js`) — daily Vercel cron, matches each lead's Alert* fields against Bridge MLS.
+- **CRM dashboard** (`crm.js`) — sidebar nav → per-view render; RE leads, Consulting, Lead Generation.
+- **Trilingual i18n** — EN/ES/PT on the public pages.
 
-### Property Alerts (api/send-alerts.js)
-- Daily cron at 9am sends matching property alerts
-- Uses Bridge API for MLS data
-- Emails sent via Resend
-- Alert links include lead token for popup bypass
-
-### CRM Dashboard (crm.js)
-- Leads table with sorting, filtering, search
-- Lead detail panel with notes, status, agent assignment
-- Reminders system
-- CSV export
-- MapLibre GL JS map with polygon drawing for alert areas
-
-### Trilingual i18n (EN/ES/PT)
-- All translatable text uses `data-i18n` attributes
-- Translations in `i18n.js`
-- Language stored in localStorage as `poler-lang`
+Implementation detail for each → [`docs/key-features.md`](docs/key-features.md).
 
 ## Deployment
 
@@ -142,20 +94,7 @@ There is NO Git-based auto-deploy. Every deployment must be done manually via CL
 
 ## Session Handoffs (Mandatory)
 
-When the system reminder fires that **context is getting full (~75–80%)**, **immediately** write a session handoff and KEEP UPDATING IT for the rest of the session. Do NOT wait for auto-compact — compact summaries are lossy by design.
-
-Location: `<project>/.claude/handoffs/YYYY-MM-DD-HHMM-<short-slug>.md` (use `~/business/real-estate/poler-team-website/.claude/handoffs/`).
-
-Required sections in every handoff:
-- **Goal**: one sentence on what this session is trying to do
-- **State**: what's done — be specific (file:line refs, deployment URLs, commit SHAs, Airtable record IDs)
-- **Pending**: exact next step, command-ready if possible
-- **Touched**: every file modified, every external system mutated (Vercel deploys, Airtable writes, env-var changes, git commits)
-- **Gotchas**: stashes, uncommitted work, half-deployed changes, things the next session would step on
-
-After writing it once, UPDATE the same file after every meaningful subsequent action until the session ends. A handoff written once at 80% is stale by 81%.
-
-**Why this is here:** 2026-05-11 session left lib/* and api/agent/*.js uncommitted on disk; next session inherited a stale working tree and deployed a partial codebase, silently dropping ~80 endpoints from production. A live handoff would have warned the next session that those files existed only on disk and on the Vercel deployment, not in git. Committing the active work to `main` is the other half of this defense.
+**Every session that changes anything here writes a handoff before it ends** — dated `SESSION_HANDOFF_<topic>_<date>.md`, covering what changed, what's deployed, and what's still open. A session that skips it leaves the next one guessing against a live CRM. Template + full procedure → [`docs/session-handoffs.md`](docs/session-handoffs.md).
 
 ## CRM Architecture (added 2026-05-14, was missing from original CLAUDE.md)
 
@@ -163,13 +102,13 @@ The CRM (`/crm`) has two distinct sections in the left nav:
 - **Real Estate**: Dashboard, All Leads, Reminders, Listings, **AI Calls**, Export CSV — driven by `Leads` table in Airtable
 - **CONSULTING**: Companies, Opportunities, Pipeline, Reminders, Partners — driven by `Consulting Clients` / `Consulting Deals` / `Consulting Contacts` / `Consulting Tasks` / `Consulting Activity` / `Consulting Partners` Airtable tables
 
-**AI Calls tab** (added 2026-06-08): in-CRM view (`#ai-calls-view`, `switchView('ai-calls')` → `loadAICalls()`/`renderAICalls()` in `crm.js`). Shows Sammy's outbound/inbound AI voice calls with pickup, recording playback, and checkmarks (note / reminder / alerts / WhatsApp). Backed by `api/agent/ai-calls.js` (joins ElevenLabs Conversational AI — the call system of record — with the CRM by matching `conv_…` ids found in lead notes) + `api/agent/ai-call-audio.js` (recording proxy). Needs Vercel env `ELEVENLABS_API_KEY` + `ELEVENLABS_AGENT_ID` / `ELEVENLABS_RAPPORT_AGENT_ID` / `ELEVENLABS_INBOUND_AGENT_ID` (Kevin's own EL account, Creator tier). Chart via Chart.js CDN. The engine that PLACES the calls lives in `~/business/real-estate/whatsapp-lead-monitor/` (see `saas-portfolio/products/revenue-engine`).
+**AI Calls tab** (2026-06-08): in-CRM view of Sammy's AI voice calls — pickup, recording playback, note/reminder/alert checkmarks. Backed by `api/agent/ai-calls.js` (+ `ai-call-audio.js` proxy), needs the `ELEVENLABS_*` Vercel envs. **Full detail → [`docs/crm-internals.md`](docs/crm-internals.md).**
 
 Backend endpoints for consulting live at `api/get-consulting-*.js`, `api/save-consulting-*.js`, `api/update-consulting-*.js`, `api/delete-consulting-*.js`, plus `api/log-consulting-activity.js` and `api/stamp-last-contact.js`.
 
 The hosted MCP server at `api/mcp.js` exposes ~50 tools as `mcp__poler-crm__*`, used by Claude.ai connectors on the Poler Team's accounts. The local MCP at `~/poler-team-mcp/index.js` exposes the same tools.
 
-**Flash live-coach panel** (added 2026-06-19): the lead panel has a "🎯 Coach en vivo" button (`#panel-coach-start` in `crm.html`) that lazy-loads **Flash** (the AI sales-call coach, `~/business/saas-portfolio/clairvo-clone`, on Vercel project `flash-coach`) as an iframe at `flash-coach-tan.vercel.app/embed?leadId=&key=`, pre-locked to the open lead; ⛶ (`#panel-expand`) widens the panel (`.panel-expanded`). `crm.js`: `openFlashCoach`/`getFlashConfig`/`resetCoachSection`/`togglePanelExpand` + an **origin-checked** `handleFlashMessage` (the `message` listener) that, on `flash:call-ended`, appends the call summary to the lead via `/api/agent/log-note` (agent="Flash Coach"). **Post-call writes (2026-07-01, server-primary since 2026-07-03):** the note is a CALL SUMMARY per the `crm-note-format` skill (headerless `Convo:`/`Next:` bullets from the judge's `crmConvo`/`crmNext`) — NEVER Flash's coaching critique/score. Since 2026-07-03 **Flash's SERVER writes the note + follow-up reminder itself** right after judging (its `deliverToCrm` → `/api/agent/log-note` + `/api/create-reminder`, Bearer `AGENT_API_TOKEN`) — the old postMessage-only chain silently lost the note whenever the iframe died during the ~20s judge wait or the run route 500'd (Alfredo Carvajal). `handleFlashMessage` now reads `data.noteLogged`/`data.reminderCreated`: when set it only refreshes the panel; when false it falls back to writing from the browser as before (dueAt judged from the call's outcome; none for wrong-number/dead calls), then `loadReminders()` + re-renders. Flash's server also auto-activates the lead's PROPERTY ALERTS from the call's buy-box (`/api/agent/update-alerts`, Weekly/5) — only when the lead has no active alert profile yet, so it never clobbers a hand-tuned one; a separate LAND budget becomes a second profile via the `profiles` array (never blended into the house range). **Alert engine (2026-07-03):** profile type `Land` queries Bridge `PropertyType "Land/Boat Docks"` (subtypes Residential + Agriculture, residential-only filters stripped — `lib/alert-search.js`); multi-profile leads get ≥1 slot per profile in the capped email (fairness rule); email cards show lot size when a listing has no living area; Land checkbox in the CRM panel + `/preferences`. **Flash reminder policy (Kevin 2026-07-03):** judged cadence; ambiguous-but-real call → default 5 days; due 10:00 AM ET; a new Flash reminder auto-COMPLETES the lead's prior pending "Flash Coach" reminders (Sammy's + manual ones untouched). The iframe token comes from NEW gated `api/flash-config.js` (keeps `FLASH_EMBED_TOKEN` out of the public `crm.js`). Vercel env: `FLASH_EMBED_TOKEN` (must be byte-identical to the `flash-coach` Vercel project's value — set with `printf`, never `echo`; a trailing `\n` breaks the SHA-256 match and bounces the iframe to Flash's password gate, see 2026-06-22) + `FLASH_BASE_URL` (= `https://flash-coach-tan.vercel.app`). Flash owns the coaching brain; the CRM only launches it + logs the note. **Call recording (2026-06-24):** on a `flash:recording` postMessage, the same origin-checked `handleFlashMessage` saves the call audio to the lead via NEW `api/agent/save-recording.js` → the NEW `Flash Recordings` multilineText field on Leads (JSON `[{url,recordedAt,durationSec,callId}]`; audio lives on Vercel Blob, host-validated). `get-leads` maps `flashRecordings`; `renderFlashRecordings()` shows them under a "🎙️ Flash voice recordings" panel section (`#panel-recordings-section`, newest-first dated `<audio>` players). Flash itself captures + uploads the audio (its own gated `/api/recording` → `@vercel/blob`); the CRM only stores the URL + renders it. Full build notes: clairvo-clone CLAUDE.md §11 + memory `project_clairvo_clone_buildout`. **Panel-close = call ended (Kevin 2026-07-17):** every coach teardown (closePanel/overlay/Esc, coach ✕, lead switch in `populatePanel`) goes through `finalizeCoachSection()` — postMessages `flash:finalize` to the iframe (Flash stops the mic + submits the call = note/reminder/alerts, same as Detener) and blanks the src only after a 25s grace (`_coachBlankTimer`, cleared by `openFlashCoach`) so the submit/recording finish; NEVER call `resetCoachSection()` directly on a live coach. Re-opening the SAME lead leaves a live coach running (src leadId guard). Also 2026-07-17: `openPanel` adds `panel-expanded` by default — the lead panel opens in the WIDE view; ⛶ toggles it smaller.
+**Flash live-coach panel** (2026-06-19): the lead panel embeds Flash (`saas-portfolio/clairvo-clone`, Vercel `flash-coach`) as an origin-checked iframe pre-locked to the open lead. **Full detail → [`docs/crm-internals.md`](docs/crm-internals.md).**
 
 ## Email → CRM Auto-Sync (added 2026-05-11/14)
 
@@ -183,7 +122,6 @@ Forward detection: when sender is internal (`@poler.org`), the body is scanned f
 
 Buyer/broker contacts for OUR listings (LoopNet favorites, cold-campaign repliers, CDX) do NOT belong in the main leads dashboard — Kevin's dashboard is for inbound ad/website leads only. Convention: create them as normal Leads records with `Source URL = "buyer:<MLS#>"` (e.g. `buyer:A11967447` = The Lauderdale). `crm.js isBuyerLead()` hides them from the dashboard table/stats/CSV; the Listings tab → listing panel shows them in its "Buyer Leads" section (`renderListingBuyerLeads`), sorted by status, click-through to the full lead panel. Reminders/notes on them work normally.
 
-- 2026-07-03 [FAIL]: MCP `create_lead` posts `firstName/lastName/country/notes/assignedTo` to `/api/save-lead`, which expected `first/last/countryIso` — names+country silently dropped (9 nameless leads). Fixed server-side in save-lead.js (accepts both shapes) so both MCPs are covered; when adding an MCP tool that proxies an existing endpoint, diff the tool schema against the endpoint's destructured body field-by-field.
-- 2026-07-03 [FAIL]: The Listings nav tab never opened — the sidebar click dispatcher in crm.js had a branch for every action EXCEPT `listings` (switchView existed, was just never called). When adding a nav item, grep the dispatcher for its data-action.
-- 2026-07-13 [FAIL]: `api/agent/search-properties.js` PROPERTY_TYPE_ALIAS lacked the CRM's own Alert Property Types vocabulary — `propertyType=Single Family` passed through as a PropertySubType Bridge doesn't know → count 0, no error, and every Sammy drip/blast/button send for SFH-typed leads silently sent nothing. Added 'single family'/'multi family' aliases; keep in sync with `lib/alert-search.js` TYPE_MAP (email alerts already mapped it — only this endpoint was blind).
-- 2026-07-16 [FAIL→fix]: "Flash didn't set a reminder" was a CRM-PANEL STALENESS bug, not a Flash bug — Flash's server DID create the no-answer retry reminder ~7s after the call (correct note + 10 AM ET). But `crm.js` rendered a lead's reminders from the page-load `allReminders` cache (`populatePanel`→`renderLeadReminders`) and NEVER re-fetched on panel open, so a reminder created after the tab loaded was invisible → Kevin re-added it by hand (Julian Niño ended up with 3 duplicate next-day Call reminders). Fix: `populatePanel` now fires `loadReminders()` then re-renders on open (instant cache paint first, no flicker); `handleFlashMessage` always refreshes reminders after a coached call (was gated on a well-formed `data.reminder`, so dead-lead calls with `followUp:null` never refreshed the panel). RULE: any panel showing rows another system mutates out-of-band (reminders, notes) must RE-FETCH on open, never render only the load-time cache — the 3rd "Flash didn't do X" false alarm traced to the panel not auto-refreshing.
+## Learnings
+
+Split out to keep this file lean → [`.claude/rules/learnings.md`](.claude/rules/learnings.md). Append new dated `[FAIL]`/`[WIN]`/`[FAST]` entries there, not here.

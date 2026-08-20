@@ -27,7 +27,8 @@ const EMAILJS_WELCOME_TEMPLATE = 'template_5t3k1w7';    // Intro email → new l
 // (Security audit 2026-07-17; the token was hardcoded here before.)
 const API_BASE   = '/api/bridge';
 const OTP_BASE   = 'https://poler-team-website-two.vercel.app'; // Vercel project with Twilio env vars
-const PAGE_SIZE  = 12;
+const PAGE_SIZE  = 50;
+const MAX_OFFSET = 10000; // Bridge rejects offsets past ~10k — clamp reachable pages
 
 // South Florida cities whitelist (Florida City through Fort Lauderdale + surrounding)
 const SOUTH_FL_CITIES = [
@@ -68,6 +69,23 @@ const utmData = getUtmParams();
 // ============================================================
 let heroListing    = null;   // Property shown in hero
 let searchOffset   = 0;      // Pagination offset
+let currentPage    = 0;      // 0-based page for the paginated grid
+let sortMode       = 'newest'; // 'newest' | 'price-desc' | 'price-asc'
+
+function sortParams() {
+    if (sortMode === 'price-desc') return { sortBy: 'ListPrice', order: 'desc' };
+    if (sortMode === 'price-asc')  return { sortBy: 'ListPrice', order: 'asc' };
+    // Newest = the date shown on the card (ListingContractDate), NOT the feed entry
+    // timestamp — they differ when a listing is entered late with a backdated
+    // contract date. The .gte guard drops the ~7 rows with NO date (Bridge sorts
+    // nulls first on desc, which would pin dateless listings to the top).
+    return { sortBy: 'ListingContractDate', order: 'desc', 'ListingContractDate.gte': '1900-01-01' };
+}
+function clientSort(listings) {
+    if (sortMode === 'price-desc') listings.sort((a, b) => (b.ListPrice || 0) - (a.ListPrice || 0));
+    else if (sortMode === 'price-asc') listings.sort((a, b) => (a.ListPrice || 0) - (b.ListPrice || 0));
+    else listings.sort(byNewestListed);
+}
 let lastQuery      = {};     // Last search params
 let totalResults   = 0;      // Total from API
 let leadCaptured   = false;  // Has user already registered?
@@ -297,15 +315,15 @@ function initLeadCapture() {
     // Guarded (2026-07-17): an unguarded localStorage throw here aborted the
     // entire boot chain incl. the popup wiring (see i18n.js getLang note).
     try { leadCaptured = !!localStorage.getItem('poler_lead_v1'); } catch (e) { leadCaptured = false; }
-    if (leadCaptured) return;
 
     // Recognize returning leads from alert emails (URL has ?t=TOKEN)
     const alertToken = new URLSearchParams(window.location.search).get('t');
-    if (alertToken && alertToken.length >= 10) {
+    if (!leadCaptured && alertToken && alertToken.length >= 10) {
         localStorage.setItem('poler_lead_v1', 'alert_' + alertToken);
         leadCaptured = true;
-        return;
     }
+    // NOTE (2026-08-19): captured visitors no longer bail out here — the form must
+    // stay functional because Call Us / Contact open this popup on demand for everyone.
 
     const overlay  = document.getElementById('lead-overlay');
     const bar      = document.getElementById('lead-timer-bar');
@@ -319,31 +337,60 @@ function initLeadCapture() {
         emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
     }
 
-    // 30-second countdown — persists across page refreshes
-    const DURATION    = 10000;
-    const TIMER_KEY   = 'poler_lead_timer_start';
-    let storedStart   = sessionStorage.getItem(TIMER_KEY);
-    if (!storedStart) {
-        storedStart = Date.now();
-        sessionStorage.setItem(TIMER_KEY, storedStart);
-    }
-    const START = Number(storedStart);
+    // AUTO-POPUP POLICY (Kevin 2026-08-19): the 10s gate fires ONLY for
+    // Facebook/Instagram traffic (fbclid param, meta utm_source, or FB/IG referrer).
+    // Google Ads, organic search, and direct visitors browse with NO auto-popup.
+    // Meta status is remembered for the whole visit (sessionStorage) so the gate
+    // still works when the visitor clicks into a property and URL params drop off.
+    const META_KEY = 'poler_meta_visitor';
+    let isMetaTraffic = false;
+    try {
+        const gp = new URLSearchParams(window.location.search);
+        const gsrc = (gp.get('utm_source') || '').toLowerCase();
+        const ref  = (document.referrer || '').toLowerCase();
+        if (gp.get('fbclid') ||
+            ['facebook', 'fb', 'ig', 'instagram', 'meta'].includes(gsrc) ||
+            ref.includes('facebook.com') || ref.includes('instagram.com')) {
+            isMetaTraffic = true;
+            sessionStorage.setItem(META_KEY, '1');
+        } else if (sessionStorage.getItem(META_KEY) === '1') {
+            isMetaTraffic = true;
+        }
+    } catch (e) { /* privacy-hardened browsers: no auto-popup */ }
+    const AUTO_POPUP = isMetaTraffic;
+    if (AUTO_POPUP && !leadCaptured) {
+        const DURATION    = 10000;
+        const TIMER_KEY   = 'poler_lead_timer_start';
+        let storedStart   = sessionStorage.getItem(TIMER_KEY);
+        if (!storedStart) {
+            storedStart = Date.now();
+            sessionStorage.setItem(TIMER_KEY, storedStart);
+        }
+        const START = Number(storedStart);
 
-    // If timer already expired (user refreshed after 10s), show modal immediately
-    if (Date.now() - START >= DURATION) {
-        bar.style.transform = 'scaleX(0)';
-        showLeadModal(overlay, pageWrap);
-    } else {
-        timerInterval = setInterval(() => {
-            const elapsed = Date.now() - START;
-            const pct = Math.max(0, 1 - elapsed / DURATION);
-            bar.style.transform = `scaleX(${pct})`;
-            if (elapsed >= DURATION) {
-                clearInterval(timerInterval);
-                showLeadModal(overlay, pageWrap);
-            }
-        }, 80);
+        // If timer already expired (user refreshed after 10s), show modal immediately
+        if (Date.now() - START >= DURATION) {
+            bar.style.transform = 'scaleX(0)';
+            showLeadModal(overlay, pageWrap);
+        } else {
+            timerInterval = setInterval(() => {
+                const elapsed = Date.now() - START;
+                const pct = Math.max(0, 1 - elapsed / DURATION);
+                bar.style.transform = `scaleX(${pct})`;
+                if (elapsed >= DURATION) {
+                    clearInterval(timerInterval);
+                    showLeadModal(overlay, pageWrap);
+                }
+            }, 80);
+        }
     }
+
+    // Deep link: ?signup=1 (Call Us / Contact from other pages) opens the form now
+    try {
+        if (new URLSearchParams(window.location.search).get('signup')) {
+            showLeadModal(overlay, pageWrap);
+        }
+    } catch (e) { /* non-critical */ }
 
     // Scroll trigger: show modal if user scrolls past 3rd property card
     function checkScrollTrigger() {
@@ -358,7 +405,11 @@ function initLeadCapture() {
             }
         }
     }
-    window.addEventListener('scroll', checkScrollTrigger, { passive: true });
+    // Scroll trigger is part of the Meta-only gate (Kevin 2026-08-20): Google Ads
+    // and organic visitors must never get a forced popup, scroll or no scroll.
+    if (AUTO_POPUP && !leadCaptured) {
+        window.addEventListener('scroll', checkScrollTrigger, { passive: true });
+    }
 
     // ── Timeline pills (single-select) ────────────────────────
     document.querySelectorAll('#timeline-pills .timeline-pill').forEach(pill => {
@@ -772,6 +823,16 @@ function startResendTimer() {
             timerEl.textContent = `(${seconds}s)`;
         }
     }, 1000);
+}
+
+
+// Open the lead-capture popup on demand (Call Us / Contact buttons).
+// ALWAYS shows the signup form (Kevin 2026-08-19) — args kept for onclick compat.
+function openLeadGate(fallbackUrl, newTab) {
+    const overlay  = document.getElementById('lead-overlay');
+    const pageWrap = document.getElementById('page-wrap');
+    if (overlay && pageWrap) showLeadModal(overlay, pageWrap);
+    else if (fallbackUrl) { if (newTab) window.open(fallbackUrl, '_blank'); else window.location.href = fallbackUrl; }
 }
 
 function showLeadModal(overlay, pageWrap) {
@@ -1200,17 +1261,11 @@ function renderHero(container, listing) {
 }
 
 function renderDefaultHero(container) {
-    container.innerHTML = `
-    <div class="hero-default">
-        <div class="hero-video-wrap">
-            <video class="hero-bg-video" autoplay muted loop playsinline>
-                <source src="sunny-isles-drone-web.mp4" type="video/mp4">
-            </video>
-            <div class="hero-video-overlay"></div>
-        </div>
-        <h1 class="hero-default-title" data-i18n="tagline">${t('tagline')}</h1>
-        <p class="hero-default-sub" data-i18n="showingFeatured">${t('showingFeatured')}</p>
-    </div>`;
+    // No property in the URL — hide the hero entirely so visitors (esp. from
+    // Google Ads) land directly on the search bar + property grid.
+    if (!container) return;
+    container.innerHTML = '';
+    container.style.display = 'none';
 }
 
 // Re-render hero when language changes
@@ -1413,27 +1468,66 @@ function initFilterToggle() {
 // ============================================================
 // SEARCH — build params + fetch from Bridge API
 // ============================================================
+// Multi-select property types: checkbox key -> Bridge PropertySubType values
+const PTYPE_SUBTYPES = {
+    sfr:   ['Single Family Residence'],
+    condo: ['Condominium', 'Stock Cooperative', 'Villa'],
+    town:  ['Townhouse'],
+    multi: ['Multi Family', 'Duplex', 'Triplex', 'Quadruplex'],
+};
+const PTYPE_LABEL_KEYS = { sfr: 'singleFamily', condo: 'condoVilla', town: 'townhouseOpt', multi: 'multiFamily' };
+
+function initTypeMulti() {
+    const btn   = document.getElementById('f-type-btn');
+    const panel = document.getElementById('f-type-panel');
+    const label = document.getElementById('f-type-label');
+    if (!btn || !panel || !label) return;
+
+    const updateLabel = () => {
+        const checked = [...panel.querySelectorAll('input[name="ptype"]:checked')].map(b => b.value);
+        if (!checked.length)      { label.textContent = t('allTypes'); label.setAttribute('data-i18n', 'allTypes'); }
+        else if (checked.length === 1) { label.textContent = t(PTYPE_LABEL_KEYS[checked[0]]); label.setAttribute('data-i18n', PTYPE_LABEL_KEYS[checked[0]]); }
+        else { label.textContent = `${checked.length} ${t('typesWord')}`; label.removeAttribute('data-i18n'); }
+    };
+
+    btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const open = panel.style.display !== 'none';
+        panel.style.display = open ? 'none' : 'block';
+        btn.setAttribute('aria-expanded', String(!open));
+    });
+    panel.addEventListener('click', (e) => e.stopPropagation());
+    document.addEventListener('click', () => {
+        if (panel.style.display !== 'none') { panel.style.display = 'none'; btn.setAttribute('aria-expanded', 'false'); }
+    });
+    panel.querySelectorAll('input[name="ptype"]').forEach(box => box.addEventListener('change', updateLabel));
+}
+
 function buildSearchParams() {
     const isRent = activeTab === 'rent';
-    const params = { limit: PAGE_SIZE, sortBy: 'ModificationTimestamp', order: 'desc', StandardStatus: 'Active' };
+    const params = { limit: PAGE_SIZE, ...sortParams(), StandardStatus: 'Active' };
 
     // Location (comma-separated cities → multiple City params handled below)
     const loc = document.getElementById('f-location').value.trim();
     if (loc) params._cities = loc.split(',').map(s => s.trim()).filter(Boolean);
 
-    // Property Type — respect Buy vs Rent tab
+    // Property Type — respect Buy vs Rent tab; multi-select checkboxes
+    // (none checked = All Types). Bridge takes PropertySubType.in=csv.
     const baseType = isRent ? 'Residential Lease' : 'Residential';
-    const type = document.getElementById('f-type').value;
-    if (type !== 'all') {
-        if (type === 'MultiFamily') {
-            params.PropertyType = baseType;
-            params.PropertySubType = 'Multi Family';
-        } else {
-            params.PropertyType = baseType;
-            params.PropertySubType = type;
+    params.PropertyType = baseType;
+    const typeKeys = [...document.querySelectorAll('#f-type-panel input[name="ptype"]:checked')].map(b => b.value);
+    if (typeKeys.length) {
+        const subs = typeKeys.flatMap(k => PTYPE_SUBTYPES[k] || []);
+        if (subs.length) params['PropertySubType.in'] = subs.join(',');
+        // Multifamily (Multi Family/Duplex/Triplex/Quadruplex) lives under
+        // PropertyType "Residential Income", NOT "Residential" — a plain
+        // Residential query returns ZERO for it (verified live 2026-08-20).
+        if (!isRent && typeKeys.includes('multi')) {
+            delete params.PropertyType;
+            params['PropertyType.in'] = typeKeys.length === 1 && typeKeys[0] === 'multi'
+                ? 'Residential Income'
+                : 'Residential,Residential Income';
         }
-    } else {
-        params.PropertyType = baseType;
     }
 
     // Price — Buy mode uses thousands shorthand (500 = $500K), Rent mode uses exact amount
@@ -1489,7 +1583,62 @@ function buildSearchParams() {
         params._wfType = document.querySelector('input[name="wf-type"]:checked')?.value || 'any';
     }
 
+    // Feature filters — Bridge fields verified live 2026-08-19:
+    // PoolPrivateYN=true (17k actives) · CommunityFeatures contains Gated/Gated Community
+    // (3.6k) · PatioAndPorchFeatures outdoor values (no literal "Terrace" in the feed) ·
+    // MIAMIRE_Restrictions "Daily Rentals Allowed" (940, same field the STR page uses)
+    if (document.getElementById('f-pool')?.checked)   params.PoolPrivateYN = 'true';
+    if (document.getElementById('f-gated')?.checked)  params['CommunityFeatures.in'] = 'Gated,Gated Community';
+    if (document.getElementById('f-terrace')?.checked) params['PatioAndPorchFeatures.in'] = 'Open Balcony,Patio,Deck,Open Porch,Wrap Around';
+    if (document.getElementById('f-str-ok')?.checked) params['MIAMIRE_Restrictions.in'] = 'Daily Rentals Allowed';
+
+    // HOA — AssociationFee ($/mo) range, or AssociationYN=false for "No HOA"
+    if (document.getElementById('f-no-hoa')?.checked) {
+        params.AssociationYN = 'false';
+    } else {
+        const hoaMin = parseFloat(document.getElementById('f-hoa-min')?.value);
+        const hoaMax = parseFloat(document.getElementById('f-hoa-max')?.value);
+        if (!isNaN(hoaMin) && hoaMin > 0) params['AssociationFee.gte'] = hoaMin;
+        if (!isNaN(hoaMax) && hoaMax > 0) params['AssociationFee.lte'] = hoaMax;
+    }
+
+    // Keywords — free-text, comma-separated (CRM style). Bridge has NO text-search
+    // operator (probed: .contains/.like 400), so terms filter client-side over a
+    // widened fetch window (see fetchListings). Every typed term must match, and
+    // keywords combine (AND) with every other filter above.
+    const kwRaw = (document.getElementById('f-keyword')?.value || '').trim();
+    if (kwRaw) {
+        const kws = kwRaw.split(/[,;]+/).map(t => t.trim().toLowerCase()).filter(Boolean);
+        if (kws.length) params._keywords = kws;
+    }
+
     return params;
+}
+
+// Keyword → match terms (EN + ES so LATAM-written remarks match too)
+const KEYWORD_TERMS = {
+    modern:    ['modern', 'moderno', 'moderna'],
+    moderno:   ['modern', 'moderno', 'moderna'],
+    renovated: ['renovated', 'remodeled', 'renovado', 'renovada', 'remodelado', 'remodelada', 'updated'],
+    renovado:  ['renovated', 'remodeled', 'renovado', 'renovada', 'remodelado', 'remodelada', 'updated'],
+    remodeled: ['renovated', 'remodeled', 'renovado', 'renovada', 'remodelado', 'remodelada', 'updated'],
+    private:   ['private', 'privado', 'privada', 'privacy'],
+    privado:   ['private', 'privado', 'privada', 'privacy'],
+    golf:      ['golf'],
+    pool:      ['pool', 'piscina'],
+    piscina:   ['pool', 'piscina'],
+    waterfront:['waterfront', 'water front', 'frente al agua'],
+};
+// Any word NOT in the map matches literally against the listing text.
+function listingMatchesKeywords(l, kws) {
+    const hay = [
+        l.PublicRemarks || '',
+        (l.InteriorFeatures || []).join(' '),
+        (l.ExteriorFeatures || []).join(' '),
+        (l.CommunityFeatures || []).join(' '),
+        (l.ArchitecturalStyle || []).join(' '),
+    ].join(' ').toLowerCase();
+    return kws.every(k => (KEYWORD_TERMS[k] || [k]).some(term => hay.includes(term)));
 }
 
 // Newest-to-market first. Sort by the SAME date shown on the card
@@ -1534,68 +1683,54 @@ function computeDaysOnMarket(l) {
     return bridge;
 }
 
-async function fetchCuratedListings() {
+
+// Results title (reference layout): "<City> Homes for Sale/Rent"
+function updateResultsTitle() {
+    const el = document.getElementById('results-title');
+    if (!el) return;
+    const loc = (document.getElementById('f-location') || {}).value || '';
+    const city = loc.split(',')[0].trim();
+    const mode = activeTab === 'rent' ? 'for Rent' : 'for Sale';
+    el.textContent = `${city || 'South Florida'} Homes ${mode}`;
+}
+
+async function fetchBrowseListings(page = 0) {
     const grid      = document.getElementById('results-grid');
     const countEl   = document.getElementById('results-count');
     const noResults = document.getElementById('no-results');
-    const loadMore  = document.getElementById('load-more-wrap');
 
-    grid.innerHTML = renderSkeletons();
+    currentPage = page;
+    updateResultsTitle();
+    grid.innerHTML = renderSkeletons(9);
     noResults.style.display = 'none';
-    loadMore.style.display  = 'none';
-    countEl.textContent = 'Loading featured properties...';
+    hidePagination();
+    countEl.textContent = 'Loading properties...';
 
     const isRent = activeTab === 'rent';
-    const ranges = isRent
-        ? [
-            { 'ListPrice.gte': 1500,  'ListPrice.lte': 5000 },
-            { 'ListPrice.gte': 5000,  'ListPrice.lte': 15000 },
-            { 'ListPrice.gte': 15000, 'ListPrice.lte': 50000 },
-          ]
-        : [
-            { 'ListPrice.gte': 500000,  'ListPrice.lte': 1000000 },
-            { 'ListPrice.gte': 1000000, 'ListPrice.lte': 5000000 },
-            { 'ListPrice.gte': 5000000, 'ListPrice.lte': 10000000 },
-          ];
 
     try {
-        // Sort the FETCH by entry date (not ModificationTimestamp — price-change
-        // touches on old listings were crowding brand-new listings out of the
-        // small pool, so "newest on market" showed 2+ day-old listings while
-        // DOM-0 listings existed). Fetch deep (40/bucket) because the miamire
-        // feed spans Palm Beach+ — non-South-FL cities eat slots before the
-        // city filter below.
-        const results = await Promise.allSettled(
-            ranges.map(r => apiFetch({
-                ...r,
-                StandardStatus: 'Active',
-                PropertyType: isRent ? 'Residential Lease' : 'Residential',
-                sortBy: 'OriginalEntryTimestamp',
-                order: 'desc',
-                limit: 40,
-            }))
-        );
-
-        let all = [];
-        results.forEach(r => {
-            if (r.status === 'fulfilled' && r.value.success && Array.isArray(r.value.bundle)) {
-                all = all.concat(r.value.bundle);
-            }
+        // Full South-FL active inventory, newest-on-market first (sort by entry
+        // date, not ModificationTimestamp — price-change touches on old listings
+        // would float them above genuinely new ones). City filter runs SERVER-side
+        // (City.in) so the API `total` is exact and pagination math holds.
+        const data = await apiFetch({
+            StandardStatus: 'Active',
+            PropertyType: isRent ? 'Residential Lease' : 'Residential',
+            'City.in': SOUTH_FL_CITIES.join(','),
+            ...sortParams(),
+            limit: PAGE_SIZE,
+            offset: page * PAGE_SIZE,
         });
 
-        // Filter to South Florida cities only
-        all = all.filter(l => l.City && SOUTH_FL_CITIES.includes(l.City));
-
-        // Sort newest-to-market first (by listing date shown on the card),
-        // then cap — "featured" stays a short list even with the deeper fetch.
-        all.sort(byNewestListed);
-        all = all.slice(0, 24);
+        const all = (data.success && Array.isArray(data.bundle)) ? data.bundle : [];
+        const total = (data.success && typeof data.total === 'number') ? data.total : all.length;
+        clientSort(all); // within-page order always matches the date on the card
 
         grid.innerHTML = '';
 
         if (!all.length) {
             noResults.style.display = 'block';
-            countEl.textContent = 'No featured properties available';
+            countEl.textContent = 'No properties available';
             return;
         }
 
@@ -1603,13 +1738,82 @@ async function fetchCuratedListings() {
         const renderFn = currentViewMode === 'list' ? renderListItem : renderCard;
         if (currentViewMode === 'list') grid.classList.add('results-list-view');
         all.forEach(l => grid.insertAdjacentHTML('beforeend', renderFn(l)));
-        countEl.textContent = `Showing ${all.length} featured propert${all.length === 1 ? 'y' : 'ies'}`;
+
+        const from = page * PAGE_SIZE + 1;
+        const to   = page * PAGE_SIZE + all.length;
+        countEl.textContent = `Showing ${from.toLocaleString()}-${to.toLocaleString()} of ${total.toLocaleString()} properties`;
+        renderPagination(total, page);
+
+        // Update map if in map view
+        if (document.getElementById('map-view')?.style.display === 'block') renderMapView();
     } catch (err) {
-        console.error('Curated listings error:', err);
+        console.error('Browse listings error:', err);
         grid.innerHTML = '';
         noResults.style.display = 'block';
         countEl.textContent = 'Error loading properties — please try searching';
     }
+}
+
+// ============================================================
+// PAGINATION — numbered pages under the grid (browse + search)
+// ============================================================
+function hidePagination() {
+    const wrap = document.getElementById('pagination-wrap');
+    if (wrap) { wrap.style.display = 'none'; wrap.innerHTML = ''; }
+}
+
+function goToPage(page) {
+    if (hasActiveSearch) runSearch(page, true); // reuse lastQuery — never rebuild from the form mid-pagination
+    else fetchBrowseListings(page);
+    // Jump back to the top of the results for the new page
+    const anchor = document.getElementById('browse-section');
+    if (anchor) anchor.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function renderPagination(total, page) {
+    const wrap = document.getElementById('pagination-wrap');
+    if (!wrap) return;
+
+    // Bridge rejects deep offsets — cap reachable pages at MAX_OFFSET
+    const totalPages = Math.min(
+        Math.ceil(total / PAGE_SIZE),
+        Math.floor(MAX_OFFSET / PAGE_SIZE)
+    );
+    if (totalPages <= 1) { hidePagination(); return; }
+
+    const btn = (label, target, opts = {}) => {
+        const cls = ['page-btn'];
+        if (opts.active) cls.push('active');
+        if (opts.nav) cls.push('page-nav');
+        const dis = opts.disabled ? ' disabled' : '';
+        return `<button class="${cls.join(' ')}"${dis} data-page="${target}">${label}</button>`;
+    };
+
+    // Windowed page numbers: 1 … p-1 p p+1 … last
+    const nums = new Set([0, totalPages - 1]);
+    for (let i = page - 2; i <= page + 2; i++) {
+        if (i >= 0 && i < totalPages) nums.add(i);
+    }
+    const sorted = [...nums].sort((a, b) => a - b);
+
+    let html = btn('‹ ' + t('prevPage'), page - 1, { nav: true, disabled: page === 0 });
+    let prev = -1;
+    sorted.forEach(p => {
+        if (prev !== -1 && p - prev > 1) html += '<span class="page-ellipsis">…</span>';
+        html += btn(String(p + 1), p, { active: p === page });
+        prev = p;
+    });
+    html += btn(t('nextPage') + ' ›', page + 1, { nav: true, disabled: page >= totalPages - 1 });
+
+    wrap.innerHTML = html;
+    wrap.style.display = 'flex';
+
+    wrap.querySelectorAll('.page-btn:not([disabled])').forEach(b => {
+        b.addEventListener('click', () => {
+            const target = parseInt(b.dataset.page, 10);
+            if (!isNaN(target) && target !== page) goToPage(target);
+        });
+    });
 }
 
 async function fetchListings(params, offset = 0) {
@@ -1620,31 +1824,49 @@ async function fetchListings(params, offset = 0) {
     delete params._statusList;
     const wfType = params._wfType;
     delete params._wfType;
+    const keywords = params._keywords;
+    delete params._keywords;
+
+    // Keyword mode: text-match runs client-side, so widen the fetch to the proxy
+    // max (200 newest) and search within it — every shown property truly matches.
+    if (keywords && keywords.length) { params.limit = 200; offset = 0; }
 
     params.offset = offset;
 
     let allListings = [];
+    let total = 0;
 
     if (cities && cities.length > 1) {
+        // Multi-city stays comma-safe (city names can't be trusted in a raw .in
+        // list from free-text input) — parallel per-city queries, totals summed.
         const requests = cities.map(city => {
             const p = { ...params, City: city };
             if (statusList) p.StandardStatus = statusList[0];
-            return apiFetch(p).then(d => (d.success && Array.isArray(d.bundle)) ? d.bundle : []);
+            return apiFetch(p).then(d => (d.success && Array.isArray(d.bundle))
+                ? { bundle: d.bundle, total: (typeof d.total === 'number' ? d.total : d.bundle.length) }
+                : { bundle: [], total: 0 });
         });
         const results = await Promise.all(requests);
-        allListings = results.flat();
-        // Sort newest-to-market first after merge (re-sorted again in runSearch)
-        allListings.sort(byNewestListed);
+        results.forEach(r => { allListings = allListings.concat(r.bundle); total += r.total; });
+        clientSort(allListings);
     } else {
         if (cities && cities.length === 1) params.City = cities[0];
         if (statusList) params.StandardStatus = statusList[0];
         const data = await apiFetch(params);
         allListings = (data.success && Array.isArray(data.bundle)) ? data.bundle : [];
+        total = (data.success && typeof data.total === 'number') ? data.total : allListings.length;
     }
 
     // Client-side filter for multiple statuses
     if (statusList && statusList.length > 1) {
         allListings = allListings.filter(l => statusList.includes(l.StandardStatus));
+    }
+
+    // Client-side keyword filter (remarks + feature arrays, EN/ES terms)
+    let keywordMode = false;
+    if (keywords && keywords.length) {
+        keywordMode = true;
+        allListings = allListings.filter(l => listingMatchesKeywords(l, keywords));
     }
 
     // Client-side filter for waterfront type
@@ -1656,12 +1878,25 @@ async function fetchListings(params, offset = 0) {
         });
     }
 
-    return allListings;
+    return { listings: allListings, total, keywordMode };
 }
 
 // ============================================================
 // RENDER LISTING CARDS
 // ============================================================
+
+// Share a listing (preview layout) - native share sheet, clipboard fallback
+function sharePreviewListing(lid) {
+    const url = `${window.location.origin}/listing?mls=${lid}`;
+    if (navigator.share) {
+        navigator.share({ title: 'The Poler Team', url }).catch(() => {});
+    } else if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(() => alert('Link copied'));
+    } else {
+        window.prompt('Copy this link:', url);
+    }
+}
+
 function renderCard(listing) {
     const photo   = getPhoto(listing);
     const price   = formatPrice(listing.ListPrice);
@@ -1669,7 +1904,6 @@ function renderCard(listing) {
     const city    = listing.City || '';
     const stats   = statsStr(listing);
     const lid     = listing.ListingId || '';
-    const agent   = 'Rosa Poler';
     const status  = listing.StandardStatus || 'Active';
 
     const imgHtml = photo
@@ -1682,9 +1916,8 @@ function renderCard(listing) {
     const dom = computeDaysOnMarket(listing);
     const isNew = dom != null && dom <= 7;
 
-    // Price per sqft
-    const sqft = listing.LivingArea;
-    const ppsfVal = (listing.ListPrice && sqft) ? Math.round(listing.ListPrice / sqft) : 0;
+    // Date the listing went to market (shown on every card)
+    const listDateStr = fmtListDate(listing.ListingContractDate || listing.OnMarketDate || '', { month: 'short', day: 'numeric', year: 'numeric' });
 
     // Heart/save state
     let savedHomes = [];
@@ -1702,26 +1935,24 @@ function renderCard(listing) {
     <div class="listing-card" data-lid="${lid}" onclick="window.location.href='listing?mls=${lid}'">
         <div class="listing-image" style="position:relative">
             ${imgHtml}
-            ${isNew ? '<span class="listing-new-badge">NEW</span>' : ''}
-            <button class="listing-save-btn ${isSaved ? 'saved' : ''}" onclick="event.stopPropagation();toggleSaveHome('${lid}',this)" aria-label="Save property">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="${isSaved ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
-            </button>
-            <div class="listing-overlay">
-                <span class="listing-area">${city}</span>
-                <span class="listing-status-badge ${statusClass}">${status}</span>
+            <div class="pv-chips">
+                <span class="pv-status ${statusClass}">${status}</span>
+                ${isNew ? '<span class="pv-new">New</span>' : ''}
             </div>
-            ${capBadge}
+            <div class="pv-actions">
+                <button class="pv-icon-btn pv-save ${isSaved ? 'saved' : ''}" onclick="event.stopPropagation();toggleSaveHome('${lid}',this)" aria-label="Save property">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="${isSaved ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+                </button>
+                <button class="pv-icon-btn" onclick="event.stopPropagation();sharePreviewListing('${lid}')" aria-label="Share property">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                </button>
+            </div>
         </div>
         <div class="listing-details">
             <div class="listing-price">${price}</div>
-            <div class="listing-address">${address}</div>
             ${stats ? `<div class="listing-stats">${stats}</div>` : ''}
-            ${ppsfVal ? `<div class="listing-ppsf">$${ppsfVal.toLocaleString()} / sq ft</div>` : ''}
-            <div class="listing-agent-row">
-                <img src="team-rosa.jpg" alt="${agent}" class="listing-agent-avatar">
-                <span class="listing-agent-name">${agent}</span>
-                <span class="listing-agent-brokerage">Optimar Int'l</span>
-            </div>
+            <div class="listing-address">${address}</div>
+            <div class="listing-mls">${listDateStr ? `${t('listedLabel')} ${listDateStr}` : ''}${dom != null ? `${listDateStr ? ' · ' : ''}${dom === 0 ? t('domToday') : dom + ' ' + t(dom === 1 ? 'domLabelOne' : 'domLabel')}` : ''}${(listDateStr || dom != null) && lid ? ' · ' : ''}${lid ? `MLS®: ${lid}` : ''}</div>
         </div>
     </div>`;
 }
@@ -1782,7 +2013,7 @@ function renderListItem(listing) {
     </div>`;
 }
 
-let currentViewMode = 'list'; // 'grid', 'list', or 'map' — default to list
+let currentViewMode = 'grid'; // 'grid', 'list', or 'map' — default to grid (Four Corners style)
 
 function switchView(mode) {
     const btns = document.querySelectorAll('.view-toggle-btn[data-view]');
@@ -1800,7 +2031,7 @@ function switchView(mode) {
         } else {
             grid.classList.remove('results-list-view');
         }
-        if (mode === 'map') { grid.style.display = 'none'; if (mapView) mapView.style.display = 'block'; }
+        if (mode === 'map') { grid.style.display = 'none'; if (mapView) mapView.style.display = 'block'; renderMapView(); }
         else { grid.style.display = ''; if (mapView) mapView.style.display = 'none'; }
         return;
     }
@@ -1822,6 +2053,7 @@ function switchView(mode) {
     } else if (mode === 'map') {
         grid.style.display = 'none';
         if (mapView) mapView.style.display = 'block';
+        renderMapView();
     }
 }
 
@@ -1830,18 +2062,18 @@ function initViewToggle() {
         btn.addEventListener('click', () => switchView(btn.dataset.view));
     });
 
-    // Set default active button to list
+    // Set default active button to grid
     const listBtn = document.getElementById('view-list-btn');
     const gridBtn = document.getElementById('view-grid-btn');
     if (listBtn && gridBtn) {
-        gridBtn.classList.remove('active');
-        listBtn.classList.add('active');
+        listBtn.classList.remove('active');
+        gridBtn.classList.add('active');
     }
 
-    // Support ?view=grid URL param override
+    // Support ?view=list URL param override
     const viewParam = new URLSearchParams(window.location.search).get('view');
-    if (viewParam === 'grid') {
-        if (gridBtn) gridBtn.click();
+    if (viewParam === 'list') {
+        if (listBtn) listBtn.click();
     }
 }
 
@@ -1857,63 +2089,75 @@ function renderSkeletons(n = 6) {
 }
 
 // ============================================================
-// SEARCH — main handler
+// SEARCH — main handler (page-replace pagination, 0-based pages)
 // ============================================================
-async function runSearch(append = false) {
+async function runSearch(page = 0, reuseQuery = false) {
     const grid       = document.getElementById('results-grid');
     const countEl    = document.getElementById('results-count');
     const noResults  = document.getElementById('no-results');
-    const loadMore   = document.getElementById('load-more-wrap');
     const searchBtn  = document.getElementById('search-btn');
     const searchTxt  = document.getElementById('search-btn-text');
 
-    const params = buildSearchParams();
-    if (!params) return; // validation failed
-
-    if (!append) {
-        searchOffset = 0;
-        grid.innerHTML = renderSkeletons();
-        noResults.style.display = 'none';
-        loadMore.style.display  = 'none';
-        countEl.textContent = 'Searching...';
+    const isFirstPage = page === 0 && !reuseQuery;
+    if (isFirstPage) {
+        // Fresh search — rebuild the query from the filter form
+        const params = buildSearchParams();
+        if (!params) return; // validation failed
         lastQuery = { ...params };
     }
+
+    currentPage = page;
+    updateResultsTitle();
+    searchOffset = page * PAGE_SIZE;
+    grid.innerHTML = renderSkeletons(9);
+    noResults.style.display = 'none';
+    hidePagination();
+    countEl.textContent = 'Searching...';
 
     searchBtn.disabled = true;
     if (searchTxt) searchTxt.textContent = t('search') + '...';
 
     try {
-        const listings = await fetchListings({ ...lastQuery }, searchOffset);
+        const { listings, total, keywordMode } = await fetchListings({ ...lastQuery }, searchOffset);
 
-        if (!append) grid.innerHTML = '';
+        grid.innerHTML = '';
 
-        if (!listings.length && !append) {
+        if (!listings.length) {
             noResults.style.display = 'block';
             countEl.textContent = 'No results found';
-            loadMore.style.display = 'none';
+            // Deep page came back empty (client-side filters can thin pages) —
+            // keep pagination visible so the user can navigate back.
+            if (page > 0 && total > 0) renderPagination(total, page);
             return;
         }
 
-        // Sort newest-to-market first (by listing date shown on the card)
-        listings.sort(byNewestListed);
+        clientSort(listings);
 
-        if (!append) window._currentListings = listings;
-        else window._currentListings = (window._currentListings || []).concat(listings);
+        window._currentListings = listings;
+        totalResults = total;
 
         const renderFn = currentViewMode === 'list' ? renderListItem : renderCard;
-        if (currentViewMode === 'list' && !append) grid.classList.add('results-list-view');
+        if (currentViewMode === 'list') grid.classList.add('results-list-view');
         listings.forEach(l => {
             grid.insertAdjacentHTML('beforeend', renderFn(l));
         });
 
-        searchOffset += listings.length;
-        totalResults = searchOffset; // approximate
-
-        countEl.textContent = `Showing ${searchOffset} propert${searchOffset === 1 ? 'y' : 'ies'}`;
-        loadMore.style.display = listings.length === PAGE_SIZE ? 'block' : 'none';
+        if (keywordMode) {
+            // Text search runs over the 200 newest results of the other filters —
+            // say so instead of pretending we paged the whole inventory.
+            countEl.textContent = `${listings.length} matching propert${listings.length === 1 ? 'y' : 'ies'} (keyword search covers the 200 newest results)`;
+            hidePagination();
+        } else {
+            const from = searchOffset + 1;
+            const to   = searchOffset + listings.length;
+            countEl.textContent = total > listings.length
+                ? `Showing ${from.toLocaleString()}-${to.toLocaleString()} of ${total.toLocaleString()} properties`
+                : `Showing ${listings.length} propert${listings.length === 1 ? 'y' : 'ies'}`;
+            renderPagination(total, page);
+        }
 
         // Show save search CTA after explicit search
-        if (!append && hasActiveSearch) {
+        if (hasActiveSearch) {
             const cta = document.getElementById('save-search-cta');
             if (cta) cta.style.display = 'block';
         }
@@ -1922,7 +2166,7 @@ async function runSearch(append = false) {
         if (document.getElementById('map-view')?.style.display === 'block') renderMapView();
 
         // Log search activity to CRM (non-blocking)
-        if (!append) {
+        if (isFirstPage) {
             try {
                 const leadData = localStorage.getItem('poler_lead_v1');
                 if (leadData) {
@@ -1944,11 +2188,9 @@ async function runSearch(append = false) {
 
     } catch (err) {
         console.error('Search error:', err);
-        if (!append) {
-            grid.innerHTML = '';
-            noResults.style.display = 'block';
-            countEl.textContent = 'Search error — please try again';
-        }
+        grid.innerHTML = '';
+        noResults.style.display = 'block';
+        countEl.textContent = 'Search error — please try again';
     } finally {
         searchBtn.disabled = false;
         if (searchTxt) searchTxt.textContent = t('searchProperties');
@@ -1960,11 +2202,11 @@ async function runSearch(append = false) {
 // ============================================================
 function refreshGrid() {
     if (hasActiveSearch && lastQuery && Object.keys(lastQuery).length > 0) {
-        // Re-run the last search to update translated labels
-        runSearch(false);
+        // Re-run the last search (same page) to update translated labels
+        runSearch(currentPage, true);
     } else {
-        // Re-fetch curated listings with translated labels
-        fetchCuratedListings();
+        // Re-fetch the browse grid (same page) with translated labels
+        fetchBrowseListings(currentPage);
     }
 }
 
@@ -1986,13 +2228,17 @@ function initTabs() {
             tab.classList.add('active');
             activeTab = tab.dataset.tab;
 
-            // Show/hide sell form vs search bar
+            // Show/hide sell form vs search bar (+ inline filter bar, which now
+            // lives in the same row as the search bar)
+            const filterBar = document.getElementById('filter-bar');
             if (activeTab === 'sell') {
                 if (searchWrap) searchWrap.style.display = 'none';
+                if (filterBar) filterBar.style.display = 'none';
                 if (sellPanel) sellPanel.style.display = 'block';
                 if (browseSection) browseSection.style.display = 'none';
             } else {
                 if (searchWrap) searchWrap.style.display = '';
+                if (filterBar) filterBar.style.display = '';
                 if (sellPanel) sellPanel.style.display = 'none';
                 if (browseSection) browseSection.style.display = '';
 
@@ -2015,10 +2261,19 @@ function initTabs() {
 
                 // Re-fetch with correct mode (buy = sale listings, rent = rental listings)
                 hasActiveSearch = false;
-                fetchCuratedListings();
+                fetchBrowseListings(0);
             }
         });
     });
+
+    // Deep link from other pages' nav: ?tab=sell|rent opens that tab on load
+    try {
+        const tabParam = new URLSearchParams(window.location.search).get('tab');
+        if (tabParam && tabParam !== 'buy') {
+            const tBtn = document.querySelector('[data-tab="' + tabParam + '"]');
+            if (tBtn) tBtn.click();
+        }
+    } catch (e) { /* non-critical */ }
 }
 
 // ============================================================
@@ -2071,19 +2326,11 @@ function initSearchBar() {
             grid.innerHTML = renderSkeletons();
             countEl.textContent = 'Searching...';
             const isRent = activeTab === 'rent';
-            const params = { limit: PAGE_SIZE, sortBy: 'ModificationTimestamp', order: 'desc', StandardStatus: 'Active', PropertyType: isRent ? 'Residential Lease' : 'Residential', PostalCode: val };
+            const params = { limit: PAGE_SIZE, ...sortParams(), StandardStatus: 'Active', PropertyType: isRent ? 'Residential Lease' : 'Residential', PostalCode: val };
             lastQuery = { ...params };
-            const listings = await fetchListings(params);
-            // Sort newest-to-market first (by listing date shown on the card)
-            listings.sort(byNewestListed);
-            grid.innerHTML = '';
-            window._currentListings = listings;
-            if (!listings.length) { document.getElementById('no-results').style.display = 'block'; countEl.textContent = 'No results found'; return; }
-            document.getElementById('no-results').style.display = 'none';
-            const renderFn2 = currentViewMode === 'list' ? renderListItem : renderCard;
-            if (currentViewMode === 'list') grid.classList.add('results-list-view');
-            listings.forEach(l => grid.insertAdjacentHTML('beforeend', renderFn2(l)));
-            countEl.textContent = `Showing ${listings.length} properties`;
+            // Route through runSearch with the prebuilt ZIP query so results get
+            // the same count line + pagination as every other search.
+            runSearch(0, true);
             const browse = document.getElementById('browse-section');
             if (browse) browse.scrollIntoView({ behavior: 'smooth', block: 'start' });
             return;
@@ -2093,7 +2340,7 @@ function initSearchBar() {
         const locInput = document.getElementById('f-location');
         if (locInput) locInput.value = val;
         hasActiveSearch = true;
-        runSearch(false);
+        runSearch(0);
         const browse = document.getElementById('browse-section');
         if (browse) browse.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
@@ -2154,22 +2401,6 @@ function initSearchBar() {
 // ============================================================
 // AREA CHIP BUTTONS (Quick city search)
 // ============================================================
-function initAreaChips() {
-    document.querySelectorAll('.area-chip').forEach(chip => {
-        chip.addEventListener('click', () => {
-            const city = chip.dataset.city;
-            const locInput = document.getElementById('f-location');
-            const searchInput = document.getElementById('search-autocomplete');
-            if (locInput) locInput.value = city;
-            if (searchInput) searchInput.value = city;
-            hasActiveSearch = true;
-            runSearch(false);
-            const browse = document.getElementById('browse-section');
-            if (browse) browse.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        });
-    });
-}
-
 // ============================================================
 // SAVE HOME (heart icon on cards)
 // ============================================================
@@ -2264,28 +2495,9 @@ async function loadSimilarProperties(listing) {
 let mapInstance = null;
 let mapMarkers = [];
 
-function initViewToggle() {
-    const listBtn = document.getElementById('view-list-btn');
-    const mapBtn  = document.getElementById('view-map-btn');
-    const grid    = document.getElementById('results-grid');
-    const mapDiv  = document.getElementById('map-view');
-    if (!listBtn || !mapBtn || !grid || !mapDiv) return;
-
-    listBtn.addEventListener('click', () => {
-        listBtn.classList.add('active');
-        mapBtn.classList.remove('active');
-        grid.style.display = '';
-        mapDiv.style.display = 'none';
-    });
-
-    mapBtn.addEventListener('click', () => {
-        mapBtn.classList.add('active');
-        listBtn.classList.remove('active');
-        grid.style.display = 'none';
-        mapDiv.style.display = 'block';
-        renderMapView();
-    });
-}
+/* NOTE: a legacy duplicate initViewToggle used to live here — as a classic
+   script, its declaration SHADOWED the real one above (grid/list clicks only
+   toggled the active class and never re-rendered). Removed 2026-08-19. */
 
 function renderMapView() {
     const mapDiv = document.getElementById('map-view');
@@ -2388,22 +2600,62 @@ function enhanceDroneVideo() {
     if (playPromise) playPromise.catch(() => {});
 }
 
-function initSearch() {
-    document.getElementById('search-btn').addEventListener('click', () => { hasActiveSearch = true; runSearch(false); });
+// Sell-tab valuation form — wire to the CRM (pre-2026-08-19 it had NO handler:
+// the browser did a default GET reload and the seller lead was silently lost).
+function initSellForm() {
+    const form = document.getElementById('sell-form');
+    if (!form) return;
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const name  = (document.getElementById('sell-name')?.value || '').trim();
+        const email = (document.getElementById('sell-email')?.value || '').trim();
+        const phone = (document.getElementById('sell-phone')?.value || '').trim();
+        const addr  = (document.getElementById('sell-address')?.value || '').trim();
+        if (!name || !email || !addr) return;
+        const parts = name.split(/\s+/);
+        const first = parts.shift() || '';
+        const last  = parts.join(' ');
+        fetch('/api/save-lead', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                first, last, email, phone,
+                listingAddress: 'VALUATION: ' + addr,
+                sourceUrl: window.location.href,
+                pageUrl: window.location.href,
+                language: (typeof getLang === 'function' ? getLang() : 'en'),
+                timeline: 'Home Valuation',
+            }),
+        }).then(r => r.json()).then(() => {
+            if (typeof gtag_report_conversion === 'function') { try { gtag_report_conversion(); } catch (e2) {} }
+            form.style.display = 'none';
+            const ok = document.getElementById('sell-success');
+            if (ok) ok.style.display = 'block';
+        }).catch(() => { /* leave the form for retry */ });
+    });
+}
 
-    document.getElementById('load-more-btn').addEventListener('click', () => {
-        document.getElementById('load-more-btn').disabled = true;
-        document.getElementById('load-more-btn').textContent = t('search') + '...';
-        runSearch(true).finally(() => {
-            document.getElementById('load-more-btn').disabled = false;
-            document.getElementById('load-more-btn').textContent = t('loadMore');
-        });
+function initSearch() {
+    document.getElementById('search-btn').addEventListener('click', () => { hasActiveSearch = true; runSearch(0); });
+
+    // Sort control (reference layout)
+    const sortSel = document.getElementById('sort-select');
+    if (sortSel) sortSel.addEventListener('change', () => {
+        sortMode = sortSel.value;
+        if (hasActiveSearch) runSearch(0, true); else fetchBrowseListings(0);
+    });
+
+    // Save search button reveals the alert-subscribe card
+    const saveBtn = document.getElementById('save-search-btn');
+    if (saveBtn) saveBtn.addEventListener('click', () => {
+        const cta = document.getElementById('save-search-cta');
+        if (cta) { cta.style.display = 'block'; cta.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
     });
 
     // Enter key in filter inputs triggers search
-    document.querySelectorAll('.filter-input, .filter-select').forEach(el => {
+    document.querySelectorAll('.fb-input, .fb-input-sm, .fb-select').forEach(el => {
         el.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') { e.preventDefault(); hasActiveSearch = true; runSearch(false); }
+            if (e.key === 'Enter') { e.preventDefault(); hasActiveSearch = true; runSearch(0); }
         });
     });
 
@@ -2415,13 +2667,14 @@ function initSearch() {
         if (locInput) locInput.value = decodeURIComponent(cityParam.replace(/\+/g, ' '));
     }
 
-    // If search-specific params exist, run search; otherwise show curated mix.
+    // If search-specific params exist, run search; otherwise browse the full
+    // South-FL inventory newest-first (paginated).
     // Note: 'id' and 'mls' are for the hero property display, not for grid search.
     const hasSearchParam = urlParams.get('city');
     if (hasSearchParam) {
-        runSearch(false);
+        runSearch(0);
     } else {
-        fetchCuratedListings();
+        fetchBrowseListings(0);
     }
 }
 
@@ -2870,16 +3123,45 @@ document.addEventListener('DOMContentLoaded', () => {
     initLeadCapture();
     initHeroProperty();
     initTabs();
+    initTypeMulti();
+    initSellForm();
     initLookup();
     initYearSlider();
     initWaterfrontToggle();
     initFilterToggle();
     initSearchBar();
-    initAreaChips();
     initSearch();
     initViewToggle();
     initSaveSearch();
     initFooterAlert();
     initViewToggle();
     setTimeout(enhanceDroneVideo, 500);
+});
+
+// ============================================================
+// PAGE-LEAVE FADE (2026-08-19) — quick white fade covering the
+// repaint flash when navigating between pages (card -> detail,
+// nav links, detail -> results). ES5 only.
+// ============================================================
+document.addEventListener('DOMContentLoaded', function () {
+    var fade = document.createElement('div');
+    fade.setAttribute('aria-hidden', 'true');
+    fade.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;z-index:2000;background:#fff;opacity:0;pointer-events:none;transition:opacity 0.18s ease;';
+    document.body.appendChild(fade);
+    function showFade() { fade.style.opacity = '1'; }
+    document.addEventListener('click', function (e) {
+        var el = e.target;
+        if (!el || !el.closest) return;
+        var a = el.closest('a[href]');
+        if (a) {
+            var href = a.getAttribute('href');
+            if (!href || href.charAt(0) === '#' || href.indexOf('tel:') === 0 || href.indexOf('mailto:') === 0 ||
+                href.indexOf('http') === 0 || a.target === '_blank' || a.getAttribute('onclick')) return;
+            showFade();
+            return;
+        }
+        if (el.closest('.listing-card, .lv-item')) showFade();
+    });
+    // Coming back via bfcache restores this page as-is — clear the fade
+    window.addEventListener('pageshow', function () { fade.style.opacity = '0'; });
 });

@@ -3,26 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="google-site-verification" content="_FFMrOx5MLPhkf9N1O4uhLuluVA5g26G8IJ_bT1yMmY" />
     <title>South Florida Homes for Sale &amp; Condos | The Poler Team</title>
     <meta name="description" content="Homes for sale in Miami-Dade &amp; Broward — Brickell, South Beach, Sunny Isles Beach, Aventura &amp; Coral Gables. Luxury condos &amp; waterfront homes. 100+ closings.">
     <link rel="canonical" href="https://www.homesinsoflorida.com/">
-
-    <!-- Open Graph -->
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="The Poler Team">
     <meta property="og:title" content="South Florida Homes for Sale &amp; Condos | The Poler Team">
     <meta property="og:description" content="Homes for sale in Miami-Dade &amp; Broward — Brickell, South Beach, Sunny Isles Beach, Aventura &amp; Coral Gables. Luxury condos &amp; waterfront homes.">
     <meta property="og:url" content="https://www.homesinsoflorida.com/">
     <meta property="og:image" content="https://www.homesinsoflorida.com/logo.png">
-
-    <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary">
+    <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="South Florida Homes for Sale &amp; Condos | The Poler Team">
     <meta name="twitter:description" content="Homes for sale in Miami-Dade &amp; Broward — Brickell, South Beach, Sunny Isles Beach, Aventura &amp; Coral Gables. Luxury condos &amp; waterfront homes.">
-    <meta name="twitter:image" content="https://www.homesinsoflorida.com/logo.png">
-
-    <!-- Structured data -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -83,866 +75,851 @@
       ]
     }
     </script>
+    <link rel="icon" href="favicon.ico">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="icon" type="image/x-icon" href="favicon.ico">
-    <link rel="icon" type="image/png" sizes="192x192" href="favicon-192.png">
-    <link rel="apple-touch-icon" href="apple-touch-icon.png">
-    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="listing.css">
+
+    <style>
+    /* ============================================================
+       HOMEPAGE (reference: premium agent homepage; Poler tokens)
+       ============================================================ */
+    body { background: #fff; }
+
+    /* No hairlines around the nav: the hero video sits flush against the banner */
+    .lp-header { border-bottom: none; }
+    .lp-nav { border-bottom: none; }
+
+    /* Leaving the page: quick white fade that covers the video teardown flash
+       (Chrome drops the video layer during navigation, exposing the photo fallback) */
+    #hp-navfade {
+        position: fixed; inset: 0; z-index: 2000; background: #fff;
+        opacity: 0; pointer-events: none; transition: opacity 0.18s ease;
+    }
+    #hp-navfade.on { opacity: 1; }
+
+    /* ---- HERO: full-screen photo + name + search ---- */
+    .hp-hero {
+        min-height: 100dvh;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        background:
+            linear-gradient(rgba(15,22,38,0.42), rgba(15,22,38,0.5)),
+            url('hero-poster.jpg') center/cover no-repeat;
+        color: #fff; text-align: center; padding: 3rem 1.25rem;
+    }
+    .hp-hero-eyebrow {
+        font-size: 0.78rem; font-weight: 700; letter-spacing: 0.22em; text-transform: uppercase;
+        color: rgba(255,255,255,0.85); margin-bottom: 0.9rem;
+    }
+    .hp-hero h1 {
+        font-family: var(--font-heading);
+        font-size: clamp(2.6rem, 6.5vw, 4.6rem); font-weight: 700; letter-spacing: 0.01em;
+        margin-bottom: 1.6rem; text-wrap: balance;
+    }
+    .hp-hero-bar {
+        display: flex; gap: 0.6rem; background: #fff; border-radius: 10px;
+        padding: 0.45rem 0.45rem 0.45rem 1.1rem; align-items: center;
+        width: min(640px, 92vw);
+        box-shadow: 0 14px 40px rgba(5,10,22,0.4);
+    }
+    .hp-hero-bar svg { color: var(--navy); flex-shrink: 0; }
+    .hp-hero-bar input {
+        flex: 1; min-width: 0; border: none; outline: none; background: transparent;
+        font-size: 0.95rem; color: var(--text); font-family: var(--font-body); padding: 0.55rem 0;
+    }
+    .hp-hero-bar button {
+        background: var(--navy); color: #fff; border: none; cursor: pointer;
+        font-size: 0.86rem; font-weight: 700; padding: 0.75rem 1.5rem; border-radius: 8px;
+        transition: background 0.2s, transform 0.15s; white-space: nowrap;
+    }
+    .hp-hero-bar button:hover { background: var(--orange-dark); }
+    .hp-hero-bar button:active { transform: scale(0.98); }
+
+    /* ---- STATS BAND ---- */
+    .hp-stats { text-align: center; padding: 3.5rem 1.25rem 3rem; }
+    .hp-stats-kicker { font-size: 0.76rem; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.6rem; }
+    .hp-stats h2 { font-family: var(--font-heading); font-size: clamp(1.7rem, 3.4vw, 2.6rem); color: var(--text); margin-bottom: 0.5rem; }
+    .hp-stats-sub { font-size: 0.95rem; color: var(--text-muted); margin-bottom: 2.2rem; }
+    .hp-stats-row { display: flex; justify-content: center; gap: clamp(2rem, 8vw, 7rem); flex-wrap: wrap; }
+    .hp-stat-num { font-family: var(--font-heading); font-size: clamp(1.8rem, 3.2vw, 2.6rem); font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
+    .hp-stat-label { font-size: 0.76rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); margin-top: 0.3rem; }
+
+    /* ---- 3 PHOTO TILES ---- */
+    .hp-tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; padding: 0 1.25rem 3.5rem; max-width: 1500px; margin: 0 auto; }
+    .hp-tile {
+        position: relative; height: 380px; border-radius: 12px; overflow: hidden;
+        display: flex; align-items: flex-end; justify-content: center;
+        text-decoration: none; color: #fff;
+        background-size: cover; background-position: center;
+        transition: transform 0.25s cubic-bezier(0.16,1,0.3,1), box-shadow 0.25s;
+    }
+    .hp-tile::before { content: ""; position: absolute; inset: 0; background: linear-gradient(to top, rgba(10,16,30,0.72), rgba(10,16,30,0.08) 55%); transition: background 0.25s; }
+    .hp-tile:hover { transform: translateY(-4px); box-shadow: 0 14px 34px rgba(26,39,68,0.25); }
+    .hp-tile span {
+        position: relative; font-family: var(--font-heading); font-size: 1.55rem; font-weight: 700;
+        padding-bottom: 1.6rem; letter-spacing: 0.02em;
+    }
+
+    /* ---- MEET ROSA ---- */
+    .hp-meet { background: var(--bg); padding: 4rem 1.25rem; }
+    .hp-meet-inner { max-width: 1300px; margin: 0 auto; display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 3rem; align-items: center; }
+    .hp-meet-photo-wrap { position: relative; padding-left: clamp(2rem, 8vw, 9rem); }
+    .hp-meet-photo { width: min(400px, 100%); border-radius: 12px; display: block; margin-left: auto; box-shadow: var(--shadow-md); }
+    .hp-meet-card {
+        position: absolute; left: 0; bottom: 2.2rem;
+        background: var(--navy); color: #fff; border-radius: 10px;
+        padding: 1.5rem 1.7rem; max-width: 300px; box-shadow: 0 16px 40px rgba(10,16,30,0.35);
+    }
+    .hp-meet-card .hp-meet-kicker { font-size: 0.72rem; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(255,255,255,0.75); display: inline-flex; align-items: center; gap: 0.6rem; }
+    .hp-meet-card .hp-meet-kicker::before { content: ""; width: 34px; height: 1.5px; background: rgba(255,255,255,0.6); }
+    .hp-meet-card h2 { font-family: var(--font-heading); font-size: 1.9rem; margin: 0.45rem 0 0.6rem; }
+    .hp-meet-card p { font-size: 0.86rem; color: rgba(255,255,255,0.85); line-height: 1.6; }
+    .hp-meet-bio p { font-size: 0.95rem; color: var(--text-muted); line-height: 1.75; margin-bottom: 1rem; max-width: 58ch; }
+    .hp-meet-cta {
+        display: inline-block; background: var(--navy); color: #fff;
+        font-size: 0.86rem; font-weight: 700; padding: 0.8rem 1.6rem; border-radius: 8px;
+        text-decoration: none; transition: background 0.2s; margin-top: 0.4rem;
+    }
+    .hp-meet-cta:hover { background: var(--orange-dark); }
+    .hp-meet-social { display: flex; gap: 0.6rem; margin-top: 1.4rem; }
+    .hp-meet-social a {
+        width: 38px; height: 38px; border-radius: 50%;
+        background: #fff; border: 1px solid var(--border); color: var(--navy);
+        display: flex; align-items: center; justify-content: center;
+        transition: background 0.2s, color 0.2s;
+    }
+    .hp-meet-social a:hover { background: var(--navy); color: #fff; }
+
+    /* ---- TEAM ROW (Kevin + Dylan) ---- */
+    .hp-team { max-width: 1300px; margin: 3rem auto 0; display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+    .hp-team-card {
+        display: flex; align-items: center; gap: 1.4rem;
+        background: #fff; border: 1px solid var(--border); border-radius: 12px;
+        padding: 1.4rem 1.6rem;
+    }
+    .hp-team-photo {
+        width: 96px; height: 96px; border-radius: 50%; object-fit: cover; flex-shrink: 0;
+        box-shadow: var(--shadow);
+    }
+    .hp-team-mono {
+        width: 96px; height: 96px; border-radius: 50%; flex-shrink: 0;
+        background: var(--navy); color: #fff;
+        display: flex; align-items: center; justify-content: center;
+        font-family: var(--font-heading); font-size: 2rem; font-weight: 700;
+        box-shadow: var(--shadow);
+    }
+    .hp-team-info h3 { font-family: var(--font-heading); font-size: 1.35rem; color: var(--text); margin-bottom: 0.15rem; }
+    .hp-team-role { font-size: 0.78rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.4rem; }
+    .hp-team-info p { font-size: 0.86rem; color: var(--text-muted); line-height: 1.55; }
+    @media (max-width: 760px) { .hp-team { grid-template-columns: 1fr; } .hp-team-card { flex-direction: column; text-align: center; } }
+
+    /* ---- TESTIMONIALS ---- */
+    .hp-quotes {
+        background:
+            linear-gradient(rgba(20,28,48,0.82), rgba(20,28,48,0.82)),
+            url('https://images.unsplash.com/photo-1535498730771-e735b998cd64?w=1920&q=75&fm=jpg') center/cover no-repeat;
+        color: #fff; text-align: center; padding: 4.5rem 1.25rem;
+    }
+    .hp-quotes-kicker { font-size: 0.76rem; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(255,255,255,0.75); margin-bottom: 2rem; }
+    .hp-quote-slide { display: none; max-width: 820px; margin: 0 auto; }
+    .hp-quote-slide.active { display: block; animation: hpFade 0.5s ease; }
+    .hp-quote-text { font-family: var(--font-heading); font-size: clamp(1.25rem, 2.6vw, 1.9rem); line-height: 1.5; margin-bottom: 1.4rem; }
+    .hp-quote-name { font-size: 0.82rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(255,255,255,0.8); }
+    .hp-quote-dots { display: flex; justify-content: center; gap: 0.5rem; margin-top: 2rem; }
+    .hp-quote-dot { width: 9px; height: 9px; border-radius: 50%; background: rgba(255,255,255,0.35); border: none; cursor: pointer; padding: 0; }
+    .hp-quote-dot.active { background: #fff; }
+    @keyframes hpFade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* ---- FEATURED LISTINGS ---- */
+    .hp-featured { padding: 4rem 1.25rem; max-width: 1500px; margin: 0 auto; }
+    .hp-featured-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; margin-bottom: 1.6rem; flex-wrap: wrap; }
+    .hp-featured-head h2 { font-family: var(--font-heading); font-size: clamp(1.7rem, 3.4vw, 2.6rem); color: var(--text); }
+    .hp-viewall {
+        border: 1.5px solid var(--navy); color: var(--navy); background: transparent;
+        font-size: 0.84rem; font-weight: 700; padding: 0.65rem 1.4rem; border-radius: 40px;
+        text-decoration: none; transition: background 0.2s, color 0.2s; white-space: nowrap;
+    }
+    .hp-viewall:hover { background: var(--navy); color: #fff; }
+    .hp-featured-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; }
+    .hp-listing {
+        position: relative; height: 320px; border-radius: 12px; overflow: hidden;
+        display: block; text-decoration: none; color: #fff; background: #e9ebef;
+    }
+    .hp-listing img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.35s cubic-bezier(0.16,1,0.3,1); }
+    .hp-listing:hover img { transform: scale(1.04); }
+    .hp-listing-info {
+        position: absolute; left: 0; right: 0; bottom: 0;
+        background: linear-gradient(to top, rgba(10,16,30,0.78), transparent);
+        padding: 2rem 1.2rem 1.1rem;
+    }
+    .hp-listing-price { font-size: 1.25rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+    .hp-listing-addr { font-size: 0.82rem; color: rgba(255,255,255,0.88); margin-top: 0.2rem; }
+
+    /* ---- VALUATION BAND ---- */
+    .hp-val {
+        background:
+            linear-gradient(rgba(26,39,68,0.8), rgba(26,39,68,0.72)),
+            url('https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=1920&q=75&fm=jpg') center/cover no-repeat;
+        color: #fff; text-align: center; padding: 4.5rem 1.25rem;
+    }
+    .hp-val h2 { font-family: var(--font-heading); font-size: clamp(1.8rem, 4vw, 3rem); margin-bottom: 1rem; }
+    .hp-val-checks { display: flex; justify-content: center; gap: 1.75rem; flex-wrap: wrap; margin-bottom: 1.8rem; }
+    .hp-val-check { display: flex; align-items: center; gap: 0.45rem; font-size: 0.86rem; font-weight: 600; color: rgba(255,255,255,0.92); }
+    .hp-val-check svg { color: #7fd4a3; }
+    .hp-val-cta {
+        display: inline-block; background: #fff; color: var(--navy);
+        font-size: 0.9rem; font-weight: 700; padding: 0.9rem 2rem; border-radius: 40px;
+        text-decoration: none; transition: transform 0.15s, box-shadow 0.2s;
+    }
+    .hp-val-cta:hover { transform: translateY(-1px); box-shadow: 0 10px 26px rgba(0,0,0,0.3); }
+
+    /* ---- NEIGHBORHOODS (reuses listing.css card styles) ---- */
+    .hp-neigh { padding: 4rem 1.25rem; max-width: 1500px; margin: 0 auto; }
+    .hp-neigh h2 { font-family: var(--font-heading); font-size: clamp(1.7rem, 3.4vw, 2.6rem); color: var(--text); text-align: center; margin-bottom: 2rem; }
+
+    /* ---- SELL / BUY DUO ---- */
+    .hp-duo { display: grid; grid-template-columns: 1fr 1fr; }
+    .hp-duo-tile {
+        position: relative; min-height: 340px; display: flex; flex-direction: column;
+        align-items: center; justify-content: center; text-align: center; color: #fff;
+        background-size: cover; background-position: center; padding: 3rem 1.25rem;
+    }
+    .hp-duo-tile::before { content: ""; position: absolute; inset: 0; background: rgba(14,20,36,0.62); }
+    .hp-duo-tile > * { position: relative; }
+    .hp-duo-tile h3 { font-family: var(--font-heading); font-size: 1.8rem; margin-bottom: 0.5rem; }
+    .hp-duo-tile p { font-size: 0.92rem; color: rgba(255,255,255,0.85); margin-bottom: 1.4rem; }
+    .hp-duo-cta {
+        border: 1.5px solid #fff; color: #fff; text-decoration: none;
+        font-size: 0.84rem; font-weight: 700; padding: 0.75rem 1.6rem; border-radius: 40px;
+        transition: background 0.2s, color 0.2s;
+    }
+    .hp-duo-cta:hover { background: #fff; color: var(--navy); }
+
+    /* ---- WORK WITH CTA ---- */
+    .hp-work { background: var(--navy); color: #fff; text-align: center; padding: 4rem 1.25rem; }
+    .hp-work-kicker { font-size: 0.76rem; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(255,255,255,0.7); margin-bottom: 0.6rem; }
+    .hp-work h2 { font-family: var(--font-heading); font-size: clamp(1.8rem, 4vw, 3rem); margin-bottom: 0.9rem; }
+    .hp-work p { font-size: 0.95rem; color: rgba(255,255,255,0.85); max-width: 62ch; margin: 0 auto 1.8rem; line-height: 1.7; }
+    .hp-work-cta {
+        display: inline-block; background: #fff; color: var(--navy);
+        font-size: 0.9rem; font-weight: 700; padding: 0.9rem 2rem; border-radius: 40px;
+        text-decoration: none; transition: transform 0.15s, box-shadow 0.2s;
+    }
+    .hp-work-cta:hover { transform: translateY(-1px); box-shadow: 0 10px 26px rgba(0,0,0,0.35); }
+    .hp-work-phone { margin-top: 1.8rem; font-size: 0.9rem; color: rgba(255,255,255,0.8); line-height: 2; }
+    .hp-work-phone a { color: #fff; font-weight: 700; text-decoration: none; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .hp-work-sep { color: rgba(255,255,255,0.35); padding: 0 0.5rem; }
+
+    /* ---- LEAD POPUP (Contact / Call Us / Let's Connect) ---- */
+    .hpl-overlay {
+        position: fixed; inset: 0; z-index: 900; display: none;
+        align-items: center; justify-content: center; padding: 1rem;
+        background: rgba(15,22,38,0.62);
+    }
+    .hpl-overlay.open { display: flex; }
+    .hpl-card {
+        position: relative; background: #fff; border-radius: 14px;
+        width: min(430px, calc(100vw - 2rem)); max-height: 92dvh; overflow-y: auto;
+        padding: 2rem 1.75rem 1.6rem;
+        box-shadow: 0 24px 70px rgba(5,10,22,0.45);
+    }
+    .hpl-close {
+        position: absolute; top: 0.7rem; right: 0.7rem;
+        width: 34px; height: 34px; border: none; border-radius: 50%;
+        background: #f1f3f7; color: var(--text); cursor: pointer;
+        font-size: 1.1rem; line-height: 1; display: flex; align-items: center; justify-content: center;
+        transition: background 0.15s;
+    }
+    .hpl-close:hover { background: #e4e8ef; }
+    .hpl-overlay.gated .hpl-close { display: none; }
+    .hpl-title { font-family: var(--font-heading); font-size: 1.45rem; color: var(--text); margin-bottom: 0.35rem; text-wrap: balance; }
+    .hpl-sub { font-size: 0.88rem; color: var(--text-muted); line-height: 1.55; margin-bottom: 1.2rem; }
+    .hpl-form { display: flex; flex-direction: column; gap: 0.7rem; }
+    .hpl-input, .hpl-select, .hpl-textarea {
+        width: 100%; border: 1px solid #d5dae3; border-radius: 8px;
+        padding: 0.7rem 0.85rem; font-size: 0.92rem; color: var(--text);
+        font-family: var(--font-body); background: #fff; outline: none;
+        transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .hpl-input:focus, .hpl-select:focus, .hpl-textarea:focus {
+        border-color: var(--navy); box-shadow: 0 0 0 3px rgba(26,39,68,0.12);
+    }
+    .hpl-select { appearance: auto; cursor: pointer; }
+    .hpl-select.placeholder { color: #6b7280; }
+    .hpl-textarea { min-height: 84px; resize: vertical; }
+    .hpl-optional { font-size: 0.74rem; color: var(--text-muted); margin: -0.35rem 0 0 0.2rem; }
+    .hpl-error { display: none; font-size: 0.82rem; color: #b3261e; margin: 0; }
+    .hpl-submit {
+        margin-top: 0.3rem; background: var(--navy); color: #fff; border: none; cursor: pointer;
+        font-size: 0.92rem; font-weight: 700; padding: 0.85rem 1rem; border-radius: 8px;
+        transition: background 0.2s, transform 0.15s;
+    }
+    .hpl-submit:hover { background: var(--orange-dark); }
+    .hpl-submit:active { transform: scale(0.985); }
+    .hpl-submit[disabled] { opacity: 0.6; cursor: default; }
+    .hpl-consent { font-size: 0.68rem; color: var(--text-muted); line-height: 1.5; margin-top: 0.7rem; }
+    .hpl-done { display: none; text-align: center; padding: 1.5rem 0 1rem; }
+    .hpl-done-icon {
+        width: 54px; height: 54px; border-radius: 50%; background: var(--navy);
+        color: #fff; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;
+    }
+    .hpl-done h3 { font-family: var(--font-heading); font-size: 1.3rem; color: var(--text); margin-bottom: 0.4rem; }
+    .hpl-done p { font-size: 0.9rem; color: var(--text-muted); }
+
+    /* ---- HERO VIDEO ROTATION ---- */
+    .hp-hero { position: relative; overflow: hidden; }
+    .hp-hero-video {
+        position: absolute; inset: 0; width: 100%; height: 100%;
+        object-fit: cover; opacity: 0; z-index: 0;
+        transition: opacity 1.4s ease;
+        pointer-events: none;
+    }
+    .hp-hero-video.on { opacity: 1; }
+    .hp-hero-scrim { position: absolute; inset: 0; z-index: 1; background: linear-gradient(rgba(15,22,38,0.44), rgba(15,22,38,0.52)); pointer-events: none; }
+    .hp-hero > .hp-hero-eyebrow, .hp-hero > h1, .hp-hero > .hp-hero-bar { position: relative; z-index: 2; }
+
+    /* ---- SCROLL REVEALS (appear on enter, fade back out on leave) ----
+       Base-visible without JS; the hidden state only exists once the
+       script stamps html.hp-ready, so content can never ship blank. */
+    html.hp-ready .hp-reveal {
+        opacity: 0; transform: translateY(26px);
+        transition: opacity 0.7s cubic-bezier(0.16,1,0.3,1), transform 0.7s cubic-bezier(0.16,1,0.3,1);
+        will-change: opacity, transform;
+    }
+    html.hp-ready .hp-reveal.hp-in { opacity: 1; transform: none; }
+
+    /* ---- Motion ---- */
+    @media (prefers-reduced-motion: no-preference) {
+        .hp-hero-eyebrow, .hp-hero h1, .hp-hero-bar { animation: hpRise 0.7s cubic-bezier(0.16,1,0.3,1) backwards; }
+        .hp-hero h1 { animation-delay: 0.08s; }
+        .hp-hero-bar { animation-delay: 0.18s; }
+    }
+    @keyframes hpRise { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* ---- Responsive ---- */
+    @media (max-width: 1024px) {
+        .hp-tiles { grid-template-columns: 1fr; }
+        .hp-tile { height: 240px; }
+        .hp-featured-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 900px) {
+        .hp-meet-inner { grid-template-columns: 1fr; gap: 4rem; }
+        .hp-duo { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 640px) {
+        .hp-featured-grid { grid-template-columns: 1fr; }
+        .hp-hero-bar { flex-wrap: wrap; padding: 0.7rem; }
+        .hp-hero-bar input { flex: 1 1 100%; padding: 0.5rem 0.4rem; }
+        .hp-hero-bar button { width: 100%; }
+        .hp-meet-photo-wrap { padding-left: 0; }
+        .hp-meet-photo { margin: 0 auto; }
+        .hp-meet-card { position: static; margin: 1rem auto 0; max-width: min(340px, 88%); }
+        .hp-hero-bar svg { display: none; }
+        .hp-work-sep { display: none; }
+        .hp-work-phone a { display: block; }
+    }
+    </style>
 </head>
 <body>
-    <!-- Navigation -->
-    <nav class="nav" id="nav">
-        <div class="nav-container">
-            <a href="#hero" class="nav-logo">THE POLER TEAM</a>
-            <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
-                <span></span>
-                <span></span>
-                <span></span>
-            </button>
-            <ul class="nav-links" id="navLinks">
-                <li><a href="#about">About</a></li>
-                <li><a href="#lead-generation">Lead Generation</a></li>
-                <li><a href="#residential">Residential</a></li>
-                <li><a href="#commercial">Commercial</a></li>
-                <li><a href="#consulting">Consulting</a></li>
-                <li><a href="#tools">Tools</a></li>
-                <li><a href="#team">Team</a></li>
-                <li><a href="https://frontend-silk-ten-78.vercel.app/login" target="_blank" class="nav-login">Login</a></li>
-                <li><a href="#contact" class="nav-cta">Get In Touch</a></li>
-            </ul>
-        </div>
-    </nav>
 
-    <!-- Hero Section -->
-    <section class="hero" id="hero">
-        <div class="hero-overlay"></div>
-        <div class="hero-content">
-            <p class="hero-eyebrow">Real Estate &bull; Lead Generation &bull; Consulting</p>
-            <h1 class="hero-title">The Poler Team</h1>
-            <p class="hero-subtitle">A family-operated firm based in South Florida spanning M&A deal sourcing, residential and commercial real estate, and hospitality asset management.</p>
-            <div class="hero-actions">
-                <a href="#about" class="btn btn-primary">Learn More</a>
-                <a href="#contact" class="btn btn-outline">Contact Us</a>
-            </div>
-        </div>
-        <div class="hero-divisions">
-            <a href="#lead-generation" class="hero-division-card">
-                <div class="division-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
-                </div>
-                <h3>Lead Generation</h3>
-                <p>M&A Deal Sourcing</p>
-            </a>
-            <a href="#residential" class="hero-division-card">
-                <div class="division-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2.25 12l8.954-8.955a1.126 1.126 0 011.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"/></svg>
-                </div>
-                <h3>Residential</h3>
-                <p>Real Estate Sales</p>
-            </a>
-            <a href="#commercial" class="hero-division-card">
-                <div class="division-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21"/></svg>
-                </div>
-                <h3>Commercial</h3>
-                <p>Investment Sales</p>
-            </a>
-            <a href="#consulting" class="hero-division-card">
-                <div class="division-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5m.75-9l3-3 2.148 2.148A12.061 12.061 0 0116.5 7.605"/></svg>
-                </div>
-                <h3>Consulting</h3>
-                <p>Asset Management</p>
-            </a>
-        </div>
-    </section>
+<div id="hp-navfade" aria-hidden="true"></div>
+<div id="page-wrap" class="page-wrap">
 
-    <!-- About Section -->
-    <section class="section" id="about">
-        <div class="container">
-            <div class="section-header">
-                <p class="section-eyebrow">Who We Are</p>
-                <h2 class="section-title">About The Poler Team</h2>
-            </div>
-            <div class="about-grid">
-                <div class="about-text">
-                    <p class="about-lead">Founded by Rosa Poler with over 20 years of real estate experience, The Poler Team is a family-operated firm based in Sunny Isles Beach, Florida. What began as a residential real estate practice has grown into a multi-division operation spanning M&A deal sourcing, commercial brokerage, and hospitality asset management.</p>
-                    <p>Each member of the team brings a distinct specialty, and together we cover the full spectrum of real estate and business advisory services. We treat every client like a partner, not a transaction. With over 100 successful closings and 500+ satisfied clients, our track record speaks for itself.</p>
-                    <div class="about-stats">
-                        <div class="stat">
-                            <span class="stat-number" data-target="20">0</span>
-                            <span class="stat-suffix">+</span>
-                            <span class="stat-label">Years of Experience</span>
-                        </div>
-                        <div class="stat">
-                            <span class="stat-number" data-target="100">0</span>
-                            <span class="stat-suffix">+</span>
-                            <span class="stat-label">Successful Closings</span>
-                        </div>
-                        <div class="stat">
-                            <span class="stat-number" data-target="500">0</span>
-                            <span class="stat-suffix">+</span>
-                            <span class="stat-label">Happy Clients</span>
-                        </div>
-                        <div class="stat">
-                            <span class="stat-number" data-target="4">0</span>
-                            <span class="stat-suffix"></span>
-                            <span class="stat-label">Divisions</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="about-values">
-                    <div class="value-card">
-                        <h4>Family First</h4>
-                        <p>Every deal, every property, every client gets the care and attention we'd give our own family.</p>
-                    </div>
-                    <div class="value-card">
-                        <h4>Off-Market Edge</h4>
-                        <p>We specialize in finding opportunities others miss &mdash; deals that never hit the open market.</p>
-                    </div>
-                    <div class="value-card">
-                        <h4>Full Spectrum</h4>
-                        <p>From lead gen to closing, from residential to hospitality &mdash; we cover it all under one roof.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Lead Generation Section -->
-    <section class="section section-dark" id="lead-generation">
-        <div class="container">
-            <div class="section-header">
-                <p class="section-eyebrow">Division I</p>
-                <h2 class="section-title">Lead Generation</h2>
-                <p class="section-subtitle">M&A Deal Sourcing for Private Equity</p>
-            </div>
-
-            <div class="lead-gen-intro">
-                <div class="lead-gen-text">
-                    <h3>Connecting Buyers with Off-Market Acquisition Targets</h3>
-                    <p>We work with PE-backed platform companies to source acquisition targets that aren't going through a formal broker process. By operating across multiple industries, we avoid representing competing buyers &mdash; giving each client exclusivity in their vertical.</p>
-                    <p>Our approach is direct and personal: we identify owners of small-to-medium service businesses, initiate warm conversations, and facilitate introductions with your leadership team. No engagement fees. No bidding wars. Just quality, off-market deal flow.</p>
-                </div>
-                <div class="lead-gen-highlights">
-                    <div class="highlight-card">
-                        <span class="highlight-number">$0</span>
-                        <span class="highlight-label">Upfront Engagement Fee</span>
-                    </div>
-                    <div class="highlight-card">
-                        <span class="highlight-number">9+</span>
-                        <span class="highlight-label">Target Industries</span>
-                    </div>
-                    <div class="highlight-card">
-                        <span class="highlight-number">40+</span>
-                        <span class="highlight-label">States Covered</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Proven Results -->
-            <div class="lead-gen-results">
-                <h3>Proven Results</h3>
-                <p class="results-context">From a single recent client engagement in the behavioral health sector:</p>
-                <div class="results-funnel">
-                    <div class="funnel-step">
-                        <div class="funnel-bar" style="--width: 100%">
-                            <span class="funnel-number">526</span>
-                        </div>
-                        <span class="funnel-label">Business Owners Contacted</span>
-                    </div>
-                    <div class="funnel-step">
-                        <div class="funnel-bar" style="--width: 33.7%">
-                            <span class="funnel-number">177</span>
-                        </div>
-                        <span class="funnel-label">Responded (33.7% response rate)</span>
-                    </div>
-                    <div class="funnel-step">
-                        <div class="funnel-bar" style="--width: 25.3%">
-                            <span class="funnel-number">133</span>
-                        </div>
-                        <span class="funnel-label">Intro Calls Scheduled</span>
-                    </div>
-                    <div class="funnel-step">
-                        <div class="funnel-bar" style="--width: 21.9%">
-                            <span class="funnel-number">115</span>
-                        </div>
-                        <span class="funnel-label">Assisted Meetings Held</span>
-                    </div>
-                    <div class="funnel-step">
-                        <div class="funnel-bar" style="--width: 6.8%">
-                            <span class="funnel-number">36</span>
-                        </div>
-                        <span class="funnel-label">Active Pipeline Deals</span>
-                    </div>
-                </div>
-                <div class="results-callout">
-                    <div class="callout-item">
-                        <span class="callout-number">$20M</span>
-                        <span class="callout-label">Recent deal closed with no broker involvement</span>
-                    </div>
-                    <div class="callout-item">
-                        <span class="callout-number">33.7%</span>
-                        <span class="callout-label">Response rate vs. ~5% industry average</span>
-                    </div>
-                    <div class="callout-item">
-                        <span class="callout-number">1,036</span>
-                        <span class="callout-label">Companies tracked in our proprietary system</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Active Engagements -->
-            <div class="lead-gen-engagements">
-                <h3>Active Engagements</h3>
-                <p class="engagements-context">Current client partnerships across our M&amp;A lead generation practice.</p>
-                <div class="engagement-grid">
-                    <div class="engagement-card">
-                        <div class="engagement-meta">
-                            <span class="engagement-status">&bull; Active</span>
-                            <span class="engagement-since">Since 2024</span>
-                        </div>
-                        <h4>Behavioral Health Platform</h4>
-                        <p class="engagement-role">M&amp;A buy-side deal sourcing for a PE-backed behavioral health acquirer. Ongoing direct-to-owner outreach across 40+ states.</p>
-                        <div class="engagement-stats">
-                            <span class="engagement-stat"><strong>1,036</strong> companies tracked</span>
-                            <span class="engagement-stat"><strong>33.7%</strong> response rate</span>
-                            <span class="engagement-stat"><strong>36</strong> pipeline deals</span>
-                        </div>
-                    </div>
-                    <div class="engagement-card">
-                        <div class="engagement-meta">
-                            <span class="engagement-status">&bull; Active</span>
-                            <span class="engagement-since">Since May 2026</span>
-                        </div>
-                        <h4>AD1 Hospitality</h4>
-                        <p class="engagement-role">Hotel HMA (third-party management agreement) sourcing for AD1 Hospitality (Hollywood, FL). 25-hotel portfolio across Marriott, Hilton, Hyatt, IHG, Wyndham, and Choice brands. Owner outreach against active operator-change triggers &mdash; CMBS distress, REIT dispositions, foreclosures, ground-up deliveries.</p>
-                        <div class="engagement-stats">
-                            <span class="engagement-stat"><strong>219</strong> hotels researched</span>
-                            <span class="engagement-stat"><strong>82</strong> in active outreach</span>
-                            <span class="engagement-stat"><strong>17%</strong> LinkedIn accept rate</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="lead-gen-how">
-                <h3>How It Works</h3>
-                <div class="process-steps">
-                    <div class="process-step">
-                        <div class="step-number">01</div>
-                        <h4>Identify</h4>
-                        <p>We research and identify owner-operated businesses in your target industry and geography that match your acquisition criteria.</p>
-                    </div>
-                    <div class="process-step">
-                        <div class="step-number">02</div>
-                        <h4>Engage</h4>
-                        <p>Through personalized, multi-channel outreach, we connect directly with business owners to gauge interest in exploring a partnership or acquisition.</p>
-                    </div>
-                    <div class="process-step">
-                        <div class="step-number">03</div>
-                        <h4>Introduce</h4>
-                        <p>When there's mutual interest, we facilitate a warm introduction between the owner and your platform's leadership team. No engagement necessary.</p>
-                    </div>
-                    <div class="process-step">
-                        <div class="step-number">04</div>
-                        <h4>Support</h4>
-                        <p>We stay involved through the early stages &mdash; from intro call through LOI and beyond &mdash; ensuring a smooth handoff and continued deal flow.</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="lead-gen-industries">
-                <h3>Industries We Cover</h3>
-                <div class="industry-grid">
-                    <div class="industry-card industry-card-inactive">
-                        <h4>CPA / Accounting</h4>
-                    </div>
-                    <div class="industry-card industry-card-inactive">
-                        <h4>Commercial Cleaning</h4>
-                    </div>
-                    <div class="industry-card industry-card-inactive">
-                        <h4>Pool Services</h4>
-                    </div>
-                    <div class="industry-card industry-card-inactive">
-                        <h4>Pet Services</h4>
-                    </div>
-                    <div class="industry-card industry-card-inactive">
-                        <h4>Fire Protection</h4>
-                    </div>
-                    <div class="industry-card industry-card-inactive">
-                        <h4>IT / MSPs</h4>
-                    </div>
-                    <div class="industry-card industry-card-inactive">
-                        <h4>Landscaping</h4>
-                    </div>
-                    <div class="industry-card industry-card-inactive">
-                        <h4>Medical Aesthetics</h4>
-                    </div>
-                    <div class="industry-card industry-card-inactive">
-                        <h4>ABA Therapy</h4>
-                    </div>
-                    <div class="industry-card industry-card-active">
-                        <h4>Behavioral Health</h4>
-                    </div>
-                </div>
-            </div>
-
-            <div class="lead-gen-differentiators">
-                <h3>Why Work With Us</h3>
-                <div class="diff-grid">
-                    <div class="diff-card">
-                        <h4>No Bidding Wars</h4>
-                        <p>Direct conversations with owners, not auction-style broker processes. You talk first, not last.</p>
-                    </div>
-                    <div class="diff-card">
-                        <h4>Industry Exclusivity</h4>
-                        <p>We represent one buyer per industry vertical, ensuring your deal flow is never shared with a competitor.</p>
-                    </div>
-                    <div class="diff-card">
-                        <h4>Personalized Outreach</h4>
-                        <p>Every message is tailored. Our 33.7% response rate is 6x the industry average because we don't do mass marketing.</p>
-                    </div>
-                    <div class="diff-card">
-                        <h4>Full Lifecycle Support</h4>
-                        <p>From identification through intro call, NDA, data room, and LOI &mdash; we manage the relationship end to end.</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="lead-gen-portfolio">
-                <h3>Our Tools &amp; Materials</h3>
-                <div class="portfolio-grid">
-                    <a href="docs/optimar-poler-team.pdf" target="_blank" class="portfolio-card">
-                        <div class="portfolio-card-cover">
-                            <div class="portfolio-card-placeholder">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
-                                <span>Capabilities Deck</span>
-                            </div>
-                        </div>
-                        <div class="portfolio-card-info">
-                            <h4>Optimar Sales Associates</h4>
-                            <p>Poler Team partnership overview &amp; capabilities deck</p>
-                            <span class="portfolio-card-action">View PDF &rarr;</span>
-                        </div>
-                    </a>
-                    <a href="https://dylanpoler-a11y.github.io/outreach-dashboard-demo/" target="_blank" class="portfolio-card">
-                        <div class="portfolio-card-cover">
-                            <div class="portfolio-card-placeholder">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"/></svg>
-                                <span>Live Dashboard</span>
-                            </div>
-                        </div>
-                        <div class="portfolio-card-info">
-                            <h4>Live Outreach Dashboard</h4>
-                            <p>Real-time tracking of our proprietary outreach system &mdash; 1,036 companies across 40+ states</p>
-                            <p class="portfolio-card-note">* Sanitized data for demo purposes</p>
-                            <span class="portfolio-card-action">View Dashboard &rarr;</span>
-                        </div>
-                    </a>
-                    <a href="https://homesinsoflorida.com" target="_blank" class="portfolio-card">
-                        <div class="portfolio-card-cover">
-                            <div class="portfolio-card-placeholder">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2.25 12l8.954-8.955a1.126 1.126 0 011.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"/></svg>
-                                <span>Real Estate</span>
-                            </div>
-                        </div>
-                        <div class="portfolio-card-info">
-                            <h4>Homes in So Florida</h4>
-                            <p>Our residential real estate portal &mdash; South Florida listings, market insights, and property search</p>
-                            <span class="portfolio-card-action">Visit Site &rarr;</span>
-                        </div>
-                    </a>
-                </div>
-            </div>
-
-            <div class="section-cta">
-                <p>Looking for off-market deal flow in your industry?</p>
-                <a href="#contact" class="btn btn-primary">Start a Conversation</a>
-            </div>
-        </div>
-    </section>
-
-    <!-- Residential Section -->
-    <section class="section" id="residential">
-        <div class="container">
-            <div class="section-header">
-                <p class="section-eyebrow">Division II</p>
-                <h2 class="section-title">Residential Real Estate</h2>
-                <p class="section-subtitle">Helping Families Find Home</p>
-            </div>
-
-            <div class="residential-intro">
-                <p>Our residential division is led by Rosa Poler, the team's founder with over 20 years of experience and 100+ successful closings. Specializing in the Sunny Isles Beach, Aventura, and North Miami Beach markets, Rosa brings a warm, client-first approach to every transaction &mdash; whether you're buying your first home or selling a luxury oceanfront condo.</p>
-                <div class="residential-markets">
-                    <span class="market-tag">Sunny Isles Beach</span>
-                    <span class="market-tag">Aventura</span>
-                    <span class="market-tag">North Miami Beach</span>
-                    <span class="market-tag">Miami Beach</span>
-                </div>
-            </div>
-
-            <div class="sold-section">
-                <h3>Sold Properties</h3>
-                <div class="sold-grid" id="soldGrid">
-                    <div class="property-placeholder">
-                        <div class="placeholder-image">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z"/></svg>
-                            <span>Coming Soon</span>
-                        </div>
-                        <div class="placeholder-info">
-                            <div class="placeholder-bar w-70"></div>
-                            <div class="placeholder-bar w-50"></div>
-                            <div class="placeholder-bar w-40"></div>
-                        </div>
-                    </div>
-                    <div class="property-placeholder">
-                        <div class="placeholder-image">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z"/></svg>
-                            <span>Coming Soon</span>
-                        </div>
-                        <div class="placeholder-info">
-                            <div class="placeholder-bar w-70"></div>
-                            <div class="placeholder-bar w-50"></div>
-                            <div class="placeholder-bar w-40"></div>
-                        </div>
-                    </div>
-                    <div class="property-placeholder">
-                        <div class="placeholder-image">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z"/></svg>
-                            <span>Coming Soon</span>
-                        </div>
-                        <div class="placeholder-info">
-                            <div class="placeholder-bar w-70"></div>
-                            <div class="placeholder-bar w-50"></div>
-                            <div class="placeholder-bar w-40"></div>
-                        </div>
-                    </div>
-                </div>
-                <p class="coming-soon-note">Our portfolio of sold properties is being prepared. Check back to view our full track record.</p>
-            </div>
-
-            <div class="residential-services">
-                <div class="services-grid">
-                    <div class="service-card">
-                        <h4>Luxury Oceanfront Condos</h4>
-                        <p>Specializing in South Florida's premier oceanfront towers with deep knowledge of inventory, pricing trends, and building amenities.</p>
-                    </div>
-                    <div class="service-card">
-                        <h4>Family Homes</h4>
-                        <p>Guiding families through the buying and selling process with a personal touch, from school districts to neighborhood insights.</p>
-                    </div>
-                    <div class="service-card">
-                        <h4>Investment Properties</h4>
-                        <p>ROI analysis, cap rate calculations, and Airbnb revenue projections for income-producing residential properties.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Commercial Section -->
-    <section class="section section-dark" id="commercial">
-        <div class="container">
-            <div class="section-header">
-                <p class="section-eyebrow">Division III</p>
-                <h2 class="section-title">Commercial Real Estate</h2>
-                <p class="section-subtitle">Investment Sales &amp; Offering Memorandums</p>
-            </div>
-
-            <div class="commercial-intro">
-                <p>Kevin Poler leads our commercial real estate division, specializing in investment sales. We prepare comprehensive Offering Memorandums that present properties in their best light &mdash; detailed financials, market analysis, and professional presentation materials that attract serious, qualified buyers.</p>
-            </div>
-
-            <div class="om-section">
-                <h3>Featured Offering Memorandums</h3>
-                <div class="om-grid" id="omGrid">
-                    <a href="docs/ahig-section-8.pdf" target="_blank" class="om-card">
-                        <div class="om-card-cover">
-                            <div class="om-card-placeholder">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2.25 12l8.954-8.955a1.126 1.126 0 011.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"/></svg>
-                                <span>Affordable Housing</span>
-                            </div>
-                        </div>
-                        <div class="om-card-info">
-                            <h4>AHIG &ndash; Section 8 Portfolio</h4>
-                            <p class="om-card-type">Loan &amp; Investment Offering</p>
-                            <span class="om-card-action">View PDF &rarr;</span>
-                        </div>
-                    </a>
-                    <a href="docs/lean-luxury-930-stillwater.pdf" target="_blank" class="om-card">
-                        <div class="om-card-cover">
-                            <div class="om-card-placeholder">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8.25 21v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21m0 0h4.5V3.545M12.75 21h7.5V10.75M2.25 21h1.5m18 0h-18M2.25 9l4.5-1.636M18.75 3l-1.5.545m0 6.205l3 1m1.5.5l-1.5-.5M6.75 7.364V3h-3v18m3-13.636l10.5-3.819"/></svg>
-                                <span>Luxury Residential</span>
-                            </div>
-                        </div>
-                        <div class="om-card-info">
-                            <h4>930 Stillwater &ndash; Lean Luxury Market</h4>
-                            <p class="om-card-type">Luxury Residential OM</p>
-                            <span class="om-card-action">View PDF &rarr;</span>
-                        </div>
-                    </a>
-                    <a href="docs/lean-luxury-teaser-espanol.pdf" target="_blank" class="om-card">
-                        <div class="om-card-cover">
-                            <div class="om-card-placeholder">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10.5 21l5.25-11.25L21 21m-9-3h7.5M3 5.621a48.474 48.474 0 016-.371m0 0c1.12 0 2.233.038 3.334.114M9 5.25V3m3.334 2.364C11.176 10.658 7.69 15.08 3 17.502m9.334-12.138c.896.061 1.785.147 2.666.257m-4.589 8.495a18.023 18.023 0 01-3.827-5.802"/></svg>
-                                <span>Teaser Espa&ntilde;ol</span>
-                            </div>
-                        </div>
-                        <div class="om-card-info">
-                            <h4>Lean Luxury Market &ndash; Teaser</h4>
-                            <p class="om-card-type">Offering Teaser (Espa&ntilde;ol)</p>
-                            <span class="om-card-action">View PDF &rarr;</span>
-                        </div>
-                    </a>
-                    <a href="#contact" class="om-card om-card-highlight">
-                        <div class="om-card-cover">
-                            <div class="om-card-placeholder">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6M12 3v0M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V9.75"/></svg>
-                                <span>Investment Fund</span>
-                            </div>
-                        </div>
-                        <div class="om-card-info">
-                            <h4>Cannabis Real Estate Fund</h4>
-                            <p class="om-card-type">Trulieve &ndash; Investment Fund</p>
-                            <span class="om-card-action">Contact for Details &rarr;</span>
-                        </div>
-                    </a>
-                </div>
-            </div>
-
-            <div class="commercial-services">
-                <h3>What We Offer</h3>
-                <div class="services-grid">
-                    <div class="service-card">
-                        <h4>Offering Memorandums</h4>
-                        <p>Professionally designed brochure-style presentations with property details, financials, and market analysis to attract qualified buyers.</p>
-                    </div>
-                    <div class="service-card">
-                        <h4>Investment Analysis</h4>
-                        <p>Detailed pro forma projections, cap rate analysis, and comparable sales data to support informed investment decisions.</p>
-                    </div>
-                    <div class="service-card">
-                        <h4>Buyer Matching</h4>
-                        <p>Leveraging our network to connect sellers with serious, pre-qualified investors who are actively seeking acquisitions.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Consulting Section -->
-    <section class="section" id="consulting">
-        <div class="container">
-            <div class="section-header">
-                <p class="section-eyebrow">Division IV</p>
-                <h2 class="section-title">Consulting</h2>
-                <p class="section-subtitle">Hospitality Asset Management</p>
-            </div>
-
-            <div class="consulting-intro">
-                <p>Noel Poler leads our consulting division, specializing in hands-on hospitality asset management. We take over the management of underperforming hotel properties and implement operational, financial, and guest-experience improvements to drive asset value.</p>
-            </div>
-
-            <div class="hotels-section">
-                <h3>Properties Under Management</h3>
-                <div class="hotel-grid">
-                    <div class="hotel-card">
-                        <div class="hotel-image hotel-image-photo">
-                            <div class="hotel-badge">Active</div>
-                            <img src="images/cover-lauderdale.png" alt="The Lauderdale Boutique Hotel">
-                        </div>
-                        <div class="hotel-info">
-                            <h4>The Lauderdale Boutique Hotel</h4>
-                            <p class="hotel-location">2900 Riomar St, Fort Lauderdale, FL</p>
-                            <div class="hotel-tags">
-                                <span class="hotel-tag tag-management">Asset Management</span>
-                                <span class="hotel-tag tag-value">Value Enhancement</span>
-                            </div>
-                            <ul class="hotel-details">
-                                <li><strong>24</strong> rooms across 3 room types</li>
-                                <li>Standard King &bull; Deluxe Suite &bull; Penthouse</li>
-                                <li>Nightly rates: $189 &ndash; $749</li>
-                                <li>4-channel distribution (Airbnb, Booking.com, VRBO, Direct)</li>
-                            </ul>
-                            <div class="hotel-metrics">
-                                <div class="metric">
-                                    <span class="metric-value">4.6</span>
-                                    <span class="metric-label">Avg Rating</span>
-                                </div>
-                                <div class="metric">
-                                    <span class="metric-value">~80%</span>
-                                    <span class="metric-label">Occupancy</span>
-                                </div>
-                                <div class="metric">
-                                    <span class="metric-value">24/7</span>
-                                    <span class="metric-label">Managed</span>
-                                </div>
-                            </div>
-                            <a href="docs/om-the-lauderdale.pdf" target="_blank" class="hotel-om-link">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="18" height="18"><path d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
-                                View Offering Memorandum &rarr;
-                            </a>
-                        </div>
-                    </div>
-
-                    <div class="hotel-card hotel-coming-soon">
-                        <div class="hotel-image">
-                            <div class="hotel-badge badge-pending">Coming Soon</div>
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M8.25 21v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21m0 0h4.5V3.545M12.75 21h7.5V10.75M2.25 21h1.5m18 0h-18M2.25 9l4.5-1.636M18.75 3l-1.5.545m0 6.205l3 1m1.5.5l-1.5-.5M6.75 7.364V3h-3v18m3-13.636l10.5-3.819"/></svg>
-                        </div>
-                        <div class="hotel-info">
-                            <h4>The Dream</h4>
-                            <p class="hotel-location">Details coming soon</p>
-                            <p class="hotel-pending-text">Information on this property is being prepared.</p>
-                        </div>
-                    </div>
-
-                    <div class="hotel-card hotel-coming-soon">
-                        <div class="hotel-image">
-                            <div class="hotel-badge badge-pending">Coming Soon</div>
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M8.25 21v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21m0 0h4.5V3.545M12.75 21h7.5V10.75M2.25 21h1.5m18 0h-18M2.25 9l4.5-1.636M18.75 3l-1.5.545m0 6.205l3 1m1.5.5l-1.5-.5M6.75 7.364V3h-3v18m3-13.636l10.5-3.819"/></svg>
-                        </div>
-                        <div class="hotel-info">
-                            <h4>Property #3</h4>
-                            <p class="hotel-location">Details coming soon</p>
-                            <p class="hotel-pending-text">Information on our second managed property is being prepared.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="consulting-approach">
-                <h3>Our Management Approach</h3>
-                <div class="approach-grid">
-                    <div class="approach-card">
-                        <span class="approach-number">01</span>
-                        <h4>Operational Audit</h4>
-                        <p>Thorough assessment of current operations &mdash; staffing, processes, vendor contracts, and guest experience touchpoints.</p>
-                    </div>
-                    <div class="approach-card">
-                        <span class="approach-number">02</span>
-                        <h4>Revenue Optimization</h4>
-                        <p>Dynamic pricing, channel distribution optimization, and direct booking initiatives to maximize RevPAR and minimize OTA commissions.</p>
-                    </div>
-                    <div class="approach-card">
-                        <span class="approach-number">03</span>
-                        <h4>Cost Control</h4>
-                        <p>Expense management across housekeeping, maintenance, utilities, and marketing &mdash; without compromising guest experience.</p>
-                    </div>
-                    <div class="approach-card">
-                        <span class="approach-number">04</span>
-                        <h4>Technology &amp; Reporting</h4>
-                        <p>Custom dashboards for real-time KPI tracking &mdash; occupancy, ADR, RevPAR, NOI, guest reviews, and channel performance.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Tools Section -->
-    <section class="section section-dark" id="tools">
-        <div class="container">
-            <div class="section-header">
-                <p class="section-eyebrow">Our Technology</p>
-                <h2 class="section-title">Tools</h2>
-                <p class="section-subtitle">Proprietary platforms built to give our clients an edge</p>
-            </div>
-
-            <div class="tools-featured">
-                <div class="tool-card-featured">
-                    <div class="tool-card-visual">
-                        <div class="tool-icon-large">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941"/></svg>
-                        </div>
-                        <div class="tool-badge">Live</div>
-                    </div>
-                    <div class="tool-card-content">
-                        <h3>InvestorOS1</h3>
-                        <p class="tool-tagline">Find the highest CAP rates in South Florida &mdash; instantly.</p>
-                        <p class="tool-description">Our residential investment tool searches the entire MLS daily to surface the best investment opportunities by CAP rate. Stop spending hours running comps &mdash; InvestorOS1 does the heavy lifting so you can focus on closing deals.</p>
-                        <div class="tool-features">
-                            <div class="tool-feature">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2" width="20" height="20"><path d="M4.5 12.75l6 6 9-13.5"/></svg>
-                                <span>Full MLS scanned daily</span>
-                            </div>
-                            <div class="tool-feature">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2" width="20" height="20"><path d="M4.5 12.75l6 6 9-13.5"/></svg>
-                                <span>Highest CAP rates ranked instantly</span>
-                            </div>
-                            <div class="tool-feature">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2" width="20" height="20"><path d="M4.5 12.75l6 6 9-13.5"/></svg>
-                                <span>Residential investment focus</span>
-                            </div>
-                        </div>
-                        <a href="https://investoros1.com" target="_blank" class="btn btn-primary tool-cta">Visit InvestorOS1.com &rarr;</a>
-                    </div>
-                </div>
-            </div>
-
-            <div class="newsletter-section">
-                <div class="newsletter-card">
-                    <div class="newsletter-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/></svg>
-                    </div>
-                    <div class="newsletter-content">
-                        <h3>Daily 3 Best Deals</h3>
-                        <p>Get the top 3 highest CAP rate deals from the MLS delivered to your inbox every morning. No spam, no fluff &mdash; just the numbers that matter.</p>
-                    </div>
-                    <form class="newsletter-form" id="newsletterForm">
-                        <div class="newsletter-input-group">
-                            <input type="email" placeholder="Enter your email" class="newsletter-input" required>
-                            <button type="submit" class="btn btn-primary newsletter-btn">Subscribe</button>
-                        </div>
-                        <p class="newsletter-disclaimer">Free daily newsletter. Unsubscribe anytime.</p>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Team Section -->
-    <section class="section section-dark" id="team">
-        <div class="container">
-            <div class="section-header">
-                <p class="section-eyebrow">Our People</p>
-                <h2 class="section-title">The Team</h2>
-            </div>
-            <div class="team-grid">
-                <div class="team-card">
-                    <div class="team-avatar">
-                        <span>DP</span>
-                    </div>
-                    <h4>Dylan Poler</h4>
-                    <p class="team-role">Lead Generation</p>
-                    <p class="team-desc">M&A deal sourcing specialist connecting PE-backed platforms with off-market acquisition targets across 9+ industries and 40+ states.</p>
-                    <a href="#" class="team-linkedin" aria-label="Dylan Poler LinkedIn">
-                        <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
-                    </a>
-                </div>
-
-                <div class="team-card team-card-featured">
-                    <div class="team-avatar">
-                        <span>RP</span>
-                    </div>
-                    <h4>Rosa Poler</h4>
-                    <p class="team-role">Founder &amp; Residential Lead</p>
-                    <p class="team-desc">Over 20 years of real estate experience with 100+ closings. Specializing in Sunny Isles Beach, Aventura, and North Miami Beach luxury markets.</p>
-                </div>
-
-                <div class="team-card">
-                    <div class="team-avatar">
-                        <span>KP</span>
-                    </div>
-                    <h4>Kevin Poler</h4>
-                    <p class="team-role">Commercial Real Estate</p>
-                    <p class="team-desc">Investment sales specialist creating compelling Offering Memorandums and connecting commercial properties with qualified buyers.</p>
-                    <a href="#" class="team-linkedin" aria-label="Kevin Poler LinkedIn">
-                        <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
-                    </a>
-                </div>
-
-                <div class="team-card">
-                    <div class="team-avatar">
-                        <span>NP</span>
-                    </div>
-                    <h4>Noel Poler</h4>
-                    <p class="team-role">Consulting</p>
-                    <p class="team-desc">Hospitality asset management expert who takes over underperforming hotel properties and drives value through operational improvements.</p>
-                    <a href="#" class="team-linkedin" aria-label="Noel Poler LinkedIn">
-                        <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
-                    </a>
-                </div>
-            </div>
-
-            <div class="team-company-linkedin">
-                <a href="https://www.linkedin.com/in/the-poler-team-2b77551b/" target="_blank" class="btn btn-outline">
-                    <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18" style="margin-right: 8px;"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
-                    Follow The Poler Team on LinkedIn
+    <!-- HEADER — same banner as the rest of the site -->
+    <header class="lp-header">
+        <nav class="lp-nav">
+            <div class="lp-nav-inner">
+                <a href="/" class="lp-logo-link">
+                    <img src="logo-white.png" alt="The Poler Team" class="lp-nav-logo">
                 </a>
+                <div class="lp-nav-links">
+                <a href="/" class="lp-nav-link active" data-i18n="navHome">Home</a>
+                <a href="listing" class="lp-nav-link" data-i18n="navListings">Listings</a>
+                <a href="preconstruction" class="lp-nav-link" data-i18n="navPrecon">Preconstruction</a>
+                <a href="str" class="lp-nav-link" data-i18n="navSTR">Short-Term Rentals</a>
+                <a href="home-valuation" class="lp-nav-link" data-i18n="navValuation">Home Valuation</a>
+                <a href="#hp-meet" class="lp-nav-link" data-i18n="navAbout">About</a>
+                <a href="#" onclick="openHpLead();return false;" class="lp-nav-link" data-i18n="navContact">Contact</a>
+                <a href="tel:+19542354046" class="lp-nav-link lp-nav-phone">(954) 235-4046</a>
+                </div>
+
+                <div class="lp-nav-right">
+                    <a href="#" onclick="openHpLead();return false;" class="lp-call-btn">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 014.68 11.6 19.79 19.79 0 011.61 3a2 2 0 012-2.18h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L7.91 8.09a16 16 0 006 6l.91-.91a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+                        <span data-i18n="callUs">Call Us</span>
+                    </a>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- HERO -->
+    <section class="hp-hero">
+        <!-- Rotation: beach w/ people + rising drone (Kevin's pick, first) -> South Beach
+             aerial -> downtown Miami night skyline -> luxury island marina. All URLs verified. -->
+        <video class="hp-hero-video" muted loop playsinline preload="none" data-src="https://videos.pexels.com/video-files/15820848/15820848-hd_1920_1080_60fps.mp4" aria-hidden="true"></video>
+        <video class="hp-hero-video" muted loop playsinline preload="none" data-src="https://videos.pexels.com/video-files/3770584/3770584-hd_1920_1080_25fps.mp4" aria-hidden="true"></video>
+        <video class="hp-hero-video" muted loop playsinline preload="none" data-src="https://videos.pexels.com/video-files/19109601/19109601-hd_1920_1080_24fps.mp4" aria-hidden="true"></video>
+        <video class="hp-hero-video" muted loop playsinline preload="none" data-src="https://videos.pexels.com/video-files/15767939/15767939-hd_2048_1080_24fps.mp4" aria-hidden="true"></video>
+        <div class="hp-hero-scrim" aria-hidden="true"></div>
+        <p class="hp-hero-eyebrow">South Florida Real Estate Professionals</p>
+        <h1>The Poler Team</h1>
+        <form class="hp-hero-bar" id="hp-search">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+            <input type="text" id="hp-search-input" placeholder="Search address or city..." autocomplete="off">
+            <button type="submit">Search</button>
+        </form>
+    </section>
+
+    <!-- STATS -->
+    <section class="hp-stats hp-reveal">
+        <p class="hp-stats-kicker">Buy. Sell. Invest.</p>
+        <h2>Discover Luxury Living in South Florida</h2>
+        <p class="hp-stats-sub">Dedicated to finding the perfect home for you.</p>
+        <div class="hp-stats-row">
+            <div><div class="hp-stat-num">80+</div><div class="hp-stat-label">Buyers Served</div></div>
+            <div><div class="hp-stat-num">15+</div><div class="hp-stat-label">Countries</div></div>
+            <div><div class="hp-stat-num">$9.2M</div><div class="hp-stat-label">Top Sale</div></div>
+        </div>
+    </section>
+
+    <!-- 3 TILES -->
+    <div class="hp-tiles hp-reveal">
+        <a class="hp-tile" href="listing" style="background-image:url('https://images.unsplash.com/photo-1572331165267-854da2b10ccc?w=1000&q=75&fm=jpg')"><span>Home Search</span></a>
+        <a class="hp-tile" href="home-valuation" style="background-image:url('https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1000&q=75&fm=jpg')"><span>Home Valuation</span></a>
+        <a class="hp-tile" href="#" onclick="openHpLead();return false;" style="background-image:url('https://images.unsplash.com/photo-1556911220-bff31c812dba?w=1000&q=75&fm=jpg')"><span>Let's Connect</span></a>
+    </div>
+
+    <!-- MEET ROSA -->
+    <section class="hp-meet" id="hp-meet">
+        <div class="hp-meet-inner hp-reveal">
+            <div class="hp-meet-photo-wrap">
+                <img class="hp-meet-photo" src="rosa-poler-headshot.jpg" alt="Rosa Poler, REALTOR">
+                <div class="hp-meet-card">
+                    <span class="hp-meet-kicker">Meet</span>
+                    <h2>Rosa Poler</h2>
+                    <p>Going above and beyond your expectations for a seamless, rewarding real estate experience.</p>
+                </div>
+            </div>
+            <div class="hp-meet-bio">
+                <p>Whether you are buying, selling, or investing, The Poler Team is here for every step. As a family-operated team at Optimar International Realty, we have guided buyers from more than 15 countries through South Florida real estate, from first condos to waterfront estates.</p>
+                <p>We handle the entire journey: financing introductions for foreign nationals, private showings, negotiation, and closing. Your trust is the foundation of everything we do.</p>
+                <a class="hp-meet-cta" href="#" onclick="openHpLead();return false;">Work With Us</a>
+                <div class="hp-meet-social">
+                    <a href="https://instagram.com/thepolerteam" target="_blank" rel="noopener" aria-label="Instagram"><svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg></a>
+                    <a href="https://facebook.com/thepolerteam" target="_blank" rel="noopener" aria-label="Facebook"><svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385h-3.047v-3.47h3.047v-2.642c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953h-1.514c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385c5.737-.9 10.125-5.864 10.125-11.854z"/></svg></a>
+                    <a href="https://wa.me/19542354046" target="_blank" rel="noopener" aria-label="WhatsApp"><svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg></a>
+                </div>
+            </div>
+        </div>
+
+        <!-- TEAM: Kevin + Dylan -->
+        <div class="hp-team hp-reveal">
+            <div class="hp-team-card">
+                <div class="hp-team-mono" id="hp-kevin-photo" aria-hidden="true">KP</div>
+                <div class="hp-team-info">
+                    <h3>Kevin Poler</h3>
+                    <div class="hp-team-role">Realtor Associate</div>
+                    <p>Commercial and investment specialist. Hotels, portfolios, and the numbers behind every deal.</p>
+                </div>
+            </div>
+            <div class="hp-team-card">
+                <div class="hp-team-mono" id="hp-dylan-photo" aria-hidden="true">DP</div>
+                <div class="hp-team-info">
+                    <h3>Dylan Poler</h3>
+                    <div class="hp-team-role">The Poler Team</div>
+                    <p>Marketing and client experience. The engine behind our listings' reach.</p>
+                </div>
             </div>
         </div>
     </section>
 
-    <!-- Contact Section -->
-    <section class="section" id="contact">
-        <div class="container">
-            <div class="section-header">
-                <p class="section-eyebrow">Let's Talk</p>
-                <h2 class="section-title">Get In Touch</h2>
-                <p class="section-subtitle">Whether you're a PE platform looking for deal flow, buying or selling a home, exploring a commercial investment, or need help with a hospitality asset &mdash; we'd love to hear from you.</p>
-            </div>
-            <div class="contact-grid">
-                <div class="contact-cards">
-                    <div class="contact-card">
-                        <h4>Lead Generation / M&A</h4>
-                        <p>Dylan Poler</p>
-                        <a href="#" class="contact-link">Connect on LinkedIn &rarr;</a>
-                    </div>
-                    <div class="contact-card">
-                        <h4>Residential Real Estate</h4>
-                        <p>Rosa Poler</p>
-                        <a href="mailto:info@polerteam.com" class="contact-link">info@polerteam.com &rarr;</a>
-                    </div>
-                    <div class="contact-card">
-                        <h4>Commercial Real Estate</h4>
-                        <p>Kevin Poler</p>
-                        <a href="#" class="contact-link">Connect on LinkedIn &rarr;</a>
-                    </div>
-                    <div class="contact-card">
-                        <h4>Consulting / Asset Mgmt</h4>
-                        <p>Noel Poler</p>
-                        <a href="#" class="contact-link">Connect on LinkedIn &rarr;</a>
-                    </div>
-                </div>
-                <div class="contact-info">
-                    <div class="contact-detail">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="24" height="24"><path d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
-                        <span>Sunny Isles Beach, FL</span>
-                    </div>
-                    <div class="contact-detail">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="24" height="24"><path d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/></svg>
-                        <a href="mailto:info@polerteam.com">info@polerteam.com</a>
-                    </div>
-                </div>
-            </div>
+    <!-- TESTIMONIALS -->
+    <section class="hp-quotes">
+        <p class="hp-quotes-kicker hp-reveal">See Why Our Clients Love Us</p>
+        <div class="hp-quote-slide active">
+            <p class="hp-quote-text">"Found our dream condo in Sunny Isles in two weeks."</p>
+            <p class="hp-quote-name">Carlos R. · Colombia</p>
+        </div>
+        <div class="hp-quote-slide">
+            <p class="hp-quote-text">"Rosa made the whole process easy from Brazil."</p>
+            <p class="hp-quote-name">Luiz F. · Brazil</p>
+        </div>
+        <div class="hp-quote-slide">
+            <p class="hp-quote-text">"Best experience buying property in Miami."</p>
+            <p class="hp-quote-name">Ivan C. · New York</p>
+        </div>
+        <div class="hp-quote-dots" id="hp-quote-dots"></div>
+    </section>
+
+    <!-- FEATURED LISTINGS (live MLS, $1M+, newest) -->
+    <section class="hp-featured">
+        <div class="hp-featured-head hp-reveal">
+            <h2>Featured Listings</h2>
+            <a class="hp-viewall" href="listing">View All</a>
+        </div>
+        <div class="hp-featured-grid hp-reveal" id="hp-featured-grid"></div>
+    </section>
+
+    <!-- VALUATION BAND -->
+    <section class="hp-val">
+        <h2 class="hp-reveal">How Much Is Your Home Worth?</h2>
+        <div class="hp-val-checks">
+            <span class="hp-val-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>Personalized Valuation</span>
+            <span class="hp-val-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>Expert Advice</span>
+            <span class="hp-val-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>Sell for More</span>
+        </div>
+        <a class="hp-val-cta" href="home-valuation">Get a Free Home Valuation</a>
+    </section>
+
+    <!-- NEIGHBORHOODS (same cards as the listing page) -->
+    <section class="hp-neigh hp-reveal">
+        <h2>Explore South Florida Neighborhoods</h2>
+        <div class="neighborhood-grid">
+            <a href="listing?city=Miami Beach" class="neighborhood-card" style="background-image:url('https://images.unsplash.com/photo-1535498730771-e735b998cd64?w=600&q=80')"><div class="neighborhood-overlay"><span>Miami Beach</span></div></a>
+            <a href="listing?city=Sunny Isles Beach" class="neighborhood-card" style="background-image:url('https://images.unsplash.com/photo-1506966953602-c20cc11f75e3?w=600&q=80')"><div class="neighborhood-overlay"><span>Sunny Isles Beach</span></div></a>
+            <a href="listing?city=Fort Lauderdale" class="neighborhood-card" style="background-image:url('https://images.unsplash.com/photo-1570129477492-45c003edd2be?w=600&q=80')"><div class="neighborhood-overlay"><span>Fort Lauderdale</span></div></a>
+            <a href="listing?city=Aventura" class="neighborhood-card" style="background-image:url('https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=600&q=80')"><div class="neighborhood-overlay"><span>Aventura</span></div></a>
+            <a href="listing?city=Coral Gables" class="neighborhood-card" style="background-image:url('https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=600&q=80')"><div class="neighborhood-overlay"><span>Coral Gables</span></div></a>
+            <a href="listing?city=Hollywood" class="neighborhood-card" style="background-image:url('https://images.unsplash.com/photo-1519046904884-53103b34b206?w=600&q=80')"><div class="neighborhood-overlay"><span>Hollywood</span></div></a>
         </div>
     </section>
 
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-brand">
-                    <img src="logo-white.png" alt="The Poler Team" class="footer-logo">
-                    <p>Real Estate &bull; Lead Generation &bull; Consulting</p>
-                    <p class="footer-location">Sunny Isles Beach, FL</p>
-                </div>
-                <div class="footer-links">
-                    <a href="#lead-generation">Lead Generation</a>
-                    <a href="#residential">Residential</a>
-                    <a href="#commercial">Commercial</a>
-                    <a href="#consulting">Consulting</a>
-                    <a href="#tools">Tools</a>
-                </div>
-                <div class="footer-social">
-                    <a href="https://www.linkedin.com/in/the-poler-team-2b77551b/" target="_blank" aria-label="LinkedIn">
-                        <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
-                    </a>
-                    <a href="mailto:info@polerteam.com" aria-label="Email">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/></svg>
-                    </a>
-                </div>
+    <!-- SELL / BUY DUO -->
+    <div class="hp-duo hp-reveal">
+        <div class="hp-duo-tile" style="background-image:url('https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1400&q=75&fm=jpg')">
+            <h3>Selling a Home?</h3>
+            <p>Find out what your home is really worth.</p>
+            <a class="hp-duo-cta" href="home-valuation">Get Home Value</a>
+        </div>
+        <div class="hp-duo-tile" style="background-image:url('https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=1400&q=75&fm=jpg')">
+            <h3>Buying a Home?</h3>
+            <p>Browse every listing in South Florida.</p>
+            <a class="hp-duo-cta" href="listing">View Properties</a>
+        </div>
+    </div>
+
+    <!-- WORK WITH -->
+    <section class="hp-work">
+        <p class="hp-work-kicker hp-reveal">Ready to Move?</p>
+        <h2 class="hp-reveal">Work With The Poler Team</h2>
+        <p>Reliable, responsive, and committed. We make your real estate journey our priority, from the first search to the closing table. Reach out today to get started.</p>
+        <a class="hp-work-cta" href="#" onclick="openHpLead();return false;">Let's Connect</a>
+        <p class="hp-work-phone">or call us at
+            <a href="tel:+19542354046">(954) 235-4046</a><span class="hp-work-sep">&middot;</span><a href="tel:+13057997290">(305) 799-7290</a><span class="hp-work-sep">&middot;</span><a href="tel:+19546106975">(954) 610-6975</a>
+        </p>
+    </section>
+
+    <!-- LEAD POPUP — Contact / Call Us / Let's Connect.
+         Non-Meta visitors: opens on click only, closable (X / backdrop / Esc).
+         Facebook/Instagram visitors: same gate dynamic as the listing page —
+         auto-opens after 10s, no X. -->
+    <div class="hpl-overlay" id="hpl-overlay" role="dialog" aria-modal="true" aria-labelledby="hpl-title">
+        <div class="hpl-card">
+            <button type="button" class="hpl-close" id="hpl-close" aria-label="Close">&#10005;</button>
+            <div id="hpl-main">
+                <h2 class="hpl-title" id="hpl-title">Let's Connect</h2>
+                <p class="hpl-sub">Tell us a little about you and The Poler Team will reach out right away.</p>
+                <form class="hpl-form" id="hpl-form" novalidate>
+                    <input type="text" class="hpl-input" id="hpl-name" placeholder="Full Name" autocomplete="name" required>
+                    <input type="email" class="hpl-input" id="hpl-email" placeholder="Email Address" autocomplete="email" required>
+                    <input type="tel" class="hpl-input" id="hpl-phone" placeholder="Phone Number" autocomplete="tel" required>
+                    <select class="hpl-select placeholder" id="hpl-timeline" required>
+                        <option value="" disabled selected>When do you plan to buy?</option>
+                        <option value="0-3 months">0-3 months</option>
+                        <option value="3-6 months">3-6 months</option>
+                        <option value="6-12 months">6-12 months</option>
+                        <option value="12+ months">12+ months</option>
+                        <option value="Just exploring">Just exploring</option>
+                    </select>
+                    <textarea class="hpl-textarea" id="hpl-message" placeholder="Leave us a message (optional)"></textarea>
+                    <p class="hpl-error" id="hpl-error"></p>
+                    <button type="submit" class="hpl-submit" id="hpl-submit">Connect With Us</button>
+                    <p class="hpl-consent">By submitting, you agree to be contacted by The Poler Team via call, text, and WhatsApp, including by automated or AI-assisted means, at the number provided. Consent isn't required to buy or sell.</p>
+                </form>
             </div>
-            <div class="footer-bottom">
-                <p>&copy; 2025 The Poler Team. All rights reserved.</p>
+            <div class="hpl-done" id="hpl-done">
+                <div class="hpl-done-icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>
+                <h3>Thank you!</h3>
+                <p>We received your information and will reach out shortly.</p>
             </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="lp-footer">
+        <div class="lp-footer-inner">
+            <img src="logo-white.png" alt="The Poler Team" class="lp-footer-logo">
+            <p class="lp-footer-copy">&copy; 2026 The Poler Team &middot; Optimar International Realty. All rights reserved.</p>
+            <a href="privacy.html" class="lp-footer-back">Privacy Policy</a>
         </div>
     </footer>
 
-    <script src="script.js"></script>
+</div><!-- /page-wrap -->
+
+<script>
+// Global so nav onclick handlers can call it before DOMContentLoaded wiring runs.
+function openHpLead() {
+    var ov = document.getElementById('hpl-overlay');
+    if (ov) { ov.classList.add('open'); document.body.style.overflow = 'hidden'; }
+}
+document.addEventListener('DOMContentLoaded', function () {
+    var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    // ── LEAD POPUP ──────────────────────────────────────────────
+    // Meta (Facebook/Instagram) traffic keeps the listing-page dynamic:
+    // 10s auto-popup, no X. Everyone else only sees it on Contact/Call Us
+    // click, with a fully working X / backdrop / Esc close.
+    var hplOverlay = document.getElementById('hpl-overlay');
+    var hplCaptured = false;
+    try { hplCaptured = !!localStorage.getItem('poler_lead_v1'); } catch (e) {}
+
+    var isMetaTraffic = false;
+    try {
+        var gp = new URLSearchParams(window.location.search);
+        var gsrc = (gp.get('utm_source') || '').toLowerCase();
+        var ref = (document.referrer || '').toLowerCase();
+        if (gp.get('fbclid') ||
+            gsrc === 'facebook' || gsrc === 'fb' || gsrc === 'ig' || gsrc === 'instagram' || gsrc === 'meta' ||
+            ref.indexOf('facebook.com') !== -1 || ref.indexOf('instagram.com') !== -1) {
+            isMetaTraffic = true;
+            sessionStorage.setItem('poler_meta_visitor', '1');
+        } else if (sessionStorage.getItem('poler_meta_visitor') === '1') {
+            isMetaTraffic = true;
+        }
+    } catch (e) { /* privacy browsers: treat as non-Meta */ }
+
+    function closeHpLead() {
+        if (hplOverlay.classList.contains('gated')) return;
+        hplOverlay.classList.remove('open');
+        document.body.style.overflow = '';
+    }
+    document.getElementById('hpl-close').addEventListener('click', closeHpLead);
+    hplOverlay.addEventListener('click', function (e) { if (e.target === hplOverlay) closeHpLead(); });
+    document.addEventListener('keydown', function (e) {
+        if ((e.key === 'Escape' || e.keyCode === 27) && hplOverlay.classList.contains('open')) closeHpLead();
+    });
+
+    if (isMetaTraffic && !hplCaptured) {
+        hplOverlay.classList.add('gated');
+        setTimeout(function () { openHpLead(); }, 10000);
+    }
+
+    // Select placeholder color
+    var hplTimeline = document.getElementById('hpl-timeline');
+    hplTimeline.addEventListener('change', function () {
+        if (hplTimeline.value) hplTimeline.classList.remove('placeholder');
+    });
+
+    // Submit -> /api/save-lead (same endpoint as the listing popup)
+    document.getElementById('hpl-form').addEventListener('submit', function (e) {
+        e.preventDefault();
+        var name = document.getElementById('hpl-name').value.trim();
+        var email = document.getElementById('hpl-email').value.trim();
+        var phone = document.getElementById('hpl-phone').value.trim();
+        var timeline = hplTimeline.value;
+        var message = document.getElementById('hpl-message').value.trim();
+        var errEl = document.getElementById('hpl-error');
+        var showErr = function (m) { errEl.textContent = m; errEl.style.display = 'block'; };
+        errEl.style.display = 'none';
+
+        if (!name) return showErr('Please enter your name.');
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return showErr('Please enter a valid email address.');
+        if (phone.replace(/\D/g, '').length < 7) return showErr('Please enter a valid phone number.');
+        if (!timeline) return showErr('Please tell us when you plan to buy.');
+
+        var parts = name.split(/\s+/);
+        var first = parts.shift() || '';
+        var last = parts.join(' ');
+        var btn = document.getElementById('hpl-submit');
+        btn.disabled = true;
+        btn.textContent = 'Sending...';
+
+        fetch('/api/save-lead', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                first: first, last: last, email: email, phone: phone,
+                timeline: timeline,
+                notes: message ? 'Homepage message: ' + message : '',
+                listingAddress: 'Homepage Contact',
+                sourceUrl: window.location.href,
+                pageUrl: window.location.href
+            })
+        }).then(function (r) { return r.json(); }).then(function () {
+            try { localStorage.setItem('poler_lead_v1', email); } catch (e2) {}
+            try { if (typeof fbq === 'function') fbq('track', 'Lead'); } catch (e3) {}
+            document.getElementById('hpl-main').style.display = 'none';
+            document.getElementById('hpl-done').style.display = 'block';
+            hplOverlay.classList.remove('gated');
+            setTimeout(closeHpLead, 3000);
+        }).catch(function () {
+            btn.disabled = false;
+            btn.textContent = 'Connect With Us';
+            showErr('Something went wrong. Please try again.');
+        });
+    });
+
+    // HERO VIDEO ROTATION - three clips crossfading every 9s (photo stays as fallback)
+    var vids = [].slice.call(document.querySelectorAll('.hp-hero-video'));
+    if (!reduceMotion && vids.length && 'IntersectionObserver' in window) {
+        var vi = 0;
+        var ensureSrc = function (v) {
+            if (v && !v.getAttribute('data-loaded')) {
+                var src = document.createElement('source');
+                src.src = v.getAttribute('data-src');
+                src.type = 'video/mp4';
+                v.appendChild(src);
+                v.load();
+                v.setAttribute('data-loaded', '1');
+            }
+        };
+        var playSafe = function (v) { var p = v.play(); if (p && p.catch) p.catch(function () {}); };
+        ensureSrc(vids[0]);
+        playSafe(vids[0]);
+        // Reveal the first clip only once it is actually rendering frames -
+        // adding .on earlier makes it POP in at full opacity the moment the
+        // first frame decodes (the millisecond flash) instead of crossfading.
+        var revealFirst = function () {
+            vids[0].classList.add('on');
+            vids[0].removeEventListener('playing', revealFirst);
+        };
+        if (vids[0].readyState >= 3 && !vids[0].paused) revealFirst();
+        else vids[0].addEventListener('playing', revealFirst);
+        if (vids[1]) ensureSrc(vids[1]);
+        // Rotation: advance every ~9s, but NEVER to a clip that hasn't finished
+        // loading (readyState < 3 renders as an invisible box, showing the photo
+        // fallback - "the pictures passing through" bug on slower connections).
+        // Blocked ticks just hold the current clip and retry each second.
+        var sinceSwitch = 0;
+        setInterval(function () {
+            sinceSwitch++;
+            if (sinceSwitch < 9 || document.hidden) return;
+            var cur = vids[vi];
+            if (cur.readyState >= 3 && cur.paused) playSafe(cur);
+            var next = vids[(vi + 1) % vids.length];
+            ensureSrc(next);
+            if (next.readyState < 3) return;
+            var prev = cur;
+            vi = (vi + 1) % vids.length;
+            playSafe(next);
+            next.classList.add('on');
+            prev.classList.remove('on');
+            setTimeout(function () { prev.pause(); }, 1500);
+            ensureSrc(vids[(vi + 1) % vids.length]);
+            sinceSwitch = 0;
+        }, 1000);
+        // Chrome pauses (or refuses to start) offscreen autoplay video - e.g. when the
+        // page is opened on an anchor link like #hp-meet or in a background tab. Resume
+        // the current clip whenever the hero scrolls back into view or the tab refronts.
+        var hero = document.querySelector('.hp-hero');
+        var heroInView = function () {
+            var r = hero.getBoundingClientRect();
+            return r.bottom > 0 && r.top < window.innerHeight;
+        };
+        var resumeHero = function () { var v = vids[vi]; if (v && v.paused && heroInView() && !document.hidden) playSafe(v); };
+        var heroIO = new IntersectionObserver(function (entries) {
+            if (entries[0].isIntersecting) resumeHero();
+        }, { threshold: 0.05 });
+        heroIO.observe(hero);
+        document.addEventListener('visibilitychange', resumeHero);
+        window.addEventListener('scroll', resumeHero, { passive: true });
+        // Watchdog: some Chrome states silently drop the initial play() with no
+        // event to hook (occluded window, energy saver, load races). Retry every
+        // 2s while the hero is on screen; no-op once playing.
+        setInterval(resumeHero, 2000);
+        vids.forEach(function (v) { v.addEventListener('loadeddata', resumeHero); });
+    }
+
+    // SCROLL REVEALS - sections rise in on enter and fade back out on leave
+    if (!reduceMotion && 'IntersectionObserver' in window) {
+        document.documentElement.classList.add('hp-ready');
+        var io = new IntersectionObserver(function (entries) {
+            entries.forEach(function (en) {
+                en.target.classList.toggle('hp-in', en.isIntersecting);
+            });
+        }, { threshold: 0.12, rootMargin: '0px 0px -4% 0px' });
+        [].slice.call(document.querySelectorAll('.hp-reveal')).forEach(function (el) { io.observe(el); });
+    }
+
+    // Hero search -> listing page (city or free text)
+    document.getElementById('hp-search').addEventListener('submit', function (e) {
+        e.preventDefault();
+        var q = document.getElementById('hp-search-input').value.trim();
+        showNavFade();
+        window.location.href = q ? 'listing?city=' + encodeURIComponent(q) : 'listing';
+    });
+
+    // Cover the video-teardown flash when navigating to another page
+    function showNavFade() {
+        var f = document.getElementById('hp-navfade');
+        if (f) f.classList.add('on');
+    }
+    document.addEventListener('click', function (e) {
+        var a = e.target && e.target.closest ? e.target.closest('a[href]') : null;
+        if (!a) return;
+        var href = a.getAttribute('href');
+        if (!href || href.charAt(0) === '#' || href.indexOf('tel:') === 0 ||
+            href.indexOf('http') === 0 || a.target === '_blank' || a.getAttribute('onclick')) return;
+        showNavFade();
+    });
+    // Coming BACK via the back button restores this page from cache - clear the fade
+    window.addEventListener('pageshow', function () {
+        var f = document.getElementById('hp-navfade');
+        if (f) f.classList.remove('on');
+    });
+
+    // Testimonial carousel (auto-advance + dots)
+    var slides = document.querySelectorAll('.hp-quote-slide');
+    var dotsWrap = document.getElementById('hp-quote-dots');
+    var idx = 0, timer;
+    slides.forEach(function (_, i) {
+        var d = document.createElement('button');
+        d.className = 'hp-quote-dot' + (i === 0 ? ' active' : '');
+        d.setAttribute('aria-label', 'Testimonial ' + (i + 1));
+        d.addEventListener('click', function () { show(i); restart(); });
+        dotsWrap.appendChild(d);
+    });
+    function show(i) {
+        idx = i;
+        slides.forEach(function (s, j) { s.classList.toggle('active', j === i); });
+        dotsWrap.querySelectorAll('.hp-quote-dot').forEach(function (d, j) { d.classList.toggle('active', j === i); });
+    }
+    function restart() { clearInterval(timer); start(); }
+    function start() {
+        var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (reduce) return;
+        timer = setInterval(function () { show((idx + 1) % slides.length); }, 6000);
+    }
+    start();
+
+    // Featured listings: 6 newest $1M+ actives across core cities (live MLS)
+    var CITIES = ['Miami Beach','Sunny Isles Beach','Fort Lauderdale','Miami','Aventura','Coral Gables','Bal Harbour','Key Biscayne','Hollywood','Surfside','Golden Beach'];
+    var qs = new URLSearchParams({
+        StandardStatus: 'Active', PropertyType: 'Residential',
+        'City.in': CITIES.join(','), 'ListPrice.gte': '1000000',
+        sortBy: 'ListingContractDate', order: 'desc', 'ListingContractDate.gte': '1900-01-01',
+        limit: '6', offset: '0',
+    });
+    fetch('/api/bridge/listings?' + qs.toString())
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+            if (!d.success || !d.bundle || !d.bundle.length) return;
+            var grid = document.getElementById('hp-featured-grid');
+            grid.innerHTML = d.bundle.map(function (l) {
+                var photo = (l.Media && l.Media.length) ? l.Media[0].MediaURL : '';
+                var price = l.ListPrice ? '$' + Number(l.ListPrice).toLocaleString() : '';
+                var addr = l.UnparsedAddress || l.City || '';
+                return '<a class="hp-listing" href="listing?mls=' + (l.ListingId || '') + '">' +
+                    (photo ? '<img src="' + photo + '" alt="" loading="lazy">' : '') +
+                    '<div class="hp-listing-info"><div class="hp-listing-price">' + price + '</div>' +
+                    '<div class="hp-listing-addr">' + addr + '</div></div></a>';
+            }).join('');
+        })
+        .catch(function () { /* section stays empty on API failure */ });
+});
+</script>
+<script src="nav.js" defer></script>
 </body>
 </html>

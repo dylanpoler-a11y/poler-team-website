@@ -134,6 +134,7 @@
             <h1>Lead Dashboard</h1>
             <div class="header-right">
               <span id="last-refreshed"></span>
+              <button id="add-lead-btn" class="refresh-btn" title="Add a contact to the CRM by hand">+ Add Contact</button>
               <button id="resync-email-btn" class="refresh-btn" title="Re-scan last 24h of email and write missed items to CRM">📥 Resync email (24h)</button>
               <button id="refresh-btn" class="refresh-btn">↻ Refresh</button>
             </div>
@@ -1873,6 +1874,101 @@
     </div>
   </div>
 
+  <!-- Add Contact Modal — manual CRM entry (Leads tab) -->
+  <div id="add-lead-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:10000;align-items:center;justify-content:center;padding:20px;">
+    <div style="background:#fff;border-radius:12px;max-width:560px;width:100%;padding:28px;box-shadow:0 12px 40px rgba(0,0,0,0.3);max-height:90vh;overflow-y:auto;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <h2 style="margin:0;font-size:20px;color:#0a0a0a;">Add Contact</h2>
+        <button type="button" id="add-lead-close" style="background:none;border:none;font-size:24px;cursor:pointer;color:#666;">&times;</button>
+      </div>
+
+      <div style="display:flex;gap:12px;">
+        <div style="flex:1;">
+          <label style="display:block;font-size:12px;font-weight:600;color:#555;margin-bottom:6px;text-transform:uppercase;">First Name *</label>
+          <input type="text" id="add-lead-first" placeholder="Pepe" style="width:100%;padding:10px;border:1.5px solid #ddd;border-radius:8px;margin-bottom:12px;box-sizing:border-box;">
+        </div>
+        <div style="flex:1;">
+          <label style="display:block;font-size:12px;font-weight:600;color:#555;margin-bottom:6px;text-transform:uppercase;">Last Name</label>
+          <input type="text" id="add-lead-last" placeholder="Wong Lung" style="width:100%;padding:10px;border:1.5px solid #ddd;border-radius:8px;margin-bottom:12px;box-sizing:border-box;">
+        </div>
+      </div>
+
+      <label style="display:block;font-size:12px;font-weight:600;color:#555;margin-bottom:6px;text-transform:uppercase;">Phone</label>
+      <input type="tel" id="add-lead-phone" placeholder="+51998155546 (include country code)" style="width:100%;padding:10px;border:1.5px solid #ddd;border-radius:8px;margin-bottom:12px;box-sizing:border-box;">
+
+      <label style="display:block;font-size:12px;font-weight:600;color:#555;margin-bottom:6px;text-transform:uppercase;">Email</label>
+      <input type="email" id="add-lead-email" placeholder="name@example.com" style="width:100%;padding:10px;border:1.5px solid #ddd;border-radius:8px;margin-bottom:12px;box-sizing:border-box;">
+
+      <div style="display:flex;gap:12px;">
+        <div style="flex:1;">
+          <label style="display:block;font-size:12px;font-weight:600;color:#555;margin-bottom:6px;text-transform:uppercase;">Country</label>
+          <input type="text" id="add-lead-country" placeholder="auto-detected from phone" style="width:100%;padding:10px;border:1.5px solid #ddd;border-radius:8px;margin-bottom:12px;box-sizing:border-box;">
+        </div>
+        <div style="flex:1;">
+          <label style="display:block;font-size:12px;font-weight:600;color:#555;margin-bottom:6px;text-transform:uppercase;">Language</label>
+          <select id="add-lead-language" style="width:100%;padding:10px;border:1.5px solid #ddd;border-radius:8px;margin-bottom:12px;box-sizing:border-box;">
+            <option value="en">English</option>
+            <option value="es">Espa&ntilde;ol</option>
+            <option value="pt">Portugu&ecirc;s</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:12px;">
+        <div style="flex:1;">
+          <label style="display:block;font-size:12px;font-weight:600;color:#555;margin-bottom:6px;text-transform:uppercase;">Assigned To</label>
+          <select id="add-lead-assigned" style="width:100%;padding:10px;border:1.5px solid #ddd;border-radius:8px;margin-bottom:12px;box-sizing:border-box;">
+            <option value="Kevin">Kevin</option>
+            <option value="Rosa">Rosa</option>
+            <option value="Dylan">Dylan</option>
+            <option value="Noel">Noel</option>
+          </select>
+        </div>
+        <div style="flex:1;">
+          <label style="display:block;font-size:12px;font-weight:600;color:#555;margin-bottom:6px;text-transform:uppercase;">Timeline</label>
+          <select id="add-lead-timeline" style="width:100%;padding:10px;border:1.5px solid #ddd;border-radius:8px;margin-bottom:12px;box-sizing:border-box;">
+            <option value="">&mdash;</option>
+            <option value="0-3 months">0-3 months</option>
+            <option value="3-6 months">3-6 months</option>
+            <option value="6-12 months">6-12 months</option>
+            <option value="12+ months">12+ months</option>
+          </select>
+        </div>
+      </div>
+
+      <label style="display:block;font-size:12px;font-weight:600;color:#555;margin-bottom:6px;text-transform:uppercase;">Status</label>
+      <select id="add-lead-status" style="width:100%;padding:10px;border:1.5px solid #ddd;border-radius:8px;margin-bottom:12px;box-sizing:border-box;margin-bottom:6px;">
+        <option value="Contacted">Contacted &mdash; someone you already know (no automation)</option>
+        <option value="Warm">Warm</option>
+        <option value="Hot">Hot</option>
+        <option value="New">New &mdash; run them through the automated funnel</option>
+      </select>
+      <p id="add-lead-status-warning" style="display:none;font-size:12px;color:#92400e;background:#fef3c7;border:1px solid #fcd34d;border-radius:6px;padding:8px 10px;margin:0 0 12px;">
+        &#9888; &ldquo;New&rdquo; puts them in Claudia&rsquo;s funnel &mdash; she WhatsApps them an automated intro (&ldquo;you just signed up on our website&rdquo;) from the 954 within ~30 min. Only pick this for a genuine new lead.
+      </p>
+
+      <label style="display:block;font-size:12px;font-weight:600;color:#555;margin-bottom:6px;text-transform:uppercase;">Interested In (address, optional)</label>
+      <input type="text" id="add-lead-listing" placeholder="e.g. 5601 Collins Ave #1011" style="width:100%;padding:10px;border:1.5px solid #ddd;border-radius:8px;margin-bottom:12px;box-sizing:border-box;">
+
+      <label style="display:block;font-size:12px;font-weight:600;color:#555;margin-bottom:6px;text-transform:uppercase;">Notes</label>
+      <textarea id="add-lead-notes" rows="4" placeholder="Convo:&#10;&bull; ...&#10;Next:&#10;&bull; ..." style="width:100%;padding:10px;border:1.5px solid #ddd;border-radius:8px;margin-bottom:12px;box-sizing:border-box;resize:vertical;font-family:inherit;"></textarea>
+
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px 14px;margin-bottom:16px;">
+        <label style="display:flex;align-items:flex-start;gap:9px;font-size:13px;color:#334155;cursor:pointer;margin-bottom:9px;">
+          <input type="checkbox" id="add-lead-welcome" style="margin-top:2px;flex:0 0 auto;">
+          <span>Email them their portal login &mdash; sends a &ldquo;Your Account&rdquo; message with a password. <strong>Leave off for people you already know.</strong></span>
+        </label>
+        <label style="display:flex;align-items:flex-start;gap:9px;font-size:13px;color:#334155;cursor:pointer;">
+          <input type="checkbox" id="add-lead-notify" style="margin-top:2px;flex:0 0 auto;">
+          <span>Send the team the &ldquo;New Lead&rdquo; notification email.</span>
+        </label>
+      </div>
+
+      <button type="button" id="add-lead-create" style="width:100%;padding:12px;background:#0a0a0a;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">Add Contact</button>
+      <p id="add-lead-error" style="color:#c0392b;font-size:13px;margin:10px 0 0;display:none;"></p>
+    </div>
+  </div>
+
   <!-- Property Detail Modal -->
   <div id="property-modal" class="property-modal">
     <div class="property-modal-backdrop" onclick="closePropertyModal()"></div>
@@ -1885,6 +1981,6 @@
   </div>
 
   <script src="https://unpkg.com/maplibre-gl@4.1.2/dist/maplibre-gl.js"></script>
-  <script src="crm.js?v=20260612c" defer></script>
+  <script src="crm.js?v=20260818c" defer></script>
 </body>
 </html>

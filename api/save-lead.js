@@ -10,6 +10,7 @@
 export const config = { runtime: 'edge' };
 
 import { sendCapiEvent } from './_capi.js';
+import { authorize } from './_auth.js';
 
 // ISO 2-letter code → country name (matches listing.html dropdown)
 const ISO_COUNTRY = {
@@ -128,6 +129,28 @@ export default async function handler(req, context) {
     if (!first && typeof body.firstName === 'string') first = body.firstName;
     if (!last  && typeof body.lastName  === 'string') last  = body.lastName;
 
+    // ── Manual CRM entry (the crm.html "+ Add Contact" button) ──
+    // Someone Kevin types in himself is NOT a website lead: it must never auto-fire the
+    // "here are your login credentials" welcome email at a contact he already knows, and
+    // the internal "New Lead" blast is noise when he is the one entering it. Both become
+    // opt-in, and the flag only counts when the caller holds CRM auth — otherwise the
+    // public form endpoint could be used to silently suppress lead notifications.
+    const manualEntry = body.manualEntry === true && authorize(req, body).ok;
+    const sendWelcome = manualEntry ? body.sendWelcomeEmail === true : true;
+    const notifyTeam  = manualEntry ? body.notifyTeam       === true : true;
+
+    // A hand-added contact defaults to "Contacted", NOT "New". The Sammy/Claudia engine's
+    // new-lead funnel only picks up status === "New", and its 954 signup intro opens with
+    // "You just signed up on our website" — false and off-key for someone Kevin already
+    // knows. Defaulting off "New" keeps a manual add out of that funnel entirely, with no
+    // change needed in the engine. Kevin can still choose "New" in the modal to opt a
+    // manual contact INTO the automated funnel on purpose.
+    // Root: 2026-08-18 — Pepe Wong (a client of years, Peru) was added by hand and got the
+    // English cold-lead intro from the 954 within 60 seconds.
+    const leadStatus = manualEntry
+        ? ((typeof body.status === 'string' && body.status.trim()) || 'Contacted')
+        : 'New';
+
     // Build UTM summary string for CRM (e.g. "facebook / cpc / miami-luxury-q1")
     const utmParts = [utm_source, utm_medium, utm_campaign].filter(Boolean);
     const utmSummary = utmParts.length ? utmParts.join(' / ') : '';
@@ -165,7 +188,7 @@ export default async function handler(req, context) {
         'Source URL':      sourceUrl,
         'Listing Address': listingAddress,
         'Listing Price':   Number(listingPrice) || 0,
-        'Status':          'New',
+        'Status':          leadStatus,
         'Created At':      new Date().toISOString(),
         'Alert Token':     alertToken,
         'Access Password': accessPassword,
@@ -249,7 +272,7 @@ export default async function handler(req, context) {
         const emailPromises = [];
 
         // 1. Welcome email → new lead (with login credentials)
-        if (email) {
+        if (email && sendWelcome) {
             const subjects = { en: 'Your Account — The Poler Team', es: 'Tu Cuenta — The Poler Team', pt: 'Sua Conta — The Poler Team' };
             emailPromises.push(
                 fetch('https://api.resend.com/emails', {
@@ -266,35 +289,37 @@ export default async function handler(req, context) {
         }
 
         // 2. New lead notification → Kevin, Rosa, Dylan
-        const notifyRecipients = [
-            'kevinpolermiami@gmail.com',
-            'rosadasilvapoler@gmail.com',
-            'rosapoler@hotmail.com',
-            'dylan@poler.org',
-        ];
-        const notifyHtml = buildNotificationEmail({
-            first, last, email, phone,
-            listingAddress, listingPrice,
-            sourceUrl, country, assignedTo,
-            timeline, utmSummary, consentRecord,
-        });
-        emailPromises.push(
-            fetch('https://api.resend.com/emails', {
-                method: 'POST',
-                headers: resendHeaders,
-                body: JSON.stringify({
-                    from: `New Lead <${fromEmail}>`,
-                    to: notifyRecipients,
-                    subject: `New Lead: ${first} ${last}${country ? ` (${country})` : ''}`,
-                    html: notifyHtml,
-                }),
-            }).then(async r => {
-                if (!r.ok) {
-                    const body = await r.json().catch(() => ({}));
-                    console.error('Notification email failed:', r.status, JSON.stringify(body));
-                }
-            }).catch(err => console.error('Notification email error:', err))
-        );
+        if (notifyTeam) {
+            const notifyRecipients = [
+                'kevinpolermiami@gmail.com',
+                'rosadasilvapoler@gmail.com',
+                'rosapoler@hotmail.com',
+                'dylan@poler.org',
+            ];
+            const notifyHtml = buildNotificationEmail({
+                first, last, email, phone,
+                listingAddress, listingPrice,
+                sourceUrl, country, assignedTo,
+                timeline, utmSummary, consentRecord,
+            });
+            emailPromises.push(
+                fetch('https://api.resend.com/emails', {
+                    method: 'POST',
+                    headers: resendHeaders,
+                    body: JSON.stringify({
+                        from: `New Lead <${fromEmail}>`,
+                        to: notifyRecipients,
+                        subject: `New Lead: ${first} ${last}${country ? ` (${country})` : ''}`,
+                        html: notifyHtml,
+                    }),
+                }).then(async r => {
+                    if (!r.ok) {
+                        const body = await r.json().catch(() => ({}));
+                        console.error('Notification email failed:', r.status, JSON.stringify(body));
+                    }
+                }).catch(err => console.error('Notification email error:', err))
+            );
+        }
 
         // Await both before returning — Edge runtime kills pending fetches on response
         await Promise.allSettled(emailPromises);

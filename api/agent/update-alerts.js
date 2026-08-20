@@ -90,7 +90,17 @@ export default async function handler(req) {
     // them into profile #1. When the caller sends profiles[] too, those win untouched:
     // features there belong per-profile.
     const wantsFeatures = !wantsProfiles && Array.isArray(profile.features);
-    if (wantsProfiles || wantsChannels || wantsFeatures) {
+    // Flat CRITERIA (price/cities/beds/baths/types) must ALSO fold into profile #1 when
+    // the lead already has a wrapper: profilesFromLead() prefers profiles[] and ignores
+    // the flat columns entirely, so writing only the flat fields is a SILENT NO-OP for
+    // every wrapper lead. Root: 2026-08-10, Yasser Lenis — raising his cap $550k→$650k
+    // updated 'Alert Price Max' while the engine kept reading $550k off the profile.
+    const wantsFlatCriteria = !wantsProfiles && (
+        profile.priceMin !== undefined || profile.priceMax !== undefined ||
+        profile.bedsMin  !== undefined || profile.bathsMin !== undefined ||
+        Array.isArray(profile.cities)  || Array.isArray(profile.propertyTypes)
+    );
+    if (wantsProfiles || wantsChannels || wantsFeatures || wantsFlatCriteria) {
         let curRaw = '';
         let curFields = {};
         try {
@@ -106,6 +116,19 @@ export default async function handler(req) {
         let nextProfiles = wantsProfiles
             ? profile.profiles.slice(0, 5).filter(p => p && typeof p === 'object')
             : parsed.profiles;
+        // Merge whatever the caller explicitly sent into profile #1 (same convention as
+        // features: profile #1 is the flat-field mirror). Keys the caller omitted are
+        // left untouched, so a price-only update can't wipe cities/features.
+        if (wantsFlatCriteria && nextProfiles.length > 0) {
+            const patch = {};
+            if (Array.isArray(profile.propertyTypes)) patch.types = fields['Alert Property Types'];
+            if (Array.isArray(profile.cities))        patch.cities = fields['Alert Cities'];
+            if (profile.priceMin !== undefined)       patch.priceMin = fields['Alert Price Min'];
+            if (profile.priceMax !== undefined)       patch.priceMax = fields['Alert Price Max'];
+            if (profile.bedsMin  !== undefined)       patch.bedsMin  = fields['Alert Beds Min'];
+            if (profile.bathsMin !== undefined)       patch.bathsMin = fields['Alert Baths Min'];
+            nextProfiles = nextProfiles.map((p, i) => (i === 0 ? { ...p, ...patch } : p));
+        }
         if (wantsFeatures) {
             const feats = profile.features.map(f => String(f).trim()).filter(Boolean).slice(0, 15);
             if (nextProfiles.length > 0) {
@@ -128,7 +151,13 @@ export default async function handler(req) {
         const nextChannels = wantsChannels
             ? { email: profile.channels.email !== false, whatsapp: !!profile.channels.whatsapp }
             : parsed.channels;
-        fields['Alert Profiles'] = serializeAlertProfiles(nextProfiles, nextChannels);
+        // Only touch the wrapper when there's something real to store. A flat-only lead
+        // whose update carried just criteria must NOT gain an empty profiles wrapper —
+        // wantsFlatCriteria now opens this block for those leads too. wantsProfiles with
+        // [] stays an explicit clear-back-to-flat.
+        if (wantsProfiles || wantsChannels || nextProfiles.length > 0) {
+            fields['Alert Profiles'] = serializeAlertProfiles(nextProfiles, nextChannels);
+        }
     }
 
     if (Object.keys(fields).length === 0) {

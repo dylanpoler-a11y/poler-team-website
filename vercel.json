@@ -7,6 +7,10 @@
     {
       "source": "/via-ventura",
       "destination": "/api/vv-ab/route"
+    },
+    {
+      "source": "/kevindashboard",
+      "destination": "/api/kevindashboard"
     }
   ],
   "redirects": [

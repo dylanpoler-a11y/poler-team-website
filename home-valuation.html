@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home Valuation — The Poler Team</title>
+    <meta name="description" content="Find out what your South Florida home is worth. Free personalized valuation from The Poler Team.">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://www.homesinsoflorida.com/home-valuation">
+    <link rel="icon" href="favicon.ico">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="listing.css">
+
+    <!-- Meta Pixel Code -->
+    <script>
+    !function(f,b,e,v,n,t,s)
+    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+    n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];
+    s.parentNode.insertBefore(t,s)}(window, document,'script',
+    'https://connect.facebook.net/en_US/fbevents.js');
+    fbq('init', '1221841166090741');
+    fbq('track', 'PageView');
+    </script>
+    <noscript><img height="1" width="1" style="display:none"
+    src="https://www.facebook.com/tr?id=1221841166090741&ev=PageView&noscript=1"
+    /></noscript>
+    <!-- End Meta Pixel Code -->
+
+    <!-- Google Ads tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=AW-17910762846"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'AW-17910762846');
+    </script>
+    <!-- End Google Ads tag -->
+
+    <style>
+    /* ============================================================
+       HOME VALUATION PAGE (reference: premium valuation landing;
+       Poler tokens: navy accent, Playfair display, Inter body)
+       ============================================================ */
+    .hv-hero {
+        background:
+            linear-gradient(rgba(26,39,68,0.78), rgba(26,39,68,0.66)),
+            url('https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=1920&q=78&fm=jpg') center/cover no-repeat;
+        color: #fff;
+        padding: 4.5rem 1.25rem 4rem;
+        text-align: center;
+    }
+    .hv-hero h1 {
+        font-family: var(--font-heading);
+        font-size: clamp(2rem, 4.5vw, 3.2rem);
+        font-weight: 700; letter-spacing: -0.01em;
+        margin-bottom: 1rem; text-wrap: balance;
+    }
+    .hv-checks {
+        display: flex; justify-content: center; gap: 1.75rem; flex-wrap: wrap;
+        margin-bottom: 1.75rem;
+    }
+    .hv-check {
+        display: flex; align-items: center; gap: 0.45rem;
+        font-size: 0.86rem; font-weight: 600; letter-spacing: 0.02em;
+        color: rgba(255,255,255,0.92);
+    }
+    .hv-check svg { color: #7fd4a3; flex-shrink: 0; }
+    .hv-bar {
+        display: flex; align-items: center; gap: 0.6rem;
+        background: #fff; border-radius: 10px;
+        padding: 0.5rem 0.5rem 0.5rem 1.1rem;
+        max-width: 760px; margin: 0 auto;
+        box-shadow: 0 12px 34px rgba(10,16,30,0.35);
+    }
+    .hv-bar svg { color: var(--navy); flex-shrink: 0; }
+    .hv-bar input {
+        flex: 1; min-width: 0; border: none; outline: none;
+        font-size: 0.95rem; color: var(--text); font-family: var(--font-body);
+        background: transparent; padding: 0.55rem 0;
+    }
+    .hv-bar input::placeholder { color: var(--text-muted); }
+    .hv-bar button {
+        background: var(--navy); color: #fff; border: none; cursor: pointer;
+        font-size: 0.86rem; font-weight: 700; white-space: nowrap;
+        padding: 0.75rem 1.3rem; border-radius: 8px;
+        transition: background 0.2s, transform 0.15s;
+    }
+    .hv-bar button:hover { background: var(--orange-dark); }
+    .hv-bar button:active { transform: scale(0.98); }
+    /* Step 2 card: contact details */
+    .hv-step2 {
+        display: none;
+        background: #fff; border-radius: 12px;
+        max-width: 560px; margin: 1rem auto 0;
+        padding: 1.4rem; text-align: left;
+        box-shadow: 0 12px 34px rgba(10,16,30,0.35);
+    }
+    .hv-step2.open { display: block; }
+    .hv-step2 h3 { font-size: 1.02rem; font-weight: 700; color: var(--text); margin-bottom: 0.8rem; text-align: center; }
+    .hv-step2 .hv-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.7rem; }
+    .hv-step2 input {
+        width: 100%; padding: 0.7rem 0.9rem; margin-bottom: 0.7rem;
+        border: 1.5px solid var(--border); border-radius: 8px;
+        font-size: 0.9rem; color: var(--text); outline: none; font-family: var(--font-body);
+    }
+    .hv-step2 input:focus { border-color: var(--navy); }
+    .hv-step2 button[type="submit"] {
+        width: 100%; background: var(--navy); color: #fff; border: none; cursor: pointer;
+        font-size: 0.92rem; font-weight: 700; padding: 0.85rem; border-radius: 8px;
+        transition: background 0.2s, transform 0.15s;
+    }
+    .hv-step2 button[type="submit"]:hover { background: var(--orange-dark); }
+    .hv-step2 button[type="submit"]:active { transform: scale(0.98); }
+    .hv-consent { font-size: 0.68rem; color: var(--text-light); margin-top: 0.6rem; line-height: 1.45; text-align: center; }
+    .hv-success {
+        display: none; background: #fff; border-radius: 12px;
+        max-width: 560px; margin: 1rem auto 0; padding: 1.6rem;
+        color: #15803d; font-weight: 600; font-size: 0.95rem; text-align: center;
+    }
+    .hv-error { display: none; color: #fecaca; font-size: 0.85rem; margin-top: 0.7rem; }
+
+    /* ---- Sections ---- */
+    .hv-section { padding: 3.5rem 1.25rem; }
+    .hv-inner { max-width: 1400px; margin: 0 auto; }
+    .hv-kicker {
+        display: inline-flex; align-items: center; gap: 0.7rem;
+        font-size: 0.74rem; font-weight: 700; letter-spacing: 0.14em;
+        text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.9rem;
+    }
+    .hv-kicker::before { content: ""; width: 44px; height: 2px; background: var(--navy); }
+    .hv-split { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; align-items: center; }
+    .hv-split h2 {
+        font-family: var(--font-heading); font-size: clamp(1.6rem, 3vw, 2.3rem);
+        color: var(--text); margin-bottom: 1rem; text-wrap: balance;
+    }
+    .hv-split p { font-size: 0.95rem; color: var(--text-muted); line-height: 1.7; margin-bottom: 0.9rem; max-width: 60ch; }
+    .hv-split img { width: 100%; height: 100%; max-height: 440px; object-fit: cover; border-radius: 12px; }
+
+    /* ---- FAQ boxes ---- */
+    .hv-faq { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+    .hv-faq-cell { padding: 2rem 1.6rem; background: #fff; }
+    .hv-faq-cell + .hv-faq-cell { border-left: 1px solid var(--border); }
+    .hv-faq-cell h3 {
+        font-family: var(--font-heading); font-size: 1.2rem; color: var(--text);
+        margin-bottom: 0.7rem; text-align: center; text-wrap: balance;
+    }
+    .hv-faq-cell p { font-size: 0.88rem; color: var(--text-muted); line-height: 1.65; }
+
+    /* ---- Timeline ---- */
+    .hv-tl-head { text-align: center; margin-bottom: 2.5rem; }
+    .hv-tl-head h2 { font-family: var(--font-heading); font-size: clamp(1.6rem, 3vw, 2.3rem); color: var(--text); margin-bottom: 0.4rem; }
+    .hv-tl-head p { font-size: 0.92rem; color: var(--text-muted); }
+    .hv-tl { position: relative; max-width: 1100px; margin: 0 auto; }
+    .hv-tl::before {
+        content: ""; position: absolute; left: 50%; top: 0; bottom: 0;
+        width: 1px; background: var(--border); transform: translateX(-50%);
+    }
+    .hv-tl-item { display: grid; grid-template-columns: 1fr 1fr; gap: 3.5rem; position: relative; padding: 1.4rem 0; }
+    .hv-tl-item::before {
+        content: ""; position: absolute; left: 50%; top: 2rem;
+        width: 10px; height: 10px; border-radius: 50%;
+        background: var(--navy); transform: translateX(-50%);
+    }
+    .hv-tl-label {
+        display: inline-block; background: var(--navy); color: #fff;
+        font-size: 0.76rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+        padding: 0.5rem 1rem; border-radius: 6px;
+    }
+    .hv-tl-item .hv-tl-left  { text-align: right; }
+    .hv-tl-item .hv-tl-right { text-align: left; }
+    .hv-tl-body h3 { font-family: var(--font-heading); font-size: 1.25rem; color: var(--text); margin-bottom: 0.5rem; }
+    .hv-tl-body p { font-size: 0.9rem; color: var(--text-muted); line-height: 1.65; max-width: 52ch; }
+    .hv-tl-item .hv-tl-left p { margin-left: auto; }
+
+    /* ---- CTA band ---- */
+    .hv-cta {
+        background: var(--navy); color: #fff;
+        padding: 3rem 1.25rem;
+    }
+    .hv-cta-inner {
+        max-width: 1400px; margin: 0 auto;
+        display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; flex-wrap: wrap;
+    }
+    .hv-cta h2 { font-family: var(--font-heading); font-size: clamp(1.6rem, 3.4vw, 2.6rem); }
+    .hv-cta a {
+        background: #fff; color: var(--navy);
+        font-size: 0.9rem; font-weight: 700; white-space: nowrap;
+        padding: 0.85rem 1.7rem; border-radius: 40px;
+        transition: transform 0.15s, box-shadow 0.2s;
+        text-decoration: none;
+    }
+    .hv-cta a:hover { box-shadow: 0 8px 22px rgba(0,0,0,0.3); transform: translateY(-1px); }
+
+    /* ---- Motion (reduced-motion gated) ---- */
+    @media (prefers-reduced-motion: no-preference) {
+        .hv-hero h1, .hv-checks, .hv-bar { animation: hvRise 0.6s cubic-bezier(0.16,1,0.3,1) backwards; }
+        .hv-checks { animation-delay: 0.08s; }
+        .hv-bar { animation-delay: 0.16s; }
+    }
+    @keyframes hvRise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* ---- Responsive ---- */
+    @media (max-width: 900px) {
+        .hv-split { grid-template-columns: 1fr; gap: 1.5rem; }
+        .hv-faq { grid-template-columns: 1fr; }
+        .hv-faq-cell + .hv-faq-cell { border-left: none; border-top: 1px solid var(--border); }
+        .hv-tl::before, .hv-tl-item::before { display: none; }
+        .hv-tl-item { grid-template-columns: 1fr; gap: 0.7rem; padding: 1rem 0; }
+        .hv-tl-item .hv-tl-left { text-align: left; }
+        .hv-tl-item .hv-tl-left p { margin-left: 0; }
+        .hv-hero { padding: 3rem 1rem 2.5rem; }
+        .hv-bar { flex-wrap: wrap; padding: 0.7rem; }
+        .hv-bar input { width: 100%; flex: 1 1 100%; padding: 0.5rem 0.4rem; }
+        .hv-bar button { width: 100%; }
+        .hv-step2 .hv-row { grid-template-columns: 1fr; gap: 0; }
+    }
+    @media (max-width: 640px) { .hv-bar > svg { display: none; } }
+    </style>
+</head>
+<body>
+
+<div id="page-wrap" class="page-wrap">
+
+    <!-- HEADER — same banner as the rest of the site -->
+    <header class="lp-header">
+        <nav class="lp-nav">
+            <div class="lp-nav-inner">
+                <a href="index.html" class="lp-logo-link">
+                    <img src="logo-white.png" alt="The Poler Team" class="lp-nav-logo">
+                </a>
+                <div class="lp-nav-links">
+                <a href="/" class="lp-nav-link" data-i18n="navHome">Home</a>
+                <a href="listing" class="lp-nav-link" data-i18n="navListings">Listings</a>
+                <a href="preconstruction" class="lp-nav-link" data-i18n="navPrecon">Preconstruction</a>
+                <a href="str" class="lp-nav-link" data-i18n="navSTR">Short-Term Rentals</a>
+                <a href="home-valuation" class="lp-nav-link active" data-i18n="navValuation">Home Valuation</a>
+                <a href="/#hp-meet" class="lp-nav-link" data-i18n="navAbout">About</a>
+                <a href="listing?signup=1" class="lp-nav-link" data-i18n="navContact">Contact</a>
+                <a href="tel:+19542354046" class="lp-nav-link lp-nav-phone">(954) 235-4046</a>
+                </div>
+
+                <div class="lp-nav-right">
+                    <a href="listing?signup=1" class="lp-call-btn">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 014.68 11.6 19.79 19.79 0 011.61 3a2 2 0 012-2.18h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L7.91 8.09a16 16 0 006 6l.91-.91a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+                        <span data-i18n="callUs">Call Us</span>
+                    </a>
+                    <div class="lang-selector" id="lang-selector">
+                        <button class="lang-selector-btn" id="lang-selector-btn" aria-label="Select language" aria-expanded="false">
+                            <span id="lang-btn-text">🇺🇸 EN</span>
+                            <svg class="lang-chevron" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                        </button>
+                        <div class="lang-dropdown" id="lang-dropdown">
+                            <button class="lang-option active" data-lang="en">🇺🇸 English</button>
+                            <button class="lang-option" data-lang="es">🇪🇸 Español</button>
+                            <button class="lang-option" data-lang="pt">🇵🇹 Português</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- HERO -->
+    <section class="hv-hero">
+        <h1 data-i18n="hvTitle">How Much Is Your Home Worth?</h1>
+        <div class="hv-checks">
+            <span class="hv-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg><span data-i18n="hvCheck1">Personalized Valuation</span></span>
+            <span class="hv-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg><span data-i18n="hvCheck2">Expert Advice</span></span>
+            <span class="hv-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg><span data-i18n="hvCheck3">Sell for More</span></span>
+        </div>
+        <div class="hv-bar" id="hv-bar">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            <input type="text" id="hv-address" data-i18n="hvAddressPh" placeholder="Enter your home address..." autocomplete="street-address">
+            <button type="button" id="hv-go" data-i18n="hvCta">Get a Free Home Valuation</button>
+        </div>
+        <form class="hv-step2" id="hv-step2" novalidate>
+            <h3 data-i18n="hvStep2Title">Where should we send your valuation?</h3>
+            <input type="text" id="hv-name" data-i18n="hvName" placeholder="Your Name" required autocomplete="name">
+            <div class="hv-row">
+                <input type="email" id="hv-email" data-i18n="hvEmail" placeholder="Email Address" required autocomplete="email">
+                <input type="tel" id="hv-phone" data-i18n="hvPhone" placeholder="Phone Number" autocomplete="tel">
+            </div>
+            <button type="submit" id="hv-submit" data-i18n="hvSubmit">Request My Valuation</button>
+            <p class="hv-consent" data-i18n="consentDisclosure">By submitting, you agree to be contacted by The Poler Team via call, text, and WhatsApp, including by automated or AI-assisted means, at the number provided. Consent isn't required to buy or sell.</p>
+        </form>
+        <div class="hv-success" id="hv-success" data-i18n="hvSuccess">Thank you! Rosa will contact you shortly with your personalized valuation.</div>
+        <p class="hv-error" id="hv-error" data-i18n="hvError">Something went wrong. Please try again or call us.</p>
+    </section>
+
+    <!-- WHAT'S YOUR PROPERTY WORTH -->
+    <section class="hv-section">
+        <div class="hv-inner hv-split">
+            <div>
+                <span class="hv-kicker" data-i18n="hvQuoteKicker">Get a Quote</span>
+                <h2 data-i18n="hvWorthTitle">What's Your Property Worth?</h2>
+                <p data-i18n="hvWorthBody1">Knowing what your home is worth helps you plan ahead: how much equity you hold, what a sale could net, and when the market favors you.</p>
+                <p data-i18n="hvWorthBody2">For the most precise number, we prepare a customized Comparative Market Analysis based on recent sales around your property.</p>
+            </div>
+            <img src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1400&q=75&fm=jpg" alt="South Florida living room interior" loading="lazy">
+        </div>
+    </section>
+
+    <!-- FAQ BOXES -->
+    <section class="hv-section" style="padding-top:0">
+        <div class="hv-inner hv-faq">
+            <div class="hv-faq-cell">
+                <h3 data-i18n="hvFaq1T">What is a home valuation?</h3>
+                <p data-i18n="hvFaq1B">An estimate of your property's current market value. It anchors every big decision: selling, refinancing, or borrowing against your equity.</p>
+            </div>
+            <div class="hv-faq-cell">
+                <h3 data-i18n="hvFaq2T">How is it calculated?</h3>
+                <p data-i18n="hvFaq2B">Location, size, age, condition, upgrades, and recent sales of comparable homes nearby, adjusted for current market trends and buyer demand.</p>
+            </div>
+            <div class="hv-faq-cell">
+                <h3 data-i18n="hvFaq3T">How accurate is it?</h3>
+                <p data-i18n="hvFaq3B">Automated numbers are a starting point. Renovations, unique features, and views only show up in a professional, in-person analysis.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- HOW IS A VALUATION PERFORMED -->
+    <section class="hv-section" style="background:#fff">
+        <div class="hv-inner">
+            <div class="hv-tl-head">
+                <h2 data-i18n="hvHowTitle">How Is a Valuation Performed?</h2>
+                <p data-i18n="hvHowSub">Two proven ways to value a home</p>
+            </div>
+            <div class="hv-tl">
+                <div class="hv-tl-item">
+                    <div class="hv-tl-left"><span class="hv-tl-label" data-i18n="hvCmaLabel">Market Analysis</span></div>
+                    <div class="hv-tl-right hv-tl-body">
+                        <h3 data-i18n="hvCmaTitle">Comparative Market Analysis</h3>
+                        <p data-i18n="hvCmaBody">We find recently sold homes as similar and as close to yours as possible, then price out every difference to see what yours would sell for today.</p>
+                    </div>
+                </div>
+                <div class="hv-tl-item">
+                    <div class="hv-tl-left hv-tl-body">
+                        <h3 data-i18n="hvAppTitle">A Professional's Opinion</h3>
+                        <p data-i18n="hvAppBody">A licensed appraiser inspects the home inside and out, reviews comparable sales, and issues the formal report lenders rely on for mortgages.</p>
+                    </div>
+                    <div class="hv-tl-right"><span class="hv-tl-label" data-i18n="hvAppLabel">Appraisal</span></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- WHY GET A VALUATION -->
+    <section class="hv-section">
+        <div class="hv-inner">
+            <div class="hv-tl-head">
+                <h2 data-i18n="hvWhyTitle">Why Get a Valuation?</h2>
+                <p data-i18n="hvWhySub">Moments when knowing your number matters</p>
+            </div>
+            <div class="hv-tl">
+                <div class="hv-tl-item">
+                    <div class="hv-tl-left"><span class="hv-tl-label" data-i18n="hvWhy1L">Refinancing</span></div>
+                    <div class="hv-tl-right hv-tl-body"><p data-i18n="hvWhy1B">Lenders size your loan against your home's value. More equity means better terms on your refinance.</p></div>
+                </div>
+                <div class="hv-tl-item">
+                    <div class="hv-tl-left hv-tl-body"><p data-i18n="hvWhy2B">Before a big renovation, see how your home compares to the neighborhood so you invest where it pays back.</p></div>
+                    <div class="hv-tl-right"><span class="hv-tl-label" data-i18n="hvWhy2L">Home Improvements</span></div>
+                </div>
+                <div class="hv-tl-item">
+                    <div class="hv-tl-left"><span class="hv-tl-label" data-i18n="hvWhy3L">Qualifying for Credit</span></div>
+                    <div class="hv-tl-right hv-tl-body"><p data-i18n="hvWhy3B">A home equity line requires knowing your equity. A current valuation tells you if you qualify and for how much.</p></div>
+                </div>
+                <div class="hv-tl-item">
+                    <div class="hv-tl-left hv-tl-body"><p data-i18n="hvWhy4B">Life moves fast. Knowing what you could sell or borrow for keeps you ready for whatever comes next.</p></div>
+                    <div class="hv-tl-right"><span class="hv-tl-label" data-i18n="hvWhy4L">Planning</span></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA BAND -->
+    <section class="hv-cta">
+        <div class="hv-cta-inner">
+            <h2 data-i18n="hvDreamTitle">Find Your Next Dream Home</h2>
+            <a href="listing" data-i18n="hvBrowse">Browse Homes</a>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="lp-footer">
+        <div class="lp-footer-inner">
+            <img src="logo-white.png" alt="The Poler Team" class="lp-footer-logo">
+            <p class="lp-footer-copy" data-i18n="footerCopy">&copy; 2026 The Poler Team &middot; Optimar International Realty. All rights reserved.</p>
+            <a href="index.html" class="lp-footer-back" data-i18n="backToMain">&#8592; Back to Main Site</a>
+        </div>
+    </footer>
+
+</div><!-- /page-wrap -->
+
+<script src="i18n.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    if (typeof applyTranslations === 'function') applyTranslations();
+    if (typeof initLangSelector === 'function') initLangSelector();
+
+    var bar    = document.getElementById('hv-bar');
+    var step2  = document.getElementById('hv-step2');
+    var ok     = document.getElementById('hv-success');
+    var err    = document.getElementById('hv-error');
+
+    // Step 1: address entered -> reveal contact card
+    document.getElementById('hv-go').addEventListener('click', function () {
+        var addr = document.getElementById('hv-address').value.trim();
+        if (!addr) { document.getElementById('hv-address').focus(); return; }
+        step2.classList.add('open');
+        document.getElementById('hv-name').focus();
+    });
+    document.getElementById('hv-address').addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') { e.preventDefault(); document.getElementById('hv-go').click(); }
+    });
+
+    // Step 2: submit -> CRM (same endpoint as the lead popup)
+    step2.addEventListener('submit', function (e) {
+        e.preventDefault();
+        err.style.display = 'none';
+        var name  = document.getElementById('hv-name').value.trim();
+        var email = document.getElementById('hv-email').value.trim();
+        var phone = document.getElementById('hv-phone').value.trim();
+        var addr  = document.getElementById('hv-address').value.trim();
+        if (!name || !email) { err.style.display = 'block'; return; }
+
+        var parts = name.split(/\s+/);
+        var first = parts.shift() || '';
+        var last  = parts.join(' ');
+        var btn = document.getElementById('hv-submit');
+        btn.disabled = true;
+
+        fetch('/api/save-lead', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                first: first,
+                last: last,
+                email: email,
+                phone: phone,
+                listingAddress: 'VALUATION: ' + addr,
+                sourceUrl: window.location.href,
+                pageUrl: window.location.href,
+                language: (typeof getLang === 'function' ? getLang() : 'en'),
+                timeline: 'Home Valuation',
+            }),
+        }).then(function (r) { return r.json(); }).then(function () {
+            if (typeof gtag_report_conversion === 'function') { try { gtag_report_conversion(); } catch (e2) {} }
+            try { if (typeof fbq === 'function') fbq('track', 'Lead', { content_name: 'Home Valuation' }); } catch (e3) {}
+            bar.style.display = 'none';
+            step2.style.display = 'none';
+            ok.style.display = 'block';
+        }).catch(function () {
+            btn.disabled = false;
+            err.style.display = 'block';
+        });
+    });
+});
+</script>
+<script src="nav.js" defer></script>
+</body>
+</html>

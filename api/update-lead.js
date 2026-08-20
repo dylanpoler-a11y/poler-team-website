@@ -49,7 +49,7 @@ export default async function handler(req, context) {
         return json({ error: 'Invalid request body' }, 400);
     }
 
-    const { id, status, notes, assignedTo, firstName, lastName, email, phone, password } = body;
+    const { id, status, notes, assignedTo, firstName, lastName, email, phone, country, language, timeline, password } = body;
 
     if (!authorize(req, body).ok) {
         return json({ error: 'Unauthorized' }, 401);
@@ -67,6 +67,9 @@ export default async function handler(req, context) {
     if (lastName   !== undefined) fields['Last Name']   = lastName;
     if (email      !== undefined) fields['Email']       = email;
     if (phone      !== undefined) fields['Phone']       = phone;
+    if (country    !== undefined) fields['Country']     = country;
+    if (timeline   !== undefined) fields['Timeline']    = timeline;
+    if (language   !== undefined) fields['Preferred Language'] = language;
 
     // Fetch the CURRENT record before applying any update whenever we need to read
     // something from prior state: the OTHER name component (existing behavior), or the

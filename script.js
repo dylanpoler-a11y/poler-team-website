@@ -58,21 +58,24 @@ document.addEventListener('DOMContentLoaded', () => {
         '.team-grid, .team-company-linkedin, .contact-grid'
     );
 
-    revealElements.forEach(el => el.classList.add('reveal'));
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    const revealObserver = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('visible');
-                revealObserver.unobserve(entry.target);
-            }
+    if (!prefersReducedMotion) {
+        revealElements.forEach(el => el.classList.add('reveal'));
+
+        // Toggle (not one-shot): elements fade in entering the viewport and
+        // fade back out once fully scrolled away, in either direction.
+        const revealObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                entry.target.classList.toggle('visible', entry.isIntersecting);
+            });
+        }, {
+            threshold: 0,
+            rootMargin: '0px 0px -60px 0px'
         });
-    }, {
-        threshold: 0.1,
-        rootMargin: '0px 0px -40px 0px'
-    });
 
-    revealElements.forEach(el => revealObserver.observe(el));
+        revealElements.forEach(el => revealObserver.observe(el));
+    }
 
     // ---- Counter animation ----
     const counters = document.querySelectorAll('.stat-number[data-target]');
