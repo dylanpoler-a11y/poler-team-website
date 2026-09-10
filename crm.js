@@ -1914,7 +1914,9 @@ async function openFlashCoach(lead, slot) {
     const cfg = await getFlashConfig();
     // bucket=leadgen makes Flash read/write the LeadGen tables instead of the RE Leads table.
     const bucketQS = S.bucket === 'leadgen' ? '&bucket=leadgen' : '';
-    iframe.src = `${cfg.flashBaseUrl}/embed?leadId=${encodeURIComponent(lead.id)}&key=${encodeURIComponent(cfg.embedToken)}${bucketQS}`;
+    // Logged-in agent → Flash stamps its notes/reminders "<name> llamó — …" (Rosa parity, 2026-09-10).
+    const repQS = currentAgent?.name ? `&rep=${encodeURIComponent(currentAgent.name)}` : '';
+    iframe.src = `${cfg.flashBaseUrl}/embed?leadId=${encodeURIComponent(lead.id)}&key=${encodeURIComponent(cfg.embedToken)}${bucketQS}${repQS}`;
     iframe.style.display = 'block';
     if (launch) launch.style.display = 'none';
     const closeBtn = document.getElementById(S.close);

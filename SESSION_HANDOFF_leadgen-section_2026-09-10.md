@@ -71,3 +71,9 @@ Kevin: "add all the leads that favored our hotel listing … in the listing sect
 - Every producer MUST pass `messageId`; without it the Railway double-sweep (inbox_watch + smtp_sender read the same KPS boxes) would double-write.
 - `inbox_watch._body()` cut markers now include Outlook-style `From:` / `De:` — otherwise our own email leaks into reply text.
 - Pre-existing pyflakes warnings in `smtp_sender.py` (`_blocked` unused) and `gmail_outreach.py` (`_telegram` shadowed ~1376) are not from this session.
+
+## Pass 5 (2026-09-10, late) — Rosa/Flash parity + call-first list
+
+- **Parity audit:** the CRM has ONE shared password and no per-agent feature gating — Rosa already had Flash, notes, next steps, alerts, reminders identical to Kevin. The only gap was **attribution**: Flash hardcoded "Kevin llamó …" in every deterministic note (no-answer / quick-hangup / dead) and defaulted the rep-name field to Kevin.
+- **Fix (deployed both sides):** `crm.js openFlashCoach` appends `&rep=${currentAgent.name}` to the iframe src (cache-bust `?v=20260910f`). clairvo-clone: `embed/page.tsx` sanitizes `rep` (letters only ≤30) → `<LiveCoach initialRepName>` → `CallRecord.rep` (omitted when Kevin, so stored shape is unchanged) → `judge.ts` wording via `repDisplayName(call.rep)`; speaker labels in the transcript/summary also use it. `crmNote.ts` detectors (`isNoAnswerReport`/`isQuickHangupReport`) now match `/^\S+ llamó — no atendió/` so Rosa's notes classify the same (Contacted promotion, callback amend). `NO_ANSWER_PREFIX` constants kept — lever tests pin them. `npm run test:optimize` + `typecheck` green; live embed verified `value="Rosa"` with `&rep=Rosa`, `Kevin` without / with a bad value.
+- **Call list:** `~/business/real-estate/active/leads/call-list-2026-09-10.md` (ranked from the live pull).
