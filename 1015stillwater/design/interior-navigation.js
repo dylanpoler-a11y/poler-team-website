@@ -16,7 +16,7 @@ export class InteriorNavigation{
  move(side,forward){
   const direction=new THREE.Vector3(Math.sin(this.yaw)*forward-Math.cos(this.yaw)*side,0,Math.cos(this.yaw)*forward+Math.sin(this.yaw)*side).normalize();
   const step=.16,candidate=this.camera.position.clone().addScaledVector(direction,step),b=this.room.bounds,low=this.toWorld([b[0],b[2]]),high=this.toWorld([b[1],b[3]]);
-  if(candidate.x<low[0]||candidate.x>high[0]||candidate.z<low[2]||candidate.z>high[2])return;
+  if(candidate.x<Math.min(low[0],high[0])||candidate.x>Math.max(low[0],high[0])||candidate.z<Math.min(low[2],high[2])||candidate.z>Math.max(low[2],high[2]))return;
   // Check both eye and waist height so movement stops at walls, tables and seat backs.
   for(const drop of [0,.78]){this.ray.set(this.camera.position.clone().add(new THREE.Vector3(0,-drop,0)),direction);this.ray.far=step+.2;const hit=this.ray.intersectObjects(this.getObjects(),true).find(h=>h.object.isMesh&&!h.object.material.transparent&&h.object.visible);if(hit)return;}
   this.camera.position.copy(candidate);this.look();

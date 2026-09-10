@@ -10,24 +10,29 @@ import { buildUpperInteriors } from './interior-upper.js';
 // All geometry is in metres. Source plan coordinates are feet, street → water on +Z.
 // World Y=0 is the understory structural slab (NGVD 5′3″).
 const FT=.3048, IN=.0254, X0=18.5, Z0=43;
-export const toWorld = ([x,z],y=0)=>[(x-X0)*FT,y,(z-Z0)*FT];
+const toModel = ([x,z],y=0)=>[(x-X0)*FT,y,(z-Z0)*FT];
+// Client-confirmed orientation: garage on the left when facing the home from the street.
+// Keep the traced plan coordinates intact and reflect only the model-to-world X axis.
+export const toWorld = (point,y=0)=>{const [x,wy,z]=toModel(point,y);return[-x,wy,z];};
 export const floorLevels={ground:0,main:134*IN,upper:284*IN};
 export const dimensions={main:floorLevels.main,upper:floorLevels.upper,roof:413*IN,parapet:425*IN,hvac:473*IN};
 const levelKey={understory:'ground',first:'main',second:'upper'};
 export const rooms=floorData.floors.flatMap(f=>f.rooms.filter(r=>!/A\/C|Low Voltage|WC|Hall Closet|Foyer Closet|Pool Equipment|Closet -|W\.I\.C\./.test(r.name)).map(r=>({name:r.name.replace('Bathroom #','Bath ').replace('Bedroom #','Bedroom ').replace('Entry (exterior covered walk)','Entry walk').replace('Covered Terrace - north','Covered terrace').replace('Covered Terrace - south','Covered terrace'),level:levelKey[f.id],point:toWorld(r.center_ft,floorLevels[levelKey[f.id]]+.08)})));
 export const views={
- overview:{position:[-31,26,41],target:[0,3.5,1.5],caption:'A waterfront residence organized around two open courtyards.'},
- waterfront:{position:[-14,17,47],target:[0,4,7],caption:'Recessed terraces, tall glazing and a pool that extends toward the water.'},
- arrival:{position:[32,20,-42],target:[0,4,-5],caption:'An elevated entrance, shaded balconies and patterned privacy screens.'},
- aerial:{position:[-27,47,30],target:[0,1,0],caption:'The tapered site, three levels and open courtyards, reconstructed from the plans.'},
+ overview:{position:[31,26,41],target:[0,3.5,1.5],caption:'A waterfront residence organized around two open courtyards.'},
+ waterfront:{position:[14,17,47],target:[0,4,7],caption:'Recessed terraces, tall glazing and a pool that extends toward the water.'},
+ arrival:{position:[-32,20,-42],target:[0,4,-5],caption:'An elevated entrance, shaded balconies and patterned privacy screens.'},
+ aerial:{position:[27,47,30],target:[0,1,0],caption:'The tapered site, three levels and open courtyards, reconstructed from the plans.'},
 };
 export const features=[
  {id:'arrival',number:'01',title:'A sheltered arrival',point:toWorld([30,21],2.2),photo:2,kicker:'ARCHITECTURAL REFERENCE',description:'The exterior concrete stair rises beside the front bedrooms to a covered entry walk. A separate interior stair and elevator connect all three levels.',view:'arrival'},
  {id:'glazing',number:'02',title:'The waterfront rooms',point:toWorld([28,88],5.3),photo:3,kicker:'ARCHITECTURAL REFERENCE',description:'The great room projects toward the waterfront. Above it, the master bedroom steps back to create a deep terrace, while the family room occupies the other wing.',view:'waterfront'},
  {id:'canopy',number:'03',title:'Open to the sky',point:toWorld([30,41],10.6),photo:17,kicker:'ARCHITECTURAL REFERENCE',description:'Two open courtyards interrupt the long building. A tall palm rises through the larger courtyard beside the stairs. The roof combines solid zones, open frame edges and decorative louvers; the model preserves these openings.',view:'aerial'},
- {id:'pool',number:'04',title:'Pool & inset spa',point:toWorld([9,99],.3),photo:44,kicker:'SITE PLAN · A100',description:'The pool runs toward the waterfront, measuring 26′11¼″ along its long axis. The inset spa is at the waterfront-left corner, with entry steps beside it.',view:'waterfront'},
+ {id:'pool',number:'04',title:'Pool & inset spa',point:toWorld([9,99],.3),photo:44,kicker:'SITE PLAN · A100',description:'The pool runs toward the waterfront, measuring 26′11¼″ along its long axis. The inset spa is at the waterfront end, with entry steps beside it.',view:'waterfront'},
 ];
 export function createHouse({style='warm'}={}){
+ // Builders and their cached staging metadata use model-local coordinates.
+ const toWorld=toModel;
  const root=new THREE.Group();root.name='1015 Stillwater — Architectural Rev 8';
  root.userData={units:'metres',basis:'Architectural set Rev 8, sheets A100–A104, A200–A305 and A500–A501; 44 client photographs/renderings.',accuracy:'Annotated dimensions govern where available; other locations are scaled drawing traces. Architectural visualization, not an as-built survey or fabrication/BIM model.',datum:'Y=0: understory structural top of slab, NGVD5ft3in',unconfirmed:'Structural thicknesses and column sizes, detailed finishes, plantings and small fittings are visual approximations.'};
  const groups={};for(const k of ['site','ground','main','upper','roof','landscape','pool','water']){groups[k]=new THREE.Group();groups[k].name=k;root.add(groups[k]);}
@@ -198,6 +203,11 @@ export function createHouse({style='warm'}={}){
   group.updateMatrixWorld(true);const batches=new Map();const retained=[];group.traverse(o=>{if(o.isLight){o.updateWorldMatrix(true,false);const position=new THREE.Vector3(),quaternion=new THREE.Quaternion(),scale=new THREE.Vector3();o.matrixWorld.decompose(position,quaternion,scale);retained.push({object:o,position,quaternion});}});group.traverse(o=>{if(!o.isMesh)return;const key=o.material.uuid;if(!batches.has(key))batches.set(key,{material:o.material,geometries:[]});let geo=o.geometry.clone();geo.applyMatrix4(o.matrixWorld);if(geo.index)geo=geo.toNonIndexed();if(!geo.getAttribute('uv'))geo.setAttribute('uv',new THREE.BufferAttribute(new Float32Array(geo.getAttribute('position').count*2),2));for(const key of Object.keys(geo.attributes))if(!['position','normal','uv'].includes(key))geo.deleteAttribute(key);batches.get(key).geometries.push(geo);});group.clear();for(const r of retained){r.object.position.copy(r.position);r.object.quaternion.copy(r.quaternion);group.add(r.object);}
   for(const {material,geometries}of batches.values()){const geo=mergeGeometries(geometries,false);const mesh=new THREE.Mesh(geo,material);mesh.name=`${group.name} / ${material.name}`;mesh.castShadow=!material.transparent&&group.name!=='water';mesh.receiveShadow=true;group.add(mesh);geometries.forEach(g=>g.dispose());}
  }
+ // Apply after batching: batching above bakes world matrices into each mesh.
+ // One parent reflection keeps the shell, site, furniture, palm and GLB export aligned.
+ root.scale.x=-1;
+ root.userData.orientation='Garage left when viewed from the street; model-local X reflected, street-to-water Z preserved. Client correction, 2026-09-10.';
+ root.updateMatrixWorld(true);
  const setInteriorStyle=id=>{applyInteriorStyle(interiorMaterials,id);root.userData.interiorStyle=id;};
  setInteriorStyle(style);root.userData.staging='Proposed finished interiors. Reference-supported vanity, stone and wood appearances; three optional furnishing/finish schemes are design concepts.';
  return{root,groups,materials,interiorMaterials,interiorLights,interiorResults,setInteriorStyle};

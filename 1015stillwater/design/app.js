@@ -134,7 +134,7 @@ function setMaterial(mode){
 }
 function setLight(value){
   if(!sun)return;state.light=Number(value);const t=state.light/100;
-  sun.position.set(-18+12*t,25-21*t,8+8*t);sun.color.set('#fff8df').lerp(new THREE.Color('#ffa867'),t);
+  sun.position.set(18-12*t,25-21*t,8+8*t);sun.color.set('#fff8df').lerp(new THREE.Color('#ffa867'),t);
   sun.intensity=2.8-1.6*t;hemi.intensity=1.65-1.05*t;renderer.toneMappingExposure=.97-t*.06;
   scene.background.set('#eeede6').lerp(new THREE.Color('#b0b3b0'),t*.85);
   house.materials.light.emissiveIntensity=.18+t*5;
@@ -147,7 +147,7 @@ function updateInteriorLighting(){
   if(inside){sun.intensity=1.7-t*1.0;hemi.intensity=.58-t*.20;scene.environmentIntensity=.48;renderer.toneMappingExposure=state.style==='dramatic'?1.0:.96;}
   else scene.environmentIntensity=.32;
   house.materials.glass.opacity=inside?.09:.29;
-  const sorted=house.interiorLights.map(light=>({light,d:camera.position.distanceTo(light.position)})).filter(x=>Math.abs(x.light.position.y-camera.position.y)<2.2).sort((a,b)=>a.d-b.d);
+  const sorted=house.interiorLights.map(light=>{const position=light.getWorldPosition(new THREE.Vector3());return{light,position,d:camera.position.distanceTo(position)};}).filter(x=>Math.abs(x.position.y-camera.position.y)<2.2).sort((a,b)=>a.d-b.d);
   const selected=new Set(inside?sorted.slice(0,8).map(x=>x.light):[]);
   for(const light of house.interiorLights){light.visible=selected.has(light);light.intensity=light.userData.baseIntensity*(inside?.65+t*.5:0);light.color.copy(house.interiorMaterials.emissive.emissive);}
 }
@@ -205,7 +205,7 @@ try{
   const pmrem=new THREE.PMREMGenerator(renderer),room=new RoomEnvironment();
   const environment=pmrem.fromScene(room,.08);scene.environment=environment.texture;scene.environmentIntensity=.32;room.dispose();pmrem.dispose();
   hemi=new THREE.HemisphereLight('#f9fbef','#96987e',2.2);scene.add(hemi);
-  sun=new THREE.DirectionalLight('#fff4d7',3.4);sun.position.set(-18,25,8);sun.castShadow=true;
+  sun=new THREE.DirectionalLight('#fff4d7',3.4);sun.position.set(18,25,8);sun.castShadow=true;
   sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=-30;sun.shadow.camera.right=30;sun.shadow.camera.top=32;sun.shadow.camera.bottom=-32;sun.shadow.camera.near=.5;sun.shadow.camera.far=90;sun.shadow.bias=-.00015;sun.shadow.normalBias=.045;sun.shadow.radius=3;scene.add(sun);
   house=createHouse();scene.add(house.root);
   interiorNavigation=new InteriorNavigation(camera,renderer.domElement,()=>house.groups[interiorRooms.find(r=>r.id===state.room)?.level||'main'].children,toWorld);
