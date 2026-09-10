@@ -1,8 +1,13 @@
 /**
  * /api/_leadgen.js — shared helpers for the CRM "Lead Generation" module.
  *
- * Lead Generation holds AGENCY (KPS) outbound prospects who gave a POSITIVE reply
- * — Instantly (all campaigns), Facebook outreach, and the LoopNet responder.
+ * Lead Generation holds every outbound prospect who REPLIED to outreach — any
+ * sentiment except auto-replies/OOO/bounces (Kevin 2026-09-10). Sources: the
+ * Railway cloud-sender (all cold-email campaigns incl. Keystone/Abrams; the
+ * pre-Aug-2026 Instantly era is backfilled under the same `Email` channel),
+ * Facebook DMs, LinkedIn DMs, the LoopNet responder. Consulting-client outreach
+ * (Plaza San Miguel / Atrio, Mara & CSC) is routed to the Consulting module by
+ * api/agent/leadgen-reply.js instead — see CONSULTING_CAMPAIGNS there.
  * It is deliberately SEPARATE from the real-estate `Leads` table: that one is the
  * brokerage pipeline and Sammy's WhatsApp drip targets it. Never cross-write.
  *
@@ -148,6 +153,11 @@ export function mapLead(r) {
         status:        f['Status']          || 'New',
         replySnippet:  f['Reply Snippet']   || '',
         replyAt:       f['Reply At']        || '',
+        sentiment:     f['Sentiment']       || '',
+        firstReply:    f['First Reply']     || '',
+        summary:       f['Summary']         || '',
+        lastReplyAt:   f['Last Reply At']   || f['Reply At'] || '',
+        replyCount:    Number(f['Reply Count'] || 0),
         owner:         f['Owner']           || '',
         sourceLeadId:  f['Source Lead ID']  || '',
         website:       f['Website']         || '',
@@ -202,5 +212,16 @@ export async function logActivity({ title, type, leadId, details, agent = 'Respo
     }
 }
 
-export const STATUSES = ['New', 'Contacted', 'Meeting Booked', 'Won', 'Lost'];
-export const CHANNELS  = ['Instantly', 'Facebook', 'LoopNet', 'Manual'];
+export const STATUSES   = ['New', 'Contacted', 'Meeting Booked', 'Won', 'Lost'];
+// 'Email' covers both the Railway cloud-sender and the retired Instantly era —
+// Kevin 2026-09-10: Instantly must not appear as a label anywhere in the CRM.
+export const CHANNELS   = ['Email', 'Facebook', 'LinkedIn', 'WhatsApp', 'LoopNet', 'Manual'];
+export const SENTIMENTS = ['Positive', 'Question', 'Neutral', 'Not Now', 'Negative'];
+
+/** Normalize a caller-supplied channel — legacy 'Instantly' → 'Email'. */
+export function normChannel(v) {
+    const c = String(v || '').trim();
+    if (/^instantly$/i.test(c) || /^(gmail|smtp|railway|email)$/i.test(c)) return 'Email';
+    const hit = CHANNELS.find(x => x.toLowerCase() === c.toLowerCase());
+    return hit || 'Manual';
+}

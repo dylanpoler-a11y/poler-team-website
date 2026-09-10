@@ -2559,3 +2559,117 @@ body {
   display: block;
   margin-top: 0.25rem;
 }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   LEAD GENERATION (added 2026-09-10) — outreach replies table, pipeline, panel
+   ══════════════════════════════════════════════════════════════════════════ */
+#leadgen-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 480px;
+  height: 100vh;
+  background: white;
+  box-shadow: -4px 0 24px rgba(0,0,0,0.12);
+  z-index: 1000;
+  transform: translateX(100%);
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+#leadgen-panel.open { transform: translateX(0); }
+@media (max-width: 600px) {
+  #leadgen-panel { width: 100%; }
+}
+
+/* Sentiment chips — one color per verdict, readable at table density */
+.sent-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.22rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.sent-Positive { background: #f0fdf4; color: #166534; }
+.sent-Question { background: #eff6ff; color: #1d4ed8; }
+.sent-Neutral  { background: #f8fafc; color: #475569; }
+.sent-Not-Now  { background: #fff7ed; color: #c2410c; }
+.sent-Negative { background: #fef2f2; color: #b91c1c; }
+.sent-none     { background: #f8fafc; color: #94a3b8; }
+
+/* Lead-gen stage badges (reuse .status-badge shape) */
+.status-Meeting-Booked { background: #f0fdfa; color: #0f766e; }
+.status-Won            { background: #f0fdf4; color: #166534; }
+.status-Lost           { background: #f9fafb; color: #9ca3af; }
+
+/* Channel tag in the table */
+.lg-channel {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+.lg-campaign {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.7rem;
+  color: #475569;
+  background: #f1f5f9;
+  padding: 0.15rem 0.45rem;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+.lg-summary-cell {
+  max-width: 420px;
+  font-size: 0.78rem;
+  color: #475569;
+  line-height: 1.35;
+  white-space: normal;
+}
+.lg-contact-sub {
+  font-size: 0.72rem;
+  color: #94a3b8;
+}
+
+/* Verbatim first reply inside the panel */
+.lg-reply-block {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-left: 3px solid var(--color-navy, #1a2744);
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
+  font-size: 0.8rem;
+  color: #334155;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+/* Stage select inline in the table row */
+.lg-stage-select {
+  font-size: 0.75rem;
+  padding: 0.2rem 0.4rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background: white;
+  color: var(--navy, #1a2744);
+}
+
+/* Kanban card sentiment strip */
+.kanban-card.lg-card { border-left: 3px solid #e2e8f0; }
+.kanban-card.lg-Positive { border-left-color: #16a34a; }
+.kanban-card.lg-Question { border-left-color: #2563eb; }
+.kanban-card.lg-Not-Now  { border-left-color: #ea580c; }
+.kanban-card.lg-Negative { border-left-color: #dc2626; }
+.kanban-card .lg-card-summary {
+  font-size: 0.7rem;
+  color: #64748b;
+  margin-top: 0.3rem;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}

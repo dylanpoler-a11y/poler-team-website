@@ -98,15 +98,16 @@ There is NO Git-based auto-deploy. Every deployment must be done manually via CL
 
 ## CRM Architecture (added 2026-05-14, was missing from original CLAUDE.md)
 
-The CRM (`/crm`) has two distinct sections in the left nav:
-- **Real Estate**: Dashboard, All Leads, Reminders, Listings, **AI Calls**, Export CSV — driven by `Leads` table in Airtable
-- **CONSULTING**: Companies, Opportunities, Pipeline, Reminders, Partners — driven by `Consulting Clients` / `Consulting Deals` / `Consulting Contacts` / `Consulting Tasks` / `Consulting Activity` / `Consulting Partners` Airtable tables
+The CRM (`/crm`) has three distinct sections in the left nav (three buckets, never cross-file):
+- **REAL ESTATE** ("Real Estate Dashboard"): Dashboard, All Leads, Reminders, Listings, **AI Calls**, Export CSV — driven by `Leads` table in Airtable. Inbound ad/website buyers + `buyer:<MLS>` listing buyers only.
+- **CONSULTING**: Companies, Opportunities, Pipeline, Reminders, Partners — driven by `Consulting Clients` / `Consulting Deals` / `Consulting Contacts` / `Consulting Tasks` / `Consulting Activity` / `Consulting Partners` Airtable tables. Consulting-client outreach replies (Plaza San Miguel/Atrio, Mara-CSC) land here via the router in `api/agent/leadgen-reply.js`.
+- **LEAD GENERATION** (2026-09-10): every outreach contact who REPLIED (any sentiment, auto-replies/OOO/bounces dropped) — agency email (Railway cloud-sender; Instantly-era rows backfilled as channel `Email`), Facebook, LinkedIn, Keystone/Abrams investor outreach. Tables `LeadGen Leads` / `LeadGen Tasks` / `LeadGen Activity`; ingest endpoint `POST /api/agent/leadgen-reply` (idempotent on `messageId`). **Full detail → [`docs/crm-internals.md`](docs/crm-internals.md).**
 
 **AI Calls tab** (2026-06-08): in-CRM view of Sammy's AI voice calls — pickup, recording playback, note/reminder/alert checkmarks. Backed by `api/agent/ai-calls.js` (+ `ai-call-audio.js` proxy), needs the `ELEVENLABS_*` Vercel envs. **Full detail → [`docs/crm-internals.md`](docs/crm-internals.md).**
 
 Backend endpoints for consulting live at `api/get-consulting-*.js`, `api/save-consulting-*.js`, `api/update-consulting-*.js`, `api/delete-consulting-*.js`, plus `api/log-consulting-activity.js` and `api/stamp-last-contact.js`.
 
-The hosted MCP server at `api/mcp.js` exposes ~50 tools as `mcp__poler-crm__*`, used by Claude.ai connectors on the Poler Team's accounts. The local MCP at `~/poler-team-mcp/index.js` exposes the same tools.
+The hosted MCP server at `api/mcp.js` exposes ~50 tools as `mcp__poler-crm__*`, used by Claude.ai connectors on the Poler Team's accounts. The local MCP at `~/business/real-estate/poler-team-mcp/index.js` exposes the same tools (incl. the 5 `leadgen_*` tools).
 
 **Flash live-coach panel** (2026-06-19): the lead panel embeds Flash (`saas-portfolio/clairvo-clone`, Vercel `flash-coach`) as an origin-checked iframe pre-locked to the open lead. **Full detail → [`docs/crm-internals.md`](docs/crm-internals.md).**
 

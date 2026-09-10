@@ -74,6 +74,7 @@
         </div>
         <div class="sidebar-agent" id="sidebar-agent"></div>
         <div class="sidebar-nav">
+          <div class="sidebar-section-divider">Real Estate</div>
           <a class="nav-item active" data-action="dashboard" href="#">
             <span class="nav-icon">📊</span> Dashboard
           </a>
@@ -111,6 +112,13 @@
           <a class="nav-item" data-action="partners" href="#">
             <span class="nav-icon">🤝</span> Partners
           </a>
+          <div class="sidebar-section-divider">Lead Generation</div>
+          <a class="nav-item" data-action="leadgen" href="#">
+            <span class="nav-icon">📨</span> Replies <span id="leadgen-badge" class="reminder-badge" style="display:none;">0</span>
+          </a>
+          <a class="nav-item" data-action="leadgen-pipeline" href="#">
+            <span class="nav-icon">🎯</span> Pipeline
+          </a>
           <div class="sidebar-section-divider">Tools</div>
           <a class="nav-item" data-action="export" href="#">
             <span class="nav-icon">⬇️</span> Export CSV
@@ -131,7 +139,7 @@
 
           <!-- Header -->
           <div class="crm-header">
-            <h1>Lead Dashboard</h1>
+            <h1>Real Estate Dashboard</h1>
             <div class="header-right">
               <span id="last-refreshed"></span>
               <button id="add-lead-btn" class="refresh-btn" title="Add a contact to the CRM by hand">+ Add Contact</button>
@@ -704,6 +712,124 @@
         </div><!-- /partners-view -->
 
         <!-- ── LISTINGS VIEW (Rosa's MLS listings + per-listing notes) ─────── -->
+        <!-- ═══════ LEAD GENERATION — REPLIES VIEW ═══════ -->
+        <!-- Every outreach prospect who replied (any sentiment except auto/OOO/bounce).
+             Fed by /api/agent/leadgen-reply from the Railway sender + FB/LinkedIn watchers.
+             Kevin 2026-09-10. Data: Airtable `LeadGen Leads`. -->
+        <div id="leadgen-view" style="display:none;">
+          <div class="crm-header">
+            <h1>Lead Generation <span id="leadgen-count-label" class="reminders-count-label"></span></h1>
+            <div class="header-right">
+              <select id="lg-channel-filter" class="filter-select">
+                <option value="">All Channels</option>
+                <option value="Email">Email</option>
+                <option value="Facebook">Facebook</option>
+                <option value="LinkedIn">LinkedIn</option>
+                <option value="WhatsApp">WhatsApp</option>
+                <option value="LoopNet">LoopNet</option>
+                <option value="Manual">Manual</option>
+              </select>
+              <select id="lg-campaign-filter" class="filter-select">
+                <option value="">All Campaigns</option>
+              </select>
+              <select id="lg-sentiment-filter" class="filter-select">
+                <option value="">All Sentiments</option>
+                <option value="Positive">Positive</option>
+                <option value="Question">Question</option>
+                <option value="Neutral">Neutral</option>
+                <option value="Not Now">Not Now</option>
+                <option value="Negative">Negative</option>
+              </select>
+              <select id="lg-status-filter" class="filter-select">
+                <option value="">All Stages</option>
+                <option value="New">New</option>
+                <option value="Contacted">Contacted</option>
+                <option value="Meeting Booked">Meeting Booked</option>
+                <option value="Won">Won</option>
+                <option value="Lost">Lost</option>
+              </select>
+              <input type="text" id="lg-search" class="filter-select" placeholder="Search name, company, email…" style="min-width:220px;" />
+              <button id="lg-add-btn" class="refresh-btn" title="Log a reply by hand">+ Add Reply</button>
+              <button id="lg-refresh-btn" class="refresh-btn">↻ Refresh</button>
+            </div>
+          </div>
+
+          <div class="stats-row">
+            <div class="stat-card">
+              <div class="stat-icon blue">📨</div>
+              <div>
+                <div class="stat-number" id="lg-stat-total">—</div>
+                <div class="stat-label">Replied</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon green">👍</div>
+              <div>
+                <div class="stat-number" id="lg-stat-positive">—</div>
+                <div class="stat-label">Positive</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon teal">🆕</div>
+              <div>
+                <div class="stat-number" id="lg-stat-new">—</div>
+                <div class="stat-label">Untouched (New)</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon red">📅</div>
+              <div>
+                <div class="stat-number" id="lg-stat-meetings">—</div>
+                <div class="stat-label">Meetings + Won</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="table-card">
+            <div id="lg-loading" style="display:none;">
+              <div class="loading-spinner"></div>
+              <div>Loading replies…</div>
+            </div>
+            <div id="lg-empty" style="display:none;">No replies yet.</div>
+            <table class="leads-table" id="lg-table">
+              <thead>
+                <tr>
+                  <th>Contact</th>
+                  <th>Channel</th>
+                  <th>Campaign</th>
+                  <th>Sentiment</th>
+                  <th>Stage</th>
+                  <th>Last Reply</th>
+                  <th>Summary</th>
+                </tr>
+              </thead>
+              <tbody id="lg-tbody"></tbody>
+            </table>
+          </div>
+        </div><!-- /leadgen-view -->
+
+        <!-- ═══════ LEAD GENERATION — PIPELINE (KANBAN) VIEW ═══════ -->
+        <div id="leadgen-pipeline-view" style="display:none;">
+          <div class="crm-header">
+            <h1>Lead Gen Pipeline <span id="lg-pipeline-count-label" class="reminders-count-label"></span></h1>
+            <div class="header-right">
+              <select id="lg-pipeline-channel-filter" class="filter-select">
+                <option value="">All Channels</option>
+                <option value="Email">Email</option>
+                <option value="Facebook">Facebook</option>
+                <option value="LinkedIn">LinkedIn</option>
+                <option value="WhatsApp">WhatsApp</option>
+              </select>
+              <select id="lg-pipeline-campaign-filter" class="filter-select">
+                <option value="">All Campaigns</option>
+              </select>
+              <button id="lg-pipeline-refresh-btn" class="refresh-btn">↻ Refresh</button>
+            </div>
+          </div>
+          <!-- Columns = pipeline stages; rendered by renderLGPipeline() in crm.js -->
+          <div id="lg-kanban-board" class="kanban-board"></div>
+        </div><!-- /leadgen-pipeline-view -->
+
         <div id="listings-view" style="display:none;">
           <div class="crm-header">
             <h1>Listings <span id="listings-count-label" class="reminders-count-label"></span></h1>
@@ -1239,7 +1365,125 @@
 
   </aside>
 
-  <!-- ═══════════════════════════════════════════════════════ CLIENT DETAIL PANEL -->
+  <!-- ═══════ LEAD GENERATION PANEL (slide-out) ═══════ -->
+  <aside id="leadgen-panel">
+    <div class="panel-header">
+      <span style="font-size:0.875rem;font-weight:600;color:#1a2744;">Lead Generation</span>
+      <button id="lg-panel-close" class="panel-close" aria-label="Close panel">✕</button>
+    </div>
+
+    <div class="panel-lead-info">
+      <div class="panel-avatar"><span id="lg-avatar-text">?</span></div>
+      <div>
+        <div class="panel-name" id="lg-panel-name">—</div>
+        <div class="panel-date" id="lg-panel-sub">—</div>
+      </div>
+    </div>
+
+    <div class="panel-actions">
+      <a id="lg-call" href="#" class="action-btn">📞 Call</a>
+      <a id="lg-email-action" href="#" class="action-btn">✉️ Email</a>
+      <a id="lg-whatsapp" href="#" class="action-btn whatsapp" target="_blank" rel="noopener">💬 WhatsApp</a>
+    </div>
+
+    <div class="panel-section">
+      <div class="panel-section-title">Pipeline</div>
+      <div class="panel-field">
+        <div class="panel-field-label">Stage</div>
+        <select id="lg-status" class="panel-input">
+          <option value="New">New</option>
+          <option value="Contacted">Contacted</option>
+          <option value="Meeting Booked">Meeting Booked</option>
+          <option value="Won">Won</option>
+          <option value="Lost">Lost</option>
+        </select>
+      </div>
+      <div class="panel-field">
+        <div class="panel-field-label">Sentiment</div>
+        <select id="lg-sentiment" class="panel-input">
+          <option value="">—</option>
+          <option value="Positive">Positive</option>
+          <option value="Question">Question</option>
+          <option value="Neutral">Neutral</option>
+          <option value="Not Now">Not Now</option>
+          <option value="Negative">Negative</option>
+        </select>
+      </div>
+      <div class="panel-field">
+        <div class="panel-field-label">Owner</div>
+        <select id="lg-owner" class="panel-input">
+          <option value="Kevin">Kevin</option>
+          <option value="Dylan">Dylan</option>
+          <option value="Rosa">Rosa</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <div class="panel-section-title">Conversation</div>
+      <div class="panel-field">
+        <div class="panel-field-label">Summary <span id="lg-reply-count" style="font-weight:400;color:#94a3b8;"></span></div>
+        <textarea id="lg-summary" class="panel-input" rows="4" placeholder="Running summary of the conversation…" style="width:100%;"></textarea>
+      </div>
+      <div class="panel-field">
+        <div class="panel-field-label">First reply <span id="lg-first-reply-date" style="font-weight:400;color:#94a3b8;"></span></div>
+        <div id="lg-first-reply" class="lg-reply-block">—</div>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <div class="panel-section-title">Contact</div>
+      <div class="panel-field">
+        <div class="panel-field-label">Name</div>
+        <input type="text" id="lg-name" class="panel-input" placeholder="Full name" />
+      </div>
+      <div class="panel-field">
+        <div class="panel-field-label">Company</div>
+        <input type="text" id="lg-company" class="panel-input" placeholder="Company" />
+      </div>
+      <div class="panel-field">
+        <div class="panel-field-label">Title</div>
+        <input type="text" id="lg-title" class="panel-input" placeholder="Role / title" />
+      </div>
+      <div class="panel-field">
+        <div class="panel-field-label">Email</div>
+        <input type="email" id="lg-email" class="panel-input" placeholder="email@example.com" />
+      </div>
+      <div class="panel-field">
+        <div class="panel-field-label">Phone</div>
+        <input type="tel" id="lg-phone" class="panel-input" placeholder="+1 555 123 4567" />
+      </div>
+      <div class="panel-field">
+        <div class="panel-field-label">Website</div>
+        <input type="url" id="lg-website" class="panel-input" placeholder="https://" />
+      </div>
+      <div class="panel-field">
+        <div class="panel-field-label">Channel · Campaign</div>
+        <div class="panel-field-value" id="lg-source-line">—</div>
+      </div>
+      <div id="lg-save-status" class="panel-alert-status"></div>
+    </div>
+
+    <div class="panel-section">
+      <div class="panel-section-title" style="display:flex;justify-content:space-between;align-items:center;">
+        Activity
+        <button id="lg-add-note-toggle" type="button" class="alert-action-btn" style="padding:4px 10px;font-size:12px;">+ Add Note</button>
+      </div>
+      <div id="lg-new-note-form" style="display:none; margin-bottom: 1rem;">
+        <textarea id="lg-new-note-text" class="panel-input" rows="3" placeholder="Write a note…" style="width:100%;"></textarea>
+        <div style="display:flex; gap:8px; margin-top:8px;">
+          <button id="lg-save-new-note" type="button" class="alert-action-btn" style="padding:6px 12px;font-size:12px;flex:0 0 auto;">Save Note</button>
+          <button id="lg-cancel-new-note" type="button" class="alert-action-btn secondary" style="padding:6px 12px;font-size:12px;flex:0 0 auto;">Cancel</button>
+        </div>
+        <div id="lg-new-note-status" style="font-size:0.75rem;color:#6b7280;margin-top:4px;"></div>
+      </div>
+      <div id="lg-activity-list" class="company-notes-list">
+        <p class="panel-empty-text">Loading…</p>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ═══════ CONSULTING CLIENT PANEL ═══════ -->
   <aside id="client-panel">
 
     <!-- Panel Header -->
@@ -1981,6 +2225,6 @@
   </div>
 
   <script src="https://unpkg.com/maplibre-gl@4.1.2/dist/maplibre-gl.js"></script>
-  <script src="crm.js?v=20260818c" defer></script>
+  <script src="crm.js?v=20260828a" defer></script>
 </body>
 </html>

@@ -77,6 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loadConsultingTasks();
     loadConsultingContacts();
     loadConsultingPartners();
+    loadLGLeads();
     return;
   }
 
@@ -146,6 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
       loadConsultingTasks();
       loadConsultingContacts();
       loadConsultingPartners();
+      loadLGLeads();
     } catch (err) {
       console.error('Login error:', err);
       loginError.textContent = 'Connection error. Please try again.';
@@ -288,6 +290,8 @@ function switchView(view) {
     partners:      document.getElementById('partners-view'),
     'ai-calls':    document.getElementById('ai-calls-view'),
     autoresearch:  document.getElementById('autoresearch-view'),
+    leadgen:       document.getElementById('leadgen-view'),
+    'leadgen-pipeline': document.getElementById('leadgen-pipeline-view'),
   };
 
   Object.values(views).forEach(el => { if (el) el.style.display = 'none'; });
@@ -334,6 +338,14 @@ function switchView(view) {
   } else if (view === 'autoresearch') {
     if (views.autoresearch) views.autoresearch.style.display = 'block';
     initAutoresearch();
+  } else if (view === 'leadgen') {
+    if (views.leadgen) views.leadgen.style.display = 'block';
+    renderLGLeads();
+    loadLGLeads();
+  } else if (view === 'leadgen-pipeline') {
+    if (views['leadgen-pipeline']) views['leadgen-pipeline'].style.display = 'block';
+    renderLGPipeline();
+    loadLGLeads();
   } else {
     if (views.dashboard) views.dashboard.style.display = 'block';
   }
@@ -354,7 +366,14 @@ let _autoresearchInit = false;
 function loadAutoresearchTab(key) {
   const iframe = document.getElementById('autoresearch-iframe');
   if (!iframe || !AUTORESEARCH_URLS[key]) return;
-  iframe.src = AUTORESEARCH_URLS[key];
+  // Fresh cache-busting param on every load. Chrome partitions its HTTP cache by
+  // top-level site, and a bad response cached under the (homesinsoflorida.com, exact
+  // dashboard URL) key made the iframe render a grey dead page FOREVER — reloads never
+  // healed it, while the same URL worked top-level (different cache partition) and in
+  // other browsers (2026-08-25). A unique query string per open makes every load a
+  // fresh cache key, so no poisoned entry can ever stick. The dashboards are tiny
+  // static pages republished every few minutes — losing browser cache costs nothing.
+  iframe.src = AUTORESEARCH_URLS[key] + '&t=' + Date.now();
   document.querySelectorAll('#autoresearch-subnav .ar-tab').forEach(b => {
     b.classList.toggle('active', b.dataset.ar === key);
   });
@@ -1045,6 +1064,8 @@ function setupEvents() {
         switchView('ai-calls');
       } else if (action === 'autoresearch') {
         switchView('autoresearch');
+      } else if (action === 'leadgen' || action === 'leadgen-pipeline') {
+        switchView(action);
       } else if (action === 'refresh') {
         switchView('dashboard');
         loadLeads();
@@ -1379,13 +1400,28 @@ async function refreshLeadInPanel(id) {
     const data = await res.json();
     const fresh = (data.leads || []).find(l => String(l.id) === String(id));
     if (!fresh) return;
+    // MERGE IN PLACE — never `allLeads[idx] = fresh`. `filteredLeads` (what renderTable
+    // paints from) holds REFERENCES to the allLeads objects, so swapping the object here
+    // orphaned the row: every later save mutated the new object while the table still
+    // rendered the old one, and the change (e.g. the Dead strikethrough) only appeared
+    // after a page reload. Keeping identity means one mutation is visible everywhere.
     const idx = allLeads.findIndex(l => String(l.id) === String(id));
-    if (idx >= 0) allLeads[idx] = fresh;
+    let record = fresh;
+    if (idx >= 0) {
+      const target = allLeads[idx];
+      for (const k of Object.keys(target)) if (!(k in fresh)) delete target[k];
+      Object.assign(target, fresh);
+      record = target;
+    }
+    // Out-of-band writers (Flash's dead-lead call, Claudia, another device) change the
+    // record while the tab is open — repaint so the row reflects the server right away.
+    renderTable();
+    renderStats();
     // Only re-hydrate if this is still the open lead, no newer refresh superseded us,
     // and the alert form is untouched.
     if (seq === _panelRefreshSeq && activeLead && String(activeLead.id) === String(id) && !_alertFormTouched) {
-      activeLead = fresh;
-      populatePanel(fresh);
+      activeLead = record;
+      populatePanel(record);
     }
   } catch (e) { /* stale render survives — same as before this refresh existed */ }
 }
@@ -2574,6 +2610,10 @@ async function saveLead() {
           if (nameEl) nameEl.textContent = lead.name || '—';
         }
         activeLead      = lead;
+        // Belt: the table paints from filteredLeads. If anything ever hands it a
+        // different object for this lead, re-point it so the row shows this save.
+        const fIdx = filteredLeads.findIndex(l => String(l.id) === String(lead.id));
+        if (fIdx >= 0 && filteredLeads[fIdx] !== lead) filteredLeads[fIdx] = lead;
       }
       document.getElementById('panel-new-note').value = '';
       renderNotesHistory(notes);
@@ -5018,6 +5058,7 @@ if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', wireClientEvents);
 } else {
   wireClientEvents();
+  wireLGEvents();
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -6904,4 +6945,462 @@ if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', wireListingEvents);
 } else {
   wireListingEvents();
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// LEAD GENERATION (added 2026-09-10)
+// Every outreach prospect who REPLIED — any sentiment except auto/OOO/bounce.
+// Kevin: real-estate leads stay in the Real Estate dashboard; consulting-client
+// outreach (Plaza San Miguel / Mara-CSC) goes to Consulting; everything else
+// (cold email incl. Keystone, Facebook, LinkedIn) lands here.
+// Backend: api/get-leadgen-leads, update-leadgen-lead, log-leadgen-activity,
+// get-leadgen-activity, agent/leadgen-reply (the ingest hook).
+// ══════════════════════════════════════════════════════════════════════════
+const LG_STAGES     = ['New', 'Contacted', 'Meeting Booked', 'Won', 'Lost'];
+const LG_SENTIMENTS = ['Positive', 'Question', 'Neutral', 'Not Now', 'Negative'];
+let allLGLeads   = [];
+let currentLGLead = null;
+let lgSaveTimer  = null;
+
+function lgAuthQS() { return `password=${encodeURIComponent(currentPassword)}`; }
+function lgCss(v)   { return String(v || '').replace(/\s+/g, '-'); }
+function lgFmtDate(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  if (isNaN(d)) return '—';
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: d.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined });
+}
+function lgSentimentChip(s) {
+  return s
+    ? `<span class="sent-chip sent-${lgCss(s)}">${escHtml(s)}</span>`
+    : `<span class="sent-chip sent-none">—</span>`;
+}
+function lgChannelIcon(c) {
+  return { Email: '✉️', Facebook: '📘', LinkedIn: '💼', WhatsApp: '💬', LoopNet: '🏢', Manual: '✍️' }[c] || '•';
+}
+
+// ── LOAD ───────────────────────────────────────────────────────────────────
+async function loadLGLeads() {
+  if (!currentPassword) return;
+  const loading = document.getElementById('lg-loading');
+  const table   = document.getElementById('lg-table');
+  const empty   = document.getElementById('lg-empty');
+  if (loading && !allLGLeads.length) loading.style.display = 'block';
+  if (table && !allLGLeads.length)   table.style.display = 'none';
+  if (empty) empty.style.display = 'none';
+  try {
+    const res = await fetch(`${CRM_API_BASE}/api/get-leadgen-leads?${lgAuthQS()}`);
+    if (res.ok) {
+      const data = await res.json();
+      allLGLeads = data.leads || [];
+    } else {
+      console.error('Failed to load lead-gen leads:', res.status);
+    }
+  } catch (err) {
+    console.error('Failed to load lead-gen leads:', err);
+  }
+  if (loading) loading.style.display = 'none';
+  populateLGCampaignFilters();
+  updateLGStats();
+  updateLGBadge();
+  if (currentView === 'leadgen') renderLGLeads();
+  if (currentView === 'leadgen-pipeline') renderLGPipeline();
+}
+
+function populateLGCampaignFilters() {
+  const campaigns = [...new Set(allLGLeads.map(l => l.campaign).filter(Boolean))].sort();
+  ['lg-campaign-filter', 'lg-pipeline-campaign-filter'].forEach(id => {
+    const sel = document.getElementById(id);
+    if (!sel) return;
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">All Campaigns</option>' +
+      campaigns.map(c => `<option value="${escHtml(c)}">${escHtml(c)}</option>`).join('');
+    if (campaigns.includes(cur)) sel.value = cur;
+  });
+}
+
+function updateLGStats() {
+  const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  set('lg-stat-total',    allLGLeads.length);
+  set('lg-stat-positive', allLGLeads.filter(l => l.sentiment === 'Positive').length);
+  set('lg-stat-new',      allLGLeads.filter(l => (l.status || 'New') === 'New').length);
+  set('lg-stat-meetings', allLGLeads.filter(l => l.status === 'Meeting Booked' || l.status === 'Won').length);
+}
+
+// Sidebar badge = untouched positive/question replies — the ones that need Kevin.
+function updateLGBadge() {
+  const badge = document.getElementById('leadgen-badge');
+  if (!badge) return;
+  const n = allLGLeads.filter(l => (l.status || 'New') === 'New' && (l.sentiment === 'Positive' || l.sentiment === 'Question')).length;
+  badge.textContent = n;
+  badge.style.display = n ? 'inline-block' : 'none';
+}
+
+// ── TABLE ──────────────────────────────────────────────────────────────────
+function lgFilterLeads(prefix) {
+  const g = id => document.getElementById(id)?.value || '';
+  const channel   = g(`${prefix}channel-filter`);
+  const campaign  = g(`${prefix}campaign-filter`);
+  const sentiment = prefix === 'lg-' ? g('lg-sentiment-filter') : '';
+  const status    = prefix === 'lg-' ? g('lg-status-filter') : '';
+  const q         = prefix === 'lg-' ? g('lg-search').trim().toLowerCase() : '';
+  return allLGLeads.filter(l => {
+    if (channel   && l.channel   !== channel)   return false;
+    if (campaign  && l.campaign  !== campaign)  return false;
+    if (sentiment && l.sentiment !== sentiment) return false;
+    if (status    && (l.status || 'New') !== status) return false;
+    if (q) {
+      const hay = `${l.name} ${l.company} ${l.email} ${l.campaign} ${l.summary}`.toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+}
+
+function renderLGLeads() {
+  const tbody = document.getElementById('lg-tbody');
+  const table = document.getElementById('lg-table');
+  const empty = document.getElementById('lg-empty');
+  const label = document.getElementById('leadgen-count-label');
+  if (!tbody) return;
+
+  const rows = lgFilterLeads('lg-').sort((a, b) =>
+    new Date(b.lastReplyAt || b.replyAt || 0) - new Date(a.lastReplyAt || a.replyAt || 0));
+
+  if (label) { label.textContent = `${rows.length} of ${allLGLeads.length}`; label.style.display = 'inline-block'; }
+  if (!rows.length) {
+    if (table) table.style.display = 'none';
+    if (empty) { empty.style.display = 'block'; empty.textContent = allLGLeads.length ? 'No replies match these filters.' : 'No replies yet.'; }
+    return;
+  }
+  if (table) table.style.display = 'table';
+  if (empty) empty.style.display = 'none';
+
+  tbody.innerHTML = rows.map(l => {
+    const sub = [l.company, l.email || l.phone].filter(Boolean).join(' · ');
+    const stageOpts = LG_STAGES.map(s => `<option value="${s}"${(l.status || 'New') === s ? ' selected' : ''}>${s}</option>`).join('');
+    const summary = l.summary || l.replySnippet || l.firstReply || '';
+    return `
+      <tr data-lg-id="${escHtml(l.id)}">
+        <td>
+          <div style="font-weight:600;color:var(--navy,#1a2744);">${escHtml(l.name || l.email || '—')}</div>
+          <div class="lg-contact-sub">${escHtml(sub)}</div>
+        </td>
+        <td><span class="lg-channel">${lgChannelIcon(l.channel)} ${escHtml(l.channel || '—')}</span></td>
+        <td>${l.campaign ? `<span class="lg-campaign">${escHtml(l.campaign)}</span>` : '—'}</td>
+        <td>${lgSentimentChip(l.sentiment)}</td>
+        <td><select class="lg-stage-select" data-lg-id="${escHtml(l.id)}">${stageOpts}</select></td>
+        <td style="white-space:nowrap;">${lgFmtDate(l.lastReplyAt || l.replyAt)}${l.replyCount > 1 ? ` <span class="lg-contact-sub">×${l.replyCount}</span>` : ''}</td>
+        <td class="lg-summary-cell">${escHtml(summary.length > 220 ? summary.slice(0, 217) + '…' : summary)}</td>
+      </tr>`;
+  }).join('');
+
+  tbody.querySelectorAll('tr[data-lg-id]').forEach(tr => {
+    tr.addEventListener('click', e => {
+      if (e.target.closest('select')) return;
+      openLGPanel(tr.dataset.lgId);
+    });
+  });
+  tbody.querySelectorAll('.lg-stage-select').forEach(sel => {
+    sel.addEventListener('click', e => e.stopPropagation());
+    sel.addEventListener('change', () => updateLGStatus(sel.dataset.lgId, sel.value));
+  });
+}
+
+// ── PIPELINE (KANBAN) ──────────────────────────────────────────────────────
+function renderLGPipeline() {
+  const board = document.getElementById('lg-kanban-board');
+  if (!board) return;
+  const rows = lgFilterLeads('lg-pipeline-');
+  const label = document.getElementById('lg-pipeline-count-label');
+  if (label) {
+    const open = rows.filter(l => l.status !== 'Won' && l.status !== 'Lost').length;
+    label.textContent = `${open} open · ${rows.filter(l => l.status === 'Won').length} won · ${rows.filter(l => l.status === 'Lost').length} lost`;
+    label.style.display = 'inline-block';
+  }
+
+  board.innerHTML = LG_STAGES.map(stage => {
+    const inStage = rows.filter(l => (l.status || 'New') === stage)
+      .sort((a, b) => new Date(b.lastReplyAt || b.replyAt || 0) - new Date(a.lastReplyAt || a.replyAt || 0));
+    const cards = inStage.map(l => `
+      <div class="kanban-card lg-card lg-${lgCss(l.sentiment)}" draggable="true" data-lg-id="${escHtml(l.id)}">
+        <div class="kanban-card-name">${escHtml(l.name || l.email || '—')}</div>
+        <div class="kanban-card-company">${escHtml(l.company || '')}</div>
+        <div class="lg-card-summary">${escHtml(l.summary || l.replySnippet || '')}</div>
+        <div class="kanban-card-footer">
+          <span class="kanban-card-meta">${lgChannelIcon(l.channel)} ${escHtml(l.campaign || l.channel || '')}</span>
+          <span class="kanban-card-meta">${lgFmtDate(l.lastReplyAt || l.replyAt)}</span>
+        </div>
+      </div>`).join('');
+    return `
+      <div class="kanban-column" data-lg-stage="${escHtml(stage)}">
+        <div class="kanban-column-header">
+          <span>${escHtml(stage)}</span>
+          <span class="kanban-column-count">${inStage.length}</span>
+        </div>
+        <div class="kanban-cards lg-zone" data-lg-stage="${escHtml(stage)}">
+          ${cards || '<div style="font-size:.7rem;color:#94a3b8;padding:8px;text-align:center;">drop here</div>'}
+        </div>
+      </div>`;
+  }).join('');
+
+  wireLGKanban();
+}
+
+function wireLGKanban() {
+  const board = document.getElementById('lg-kanban-board');
+  if (!board) return;
+  board.querySelectorAll('.kanban-card[data-lg-id]').forEach(card => {
+    card.addEventListener('dragstart', e => {
+      card.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      // Own mime type: the consulting board's wireKanbanInteractions() also binds
+      // to every .kanban-card on the page and overwrites text/plain with its deal id.
+      e.dataTransfer.setData('text/lg-id', card.dataset.lgId);
+      e.dataTransfer.setData('text/plain', 'lg:' + card.dataset.lgId);
+    });
+    card.addEventListener('dragend', () => card.classList.remove('dragging'));
+    card.addEventListener('click', () => openLGPanel(card.dataset.lgId));
+  });
+  board.querySelectorAll('.lg-zone').forEach(zone => {
+    zone.addEventListener('dragover', e => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; zone.classList.add('drop-target'); });
+    zone.addEventListener('dragleave', () => zone.classList.remove('drop-target'));
+    zone.addEventListener('drop', async e => {
+      e.preventDefault();
+      zone.classList.remove('drop-target');
+      const id = e.dataTransfer.getData('text/lg-id');
+      if (!id) return;
+      const stage = zone.dataset.lgStage;
+      const lead = allLGLeads.find(l => l.id === id);
+      if (!lead || !stage || (lead.status || 'New') === stage) return;
+      await updateLGStatus(id, stage);
+    });
+  });
+}
+
+// ── UPDATES ────────────────────────────────────────────────────────────────
+async function lgPatch(id, fields) {
+  const res = await fetch(`${CRM_API_BASE}/api/update-leadgen-lead`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id, password: currentPassword, agent: currentAgent ? currentAgent.name : 'Kevin', ...fields }),
+  });
+  if (!res.ok) throw new Error(`update-leadgen-lead ${res.status}`);
+  const data = await res.json();
+  if (data.lead) {
+    const i = allLGLeads.findIndex(l => l.id === id);
+    if (i >= 0) allLGLeads[i] = data.lead;
+    if (currentLGLead && currentLGLead.id === id) currentLGLead = data.lead;
+  }
+  return data;
+}
+
+async function updateLGStatus(id, status) {
+  const lead = allLGLeads.find(l => l.id === id);
+  if (!lead) return;
+  const prev = lead.status;
+  lead.status = status;                                   // optimistic
+  updateLGStats(); updateLGBadge();
+  if (currentView === 'leadgen-pipeline') renderLGPipeline();
+  if (currentView === 'leadgen') renderLGLeads();
+  try {
+    await lgPatch(id, { status });
+    if (currentLGLead && currentLGLead.id === id) setVal('lg-status', status);
+    if (currentLGLead && currentLGLead.id === id) loadLGActivity(id);
+  } catch (err) {
+    console.error('Lead-gen stage update failed:', err);
+    lead.status = prev;
+    if (currentView === 'leadgen-pipeline') renderLGPipeline();
+    if (currentView === 'leadgen') renderLGLeads();
+  }
+}
+
+// ── PANEL ──────────────────────────────────────────────────────────────────
+function openLGPanel(id) {
+  const lead = allLGLeads.find(l => l.id === id);
+  if (!lead) return;
+  currentLGLead = lead;
+
+  const avatar = document.getElementById('lg-avatar-text');
+  if (avatar) avatar.textContent = (lead.name || lead.email || '?').charAt(0).toUpperCase();
+  document.getElementById('lg-panel-name').textContent = lead.name || lead.email || '—';
+  document.getElementById('lg-panel-sub').innerHTML =
+    `${lgSentimentChip(lead.sentiment)} <span style="margin-left:6px;">${escHtml(lead.company || '')}</span>`;
+
+  setVal('lg-status',    lead.status || 'New');
+  setVal('lg-sentiment', lead.sentiment || '');
+  setVal('lg-owner',     lead.owner || 'Kevin');
+  setVal('lg-summary',   lead.summary || '');
+  setVal('lg-name',      lead.name || '');
+  setVal('lg-company',   lead.company || '');
+  setVal('lg-title',     lead.title || '');
+  setVal('lg-email',     lead.email || '');
+  setVal('lg-phone',     lead.phone || '');
+  setVal('lg-website',   lead.website || '');
+
+  const rc = document.getElementById('lg-reply-count');
+  if (rc) rc.textContent = lead.replyCount ? `· ${lead.replyCount} repl${lead.replyCount === 1 ? 'y' : 'ies'}` : '';
+  const fr = document.getElementById('lg-first-reply');
+  if (fr) fr.textContent = lead.firstReply || lead.replySnippet || '—';
+  const frd = document.getElementById('lg-first-reply-date');
+  if (frd) frd.textContent = lead.replyAt ? `· ${lgFmtDate(lead.replyAt)}` : '';
+  const src = document.getElementById('lg-source-line');
+  if (src) src.textContent = `${lead.channel || '—'}${lead.campaign ? ` · ${lead.campaign}` : ''}${lead.sourceLeadId ? ` · ${lead.sourceLeadId}` : ''}`;
+
+  // Quick actions
+  const call = document.getElementById('lg-call');
+  const mail = document.getElementById('lg-email-action');
+  const wa   = document.getElementById('lg-whatsapp');
+  const digits = (lead.phone || '').replace(/[^\d]/g, '');
+  if (call) { call.href = lead.phone ? `tel:${lead.phone}` : '#'; call.style.opacity = lead.phone ? '1' : '.4'; }
+  if (mail) { mail.href = lead.email ? `mailto:${lead.email}` : '#'; mail.style.opacity = lead.email ? '1' : '.4'; }
+  if (wa)   { wa.href = digits ? `https://wa.me/${digits}` : '#'; wa.style.opacity = digits ? '1' : '.4'; }
+
+  const st = document.getElementById('lg-save-status'); if (st) st.textContent = '';
+  const nf = document.getElementById('lg-new-note-form'); if (nf) nf.style.display = 'none';
+
+  loadLGActivity(id);
+  document.getElementById('leadgen-panel').classList.add('open');
+  const overlay = document.getElementById('panel-overlay');
+  if (overlay) overlay.style.display = 'block';
+}
+
+function closeLGPanel() {
+  document.getElementById('leadgen-panel')?.classList.remove('open');
+  const overlay = document.getElementById('panel-overlay');
+  if (overlay) overlay.style.display = 'none';
+  currentLGLead = null;
+}
+
+async function loadLGActivity(id) {
+  const box = document.getElementById('lg-activity-list');
+  if (!box) return;
+  box.innerHTML = '<p class="panel-empty-text">Loading…</p>';
+  try {
+    const res = await fetch(`${CRM_API_BASE}/api/get-leadgen-activity?leadId=${encodeURIComponent(id)}&${lgAuthQS()}`);
+    const data = res.ok ? await res.json() : { activity: [] };
+    const items = (data.activity || []).sort((a, b) => new Date(b.at) - new Date(a.at));
+    if (!currentLGLead || currentLGLead.id !== id) return;
+    if (!items.length) { box.innerHTML = '<p class="panel-empty-text">No activity yet.</p>'; return; }
+    box.innerHTML = items.map(a => `
+      <div class="note-card">
+        <div class="note-header">
+          <span class="note-author">${escHtml(a.title || a.type || 'Activity')}</span>
+          <span class="note-date">${escHtml(a.agent || '')} · ${lgFmtDate(a.at)}</span>
+        </div>
+        ${a.details ? `<div class="note-body" style="white-space:pre-wrap;">${escHtml(a.details)}</div>` : ''}
+      </div>`).join('');
+  } catch (err) {
+    box.innerHTML = '<p class="panel-empty-text">Could not load activity.</p>';
+  }
+}
+
+async function saveLGNote() {
+  if (!currentLGLead) return;
+  const text = (document.getElementById('lg-new-note-text')?.value || '').trim();
+  const status = document.getElementById('lg-new-note-status');
+  if (!text) return;
+  if (status) status.textContent = 'Saving…';
+  try {
+    const res = await fetch(`${CRM_API_BASE}/api/log-leadgen-activity`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        password: currentPassword, leadId: currentLGLead.id, title: text.slice(0, 80),
+        type: 'Note', details: text, agent: currentAgent ? currentAgent.name : 'Kevin', stampContact: true,
+      }),
+    });
+    if (!res.ok) throw new Error(res.status);
+    document.getElementById('lg-new-note-text').value = '';
+    document.getElementById('lg-new-note-form').style.display = 'none';
+    if (status) status.textContent = '';
+    loadLGActivity(currentLGLead.id);
+  } catch (err) {
+    if (status) status.textContent = 'Failed to save note.';
+  }
+}
+
+// Manual entry — a reply Kevin got somewhere the watchers don't see (a call, a
+// DM screenshot, a forwarded email). Goes through the same ingest endpoint so it
+// gets the same sentiment/summary treatment.
+async function createLGReplyManually() {
+  const name  = prompt('Contact name:'); if (name === null) return;
+  const email = prompt('Email (optional):') || '';
+  const company = prompt('Company (optional):') || '';
+  const channel = prompt('Channel — Email / Facebook / LinkedIn / WhatsApp / Manual:', 'Manual') || 'Manual';
+  const campaign = prompt('Campaign (optional):') || '';
+  const replyText = prompt('What did they say? (paste the reply)'); if (!replyText) return;
+  try {
+    const res = await fetch(`${CRM_API_BASE}/api/agent/leadgen-reply`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: currentPassword, name, email, company, channel, campaign, replyText, force: true }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || res.status);
+    await loadLGLeads();
+    if (data.lead) openLGPanel(data.lead.id);
+  } catch (err) {
+    alert('Could not save reply: ' + err.message);
+  }
+}
+
+// ── WIRE ───────────────────────────────────────────────────────────────────
+function wireLGEvents() {
+  ['lg-channel-filter', 'lg-campaign-filter', 'lg-sentiment-filter', 'lg-status-filter'].forEach(id =>
+    document.getElementById(id)?.addEventListener('change', renderLGLeads));
+  document.getElementById('lg-search')?.addEventListener('input', renderLGLeads);
+  document.getElementById('lg-refresh-btn')?.addEventListener('click', loadLGLeads);
+  document.getElementById('lg-add-btn')?.addEventListener('click', createLGReplyManually);
+  ['lg-pipeline-channel-filter', 'lg-pipeline-campaign-filter'].forEach(id =>
+    document.getElementById(id)?.addEventListener('change', renderLGPipeline));
+  document.getElementById('lg-pipeline-refresh-btn')?.addEventListener('click', loadLGLeads);
+
+  document.getElementById('lg-panel-close')?.addEventListener('click', closeLGPanel);
+  document.getElementById('panel-overlay')?.addEventListener('click', () => {
+    if (document.getElementById('leadgen-panel')?.classList.contains('open')) closeLGPanel();
+  });
+
+  // Auto-save panel fields (debounced for text, immediate for selects)
+  const fieldMap = {
+    'lg-status': 'status', 'lg-sentiment': 'sentiment', 'lg-owner': 'owner', 'lg-summary': 'summary',
+    'lg-name': 'name', 'lg-company': 'company', 'lg-title': 'title', 'lg-email': 'email',
+    'lg-phone': 'phone', 'lg-website': 'website',
+  };
+  Object.entries(fieldMap).forEach(([id, key]) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const evt = el.tagName === 'SELECT' ? 'change' : 'input';
+    el.addEventListener(evt, () => {
+      if (!currentLGLead) return;
+      const leadId = currentLGLead.id;
+      const value  = el.value;
+      const status = document.getElementById('lg-save-status');
+      clearTimeout(lgSaveTimer);
+      const run = async () => {
+        try {
+          if (status) status.textContent = 'Saving…';
+          await lgPatch(leadId, { [key]: value });
+          if (status) status.textContent = 'Saved';
+          setTimeout(() => { if (status && status.textContent === 'Saved') status.textContent = ''; }, 1500);
+          updateLGStats(); updateLGBadge();
+          if (currentView === 'leadgen') renderLGLeads();
+          if (currentView === 'leadgen-pipeline') renderLGPipeline();
+          if (key === 'sentiment' || key === 'status') loadLGActivity(leadId);
+        } catch (err) {
+          if (status) status.textContent = 'Save failed';
+        }
+      };
+      if (evt === 'change') run(); else lgSaveTimer = setTimeout(run, 700);
+    });
+  });
+
+  document.getElementById('lg-add-note-toggle')?.addEventListener('click', () => {
+    const f = document.getElementById('lg-new-note-form');
+    if (f) { f.style.display = f.style.display === 'none' ? 'block' : 'none'; if (f.style.display === 'block') document.getElementById('lg-new-note-text')?.focus(); }
+  });
+  document.getElementById('lg-cancel-new-note')?.addEventListener('click', () => {
+    const f = document.getElementById('lg-new-note-form'); if (f) f.style.display = 'none';
+  });
+  document.getElementById('lg-save-new-note')?.addEventListener('click', saveLGNote);
 }

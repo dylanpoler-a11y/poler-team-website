@@ -2,11 +2,12 @@
  * /api/get-leadgen-leads.js — Vercel Edge Function
  *
  * Lists Lead Generation leads for the CRM's Leads + Pipeline views.
- * Newest positive reply first.
+ * Newest reply first.
  *
  *   GET ?password=…            → { leads: [...] }
  *   GET ?status=New            → filter by pipeline stage
- *   GET ?channel=Instantly     → filter by source channel
+ *   GET ?channel=Email         → filter by source channel (Email|Facebook|LinkedIn|WhatsApp|LoopNet|Manual)
+ *   GET ?sentiment=Positive    → filter by reply sentiment
  *   GET ?campaign=exec_search  → filter by campaign slug
  */
 
@@ -25,7 +26,7 @@ export default async function handler(req) {
 
     const url = new URL(req.url);
     const clauses = [];
-    for (const [param, field] of [['status', 'Status'], ['channel', 'Channel'], ['campaign', 'Campaign']]) {
+    for (const [param, field] of [['status', 'Status'], ['channel', 'Channel'], ['campaign', 'Campaign'], ['sentiment', 'Sentiment']]) {
         const v = url.searchParams.get(param);
         if (v) clauses.push(`{${field}} = '${esc(v)}'`);
     }

@@ -5,7 +5,7 @@
  * last-contact stamps. Logs a Status Change activity row when the stage moves.
  *
  *   PATCH { id, status?, notes?, owner?, name?, email?, company?, title?,
- *           phone?, website?, campaign?, stampContact?, agent? }
+ *           phone?, website?, campaign?, sentiment?, summary?, stampContact?, agent? }
  *   → { ok, lead }
  */
 
@@ -14,7 +14,7 @@ export const config = { runtime: 'edge' };
 import { authorize } from './_auth.js';
 import {
     TABLES, creds, json, preflight, listAll, updateRecord,
-    mapLead, logActivity, STATUSES, esc,
+    mapLead, logActivity, STATUSES, SENTIMENTS, esc,
 } from './_leadgen.js';
 
 export default async function handler(req) {
@@ -39,6 +39,9 @@ export default async function handler(req) {
     if (body.status && !STATUSES.includes(body.status)) {
         return json({ error: `status must be one of: ${STATUSES.join(', ')}` }, 400);
     }
+    if (body.sentiment && !SENTIMENTS.includes(body.sentiment)) {
+        return json({ error: `sentiment must be one of: ${SENTIMENTS.join(', ')}` }, 400);
+    }
 
     // Read the current stage first so the activity row can say "X → Y".
     let prevStatus = '';
@@ -59,6 +62,8 @@ export default async function handler(req) {
     put('Phone',    body.phone);
     put('Website',  body.website);
     put('Campaign', body.campaign);
+    put('Sentiment', body.sentiment);
+    put('Summary',   body.summary);
     if (body.stampContact) fields['Last Contact'] = new Date().toISOString().slice(0, 10);
 
     if (!Object.keys(fields).length) return json({ error: 'nothing to update' }, 400);

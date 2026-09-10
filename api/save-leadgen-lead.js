@@ -23,7 +23,7 @@ export const config = { runtime: 'edge' };
 import { authorize } from './_auth.js';
 import {
     TABLES, creds, json, preflight, createRecord, updateRecord,
-    findLead, mapLead, logActivity, STATUSES, CHANNELS,
+    findLead, mapLead, logActivity, STATUSES, normChannel,
 } from './_leadgen.js';
 
 export default async function handler(req) {
@@ -46,7 +46,7 @@ export default async function handler(req) {
     const email = (body.email || '').trim();
     if (!name && !email) return json({ error: 'name or email is required' }, 400);
 
-    const channel = CHANNELS.includes(body.channel) ? body.channel : 'Manual';
+    const channel = normChannel(body.channel);
     const status  = STATUSES.includes(body.status)  ? body.status  : 'New';
     const replyAt = body.replyAt || new Date().toISOString();
 

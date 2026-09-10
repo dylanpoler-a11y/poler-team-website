@@ -16,7 +16,7 @@ import {
     TABLES, creds, json, preflight, createRecord, updateRecord, mapActivity,
 } from './_leadgen.js';
 
-const TYPES = ['Positive Reply', 'Email Sent', 'Call', 'Meeting', 'Note', 'Status Change'];
+const TYPES = ['Positive Reply', 'Reply', 'Email Sent', 'Call', 'Meeting', 'Note', 'Status Change'];
 
 export default async function handler(req) {
     if (req.method === 'OPTIONS') return preflight('POST');
