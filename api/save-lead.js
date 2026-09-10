@@ -165,7 +165,12 @@ export default async function handler(req, context) {
     };
     const consentLang = CONSENT_TEXT[language] ? language : 'en';
     const consentIp = (req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || '').split(',')[0].trim();
-    const consentRecord = `${new Date().toISOString()} | IP: ${consentIp || 'unknown'} | lang: ${consentLang} | src: ${sourceUrl || 'listing'} | "${CONSENT_TEXT[consentLang]}"`;
+    // A manual/agent entry (LoopNet favorite, hand-added contact) never saw the form, so
+    // stamping the form disclosure on it would fabricate a consent record. Authed manual
+    // callers may pass `consentNote` with the truthful provenance instead.
+    const consentRecord = (manualEntry && typeof body.consentNote === 'string' && body.consentNote.trim())
+        ? body.consentNote.trim().slice(0, 500)
+        : `${new Date().toISOString()} | IP: ${consentIp || 'unknown'} | lang: ${consentLang} | src: ${sourceUrl || 'listing'} | "${CONSENT_TEXT[consentLang]}"`;
 
     // Generate a unique token for lead self-service preferences page
     const tokenArray = new Uint8Array(24);

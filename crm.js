@@ -366,7 +366,7 @@ function switchView(view) {
 // ─── Autoresearch dashboards (gated Vercel embeds; the /crm page is already auth-gated) ───
 const AUTORESEARCH_URLS = {
   overview:    'https://dashboards-hub-phi.vercel.app/?key=PolerDash2026',
-  instantly:   'https://dashboards-hub-phi.vercel.app/instantly?key=PolerDash2026',
+  outreach:    'https://dashboards-hub-phi.vercel.app/outreach?key=PolerDash2026',
   ads:         'https://conv-dashboard-eight.vercel.app/?key=PolerConv2026',
   crm:         'https://dashboards-hub-phi.vercel.app/crm?key=PolerDash2026',
   wa:          'https://dashboards-hub-phi.vercel.app/wa?key=PolerDash2026',
@@ -6792,6 +6792,7 @@ function renderListings() {
   grid.innerHTML = allListings.map(l => {
     const priceStr = l.price ? '$' + Number(l.price).toLocaleString() : '—';
     const photoStyle = l.photo ? `style="background-image:url('${escHtml(l.photo)}')"` : '';
+    const buyerCount = allLeads.filter(x => (x.sourceUrl || '') === `buyer:${l.mlsId}`).length;
     return `<div class="listing-card" data-mls="${escHtml(l.mlsId)}" onclick="openListingPanel('${escHtml(l.mlsId)}')">
       <div class="listing-card-photo" ${photoStyle}></div>
       <div class="listing-card-body">
@@ -6803,10 +6804,25 @@ function renderListings() {
           ${l.baths ? `<span class="listing-card-badge">${l.baths} ba</span>` : ''}
           ${l.sqft ? `<span class="listing-card-badge">${Number(l.sqft).toLocaleString()} sqft</span>` : ''}
         </div>
-        <div class="listing-card-mls">MLS# ${escHtml(l.mlsId)}</div>
+        <div class="listing-card-mls">MLS# ${escHtml(l.mlsId)}${buyerCount ? ` <span class="listing-card-buyers" title="Buyer leads on this listing">👥 ${buyerCount} lead${buyerCount === 1 ? '' : 's'}</span>` : ''}</div>
       </div>
     </div>`;
   }).join('');
+}
+
+// Where a buyer lead came from + when — read off the note the importer/responder wrote
+// ("LoopNet favorite 4/3/2026 …", "LoopNet inquiry 6/9/2026 …"); campaign repliers and
+// hand-added contacts fall back to the record's creation date.
+function buyerLeadOrigin(b) {
+  const m = (b.notes || '').match(/LoopNet (favorite|inquiry) (\d{1,2}\/\d{1,2}\/\d{4})/);
+  if (m) {
+    const [mo, d, y] = m[2].split('/').map(Number);
+    return { label: m[1] === 'favorite' ? '⭐ LoopNet favorite' : '✉️ LoopNet inquiry', date: new Date(y, mo - 1, d), dateStr: m[2] };
+  }
+  if (/loopnet/i.test(b.notes || '')) return { label: 'LoopNet', date: b.createdAt ? new Date(b.createdAt) : null, dateStr: b.createdAt ? new Date(b.createdAt).toLocaleDateString('en-US') : '' };
+  if (/keystone/i.test(b.notes || '')) return { label: 'Keystone outreach', date: b.createdAt ? new Date(b.createdAt) : null, dateStr: b.createdAt ? new Date(b.createdAt).toLocaleDateString('en-US') : '' };
+  const date = b.createdAt ? new Date(b.createdAt) : null;
+  return { label: 'Added', date, dateStr: date ? date.toLocaleDateString('en-US') : '' };
 }
 
 function openListingPanel(mlsId) {
@@ -6852,18 +6868,25 @@ function renderListingBuyerLeads(mlsId) {
     container.innerHTML = '<p class="panel-empty-text">No buyer leads yet.</p>';
     return;
   }
-  const statusOrder = { 'Hot': 0, 'Appointment Set': 1, 'Warm': 2, 'Contacted': 3, 'New': 4, 'Under Contract': 5, 'Closed': 6, 'Dead': 7 };
-  buyers.sort((a, b) => (statusOrder[a.status] ?? 4) - (statusOrder[b.status] ?? 4));
-  container.innerHTML = buyers.map(b => {
-    const phone = b.phone ? `<a href="tel:${escHtml(b.phone)}" style="color:#3b82f6;text-decoration:none;">${escHtml(b.phone)}</a>` : '';
-    const email = b.email ? `<a href="mailto:${escHtml(b.email)}" style="color:#3b82f6;text-decoration:none;">${escHtml(b.email)}</a>` : '';
+  // Newest interest first (LoopNet favorite/inquiry date, else record creation) so the
+  // people who just clicked in sit at the top; dead leads sink to the bottom.
+  const rows = buyers.map(b => ({ b, o: buyerLeadOrigin(b) }));
+  rows.sort((x, y) => {
+    const dx = x.b.status === 'Dead', dy = y.b.status === 'Dead';
+    if (dx !== dy) return dx ? 1 : -1;
+    return (y.o.date ? y.o.date.getTime() : 0) - (x.o.date ? x.o.date.getTime() : 0);
+  });
+  container.innerHTML = rows.map(({ b, o }) => {
+    const phone = b.phone ? `<a href="tel:${escHtml(b.phone)}" onclick="event.stopPropagation()" style="color:#3b82f6;text-decoration:none;">${escHtml(b.phone)}</a>` : '';
+    const email = b.email ? `<a href="mailto:${escHtml(b.email)}" onclick="event.stopPropagation()" style="color:#3b82f6;text-decoration:none;">${escHtml(b.email)}</a>` : '';
     const meta  = [phone, email, b.country ? escHtml(b.country) : ''].filter(Boolean).join(' · ');
-    return `<div class="listing-buyer-row" onclick="openPanel('${escHtml(b.id)}')"
-      style="padding:8px 10px;border:1px solid rgba(0,0,0,0.07);border-radius:8px;margin-bottom:6px;cursor:pointer;background:#fff;">
+    return `<div class="listing-buyer-row${b.status === 'Dead' ? ' lead-dead' : ''}" onclick="openPanel('${escHtml(b.id)}')"
+      style="padding:8px 10px;border:1px solid rgba(0,0,0,0.07);border-radius:8px;margin-bottom:6px;cursor:pointer;background:#fff;${b.status === 'Dead' ? 'opacity:.55;' : ''}">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
-        <strong style="font-size:0.85rem;">${escHtml(b.name || '—')}</strong>
+        <strong style="font-size:0.85rem;">${escHtml(b.name || [b.firstName, b.lastName].filter(Boolean).join(' ') || '—')}</strong>
         <span class="status-badge status-${escHtml((b.status || 'New').replace(/\s+/g, '-'))}" style="font-size:0.68rem;">${escHtml(b.status || 'New')}</span>
       </div>
+      <div style="font-size:0.74rem;color:#4b5563;margin-top:3px;">${escHtml(o.label)}${o.dateStr ? ` · ${escHtml(o.dateStr)}` : ''}</div>
       <div style="font-size:0.76rem;color:#6b7280;margin-top:2px;">${meta || '—'}</div>
     </div>`;
   }).join('');

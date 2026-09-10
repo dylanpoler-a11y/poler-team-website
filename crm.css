@@ -2691,3 +2691,6 @@ body {
 .lg-att-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
 .lg-att { display: inline-flex; align-items: center; gap: 4px; font-size: 0.74rem; padding: 3px 8px; border-radius: 999px; background: var(--color-bg-soft, #f3f4f6); border: 1px solid var(--color-border, #e5e7eb); color: var(--color-navy, #1a2744); text-decoration: none; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .lg-att:hover { background: #e8ebf2; }
+
+/* Buyer-lead count on a Listings card (Listings → card → panel "Buyer Leads") */
+.listing-card-buyers { display:inline-block; margin-left:8px; padding:1px 7px; border-radius:999px; background:rgba(26,39,68,0.08); color:var(--color-navy); font-size:0.7rem; font-weight:600; }
