@@ -4,7 +4,7 @@
  * THE responder entry point. Creates (or idempotently updates) a Lead Generation
  * lead from a POSITIVE outreach reply, and writes the matching Activity row.
  *
- * Called by: instantly-1k-rollout/autoresponder/respond.py, the Lauderdale +
+ * Called by: outreach-machine/autoresponder/respond.py, the Lauderdale +
  * insurance responders, the Facebook reply handler, and the LoopNet responder —
  * on the classifier's positive verdict, BEFORE the reply draft hits Telegram.
  *

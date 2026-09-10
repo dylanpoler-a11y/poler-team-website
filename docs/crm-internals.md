@@ -40,7 +40,7 @@ changing one of them, not on every session.
 **Producers (all push right before their Telegram alert, never block the send loop):**
 | Source | File | messageId |
 |---|---|---|
-| Railway cloud-sender inbox sweep (every ~2 min) | `instantly-1k-rollout/cloud-sender/inbox_watch.py` → `crm_push.py` | RFC Message-ID |
+| Railway cloud-sender inbox sweep (every ~2 min) | `outreach-machine/cloud-sender/inbox_watch.py` → `crm_push.py` | RFC Message-ID |
 | Railway direct/thread/opt-out reply checks | `cloud-sender/smtp_sender.py` | RFC Message-ID |
 | Gmail-account sweeps (IMAP + API + colleague threads + hard-no) | `cloud-sender/gmail_outreach.py` | `<acct>:<uid>` / `<acct>:api:<mid>` |
 | Facebook DM watcher (hourly launchd — plist currently ARCHIVED, not scheduled) | `autonomous-agency/tools/fb_inbox_watcher.py` `_push_crm` | `fb:<lead>:<sha1>` |

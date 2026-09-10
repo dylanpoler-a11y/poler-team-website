@@ -1,0 +1,94 @@
+:root{
+  --ink:#14171a; --paper:#f6f4f0; --line:rgba(20,23,26,.14);
+  --chip:rgba(255,255,255,.82); --chip-on:#14171a; --chip-on-ink:#fff;
+  --shadow:0 2px 14px rgba(15,20,26,.16);
+  --pad:max(12px, env(safe-area-inset-left));
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0; background:#aab4bf; color:var(--ink); overflow:hidden;
+  font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Helvetica,Arial,sans-serif;
+  -webkit-font-smoothing:antialiased; touch-action:none;
+}
+#stage{position:fixed;inset:0;width:100%;height:100%;display:block;cursor:grab}
+#stage.dragging{cursor:grabbing}
+
+#loading{position:fixed;inset:0;display:grid;place-content:center;justify-items:center;gap:14px;
+  background:var(--paper);z-index:50;transition:opacity .4s ease}
+#loading.gone{opacity:0;pointer-events:none}
+#loading p{margin:0;letter-spacing:.02em;color:#5d666f}
+.spinner{width:30px;height:30px;border:2px solid var(--line);border-top-color:var(--ink);
+  border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+#bar{position:fixed;top:0;left:0;right:0;z-index:20;display:flex;align-items:flex-start;
+  justify-content:space-between;gap:12px;padding:var(--pad);
+  padding-top:max(12px,env(safe-area-inset-top));
+  background:linear-gradient(180deg,rgba(246,244,240,.94),rgba(246,244,240,0));
+  pointer-events:none}
+#bar>*{pointer-events:auto}
+.title{display:flex;flex-direction:column;line-height:1.15;min-width:0;padding-top:2px}
+.title strong{font-size:15px;letter-spacing:.01em}
+.title span{font-size:12px;color:#5d666f}
+
+button{font:inherit;color:var(--ink);background:var(--chip);border:1px solid var(--line);
+  border-radius:999px;padding:8px 14px;cursor:pointer;backdrop-filter:blur(10px);
+  box-shadow:var(--shadow);transition:background .16s,color .16s,transform .16s}
+button:hover{transform:translateY(-1px)}
+button.on{background:var(--chip-on);color:var(--chip-on-ink);border-color:transparent}
+.modes{display:flex;gap:6px}
+
+#levels{position:fixed;z-index:20;left:var(--pad);top:50%;transform:translateY(-50%);
+  display:flex;flex-direction:column;gap:6px}
+#places{position:fixed;z-index:20;left:var(--pad);right:var(--pad);
+  bottom:max(14px,env(safe-area-inset-bottom));display:flex;gap:6px;
+  overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+#places::-webkit-scrollbar{display:none}
+#places button{white-space:nowrap;flex:0 0 auto}
+
+#hint{position:fixed;z-index:20;left:50%;transform:translateX(-50%);
+  bottom:calc(max(14px,env(safe-area-inset-bottom)) + 52px);
+  font-size:12.5px;color:#39424b;background:var(--chip);border:1px solid var(--line);
+  border-radius:999px;padding:6px 13px;box-shadow:var(--shadow);backdrop-filter:blur(10px);
+  opacity:1;transition:opacity .5s ease}
+#hint.fade{opacity:0}
+kbd{font:inherit;font-size:11.5px;background:#fff;border:1px solid var(--line);
+  border-bottom-width:2px;border-radius:4px;padding:0 4px;margin:0 1px}
+.touch{display:none}
+@media (hover:none){.desktop{display:none}.touch{display:inline}}
+
+#room{position:fixed;z-index:20;top:max(58px,calc(env(safe-area-inset-top) + 58px));
+  left:50%;transform:translateX(-50%);font-size:12.5px;letter-spacing:.09em;
+  text-transform:uppercase;color:#39424b;opacity:0;transition:opacity .3s ease;
+  pointer-events:none;text-shadow:0 1px 10px rgba(246,244,240,.9)}
+#room.show{opacity:1}
+
+#recenter{position:fixed;z-index:21;left:50%;top:50%;transform:translate(-50%,-50%)}
+
+/* Stair prompt — appears only while you are standing on the stairs. */
+#vert{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(96px + env(safe-area-inset-bottom));
+  display:flex;gap:8px;z-index:22}
+#vert button{background:var(--chip-on);color:var(--chip-on-ink);border-color:transparent;box-shadow:0 6px 20px rgba(0,0,0,.22)}
+
+/* Phones: everything stacks up from the bottom edge in fixed rows, because that
+   is the half of the screen a thumb can reach and the top half is the house. */
+@media (max-width:640px){
+  :root{--row:52px}
+  .title{flex:0 0 auto}
+  .title strong{font-size:12px;white-space:nowrap}
+  .title span{display:none}
+  .modes button{padding:6px 9px;font-size:11.5px;white-space:nowrap}
+  button{padding:7px 12px}
+
+  #places{bottom:max(10px,env(safe-area-inset-bottom))}
+  #levels{top:auto;transform:none;flex-direction:row;justify-content:center;
+    left:var(--pad);right:var(--pad);
+    bottom:calc(max(10px,env(safe-area-inset-bottom)) + var(--row))}
+  #levels button{font-size:13px;padding:7px 11px}
+  #hint{font-size:11.5px;max-width:calc(100vw - 24px);text-align:center;
+    bottom:calc(max(10px,env(safe-area-inset-bottom)) + var(--row) * 2)}
+  #vert{bottom:calc(max(10px,env(safe-area-inset-bottom)) + var(--row) * 3)}
+  #room{top:max(46px,calc(env(safe-area-inset-top) + 46px))}
+}
+

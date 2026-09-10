@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<!-- cleanUrls serves this at /1015stillwater with no trailing slash, so every
+     relative path would resolve against the site root. Pin the base. -->
+<base href="/1015stillwater/">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>1015 Stillwater Dr — walk through</title>
+<meta name="description" content="Step inside 1015 Stillwater Drive, Golden Beach — walk the rooms in 3D from your phone.">
+
+<!-- Google Analytics 4 + Google Ads -->
+<script src="/analytics.js"></script>
+
+<!-- Link preview: this page gets sent on WhatsApp, so the unfurl has to carry it. -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="1015 Stillwater Dr — walk inside">
+<meta property="og:description" content="Golden Beach waterfront. Walk the rooms in 3D from your phone.">
+<meta property="og:image" content="https://www.homesinsoflorida.com/1015stillwater/preview.jpg">
+<meta property="og:url" content="https://www.homesinsoflorida.com/1015stillwater">
+<meta name="twitter:card" content="summary_large_image">
+
+<link rel="icon" href="/favicon.ico">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="style.css">
+<script type="importmap">
+{"imports":{
+  "three":"./vendor/three.module.min.js",
+  "three/addons/":"./vendor/"
+}}
+</script>
+</head>
+<body>
+<canvas id="stage"></canvas>
+
+<div id="loading"><div class="spinner"></div><p>Loading the house…</p></div>
+
+<header id="bar">
+  <div class="title"><strong>1015 Stillwater Dr</strong><span>Golden Beach</span></div>
+  <div class="modes" role="group" aria-label="View mode">
+    <button id="mode-walk" class="on" type="button">Walk inside</button>
+    <button id="mode-orbit" type="button">See the whole house</button>
+  </div>
+</header>
+
+<nav id="levels" aria-label="Floor"></nav>
+<nav id="places" aria-label="Jump to a room"></nav>
+
+<div id="hint"><span class="desktop">Drag to look · <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> to move · <kbd>Shift</kbd> to hurry</span><span class="touch">Drag to look · tap the floor to walk there</span></div>
+<div id="vert" hidden><button id="go-up" type="button" hidden>Go up</button><button id="go-down" type="button" hidden>Go down</button></div>
+<div id="room" aria-live="polite"></div>
+<button id="recenter" type="button" hidden>Put me back inside</button>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,233 @@
+/* tower.css — per-tower preconstruction detail pages (/tower/<id>).
+   Layered on top of preconstruction.css, which owns the tokens and the nav/footer. */
+
+/* ── Nav ───────────────────────────────────────────────────────────
+   preconstruction.css alone leaves the header unsized — /preconstruction
+   supplies these in an inline <style> block. Tower pages have no inline
+   block, so the same rules live here. Keep in sync with that block. */
+.lp-nav-inner { max-width: none; padding: 0 1.25rem; display: flex; align-items: center; gap: 0.75rem; }
+.lp-nav-logo { height: 30px; display: block; width: auto; }
+.lp-logo-link { flex-shrink: 0; display: flex; align-items: center; padding: 0.4rem 0; }
+.lp-nav-links { display: flex; align-items: center; flex: 1 1 auto; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+.lp-nav-links::-webkit-scrollbar { display: none; }
+.lp-nav-phone { font-weight: 700; color: rgba(255, 255, 255, 0.92); font-variant-numeric: tabular-nums; }
+.lp-nav-phone:hover { color: #fff; }
+
+.tw-crumbs {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 1.25rem 1.25rem 0;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+}
+.tw-crumbs a { color: var(--text-muted); text-decoration: none; }
+.tw-crumbs a:hover { color: var(--navy); text-decoration: underline; }
+.tw-crumbs span { margin: 0 0.35rem; }
+.tw-crumbs [aria-current] { color: var(--text); font-weight: 600; margin: 0; }
+
+.tw-main {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 1.25rem 4rem;
+    color: var(--text);
+    font-family: var(--font-body);
+}
+
+/* ── Hero ─────────────────────────────────────────────────────────── */
+.tw-hero { padding: 1.5rem 0 1.25rem; }
+.tw-badge {
+    display: inline-block;
+    background: var(--gold-soft);
+    color: var(--gold-dark);
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    padding: 0.3rem 0.7rem;
+    border-radius: 4px;
+    margin-bottom: 0.85rem;
+}
+.tw-hero h1 {
+    font-family: var(--font-heading);
+    font-size: clamp(1.9rem, 5vw, 3rem);
+    line-height: 1.12;
+    letter-spacing: -0.02em;
+    margin: 0 0 0.6rem;
+    color: var(--navy);
+    text-wrap: balance;
+}
+.tw-sub {
+    font-size: 1.03rem;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+.tw-photo {
+    width: 100%;
+    height: auto;
+    max-height: 460px;
+    object-fit: cover;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    margin: 0.5rem 0 0.5rem;
+    background: var(--border-light);
+}
+
+/* ── Sections ─────────────────────────────────────────────────────── */
+.tw-section { padding: 2.25rem 0 0; }
+.tw-section h2 {
+    font-family: var(--font-heading);
+    font-size: clamp(1.3rem, 3vw, 1.7rem);
+    color: var(--navy);
+    margin: 0 0 0.9rem;
+    letter-spacing: -0.01em;
+}
+.tw-lede {
+    font-size: 1.05rem;
+    line-height: 1.72;
+    max-width: 68ch;
+    margin: 0;
+    text-wrap: pretty;
+}
+.tw-section p { line-height: 1.7; max-width: 68ch; }
+
+/* ── Fast facts ───────────────────────────────────────────────────── */
+.tw-facts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 0;
+    margin: 0;
+    border-top: 1px solid var(--border);
+}
+.tw-fact {
+    display: flex;
+    justify-content: space-between;
+    gap: 1.25rem;
+    padding: 0.8rem 0;
+    border-bottom: 1px solid var(--border);
+}
+.tw-fact dt {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    letter-spacing: 0.01em;
+    flex-shrink: 0;
+}
+.tw-fact dd {
+    margin: 0;
+    font-size: 0.92rem;
+    text-align: right;
+    line-height: 1.5;
+}
+
+/* ── Amenities ────────────────────────────────────────────────────── */
+.tw-amenities {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 0.5rem 1.75rem;
+}
+.tw-amenities li {
+    position: relative;
+    padding-left: 1.15rem;
+    line-height: 1.6;
+    font-size: 0.94rem;
+}
+.tw-amenities li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.62em;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--gold);
+}
+
+.tw-deposit { font-size: 1rem; }
+.tw-note {
+    font-size: 0.86rem;
+    color: var(--text-muted);
+    margin-top: 0.7rem;
+}
+
+/* ── CTA ──────────────────────────────────────────────────────────── */
+.tw-cta {
+    margin-top: 2.75rem;
+    padding: 2rem 1.75rem;
+    background: var(--navy);
+    border-radius: var(--radius);
+    color: #fff;
+}
+.tw-cta h2 {
+    font-family: var(--font-heading);
+    font-size: clamp(1.25rem, 3vw, 1.6rem);
+    margin: 0 0 0.7rem;
+    color: #fff;
+}
+.tw-cta p {
+    color: rgba(255, 255, 255, 0.86);
+    line-height: 1.65;
+    margin: 0 0 1.35rem;
+    max-width: 62ch;
+}
+.tw-cta-row { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+.tw-btn {
+    display: inline-block;
+    padding: 0.72rem 1.5rem;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.94rem;
+    text-decoration: none;
+    border: 1.5px solid rgba(255, 255, 255, 0.34);
+    color: #fff;
+    transition: background 0.18s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.18s;
+}
+.tw-btn:hover { background: rgba(255, 255, 255, 0.12); border-color: rgba(255, 255, 255, 0.6); }
+.tw-btn:active { transform: translateY(1px); }
+.tw-btn-primary {
+    background: var(--gold);
+    border-color: var(--gold);
+    color: #23180a;
+}
+.tw-btn-primary:hover { background: #dbb46a; border-color: #dbb46a; }
+
+/* ── Related + back ───────────────────────────────────────────────── */
+.tw-related { list-style: none; padding: 0; margin: 0; }
+.tw-related li {
+    padding: 0.7rem 0;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 0.75rem;
+    align-items: baseline;
+}
+.tw-related a {
+    color: var(--navy);
+    font-weight: 600;
+    text-decoration: none;
+}
+.tw-related a:hover { color: var(--gold-dark); text-decoration: underline; }
+.tw-related span { font-size: 0.84rem; color: var(--text-muted); }
+
+.tw-back { margin-top: 2.5rem; }
+.tw-back a { color: var(--navy); font-weight: 600; text-decoration: none; }
+.tw-back a:hover { color: var(--gold-dark); text-decoration: underline; }
+
+.tw-footer-note {
+    font-size: 0.8rem;
+    opacity: 0.75;
+    margin-top: 0.4rem;
+}
+
+@media (max-width: 560px) {
+    .tw-fact { flex-direction: column; gap: 0.15rem; }
+    .tw-fact dd { text-align: left; }
+    .tw-cta { padding: 1.5rem 1.15rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .tw-btn { transition: none; }
+    .tw-btn:active { transform: none; }
+}

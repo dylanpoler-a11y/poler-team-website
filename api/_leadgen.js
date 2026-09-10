@@ -4,7 +4,7 @@
  * Lead Generation holds every outbound prospect who REPLIED to outreach — any
  * sentiment except auto-replies/OOO/bounces (Kevin 2026-09-10). Sources: the
  * Railway cloud-sender (all cold-email campaigns incl. Keystone/Abrams; the
- * pre-Aug-2026 Instantly era is backfilled under the same `Email` channel),
+ * earlier rows predating Sept 2026 are backfilled under the same `Email` channel),
  * Facebook DMs, LinkedIn DMs, the LoopNet responder. Consulting-client outreach
  * (Plaza San Miguel / Atrio, Mara & CSC) is routed to the Consulting module by
  * api/agent/leadgen-reply.js instead — see CONSULTING_CAMPAIGNS there.
@@ -241,15 +241,14 @@ export async function logActivity({ title, type, leadId, details, agent = 'Respo
 }
 
 export const STATUSES   = ['New', 'Contacted', 'Meeting Booked', 'Won', 'Lost'];
-// 'Email' covers both the Railway cloud-sender and the retired Instantly era —
-// Kevin 2026-09-10: Instantly must not appear as a label anywhere in the CRM.
+// 'Email' covers all cold-email outreach, past and present, sent through the Railway cloud sender.
 export const CHANNELS   = ['Email', 'Facebook', 'LinkedIn', 'WhatsApp', 'LoopNet', 'Manual'];
 export const SENTIMENTS = ['Positive', 'Question', 'Neutral', 'Not Now', 'Negative'];
 
-/** Normalize a caller-supplied channel — legacy 'Instantly' → 'Email'. */
+/** Normalize a caller-supplied channel to one of the canonical values. */
 export function normChannel(v) {
     const c = String(v || '').trim();
-    if (/^instantly$/i.test(c) || /^(gmail|smtp|railway|email)$/i.test(c)) return 'Email';
+    if (/^(gmail|smtp|railway|email)$/i.test(c)) return 'Email';
     const hit = CHANNELS.find(x => x.toLowerCase() === c.toLowerCase());
     return hit || 'Manual';
 }

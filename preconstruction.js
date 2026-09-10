@@ -126,7 +126,11 @@ function waLink(name) {
 
 /* ---- card renderer (pure — testable in node) ---- */
 function buildCardHTML(b) {
-  var name = esc(b.name);
+  // Links the card to the tower's own indexable page (/tower/<id>, built by
+  // tools/build-tower-pages.js). Without this the detail pages are orphans.
+  var name = b.id
+    ? '<a class="pc-name-link" href="/tower/' + esc(b.id) + '">' + esc(b.name) + '</a>'
+    : esc(b.name);
   var photos = (Array.isArray(b.photos) ? b.photos : []).filter(Boolean);
   var hasPhoto = photos.length > 0;
 
@@ -144,7 +148,7 @@ function buildCardHTML(b) {
     var chip = photos.length > 1
       ? '<span class="pc-photos-chip">' + esc(t('photosChip', { n: photos.length })) + '</span>' : '';
     var gallery = ' data-gallery="' + esc(JSON.stringify(photos)) + '"';
-    var img = '<img class="pc-hero-img" loading="lazy" alt="' + name + '" src="' + esc(photos[0]) + '"' +
+    var img = '<img class="pc-hero-img" loading="lazy" alt="' + esc(b.name) + '" src="' + esc(photos[0]) + '"' +
       ' onerror="this.style.display=\'none\';this.parentNode.classList.add(\'pc-media-placeholder\')">';
     media = '<div class="pc-media pc-media-clickable"' + gallery + '>' + img + badge + chip + mediaTags + '</div>';
   } else {

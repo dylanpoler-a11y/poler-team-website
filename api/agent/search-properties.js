@@ -94,7 +94,9 @@ export default async function handler(req) {
 
     const params = new URLSearchParams({
         access_token:   bridgeToken,
-        limit:          String(Math.min(parseInt(q.get('limit') || '25', 10) || 25, 100)),
+        // Pool is post-filtered (see below) — over-fetch 3x so the caller still gets
+        // ~their asked count after non-pool rows are dropped.
+        limit:          String(Math.min((parseInt(q.get('limit') || '25', 10) || 25) * (q.get('pool') === 'true' ? 3 : 1), 100)),
         sortBy:         'ModificationTimestamp',
         order:          'desc',
         fields:         FEATURE_FIELDS,
@@ -156,9 +158,15 @@ export default async function handler(req) {
     if (yearBuiltMin > 0) params.set('YearBuilt.gte', String(yearBuiltMin));
     if (yearBuiltMax > 0) params.set('YearBuilt.lte', String(yearBuiltMax));
 
-    // Waterfront / pool — prefilter at API level
+    // Waterfront — prefilter at API level
     if (q.get('waterfront') === 'true') params.set('WaterfrontYN', 'true');
-    if (q.get('pool') === 'true')       params.set('PoolPrivateYN', 'true');
+    // Pool is a POST-filter, never a Bridge prefilter: PoolPrivateYN is false on many
+    // real pool homes in this feed (e.g. A12036650 Marlin Dr and A12017311 Genoa St —
+    // both with in-ground pools per PoolFeatures + remarks, both PoolPrivateYN=false),
+    // so filtering on it returned 0 for "Coral Gables pool homes" that exist. The
+    // response's own `pool` field maps from PoolFeatures (reliable); filter on that
+    // after mapping. Found 2026-08-26 via Gabriel Carrion.
+    const wantPool = q.get('pool') === 'true';
 
     // Preconstruction / new-development filter.
     //   preconstruction=true  → New Construction OR Under Construction
@@ -184,7 +192,7 @@ export default async function handler(req) {
     const data = await res.json();
     const records = data.bundle || data.value || [];
 
-    const listings = records.map(r => ({
+    let listings = records.map(r => ({
         mlsId:        r.ListingId || '',
         address:      r.UnparsedAddress || '',
         city:         r.City || '',
@@ -213,6 +221,7 @@ export default async function handler(req) {
         idxAllowed:   (r.FeedTypes || []).includes('IDX'),
         url:          r.ListingId ? `https://homesinsoflorida.com/listing?id=${r.ListingId}` : '',
     }));
+    if (wantPool) listings = listings.filter(l => l.pool);
 
     return json({ count: listings.length, listings });
 }

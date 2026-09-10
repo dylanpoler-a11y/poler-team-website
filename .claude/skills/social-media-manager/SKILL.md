@@ -101,7 +101,7 @@ Swipe to see why ➡️
 Listed by [ListAgentFullName] | The Poler Team
 [ListOfficeName]
 
-— The Poler Team
+— The Poler Team · Optimar International Realty
 Rosa Poler: 954-235-4046 | rosadasilvapoler@gmail.com
 Kevin Poler: 305-799-7290 | kevinpolermiami@gmail.com
 Dylan Poler: 954-610-9675 | dylan@poler.org
@@ -166,7 +166,7 @@ Swipe to see ➡️
 📲 DM us for early access to floor plans and pricing.
 🌐 homesinsoflorida.com
 
-— The Poler Team
+— The Poler Team · Optimar International Realty
 Rosa Poler: 954-235-4046 | rosadasilvapoler@gmail.com
 Kevin Poler: 305-799-7290 | kevinpolermiami@gmail.com
 Dylan Poler: 954-610-9675 | dylan@poler.org
@@ -245,7 +245,7 @@ Thinking about [Neighborhood] as your home base in South Florida? Let's talk.
 
 📲 homesinsoflorida.com
 
-— The Poler Team
+— The Poler Team · Optimar International Realty
 Rosa Poler: 954-235-4046 | rosadasilvapoler@gmail.com
 Kevin Poler: 305-799-7290 | kevinpolermiami@gmail.com
 Dylan Poler: 954-610-9675 | dylan@poler.org
@@ -303,7 +303,7 @@ Here is what every buyer should know 👇
 
 📲 DM us "GUIDE" or visit homesinsoflorida.com — happy to walk you through any of this.
 
-— The Poler Team
+— The Poler Team · Optimar International Realty
 Rosa Poler: 954-235-4046 | rosadasilvapoler@gmail.com
 Kevin Poler: 305-799-7290 | kevinpolermiami@gmail.com
 Dylan Poler: 954-610-9675 | dylan@poler.org
