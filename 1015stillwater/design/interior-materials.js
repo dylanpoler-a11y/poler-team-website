@@ -7,14 +7,17 @@ const smooth=n=>n*n*(3-2*n), mix=(a,b,t)=>a+(b-a)*t;
 const mod=(n,m)=>((n%m)+m)%m;
 
 export const interiorStyles=Object.freeze([
-  Object.freeze({id:'warm',label:'Warm contemporary',description:'Honey oak, warm stone, natural textiles and aged bronze.',swatches:['#bca27c','#75604a','#ded6c7','#eee8da','#95734f']}),
-  Object.freeze({id:'coastal',label:'Bright coastal',description:'Pale oak, ivory stone and soft sea-blue textiles.',swatches:['#d6c5a5','#f0eee4','#b4cbd0','#e9e5d8','#b29b76']}),
-  Object.freeze({id:'dramatic',label:'Dramatic luxury',description:'Deep timber, veined dark stone, ivory upholstery and warm metal.',swatches:['#79634c','#48392e','#555b56','#e0d6c3','#a48150']}),
+  Object.freeze({id:'warm',label:'Warm contemporary',description:'Honey-toned furniture, natural textiles and aged bronze; light travertine floors and a pale kitchen.',swatches:['#bca27c','#75604a','#ded6c7','#eee8da','#95734f']}),
+  Object.freeze({id:'coastal',label:'Bright coastal',description:'Pale furniture and soft sea-blue textiles; light travertine floors and a pale kitchen.',swatches:['#d6c5a5','#f0eee4','#b4cbd0','#e9e5d8','#b29b76']}),
+  Object.freeze({id:'dramatic',label:'Dramatic luxury',description:'Deep timber furniture, dark stone accents and ivory upholstery; light travertine floors and a pale kitchen.',swatches:['#79634c','#48392e','#555b56','#e0d6c3','#a48150']}),
 ]);
 
 export const interiorMaterialDescriptors=Object.freeze({
-  status:'Reference-informed finishes with three proposed furnishing palettes.',
+  status:'Andres-confirmed travertine floor family and lighter kitchen direction, with reference-informed details and three proposed furnishing palettes.',
   units:'metres',
+  clientClarification:{date:'2026-09-10',basis:'Andres identified the floors as travertine marble and said the kitchen is much lighter after viewing Dramatic.'},
+  fixedArchitecturalFinishes:['floorFinish','kitchenCabinet','kitchenCounter'],
+  confirmedFinishDirection:['Travertine flooring.','A substantially lighter kitchen than the original Dramatic rendering.'],
   referencePhotos:['ref-12.jpg','ref-14.jpg','ref-30.jpg','ref-31.jpg','ref-32.jpg','ref-37.jpg'],
   confirmedAppearance:[
     'Light, vertically grained and finely reeded timber-look vanity fronts.',
@@ -22,9 +25,9 @@ export const interiorMaterialDescriptors=Object.freeze({
     'Pale stone-look bathroom slabs with horizontal strata, small pores and narrow joints.',
     'White ceilings, recessed shower niches and clear glass openings.',
   ],
-  notConfirmed:'Timber species, natural versus manufactured stone, product names, exact colours and gloss values are not specified by the photos.',
-  staging:'Sofas, beds, upholstery, rugs, art, bronze decorative pieces and plants are proposed staging. Coastal and dramatic finishes are alternatives, not claims about the installed house.',
-  materialBasis:{oak:'reference appearance; species unverified',walnut:'staging',stone:'reference-inspired banded stone appearance',marble:'staging',plaster:'reference white finish; exact specification unverified',linen:'staging',boucle:'staging',rug:'staging',accentFabric:'proposed accent cloth; caramel, sea blue or rust according to palette',bronze:'staging',dark:'reference charcoal basin/trim appearance',ceramic:'neutral fixture interpretation',glass:'clear glazing interpretation',emissive:'proposed decorative lighting',leaf:'staging',art:'original procedural abstract staging',mirror:'reflective approximation, not a planar scene mirror',floorFinish:'reference-inspired mineral finish; dramatic variant is staging'},
+  notConfirmed:'Exact products, colours, gloss, slab sizes, vein layout and kitchen timber species are unverified. Warm ivory vein-cut travertine with a satin sheen, limewashed-oak-look cabinets and pale cream counters interpret the confirmed direction; they are not product selections.',
+  staging:'Sofas, beds, upholstery, rugs, art, decorative pieces and plants are proposed staging. Warm, coastal and dramatic vary furnishings and accents; the travertine floor and light kitchen remain fixed across all three.',
+  materialBasis:{oak:'reference appearance; species unverified',walnut:'staging',stone:'reference-inspired banded stone appearance',marble:'staging',plaster:'reference white finish; exact specification unverified',linen:'staging',boucle:'staging',rug:'staging',accentFabric:'proposed accent cloth; caramel, sea blue or rust according to palette',bronze:'staging',dark:'reference charcoal basin/trim appearance',ceramic:'neutral fixture interpretation',glass:'clear glazing interpretation',emissive:'proposed decorative lighting',leaf:'staging',art:'original procedural abstract staging',mirror:'reflective approximation, not a planar scene mirror',floorFinish:'Client-confirmed travertine family; ivory/beige vein-cut appearance and satin sheen are approximations, fixed across palettes',kitchenCabinet:'Client-confirmed lighter kitchen direction; light ivory limewashed-oak appearance is an approximation, fixed across palettes',kitchenCounter:'Pale cream stone interpretation of the confirmed lighter kitchen direction; product unverified, fixed across palettes'},
   textureNotes:'128px deterministic, repeating DataTextures. Albedo is sRGB; bump/roughness are linear. Grain runs along V. Set mesh UVs for physical scale/orientation; do not change a shared map repeat for one object.',
   glassNotes:'Mobile-friendly transparent PBR glass without a screen-space refraction pass. Mirror reflections depend on the scene environment.',
 });
@@ -49,12 +52,21 @@ function field(kind,u,v,seed) {
     const broad=noise(u,v,12,2,seed+2);
     return [.934+.061*broad-.043*growth-.014*fibres,.5+.10*growth+.045*fibres,.90+.07*broad-.045*growth];
   }
-  if(kind==='stone'||kind==='floor') {
+  if(kind==='travertine') {
+    // Vein-cut mineral strata and sparse filled pores; all noise tiles seamlessly.
+    // Variation is in the stone, not a regular printed stripe or an invented joint grid.
+    const bend=.014*Math.sin(TAU*u)+.013*(noise(u,v,3,3,seed+4)-.5),cut=v+bend;
+    const bands=(noise(u,cut,2,12,seed+6)-.5)*.13+(noise(u,cut,3,31,seed+7)-.5)*.065;
+    const fineVein=Math.pow(.5+.5*Math.sin(TAU*(cut*17+.045*noise(u,v,3,5,seed+8))),14);
+    const pores=clamp((.34-noise(u,v,61,53,seed+2))*4)*clamp((noise(u,v,29,37,seed+3)-.57)*4);
+    return [.966+bands-fineVein*.018-pores*.065,.5+bands*.18-pores*.14+(fine-.5)*.024,.87+(n-.5)*.06+pores*.12];
+  }
+  if(kind==='stone') {
     // Broad, irregular strata remain visible close up; pores do not form dots.
     const bend=.017*Math.sin(TAU*u)+.012*noise(u,v,4,3,seed+4);
     const strata=(noise(u,v+bend,3,19,seed+6)-.5)*.019+(noise(u,v+bend,5,37,seed+7)-.5)*.009;
-    const mineral=noise(u,v,31,29,seed+3)-.5,subtle=kind==='floor'?.60:1;
-    return [.962+subtle*(strata+(n-.5)*.014+mineral*.008),.5+subtle*((fine-.5)*.032+mineral*.018),.93+(n-.5)*.045+(fine-.5)*.025];
+    const mineral=noise(u,v,31,29,seed+3)-.5;
+    return [.962+strata+(n-.5)*.014+mineral*.008,.5+(fine-.5)*.032+mineral*.018,.93+(n-.5)*.045+(fine-.5)*.025];
   }
   if(kind==='marble'||kind==='marbleDark') {
     const warp=.25*Math.sin(TAU*v)+.13*Math.sin(TAU*(2*v+u))+.27*noise(u,v,5,5,seed+5);
@@ -108,7 +120,7 @@ function makeMaps(kind,seed,repeat=[1,1]) {
 }
 function textureSet() {
   return {
-    wood:makeMaps('wood',103),stone:makeMaps('stone',211),floor:makeMaps('floor',307),
+    wood:makeMaps('wood',103),stone:makeMaps('stone',211),travertine:makeMaps('travertine',307),
     marble:makeMaps('marble',401),marbleDark:makeMaps('marbleDark',401),plaster:makeMaps('plaster',503,[3,3]),
     linen:makeMaps('linen',601,[4,4]),boucle:makeMaps('boucle',701,[5,5]),rug:makeMaps('rug',809,[4,4]),
     bronze:makeMaps('bronze',907,[2,4]),dark:makeMaps('dark',1013),leaf:makeMaps('leaf',1103),art:makeMaps('art',1201),
@@ -132,20 +144,24 @@ const surface={
   leaf:{texture:'leaf',roughness:.80,bumpScale:.00035},
   art:{texture:'art',roughness:.93,bumpScale:.0003},
   mirror:{roughness:.045,metalness:1},
-  floorFinish:{texture:'floor',roughness:.67,bumpScale:.00015},
+  floorFinish:{texture:'travertine',roughness:.54,bumpScale:.00028},
+  kitchenCabinet:{texture:'wood',roughness:.59,bumpScale:.00025},
+  kitchenCounter:{texture:'stone',roughness:.38,bumpScale:.00016,clearcoat:.06,clearcoatRoughness:.42},
 };
+// Architectural corrections are independent of the proposed furnishing palettes.
+const fixedFinishColours=Object.freeze({floorFinish:'#e7ddcb',kitchenCabinet:'#e6dfd0',kitchenCounter:'#f2eadb'});
 const finishes={
   warm:{
-    colours:{oak:'#bca27c',walnut:'#75604a',stone:'#ded6c7',marble:'#f0ebe1',plaster:'#eee8da',linen:'#d6cbb8',boucle:'#eee8d8',rug:'#c7b697',accentFabric:'#a97443',bronze:'#95734f',dark:'#353735',ceramic:'#f5f0e6',glass:'#e0ece7',emissive:'#fff0d5',leaf:'#536747',art:'#d8c7a6',mirror:'#e4e7e3',floorFinish:'#ded6c7'},
+    colours:{oak:'#bca27c',walnut:'#75604a',stone:'#ded6c7',marble:'#f0ebe1',plaster:'#eee8da',linen:'#d6cbb8',boucle:'#eee8d8',rug:'#c7b697',accentFabric:'#a97443',bronze:'#95734f',dark:'#353735',ceramic:'#f5f0e6',glass:'#e0ece7',emissive:'#fff0d5',leaf:'#536747',art:'#d8c7a6',mirror:'#e4e7e3'},
     overrides:{},emission:'#ffdb9c',
   },
   coastal:{
-    colours:{oak:'#d6c5a5',walnut:'#b4a082',stone:'#f0eee4',marble:'#f7f5eb',plaster:'#f6f4eb',linen:'#b4cbd0',boucle:'#f1eee3',rug:'#ded9c9',accentFabric:'#608991',bronze:'#b29b76',dark:'#383b39',ceramic:'#fcf9f0',glass:'#deeff0',emissive:'#fff5e6',leaf:'#688066',art:'#c1d4d3',mirror:'#e9edeb',floorFinish:'#ece9dd'},
-    overrides:{oak:{roughness:.66},walnut:{roughness:.64},stone:{roughness:.78},marble:{roughness:.41},bronze:{roughness:.44},floorFinish:{roughness:.72}},emission:'#ffe6ba',
+    colours:{oak:'#d6c5a5',walnut:'#b4a082',stone:'#f0eee4',marble:'#f7f5eb',plaster:'#f6f4eb',linen:'#b4cbd0',boucle:'#f1eee3',rug:'#ded9c9',accentFabric:'#608991',bronze:'#b29b76',dark:'#383b39',ceramic:'#fcf9f0',glass:'#deeff0',emissive:'#fff5e6',leaf:'#688066',art:'#c1d4d3',mirror:'#e9edeb'},
+    overrides:{oak:{roughness:.66},walnut:{roughness:.64},stone:{roughness:.78},marble:{roughness:.41},bronze:{roughness:.44}},emission:'#ffe6ba',
   },
   dramatic:{
-    colours:{oak:'#79634c',walnut:'#48392e',stone:'#8b8578',marble:'#68726b',plaster:'#ddd3c1',linen:'#c1b39d',boucle:'#e0d6c3',rug:'#867a66',accentFabric:'#884633',bronze:'#a48150',dark:'#292d2b',ceramic:'#e7e1d4',glass:'#cbded5',emissive:'#ffe6bd',leaf:'#435640',art:'#c7ad80',mirror:'#d9dfda',floorFinish:'#827f77'},
-    overrides:{oak:{roughness:.50},walnut:{roughness:.40},stone:{texture:'marbleDark',roughness:.40,bumpScale:.00016},marble:{texture:'marbleDark',roughness:.24,clearcoat:.24},bronze:{roughness:.29},floorFinish:{texture:'marbleDark',roughness:.39,bumpScale:.00012}},emission:'#ffd18d',
+    colours:{oak:'#79634c',walnut:'#48392e',stone:'#8b8578',marble:'#68726b',plaster:'#ddd3c1',linen:'#c1b39d',boucle:'#e0d6c3',rug:'#867a66',accentFabric:'#884633',bronze:'#a48150',dark:'#292d2b',ceramic:'#e7e1d4',glass:'#cbded5',emissive:'#ffe6bd',leaf:'#435640',art:'#c7ad80',mirror:'#d9dfda'},
+    overrides:{oak:{roughness:.50},walnut:{roughness:.40},stone:{texture:'marbleDark',roughness:.40,bumpScale:.00016},marble:{texture:'marbleDark',roughness:.24,clearcoat:.24},bronze:{roughness:.29}},emission:'#ffd18d',
   },
 };
 function styleId(value) {
@@ -161,8 +177,9 @@ export function applyInteriorStyle(materials,requestedStyle='warm') {
   if(!state){state={textures:textureSet(),style:id};states.set(materials,state);}
   for(const [key,base] of Object.entries(surface)) {
     const m=materials[key];if(!m?.isMaterial) continue;
-    const spec={...base,...finish.overrides[key]},maps=spec.texture?state.textures[spec.texture]:null;
-    m.color.set(finish.colours[key]);
+    const fixed=Object.hasOwn(fixedFinishColours,key);
+    const spec=fixed?base:{...base,...finish.overrides[key]},maps=spec.texture?state.textures[spec.texture]:null;
+    m.color.set(fixed?fixedFinishColours[key]:finish.colours[key]);
     for(const name of ['map','bumpMap','roughnessMap']) m[name]=maps?.[name]??null;
     m.roughness=spec.roughness;m.metalness=spec.metalness??0;m.bumpScale=spec.bumpScale??0;
     if(m.isMeshPhysicalMaterial) {
@@ -171,7 +188,7 @@ export function applyInteriorStyle(materials,requestedStyle='warm') {
     }
     if(key==='glass') m.opacity=spec.opacity;
     if(key==='emissive'){m.emissive.set(finish.emission);m.emissiveIntensity=spec.emissiveIntensity;}
-    m.userData.interiorStyle=id;m.needsUpdate=true;
+    m.userData.interiorStyle=id;m.userData.fixedArchitecturalFinish=fixed;m.needsUpdate=true;
   }
   state.style=id;
   return materials;
@@ -179,7 +196,7 @@ export function applyInteriorStyle(materials,requestedStyle='warm') {
 
 /** One palette per shared scene; material keys stay fixed across all styles. */
 export function createInteriorMaterials(style='warm') {
-  const materials={},physical=new Set(['linen','boucle','accentFabric','marble','ceramic','glass']);
+  const materials={},physical=new Set(['linen','boucle','accentFabric','marble','ceramic','glass','kitchenCounter']);
   for(const key of Object.keys(surface)) {
     const m=physical.has(key)?new THREE.MeshPhysicalMaterial():new THREE.MeshStandardMaterial();
     m.name='Stillwater interior · '+key;

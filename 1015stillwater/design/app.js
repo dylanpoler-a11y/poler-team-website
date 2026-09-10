@@ -1,9 +1,9 @@
 import * as THREE from 'three';
 import { OrbitControls } from './vendor/OrbitControls.js';
 import { RoomEnvironment } from './vendor/RoomEnvironment.js';
-import { createHouse, views, features, floorLevels, rooms, toWorld } from './house.js';
-import { interiorStyles, disposeInteriorMaterials } from './interior-materials.js';
-import { interiorRooms } from './interior-tour.js';
+import { createHouse, views, features, floorLevels, rooms, toWorld } from './house.js?v=20260910-finishes1';
+import { interiorStyles, disposeInteriorMaterials } from './interior-materials.js?v=20260910-finishes1';
+import { interiorRooms } from './interior-tour.js?v=20260910-finishes1';
 import { InteriorNavigation } from './interior-navigation.js';
 import { EffectComposer } from './vendor/postprocessing/EffectComposer.js';
 import { RenderPass } from './vendor/postprocessing/RenderPass.js';

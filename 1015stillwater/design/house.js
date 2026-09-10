@@ -3,8 +3,8 @@ import { mergeGeometries } from './vendor/BufferGeometryUtils.js';
 import { floorData, elevationData } from './plan-data.js';
 import { buildSite } from './site-geometry.js';
 import { buildCourtyardPalm } from './courtyard-palm.js';
-import { createInteriorMaterials, applyInteriorStyle } from './interior-materials.js';
-import { buildMainInteriors } from './interior-main.js';
+import { createInteriorMaterials, applyInteriorStyle } from './interior-materials.js?v=20260910-finishes1';
+import { buildMainInteriors } from './interior-main.js?v=20260910-finishes1';
 import { buildUpperInteriors } from './interior-upper.js';
 
 // All geometry is in metres. Source plan coordinates are feet, street → water on +Z.
@@ -34,7 +34,7 @@ export function createHouse({style='warm'}={}){
  // Builders and their cached staging metadata use model-local coordinates.
  const toWorld=toModel;
  const root=new THREE.Group();root.name='1015 Stillwater — Architectural Rev 8';
- root.userData={units:'metres',basis:'Architectural set Rev 8, sheets A100–A104, A200–A305 and A500–A501; 44 client photographs/renderings.',accuracy:'Annotated dimensions govern where available; other locations are scaled drawing traces. Architectural visualization, not an as-built survey or fabrication/BIM model.',datum:'Y=0: understory structural top of slab, NGVD5ft3in',unconfirmed:'Structural thicknesses and column sizes, detailed finishes, plantings and small fittings are visual approximations.'};
+ root.userData={units:'metres',basis:'Architectural set Rev 8, sheets A100–A104, A200–A305 and A500–A501; 44 client photographs/renderings; client-directed travertine, light kitchen finishes and frameless glass stairs.',accuracy:'Annotated dimensions govern where available; other locations are scaled drawing traces. Architectural visualization, not an as-built survey or fabrication/BIM model.',datum:'Y=0: understory structural top of slab, NGVD5ft3in',unconfirmed:'Structural thicknesses and column sizes, detailed finishes, plantings and small fittings are visual approximations.'};
  const groups={};for(const k of ['site','ground','main','upper','roof','landscape','pool','water']){groups[k]=new THREE.Group();groups[k].name=k;root.add(groups[k]);}
  const mat=(name,color,opts={})=>{const m=new THREE.MeshStandardMaterial({name,color,roughness:.79,...opts});return m;};
  const materials={
@@ -43,6 +43,8 @@ export function createHouse({style='warm'}={}){
   dark:mat('Acier SW9170 — specified accent stucco','#9e9991'),frame:mat('Bronze window frames — specified','#4c4539',{metalness:.55,roughness:.42}),
   wood:mat('Teak AWS1 composite — specified finish','#997657'),woodLight:mat('Wood-finished stair treads','#b3916b'),
   glass:new THREE.MeshPhysicalMaterial({name:'Clear glazing — approximate tint',color:'#b3c6c0',roughness:.14,metalness:.06,transparent:true,opacity:.29,depthWrite:false,side:THREE.DoubleSide}),
+  stairGlass:new THREE.MeshPhysicalMaterial({name:'Frameless clear stair glass — client direction',color:'#effaf8',roughness:.06,metalness:0,transparent:true,opacity:.23,depthWrite:false,side:THREE.DoubleSide}),
+  stairMount:mat('Stair glass mounting at floor and treads only','#b0ada6',{metalness:.55,roughness:.4}),
   poolTile:mat('Pool lining — indicative finish','#789d9b'),water:mat('Pool water','#619b9c',{roughness:.14,metalness:.2,transparent:true,opacity:.77}),
   channel:mat('Waterway context','#8da8a5',{roughness:.39,metalness:.18}),grass:mat('Landscape context','#929b79'),soil:mat('Planting beds','#77725b'),
   leaf:mat('Palm foliage','#637851',{side:THREE.DoubleSide}),leafLight:mat('Landscape foliage','#819268',{side:THREE.DoubleSide}),trunk:mat('Palm trunks','#95816a'),
@@ -52,6 +54,8 @@ export function createHouse({style='warm'}={}){
  materials.floor.dispose();materials.floor=interiorMaterials.floorFinish;
  for(const [key,value]of Object.entries(interiorMaterials))if(key!=='floorFinish')materials['interior_'+key]=value;
  const interiorLights=[];
+ const stairDetails={basis:'Client direction: all staircase guards are frameless glass, with metal only at floor/tread mounting; ref-16 and ref-19 show recessed floor channels and wood tread cladding.',woodWidth_in:46,previousWoodWidth_in:41,woodCenterX_ft:16.98,shaftX_ft:[14.98,18.98],sideAllowance_in:1,woodDepthAllowance_m:.022,assumption:'Wider treads are a presentation revision within the unchanged 48-inch modeled shaft, not a verified shop-drawing dimension. Slab openings, walls and balcony guards remain unchanged. Structural underside supports are retained.',flights:[],landingGuards:[]};
+ root.userData.stairFinishOverrides=stairDetails;
  const unitBox=new THREE.BoxGeometry(1,1,1);
  function box(g,x,y,z,w,h,d,m){if(w<=.0001||h<=.0001||d<=.0001)return;const o=new THREE.Mesh(unitBox,m);o.position.set(x,y,z);o.scale.set(w,h,d);o.castShadow=!m.transparent;o.receiveShadow=true;g.add(o);return o;}
  function fb(g,x,z,w,d,bottom,height,m){const p=toWorld([x,z],bottom+height/2);return box(g,...p,w*FT,height,d*FT,m);}
@@ -74,6 +78,22 @@ export function createHouse({style='warm'}={}){
   for(let i=0;i<=n;i++)fb(g,a[0]+(b[0]-a[0])*i/n,a[1]+(b[1]-a[1])*i/n,.13,.13,y,height,materials.frame);
   if(glass)line(g,a,b,y+.08,height-.15,.018,materials.glass);else for(let k=1;k<=9;k++)line(g,a,b,y+height*k/10,.007,.007,materials.frame);
  }
+ // Clear panel joints have no posts or top cap; mounting is confined to floor/tread edges.
+ function stairGlassPanels(g,start,end,height){
+  const length=Math.hypot(end.x-start.x,end.z-start.z),panels=Math.max(1,Math.ceil(length/1.15)),gap=.004/length;
+  for(let i=0;i<panels;i++){
+   const a=start.clone().lerp(end,i/panels+(i?gap/2:0)),b=start.clone().lerp(end,(i+1)/panels-(i<panels-1?gap/2:0));
+   const c=b.clone().add(new THREE.Vector3(0,height,0)),d=a.clone().add(new THREE.Vector3(0,height,0)),geo=new THREE.BufferGeometry();
+   geo.setAttribute('position',new THREE.Float32BufferAttribute([...a.toArray(),...b.toArray(),...c.toArray(),...a.toArray(),...c.toArray(),...d.toArray()],3));
+   geo.setAttribute('uv',new THREE.Float32BufferAttribute([0,0,1,0,1,1,0,0,1,1,0,1],2));geo.computeVertexNormals();
+   const mesh=new THREE.Mesh(geo,materials.stairGlass);mesh.name='Frameless stair glass panel';g.add(mesh);
+  }
+ }
+ function stairLandingGuard(g,a,b,y,height=36*IN){
+  stairGlassPanels(g,new THREE.Vector3(...toWorld(a,y+.008)),new THREE.Vector3(...toWorld(b,y+.008)),height-.008);
+  line(g,a,b,y,.022,.035,materials.stairMount);
+  stairDetails.landingGuards.push({level:g.name,a_ft:a,b_ft:b,floorY_m:y,height_m:height,mountHeight_m:.022});
+ }
  function breeze(g,a,b,bottom,height){
   const len=Math.hypot(b[0]-a[0],b[1]-a[1])*FT,n=Math.max(1,Math.round(len/(11.4*IN))),rows=Math.max(1,Math.round(height/(11.4*IN))),s=len/n,h=height/rows;
   const assembly=new THREE.Group(),p=toWorld(a,bottom);assembly.position.set(...p);assembly.rotation.y=-Math.atan2(b[1]-a[1],b[0]-a[0]);g.add(assembly);
@@ -84,12 +104,19 @@ export function createHouse({style='warm'}={}){
  function stair(g,a,b,bottom,top,width,count,material=materials.woodLight){
   const outside=material===materials.concrete,guardH=outside?42*IN:36*IN;
   const start=new THREE.Vector3(...toWorld(a,bottom)),end=new THREE.Vector3(...toWorld(b,top)),dir=end.clone().sub(start),len=Math.hypot(dir.x,dir.z),side=new THREE.Vector3(dir.z,0,-dir.x).normalize();
-  for(let i=0;i<count;i++){const p=start.clone().lerp(end,(i+.5)/count);const o=box(g,p.x,bottom+(top-bottom)*(i+1)/count-.035,p.z,width*FT,.07,len/count+.012,material);o.rotation.y=Math.atan2(dir.x,dir.z);}
-  for(const sign of [-1,1]){const off=side.clone().multiplyScalar(sign*(width*FT/2-.06));beam(g,start.clone().add(off).add(new THREE.Vector3(0,-.09,0)).toArray(),end.clone().add(off).add(new THREE.Vector3(0,-.09,0)).toArray(),.05,.20,outside?materials.concrete:materials.frame);
-   if(!outside){const pa=start.clone().add(off),pb=end.clone().add(off),pc=pb.clone().add(new THREE.Vector3(0,guardH,0)),pd=pa.clone().add(new THREE.Vector3(0,guardH,0)),geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute([...pa.toArray(),...pb.toArray(),...pc.toArray(),...pa.toArray(),...pc.toArray(),...pd.toArray()],3));geo.computeVertexNormals();g.add(new THREE.Mesh(geo,materials.glass));}
-   else for(let k=1;k<9;k++)beam(g,start.clone().add(off).add(new THREE.Vector3(0,guardH*k/9,0)).toArray(),end.clone().add(off).add(new THREE.Vector3(0,guardH*k/9,0)).toArray(),.007,.007,materials.frame);
-   beam(g,start.clone().add(off).add(new THREE.Vector3(0,guardH,0)).toArray(),end.clone().add(off).add(new THREE.Vector3(0,guardH,0)).toArray(),.03,.035,materials.frame);
-   for(let i=0;i<=4;i++){const p=start.clone().lerp(end,i/4).add(off);beam(g,p.toArray(),p.clone().add(new THREE.Vector3(0,guardH,0)).toArray(),.025,.025,materials.frame);}}
+  const nosing=outside?.012:stairDetails.woodDepthAllowance_m;
+  for(let i=0;i<count;i++){const p=start.clone().lerp(end,(i+.5)/count);const o=box(g,p.x,bottom+(top-bottom)*(i+1)/count-.035,p.z,width*FT,.07,len/count+nosing,material);o.rotation.y=Math.atan2(dir.x,dir.z);}
+  for(const sign of [-1,1]){
+   const supportOff=side.clone().multiplyScalar(sign*(width*FT/2-.06));
+   beam(g,start.clone().add(supportOff).add(new THREE.Vector3(0,-.09,0)).toArray(),end.clone().add(supportOff).add(new THREE.Vector3(0,-.09,0)).toArray(),.05,.20,outside?materials.concrete:materials.frame);
+   const glassOff=side.clone().multiplyScalar(sign*(width*FT/2-.02));
+   stairGlassPanels(g,start.clone().add(glassOff),end.clone().add(glassOff),guardH);
+   for(let i=0;i<count;i++){
+    const p=start.clone().lerp(end,(i+.5)/count).add(glassOff),treadY=bottom+(top-bottom)*(i+1)/count;
+    const mount=box(g,p.x,treadY+.012,p.z,.035,.024,.10,materials.stairMount);mount.rotation.y=Math.atan2(dir.x,dir.z);
+   }
+  }
+  stairDetails.flights.push({level:g.name,material:outside?'concrete':'wood',a_ft:a,b_ft:b,bottom_m:bottom,top_m:top,width_in:width*12,treads:count,depthAllowance_m:nosing,guardHeight_m:guardH,mountHeight_m:.024});
  }
  const schedule=Object.fromEntries(elevationData.windows.map(w=>[w.mark,w]));
  // Wall openings are located in plan; scheduled widths and heights preserve drawing dimensions.
@@ -142,20 +169,28 @@ export function createHouse({style='warm'}={}){
   const shaft=f.elevator.shaft_envelope_ft;
   perimeter(g,shaft,y,height,[{center_ft:f.elevator.door_center_ft,width_ft:3.3333,height_ft:7,opaque:true}]);
   if(key==='ground')slab(g,f.elevator.inner_clear_rectangle_ft,y+.025,.025,materials.dark);
-  if(stairHole){guard(g,[14.92,30.95],[14.92,key==='main'?48.35:52.77],y,true,36*IN);}
+  if(stairHole){stairLandingGuard(g,[14.92,30.95],[14.92,key==='main'?48.35:52.77],y+.045);}
  }
  // Main stair: two stacked straight runs ascending toward the street; upper run has a mid-landing.
- stair(groups.ground,[16.857,48.353],[16.857,30.947],2*IN,mainY+2*IN,41/12,20);
- stair(groups.main,[16.857,52.767],[16.857,43.607],mainY+2*IN,mainY+77*IN,41/12,11);
- slab(groups.main,rect(15.149,40.113,18.565,43.607),mainY+77*IN,.08,materials.woodLight);
- stair(groups.main,[16.857,40.113],[16.857,30.953],mainY+77*IN,upperY+2*IN,41/12,11);
+ const woodCenter=stairDetails.woodCenterX_ft,woodWidth=stairDetails.woodWidth_in/12,woodLeft=woodCenter-woodWidth/2,woodRight=woodCenter+woodWidth/2;
+ stair(groups.ground,[woodCenter,48.353],[woodCenter,30.947],2*IN,mainY+2*IN,woodWidth,20);
+ stair(groups.main,[woodCenter,52.767],[woodCenter,43.607],mainY+2*IN,mainY+77*IN,woodWidth,11);
+ slab(groups.main,rect(woodLeft,40.113,woodRight,43.607),mainY+77*IN,.08,materials.woodLight);
+ for(const x of [woodLeft+.02/FT,woodRight-.02/FT])stairLandingGuard(groups.main,[x,40.113],[x,43.607],mainY+77*IN);
+ stair(groups.main,[woodCenter,40.113],[woodCenter,30.953],mainY+77*IN,upperY+2*IN,woodWidth,11);
  // Exterior stair turns twice beneath the front wing; landing levels follow A305.
  stair(groups.ground,[29.387,10.817],[32.133,10.817],0,26*IN,4,4,materials.concrete);
  slab(groups.ground,rect(32.133,8.647,36.460,12.980),26*IN,.15,materials.concrete);
+ const exteriorEdge=2-.02/FT;
+ stairLandingGuard(groups.ground,[32.133,10.817-exteriorEdge],[34.297+exteriorEdge,10.817-exteriorEdge],26*IN,42*IN);
+ stairLandingGuard(groups.ground,[34.297+exteriorEdge,10.817-exteriorEdge],[34.297+exteriorEdge,12.980],26*IN,42*IN);
  stair(groups.ground,[34.297,12.980],[34.297,21.227],26*IN,91*IN,4,10,materials.concrete);
  slab(groups.ground,rect(32.133,21.227,36.460,25.553),91*IN,.15,materials.concrete);
+ stairLandingGuard(groups.ground,[34.297+exteriorEdge,21.227],[34.297+exteriorEdge,23.390+exteriorEdge],91*IN,42*IN);
+ stairLandingGuard(groups.ground,[34.297+exteriorEdge,23.390+exteriorEdge],[32.133,23.390+exteriorEdge],91*IN,42*IN);
  stair(groups.ground,[32.133,23.390],[27.553,23.390],91*IN,129*IN,4,6,materials.concrete);
  slab(groups.main,rect(24.47,21.23,27.553,25.55),129*IN,.16,materials.stucco);
+ for(const z of [23.390-exteriorEdge,23.390+exteriorEdge])stairLandingGuard(groups.main,[24.47,z],[27.553,z],129*IN,42*IN);
  // Lower columns come directly from traced plan circles. Upper exterior columns follow the balcony structure.
  for(const c of floorData.columns||[]){
   cylinder(groups.ground,c.center_ft,0,c.drawn_diameter_ft*FT/2,mainY-.25,materials.stucco);
@@ -209,6 +244,6 @@ export function createHouse({style='warm'}={}){
  root.userData.orientation='Garage left when viewed from the street; model-local X reflected, street-to-water Z preserved. Client correction, 2026-09-10.';
  root.updateMatrixWorld(true);
  const setInteriorStyle=id=>{applyInteriorStyle(interiorMaterials,id);root.userData.interiorStyle=id;};
- setInteriorStyle(style);root.userData.staging='Proposed finished interiors. Reference-supported vanity, stone and wood appearances; three optional furnishing/finish schemes are design concepts.';
+ setInteriorStyle(style);root.userData.staging='Client-directed travertine, light kitchen cabinetry/countertops and frameless glass stair guards are fixed finish directions. Warm, coastal and dramatic are proposed furnishing/accent palettes; detailed products and fitting dimensions remain illustrative.';
  return{root,groups,materials,interiorMaterials,interiorLights,interiorResults,setInteriorStyle};
 }

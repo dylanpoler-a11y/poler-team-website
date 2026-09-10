@@ -1,8 +1,8 @@
-// Proposed staging, not a representation of furniture or finishes selected by the owner.
-// Furniture follows the A102 floor boundaries; all components use the shared finish palette.
+// Furniture and lighting are proposed staging within the A102 floor boundaries.
+// Kitchen materials follow the confirmed lighter direction; exact products remain approximations.
 export function buildMainInteriors({THREE,group,materials:m,toWorld,floorY}) {
  const FT=.3048, F=floorY+2*.0254, ceiling=3.10-2*.0254, lights=[], rooms=[], cache=new Map();
- const stats={meshes:0,triangles:0,lights:0,uniqueMaterials:0,design:'Proposed contemporary staging with switchable finishes'};
+ const stats={meshes:0,triangles:0,lights:0,uniqueMaterials:0,design:'Proposed contemporary furnishing palettes with a fixed light kitchen finish interpretation'};
  const used=new Set(), accentFabric=m.accentFabric||m.rug;
  function mesh(g,geometry,material,x=0,y=0,z=0,rx=0,ry=0,rz=0){
   const o=new THREE.Mesh(geometry,material);o.position.set(x,y,z);o.rotation.set(rx,ry,rz);
@@ -170,40 +170,41 @@ export function buildMainInteriors({THREE,group,materials:m,toWorld,floorY}) {
  const greenery=node(33.2,85.5,0,'Waterfront indoor planting');plant(greenery,0,0,0,1.20);
  for(const [x,z] of [[22.1,62.0],[34.3,63.0],[22.1,73],[34.1,72.8],[22.0,85.4],[33.1,85.3]])recessed(x,z,'great-room',z===73||z===85.3);
 
- // Kitchen window run, island, sink and integrated appliances. Cabinet depth is 650mm.
+ // Light kitchen interpretation: dedicated cabinet/counter keys remain fixed across palettes.
+ // Cabinet depth is 650mm; appliance faces, hardware and staging retain their own materials.
  const run=node(-.85,47.15,0,'Kitchen window cabinetry');
- box(run,.58,.10,3.85,-.018,.06,0,m.dark);box(run,.64,.73,3.85,0,.465,0,m.oak);
+ box(run,.58,.10,3.85,-.018,.06,0,m.dark);box(run,.64,.73,3.85,0,.465,0,m.kitchenCabinet);
  for(let i=0;i<8;i++){
   const z=-1.675+i*.4786;
-  box(run,.022,.684,.46,.331,.47,z,m.oak);
+  box(run,.022,.684,.46,.331,.47,z,m.kitchenCabinet);
   if(i<3){for(const y of [.365,.59])box(run,.025,.007,.46,.345,y,z,m.dark);}
   rod(run,[.355,.66,z-.13],[.355,.66,z+.13],.006,m.bronze);
  }
  // The countertop has a real aperture for the inset basin.
  const topShape=new THREE.Shape();topShape.moveTo(-.35,-1.98);topShape.lineTo(.35,-1.98);topShape.lineTo(.35,1.98);topShape.lineTo(-.35,1.98);topShape.closePath();
  const hole=new THREE.Path();hole.moveTo(-.24,-.39);hole.lineTo(.24,-.39);hole.lineTo(.24,.22);hole.lineTo(-.24,.22);hole.closePath();topShape.holes.push(hole);
- const tg=new THREE.ExtrudeGeometry(topShape,{depth:.045,bevelEnabled:false});tg.rotateX(-Math.PI/2);mesh(run,tg,m.marble,0,.83,0);
+ const tg=new THREE.ExtrudeGeometry(topShape,{depth:.045,bevelEnabled:false});tg.rotateX(-Math.PI/2);mesh(run,tg,m.kitchenCounter,0,.83,0);
  // The plan projection flips Z after extrusion; the sink remains centered in the aperture.
  box(run,.46,.035,.585,0,.685,.085,m.dark);
  for(const x of [-.245,.245])box(run,.018,.16,.62,x,.768,.085,m.bronze);
  for(const z of [-.225,.395])box(run,.49,.16,.018,0,.768,z,m.bronze);
  tube(run,[[-.265,.88,.09],[-.265,1.18,.09],[-.14,1.30,.09],[.095,1.28,.09],[.125,1.08,.09]],.012,m.bronze,28);
  rod(run,[-.27,.88,.27],[-.27,.98,.27],.018,m.bronze);
- box(run,.025,.14,3.88,-.335,.92,0,m.marble);
+ box(run,.025,.14,3.88,-.335,.92,0,m.kitchenCounter);
  box(run,.018,.010,3.70,.34,.125,0,m.emissive);
- const tall=node(-.25,39.55,0,'Integrated refrigerator');box(tall,.76,2.45,.92,0,1.24,0,m.oak);
- for(const z of [-.23,.23]){box(tall,.025,2.26,.436,.393,1.28,z,m.walnut);rod(tall,[.413,1.03,z+.12],[.413,1.72,z+.12],.012,m.bronze);}
+ const tall=node(-.25,39.55,0,'Integrated refrigerator');box(tall,.76,2.45,.92,0,1.24,0,m.kitchenCabinet);
+ for(const z of [-.23,.23]){box(tall,.025,2.26,.436,.393,1.28,z,m.kitchenCabinet);rod(tall,[.413,1.03,z+.12],[.413,1.72,z+.12],.012,m.bronze);}
  box(tall,.030,.005,.90,.41,.80,0,m.dark);
- const pantry=node(2.65,38.7,0,'Pantry and oven tower');box(pantry,1.18,2.44,.59,0,1.23,0,m.oak);
- for(const x of [-.302,.302])box(pantry,.568,1.17,.025,x,1.79,.312,m.oak);
+ const pantry=node(2.65,38.7,0,'Pantry and oven tower');box(pantry,1.18,2.44,.59,0,1.23,0,m.kitchenCabinet);
+ for(const x of [-.302,.302])box(pantry,.568,1.17,.025,x,1.79,.312,m.kitchenCabinet);
  box(pantry,.55,.60,.030,-.302,.91,.316,m.dark);box(pantry,.48,.36,.020,-.302,.86,.337,m.glass);rod(pantry,[-.52,1.095,.356],[-.09,1.095,.356],.012,m.bronze);
- box(pantry,.55,.55,.026,.302,.90,.316,m.oak);box(pantry,1.16,.17,.025,0,.195,.312,m.oak);
+ box(pantry,.55,.55,.026,.302,.90,.316,m.kitchenCabinet);box(pantry,1.16,.17,.025,0,.195,.312,m.kitchenCabinet);
  const island=node(5.35,46.05,0,'Waterfall stone island');
- box(island,.94,.10,2.34,0,.06,0,m.dark);soft(island,1.04,.73,2.37,.018,0,.465,0,m.oak);
- soft(island,1.20,.055,2.61,.032,0,.862,0,m.marble);
- for(const z of [-1.28,1.28])box(island,1.20,.81,.055,0,.43,z,m.marble);
- for(let i=0;i<38;i++)box(island,.028,.68,.021,.535,.46,-1.11+i*.060,m.oak);
- for(const z of [-.77,0,.77]){box(island,.022,.68,.73,-.536,.46,z,m.oak);rod(island,[-.554,.67,z-.20],[-.554,.67,z+.20],.006,m.bronze);}
+ box(island,.94,.10,2.34,0,.06,0,m.dark);soft(island,1.04,.73,2.37,.018,0,.465,0,m.kitchenCabinet);
+ soft(island,1.20,.055,2.61,.032,0,.862,0,m.kitchenCounter);
+ for(const z of [-1.28,1.28])box(island,1.20,.81,.055,0,.43,z,m.kitchenCounter);
+ for(let i=0;i<38;i++)box(island,.028,.68,.021,.535,.46,-1.11+i*.060,m.kitchenCabinet);
+ for(const z of [-.77,0,.77]){box(island,.022,.68,.73,-.536,.46,z,m.kitchenCabinet);rod(island,[-.554,.67,z-.20],[-.554,.67,z+.20],.006,m.bronze);}
  soft(island,.76,.012,.59,.035,0,.898,-.57,m.dark);
  for(const [x,z,rr] of [[-.20,-.70,.09],[.19,-.69,.105],[0,-.39,.082]])mesh(island,new THREE.TorusGeometry(rr,.0025,6,24),m.bronze,x,.906,z,Math.PI/2);
  tray(island,0,.89,.65,.82);vase(island,.03,.90,.71,.8);book(island,-.14,.89,.98,.23,.29,.028,m.art,-.05);
@@ -264,12 +265,12 @@ export function buildMainInteriors({THREE,group,materials:m,toWorld,floorY}) {
  rooms.push(
   {id:'great-room',name:'Living & dining',camera:{position:[21.8,72.1,F+1.57],target:[28.1,80.1,F+1.15]},note:'Eight-seat dining and waterfront lounge; circulation remains along the terrace side.'},
   {id:'dining',name:'Dining',camera:{position:[23.0,70.7,F+1.57],target:[28.1,65.5,F+1.20]}},
-  {id:'kitchen',name:'Kitchen',camera:{position:[9.4,53.8,F+1.58],target:[2.0,45.7,F+1.18]}},
+  {id:'kitchen',name:'Kitchen',camera:{position:[9.4,53.8,F+1.58],target:[2.0,45.7,F+1.18]},note:'Light cabinetry and cream stone interpret Andres’s lighter kitchen direction; exact products and detailing remain unverified.'},
   {id:'family-room',name:'Family lounge',camera:{position:[8.0,70.2,F+1.55],target:[3.9,65.25,F+1.12]}},
   {id:'guest-suite',name:'Guest suite',camera:{position:[22.3,3.2,F+1.56],target:[18.15,9.4,F+1.12]}},
   {id:'service-bedroom',name:'Service bedroom',camera:{position:[8.8,12.1,F+1.52],target:[3.9,6.2,F+1.07]}}
  );
  stats.uniqueMaterials=used.size;stats.lights=lights.length;
- group.userData.staging={basis:'A102 room envelopes and openings; proposed furniture and decorative lighting',palette:'Shared switchable warm / coastal / dramatic materials',cameraConvention:'position/target arrays are [source X feet,source Z feet,absolute Y metres]'};
+ group.userData.staging={basis:'A102 room envelopes and openings; proposed furniture and decorative lighting',palette:'Warm / coastal / dramatic furnishing palettes; light kitchen architectural finishes remain fixed',cameraConvention:'position/target arrays are [source X feet,source Z feet,absolute Y metres]'};
  return {lights,stats,rooms};
 }
