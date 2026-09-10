@@ -641,6 +641,72 @@ const I18N = {
     langEN: { en: 'English', es: 'Inglés', pt: 'Inglês' },
     langES: { en: 'Spanish', es: 'Español', pt: 'Espanhol' },
     langPT: { en: 'Portuguese', es: 'Portugués', pt: 'Português' },
+
+    // ── Lead gate: "Already registered?" (2026-09-10) ───────
+    alreadyRegistered: {
+        en: 'Already registered?',
+        es: '¿Ya te registraste?',
+        pt: 'Já se cadastrou?',
+    },
+    alreadyRegisteredHint: {
+        en: 'Enter the email you signed up with and we\'ll skip this.',
+        es: 'Escribe el email con el que te registraste y saltamos esto.',
+        pt: 'Digite o e-mail do seu cadastro e pulamos esta etapa.',
+    },
+    alreadyRegisteredBtn: {
+        en: 'Continue',
+        es: 'Continuar',
+        pt: 'Continuar',
+    },
+    alreadyRegisteredNotFound: {
+        en: 'We couldn\'t find that email — please register below.',
+        es: 'No encontramos ese email — regístrate abajo.',
+        pt: 'Não encontramos esse e-mail — cadastre-se abaixo.',
+    },
+
+    // ── Recalibration popup (2026-09-10) ────────────────────
+    recalibTitle: {
+        en: 'Quick question — what\'s stopping you from booking a showing?',
+        es: 'Pregunta rápida: ¿qué te frena para agendar una visita?',
+        pt: 'Pergunta rápida: o que te impede de agendar uma visita?',
+    },
+    recalibPrice:     { en: 'Prices are too high',            es: 'Los precios son muy altos',        pt: 'Os preços estão muito altos' },
+    recalibArea:      { en: 'Wrong area',                      es: 'No es la zona que busco',          pt: 'Não é a região que procuro' },
+    recalibFinancing: { en: 'I need financing without a SSN',  es: 'Necesito financiamiento sin SSN',  pt: 'Preciso de financiamento sem SSN' },
+    recalibBrowsing:  { en: 'Just browsing for now',           es: 'Solo estoy mirando por ahora',     pt: 'Só estou olhando por enquanto' },
+    recalibTalk:      { en: 'I want to talk to a person now',  es: 'Quiero hablar con una persona ya', pt: 'Quero falar com uma pessoa agora' },
+    recalibThanksPrice: {
+        en: 'Got it — we\'ll send you options in a lower price range.',
+        es: 'Entendido — te enviaremos opciones en un rango de precio más bajo.',
+        pt: 'Entendido — vamos enviar opções em uma faixa de preço mais baixa.',
+    },
+    recalibThanksArea: {
+        en: 'Got it — tell us the area you want on WhatsApp and we\'ll re-target your alerts.',
+        es: 'Entendido — dinos por WhatsApp qué zona buscas y ajustamos tus alertas.',
+        pt: 'Entendido — diga no WhatsApp qual região você quer e ajustamos seus alertas.',
+    },
+    recalibThanksFinancing: {
+        en: 'Got it — we work with foreign-national lenders (no SSN needed). Kevin will reach out today.',
+        es: 'Entendido — trabajamos con prestamistas para extranjeros (sin SSN). Kevin te contacta hoy.',
+        pt: 'Entendido — trabalhamos com credores para estrangeiros (sem SSN). Kevin entra em contato hoje.',
+    },
+    recalibThanksBrowsing: {
+        en: 'No problem — we\'ll keep sending you new listings as they hit the market.',
+        es: 'Sin problema — te seguiremos enviando propiedades nuevas apenas salgan.',
+        pt: 'Sem problema — continuamos enviando imóveis novos assim que entram no mercado.',
+    },
+    recalibThanksTalk: {
+        en: 'Kevin\'s on it — message him now:',
+        es: 'Kevin ya está al tanto — escríbele ahora:',
+        pt: 'Kevin já foi avisado — mande mensagem agora:',
+    },
+    recalibWhatsApp: { en: 'Open WhatsApp', es: 'Abrir WhatsApp', pt: 'Abrir WhatsApp' },
+    recalibClose:    { en: 'Close',         es: 'Cerrar',         pt: 'Fechar' },
+    recalibWaMsg: {
+        en: 'Hi Kevin, I\'m browsing homesinsoflorida.com and want to talk to a person.',
+        es: 'Hola Kevin, estoy viendo homesinsoflorida.com y quiero hablar con una persona.',
+        pt: 'Olá Kevin, estou vendo homesinsoflorida.com e quero falar com uma pessoa.',
+    },
 };
 
 // ── Helper: get current language ────────────────────────────

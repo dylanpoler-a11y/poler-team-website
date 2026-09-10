@@ -89,6 +89,8 @@ function clientSort(listings) {
 let lastQuery      = {};     // Last search params
 let totalResults   = 0;      // Total from API
 let leadCaptured   = false;  // Has user already registered?
+let isTeamDevice   = false;
+let searchesThisLoad = 0;    // runSearch first-page calls this load (1 = initial, >1 = filter changes)  // Kevin/Rosa/Dylan device (CRM login cookie/flag) — never gate, never recalibrate
 let timerInterval  = null;
 let activeTab      = 'buy';  // Current tab: 'buy', 'rent', or 'sell'
 let hasActiveSearch = false; // Track if user has explicitly searched
@@ -309,6 +311,213 @@ async function initLpAb() {
 }
 
 // ============================================================
+// RECOGNITION + EVENT TRACKING + RECALIBRATION POPUP (2026-09-10)
+// Design: ~/business/real-estate/active/research/listing-ux-consensus/
+// ============================================================
+
+// Parse document.cookie into a plain object (never throws).
+function readCookies() {
+    const out = {};
+    try {
+        document.cookie.split(';').forEach(part => {
+            const i = part.indexOf('=');
+            if (i < 0) return;
+            const k = part.slice(0, i).trim();
+            if (k) out[k] = decodeURIComponent(part.slice(i + 1).trim());
+        });
+    } catch (e) { /* no cookie access */ }
+    return out;
+}
+
+// Who is this captured visitor? → { token } | { email } | null.
+// Token wins (unique, never changes); email is the pre-token fallback for
+// leads captured before Alert Tokens existed.
+function leadIdentity() {
+    let tok = '', v1 = '';
+    try {
+        tok = localStorage.getItem('poler_alert_token') || '';
+        v1  = localStorage.getItem('poler_lead_v1') || '';
+    } catch (e) { /* storage blocked */ }
+    if (!tok) {
+        const c = readCookies().poler_lt;
+        if (c && c.length >= 10) tok = c;
+    }
+    if (!tok && v1.indexOf('alert_') === 0 && v1.length > 16) tok = v1.slice(6);
+    if (tok) return { token: tok };
+    if (v1.indexOf('@') > 0) return { email: v1 };
+    return null;
+}
+
+// Ask the server for the 1-year first-party cookie (same-origin on purpose —
+// the cookie must land on www.homesinsoflorida.com, not the vercel.app host).
+function rememberLead(id) {
+    if (!id || (!id.token && !id.email)) return Promise.resolve(false);
+    return fetch('/api/remember', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(id),
+    }).then(r => r.ok).catch(() => false);
+}
+
+// One helper for every post-gate signal: GA4 always (gtag is on listing.html),
+// CRM 'Lead Activity' row only for captured leads and only for the event
+// types that mean something to Kevin/Sammy.
+const CRM_EVENT_TYPES = {
+    listing_view:    'Property View',
+    favorite_add:    'Favorite',
+    favorite_remove: 'Unfavorite',
+    search:          'Search',
+    filter_applied:  'Search',
+    share_click:     'Share',
+    whatsapp_click:  'WhatsApp Click',
+    contact_click:   'Contact Click',
+    recalib_answered:'Recalibration Answer',
+};
+function trackEvent(name, params) {
+    params = params || {};
+    try { if (typeof gtag === 'function') gtag('event', name, params); } catch (e) { /* GA blocked */ }
+    const crmType = CRM_EVENT_TYPES[name];
+    if (!crmType || isTeamDevice) return;
+    const id = leadIdentity();
+    if (!id) return;
+    try {
+        fetch(`${OTP_BASE}/api/log-activity`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(Object.assign({}, id, { activityType: crmType, details: params })),
+        }).catch(() => {});
+    } catch (e) { /* non-critical */ }
+}
+
+// ── Recalibration popup ─────────────────────────────────────
+// Fires ONCE per lead, only after capture, on the first intent signal:
+// 2nd listing view (across page loads, per session), 1 favorite, 3 filter
+// changes, or 5 min of ACTIVE time as the fallback for scroll-only visitors.
+// Answered → never again. Dismissed → quiet for 14 days.
+const RECALIB_KEY       = 'poler_recalib_v1';
+const RECALIB_DISMISS_MS = 14 * 24 * 60 * 60 * 1000;
+const RECALIB_ACTIVE_MS  = 5 * 60 * 1000;
+let recalibOpen = false;
+
+function recalibSessionCount(key, inc) {
+    try {
+        const n = (Number(sessionStorage.getItem(key)) || 0) + (inc || 0);
+        if (inc) sessionStorage.setItem(key, String(n));
+        return n;
+    } catch (e) { return 0; }
+}
+
+function recalibEligible() {
+    if (!leadCaptured || isTeamDevice || recalibOpen) return false;
+    if (!leadIdentity()) return false;
+    try {
+        const v = localStorage.getItem(RECALIB_KEY) || '';
+        if (v.indexOf('answered') === 0) return false;
+        if (v.indexOf('dismissed:') === 0 && Date.now() - Number(v.slice(10)) < RECALIB_DISMISS_MS) return false;
+    } catch (e) { /* no storage → allow once this page */ }
+    const gate = document.getElementById('lead-overlay');
+    if (gate && gate.classList.contains('active')) return false;
+    return true;
+}
+
+function recalibSignal(kind) {
+    let fire = false;
+    if (kind === 'listing_view') fire = recalibSessionCount('poler_recalib_views', 1) >= 2;
+    else if (kind === 'favorite') fire = true;
+    else if (kind === 'filter')   fire = recalibSessionCount('poler_recalib_filters', 1) >= 3;
+    else if (kind === 'active')   fire = true;
+    if (fire && recalibEligible()) showRecalibPopup(kind);
+}
+
+// 5-minute ACTIVE fallback: count only while the tab is visible and the
+// visitor has scrolled/clicked/typed in the last 30s. Persists across page
+// loads within the session.
+function initRecalibActiveTimer() {
+    let lastInput = Date.now();
+    const bump = () => { lastInput = Date.now(); };
+    ['scroll', 'click', 'keydown', 'touchstart', 'mousemove'].forEach(ev =>
+        window.addEventListener(ev, bump, { passive: true }));
+    const iv = setInterval(() => {
+        if (document.hidden || Date.now() - lastInput > 30000) return;
+        const ms = recalibSessionCount('poler_recalib_active_ms', 5000);
+        if (ms >= RECALIB_ACTIVE_MS) {
+            clearInterval(iv);
+            recalibSignal('active');
+        }
+    }, 5000);
+}
+
+function showRecalibPopup(reason) {
+    if (document.getElementById('recalib-popup')) return;
+    recalibOpen = true;
+    const lang = (typeof getLang === 'function') ? getLang() : 'en';
+    const mls = new URLSearchParams(window.location.search).get('mls') || new URLSearchParams(window.location.search).get('id') || '';
+    const options = [
+        ['price',     'recalibPrice'],
+        ['area',      'recalibArea'],
+        ['financing', 'recalibFinancing'],
+        ['browsing',  'recalibBrowsing'],
+        ['talk',      'recalibTalk'],
+    ];
+    const el = document.createElement('div');
+    el.id = 'recalib-popup';
+    el.className = 'recalib-popup';
+    el.setAttribute('role', 'dialog');
+    el.setAttribute('aria-labelledby', 'recalib-title');
+    el.innerHTML =
+        `<button type="button" class="recalib-close" aria-label="${t('recalibClose')}">&times;</button>` +
+        `<p class="recalib-title" id="recalib-title">${t('recalibTitle')}</p>` +
+        `<div class="recalib-options">` +
+        options.map(([k, key]) => `<button type="button" class="recalib-opt" data-answer="${k}">${t(key)}</button>`).join('') +
+        `</div>`;
+    document.body.appendChild(el);
+    // setTimeout, not rAF: rAF never fires in a background tab, leaving the card at opacity 0
+    setTimeout(() => el.classList.add('is-open'), 30);
+    trackEvent('recalib_shown', { reason: reason, mls: mls });
+
+    const finish = (answered) => {
+        try {
+            localStorage.setItem(RECALIB_KEY, answered ? 'answered:' + answered : 'dismissed:' + Date.now());
+        } catch (e) { /* ignore */ }
+    };
+    el.querySelector('.recalib-close').addEventListener('click', () => {
+        finish(null);
+        trackEvent('recalib_dismissed', { reason: reason, mls: mls });
+        closeRecalibPopup(el);
+    });
+    el.querySelectorAll('.recalib-opt').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const answer = btn.dataset.answer;
+            finish(answer);
+            trackEvent('recalib_answered', { answer: answer, reason: reason, mls: mls });
+            const id = leadIdentity() || {};
+            fetch('/api/recalibrate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(Object.assign({}, id, { answer: answer, mls: mls, page: location.pathname + location.search, lang: lang })),
+            }).catch(() => {});
+            const thanksKey = { price: 'recalibThanksPrice', area: 'recalibThanksArea', financing: 'recalibThanksFinancing', browsing: 'recalibThanksBrowsing', talk: 'recalibThanksTalk' }[answer];
+            let html = `<p class="recalib-title">${t(thanksKey)}</p>`;
+            if (answer === 'talk' || answer === 'area') {
+                const wa = `https://wa.me/19542354046?text=${encodeURIComponent(t('recalibWaMsg'))}`;
+                html += `<a class="recalib-wa" href="${wa}" target="_blank" rel="noopener">${t('recalibWhatsApp')}</a>`;
+            }
+            el.innerHTML = `<button type="button" class="recalib-close" aria-label="${t('recalibClose')}">&times;</button>` + html;
+            el.querySelector('.recalib-close').addEventListener('click', () => closeRecalibPopup(el));
+            el.querySelector('.recalib-wa')?.addEventListener('click', () => trackEvent('whatsapp_click', { source: 'recalib', answer: answer }));
+            if (answer !== 'talk' && answer !== 'area') setTimeout(() => closeRecalibPopup(el), 6000);
+        });
+    });
+}
+
+function closeRecalibPopup(el) {
+    el = el || document.getElementById('recalib-popup');
+    if (!el) return;
+    el.classList.remove('is-open');
+    setTimeout(() => el.remove(), 350);
+}
+
+// ============================================================
 // LEAD CAPTURE — 10-second timer then forced modal, with OTP phone verification
 // ============================================================
 function initLeadCapture() {
@@ -316,11 +525,38 @@ function initLeadCapture() {
     // entire boot chain incl. the popup wiring (see i18n.js getLang note).
     try { leadCaptured = !!localStorage.getItem('poler_lead_v1'); } catch (e) { leadCaptured = false; }
 
-    // Recognize returning leads from alert emails (URL has ?t=TOKEN)
+    // RECOGNITION (2026-09-10): localStorage alone kept re-gating registered
+    // people — Safari ITP wipes script storage after 7 days, in-app webviews
+    // (IG/FB/WhatsApp) have their own storage, and the welcome email linked to a
+    // bare /listing. Order of trust: team cookie/flag → ?t= link → poler_lt
+    // cookie (server-set, 1 year, survives ITP) → localStorage. Whichever one
+    // recognizes the visitor re-seeds the others so the next visit is covered.
+    const cookies = readCookies();
+    try {
+        if (cookies.poler_team === '1' || localStorage.getItem('poler_team_member')) isTeamDevice = true;
+    } catch (e) { if (cookies.poler_team === '1') isTeamDevice = true; }
+    if (isTeamDevice) leadCaptured = true;
+
+    // Recognize returning leads from alert / share emails (URL has ?t=TOKEN)
     const alertToken = new URLSearchParams(window.location.search).get('t');
-    if (!leadCaptured && alertToken && alertToken.length >= 10) {
-        localStorage.setItem('poler_lead_v1', 'alert_' + alertToken);
+    if (alertToken && alertToken.length >= 10) {
+        try {
+            if (!localStorage.getItem('poler_lead_v1')) localStorage.setItem('poler_lead_v1', 'alert_' + alertToken);
+            localStorage.setItem('poler_alert_token', alertToken);
+        } catch (e) { /* in-memory flag suffices */ }
         leadCaptured = true;
+        rememberLead({ token: alertToken });
+    } else if (!isTeamDevice && cookies.poler_lt && cookies.poler_lt.length >= 10) {
+        // Cookie survived a storage wipe → restore localStorage from it
+        try {
+            if (!localStorage.getItem('poler_lead_v1')) localStorage.setItem('poler_lead_v1', 'alert_' + cookies.poler_lt);
+            if (!localStorage.getItem('poler_alert_token')) localStorage.setItem('poler_alert_token', cookies.poler_lt);
+        } catch (e) { /* ignore */ }
+        leadCaptured = true;
+    } else if (leadCaptured && !isTeamDevice && !cookies.poler_lt) {
+        // Captured before the cookie existed → set it now (self-heals old leads)
+        const id = leadIdentity();
+        if (id) rememberLead(id);
     }
     // NOTE (2026-08-19): captured visitors no longer bail out here — the form must
     // stay functional because Call Us / Contact open this popup on demand for everyone.
@@ -337,13 +573,18 @@ function initLeadCapture() {
         emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
     }
 
-    // AUTO-POPUP POLICY (Kevin 2026-08-19): the 10s gate fires ONLY for
-    // Facebook/Instagram traffic (fbclid param, meta utm_source, or FB/IG referrer).
-    // Google Ads, organic search, and direct visitors browse with NO auto-popup.
-    // Meta status is remembered for the whole visit (sessionStorage) so the gate
-    // still works when the visitor clicks into a property and URL params drop off.
+    // AUTO-POPUP POLICY (Kevin 2026-08-19, Google Ads re-added 2026-08-23): the
+    // 10s gate fires for PAID traffic only — Facebook/Instagram (fbclid param,
+    // meta utm_source, or FB/IG referrer) and Google Ads (gclid param or
+    // utm_source=googlead, the tag on every campaign final URL). Organic search
+    // and direct visitors browse with NO auto-popup — a bare google.com referrer
+    // without gclid/utm stays popup-free. Paid status is remembered for the whole
+    // visit (sessionStorage) so the gate still works when the visitor clicks into
+    // a property and URL params drop off.
     const META_KEY = 'poler_meta_visitor';
+    const GADS_KEY = 'poler_gads_visitor';
     let isMetaTraffic = false;
+    let isGoogleAdsTraffic = false;
     try {
         const gp = new URLSearchParams(window.location.search);
         const gsrc = (gp.get('utm_source') || '').toLowerCase();
@@ -356,8 +597,15 @@ function initLeadCapture() {
         } else if (sessionStorage.getItem(META_KEY) === '1') {
             isMetaTraffic = true;
         }
+        if (gp.get('gclid') ||
+            ['googlead', 'googleads', 'google-ads', 'adwords'].includes(gsrc)) {
+            isGoogleAdsTraffic = true;
+            sessionStorage.setItem(GADS_KEY, '1');
+        } else if (sessionStorage.getItem(GADS_KEY) === '1') {
+            isGoogleAdsTraffic = true;
+        }
     } catch (e) { /* privacy-hardened browsers: no auto-popup */ }
-    const AUTO_POPUP = isMetaTraffic;
+    const AUTO_POPUP = isMetaTraffic || isGoogleAdsTraffic;
     if (AUTO_POPUP && !leadCaptured) {
         const DURATION    = 10000;
         const TIMER_KEY   = 'poler_lead_timer_start';
@@ -374,6 +622,7 @@ function initLeadCapture() {
             showLeadModal(overlay, pageWrap);
         } else {
             timerInterval = setInterval(() => {
+                if (leadCaptured) { clearInterval(timerInterval); return; }
                 const elapsed = Date.now() - START;
                 const pct = Math.max(0, 1 - elapsed / DURATION);
                 bar.style.transform = `scaleX(${pct})`;
@@ -394,6 +643,7 @@ function initLeadCapture() {
 
     // Scroll trigger: show modal if user scrolls past 3rd property card
     function checkScrollTrigger() {
+        if (leadCaptured) { window.removeEventListener('scroll', checkScrollTrigger); return; }
         const cards = document.querySelectorAll('.listing-card:not(.is-skeleton)');
         if (cards.length >= 3) {
             const third = cards[2];
@@ -405,8 +655,8 @@ function initLeadCapture() {
             }
         }
     }
-    // Scroll trigger is part of the Meta-only gate (Kevin 2026-08-20): Google Ads
-    // and organic visitors must never get a forced popup, scroll or no scroll.
+    // Scroll trigger rides the same paid-traffic gate (Meta + Google Ads since
+    // 2026-08-23): organic and direct visitors never get a forced popup.
     if (AUTO_POPUP && !leadCaptured) {
         window.addEventListener('scroll', checkScrollTrigger, { passive: true });
     }
@@ -419,6 +669,8 @@ function initLeadCapture() {
             document.getElementById('lead-timeline').value = pill.dataset.value;
         });
     });
+
+    initAlreadyRegistered(overlay, pageWrap);
 
     // ── STEP 1: Info form → send OTP (or skip for Brazil) ────
     const form      = document.getElementById('lead-form');
@@ -715,7 +967,12 @@ async function completeLead(overlay, pageWrap) {
             }),
         });
         const saveData = await saveRes.json();
-        if (saveData.token) localStorage.setItem('poler_alert_token', saveData.token);
+        if (saveData.token) {
+            localStorage.setItem('poler_alert_token', saveData.token);
+            rememberLead({ token: saveData.token }); // 1-year cookie so the gate never re-asks
+        } else {
+            rememberLead({ email });
+        }
     } catch (err) {
         console.warn('Save lead error:', err);
     }
@@ -836,6 +1093,8 @@ function openLeadGate(fallbackUrl, newTab) {
 }
 
 function showLeadModal(overlay, pageWrap) {
+    if (overlay.classList.contains('active')) return;
+    trackEvent('gate_shown', { page: location.pathname });
     pageWrap.classList.add('blurred');
     overlay.classList.add('active');
     overlay.setAttribute('aria-hidden', 'false');
@@ -847,6 +1106,62 @@ function unlockPage(overlay, pageWrap) {
     overlay.classList.remove('active');
     overlay.setAttribute('aria-hidden', 'true');
     pageWrap.classList.remove('blurred');
+}
+
+// "Already registered?" on the gate (2026-09-10): a returning lead whose
+// storage was wiped types the email they signed up with → /api/remember sets
+// the 1-year cookie → unlock. Injected here (not in listing.html) so the gate
+// markup stays untouched; all copy via i18n keys.
+function initAlreadyRegistered(overlay, pageWrap) {
+    const form = document.getElementById('lead-form');
+    if (!form || document.getElementById('lead-registered')) return;
+    const wrap = document.createElement('div');
+    wrap.id = 'lead-registered';
+    wrap.className = 'lead-registered';
+    wrap.innerHTML =
+        `<button type="button" class="lead-registered-toggle" id="lead-registered-toggle" data-i18n="alreadyRegistered">${t('alreadyRegistered')}</button>` +
+        `<div class="lead-registered-form" id="lead-registered-form" hidden>` +
+            `<p class="lead-registered-hint" data-i18n="alreadyRegisteredHint">${t('alreadyRegisteredHint')}</p>` +
+            `<div class="lead-registered-row">` +
+                `<input type="email" id="lead-registered-email" autocomplete="email" data-i18n="emailAddress" placeholder="${t('emailAddress')}">` +
+                `<button type="button" id="lead-registered-btn" data-i18n="alreadyRegisteredBtn">${t('alreadyRegisteredBtn')}</button>` +
+            `</div>` +
+            `<p class="lead-error" id="lead-registered-error" style="display:none"></p>` +
+        `</div>`;
+    form.insertAdjacentElement('afterend', wrap);
+
+    const toggle = wrap.querySelector('#lead-registered-toggle');
+    const panel  = wrap.querySelector('#lead-registered-form');
+    const input  = wrap.querySelector('#lead-registered-email');
+    const btn    = wrap.querySelector('#lead-registered-btn');
+    const err    = wrap.querySelector('#lead-registered-error');
+    toggle.addEventListener('click', () => {
+        panel.hidden = !panel.hidden;
+        if (!panel.hidden) input.focus();
+    });
+    const submit = async () => {
+        const email = input.value.trim().toLowerCase();
+        err.style.display = 'none';
+        if (!email || email.indexOf('@') < 1) { input.focus(); return; }
+        btn.disabled = true;
+        const ok = await rememberLead({ email });
+        btn.disabled = false;
+        if (!ok) {
+            err.textContent = t('alreadyRegisteredNotFound');
+            err.style.display = 'block';
+            trackEvent('gate_recognize_fail', {});
+            return;
+        }
+        try { localStorage.setItem('poler_lead_v1', email); } catch (e) { /* cookie carries it */ }
+        const c = readCookies().poler_lt;
+        if (c) { try { localStorage.setItem('poler_alert_token', c); } catch (e) { /* ignore */ } }
+        leadCaptured = true;
+        clearInterval(timerInterval);
+        trackEvent('gate_recognized', {});
+        unlockPage(overlay, pageWrap);
+    };
+    btn.addEventListener('click', submit);
+    input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); submit(); } });
 }
 
 function showLeadError(elId, msg) {
@@ -879,23 +1194,15 @@ async function initHeroProperty() {
         // Load similar properties below the listing
         loadSimilarProperties(listing);
 
-        // Track property view for returning leads (from alert emails)
-        const alertToken = new URLSearchParams(window.location.search).get('t');
-        if (alertToken && alertToken.length >= 10) {
-            fetch(`${OTP_BASE}/api/log-activity`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    token: alertToken,
-                    activityType: 'Property View',
-                    details: {
-                        mlsId: listing.ListingId || listingId,
-                        address: listing.UnparsedAddress || listing.City || '',
-                        price: listing.ListPrice || 0,
-                    },
-                }),
-            }).catch(() => {}); // non-blocking
-        }
+        // Track the property view: GA4 for everyone, CRM row for any captured
+        // lead (was ?t= links only until 2026-09-10). 2nd view in a session is
+        // the primary recalibration trigger.
+        trackEvent('listing_view', {
+            mlsId: listing.ListingId || listingId,
+            address: listing.UnparsedAddress || listing.City || '',
+            price: listing.ListPrice || 0,
+        });
+        recalibSignal('listing_view');
     } catch (err) {
         console.error('Hero fetch error:', err);
         renderDefaultHero(container);
@@ -1287,6 +1594,7 @@ function sendHeroAgentMessage() {
         : '';
 
     const waUrl = `https://wa.me/19542354046?text=${encodeURIComponent(propertyContext + msg)}`;
+    trackEvent('whatsapp_click', { source: 'hero', mlsId: heroListing ? (heroListing.ListingId || '') : '' });
     window.open(waUrl, '_blank');
 
     if (sendBtn) {
@@ -1888,6 +2196,7 @@ async function fetchListings(params, offset = 0) {
 // Share a listing (preview layout) - native share sheet, clipboard fallback
 function sharePreviewListing(lid) {
     const url = `${window.location.origin}/listing?mls=${lid}`;
+    trackEvent('share_click', { mlsId: lid });
     if (navigator.share) {
         navigator.share({ title: 'The Poler Team', url }).catch(() => {});
     } else if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -2165,25 +2474,15 @@ async function runSearch(page = 0, reuseQuery = false) {
         // Update map if in map view
         if (document.getElementById('map-view')?.style.display === 'block') renderMapView();
 
-        // Log search activity to CRM (non-blocking)
+        // Log the search (2026-09-10: this used to JSON.parse a plain email
+        // string and throw, so no search ever reached the CRM). First search of
+        // the page load = 'search'; every later one = a filter change, which
+        // counts toward the recalibration trigger.
         if (isFirstPage) {
-            try {
-                const leadData = localStorage.getItem('poler_lead_v1');
-                if (leadData) {
-                    const lead = JSON.parse(leadData);
-                    if (lead.email) {
-                        fetch('/api/log-activity', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                email: lead.email,
-                                activityType: 'Search',
-                                details: { params: lastQuery, resultCount: listings.length },
-                            }),
-                        }).catch(() => {});
-                    }
-                }
-            } catch (e) { /* non-critical */ }
+            searchesThisLoad += 1;
+            trackEvent(searchesThisLoad === 1 ? 'search' : 'filter_applied',
+                { params: lastQuery, resultCount: listings.length });
+            if (searchesThisLoad > 1) recalibSignal('filter');
         }
 
     } catch (err) {
@@ -2412,6 +2711,8 @@ function toggleSaveHome(lid, btn) {
     if (idx >= 0) { saved.splice(idx, 1); btn.classList.remove('saved'); }
     else { saved.push(lid); btn.classList.add('saved'); }
     localStorage.setItem('poler_saved_homes', JSON.stringify(saved));
+    trackEvent(idx >= 0 ? 'favorite_remove' : 'favorite_add', { mlsId: lid });
+    if (idx < 0) recalibSignal('favorite');
 }
 
 // ============================================================
@@ -2697,6 +2998,7 @@ function sendAgentMessage() {
     const waUrl = `https://wa.me/19542354046?text=${encodeURIComponent(fullMessage)}`;
 
     // Open WhatsApp with pre-filled message
+    trackEvent('whatsapp_click', { source: 'agent_form' });
     window.open(waUrl, '_blank');
 
     // Visual confirmation + clear field
@@ -2992,10 +3294,11 @@ document.head.appendChild(spinStyle);
     // ── Save conversation to CRM (non-blocking) ──────────────
     function saveConversationToCRM() {
         try {
-            const leadData = localStorage.getItem('poler_lead_v1');
-            if (!leadData) return;
-            const lead = JSON.parse(leadData);
-            if (!lead.email) return;
+            // poler_lead_v1 is a bare string (email or 'alert_<token>'), never
+            // JSON — the old JSON.parse threw every time and no chat ever saved.
+            const leadData = localStorage.getItem('poler_lead_v1') || '';
+            if (leadData.indexOf('@') < 1) return;
+            const lead = { email: leadData };
 
             fetch('/api/save-conversation', {
                 method: 'POST',
@@ -3135,6 +3438,15 @@ document.addEventListener('DOMContentLoaded', () => {
     initSaveSearch();
     initFooterAlert();
     initViewToggle();
+    initRecalibActiveTimer();
+    // QA hook: ?recalib=1 forces the recalibration card (team devices never
+    // qualify organically, so Kevin can preview it this way).
+    try {
+        if (new URLSearchParams(location.search).get('recalib')) setTimeout(() => {
+            const gate = document.getElementById('lead-overlay');
+            if (leadCaptured && !(gate && gate.classList.contains('active'))) showRecalibPopup('manual');
+        }, 800);
+    } catch (e) { /* ignore */ }
     setTimeout(enhanceDroneVideo, 500);
 });
 

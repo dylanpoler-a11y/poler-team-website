@@ -138,6 +138,10 @@ document.addEventListener('DOMContentLoaded', () => {
       // because her localStorage gets wiped by Safari ITP).
       localStorage.setItem('poler_team_member', agent.email);
       localStorage.setItem('poler_team_member_ts', String(Date.now()));
+      // Server-set 1-year cookie for the same purpose — survives the Safari ITP
+      // wipe that kills the localStorage flag (2026-09-10). Same-origin on purpose.
+      fetch('/api/remember', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ team: true, password: pass }) }).catch(() => {});
       allLeads = data.leads || [];
       showDashboard();
       renderAll();
@@ -4213,7 +4217,7 @@ function renderSavedProperties(lead) {
   }
 
   wrap.innerHTML = saved.map(mlsId => {
-    return `<div class="viewed-property-item" style="cursor:pointer;" onclick="openPropertyModal('','?id=${escHtml(mlsId)}')">
+    return `<div class="viewed-property-item" style="cursor:pointer;" data-source="?id=${escHtml(mlsId)}" onclick="openPropertyModal('', this.dataset.source)">
       <div class="viewed-property-info">
         <span style="color:#ef4444;margin-right:6px;">❤️</span>
         <span class="viewed-property-address">MLS# ${escHtml(mlsId)}</span>
@@ -4249,7 +4253,9 @@ function renderPropertiesViewed(lead) {
     const time = v.viewedAt ? relativeTime(v.viewedAt) : '';
     const addr = v.address || v.mlsId || 'Unknown';
     const mlsParam = v.mlsId ? `?id=${escHtml(v.mlsId)}` : '';
-    return `<div class="viewed-property-item" style="cursor:pointer;" onclick="openPropertyModal('${escHtml(addr)}','${mlsParam}')">
+    // data-* + dataset read: address/mlsId come from the public log-activity
+    // endpoint, so never re-parse them as JS inside an inline handler.
+    return `<div class="viewed-property-item" style="cursor:pointer;" data-address="${escHtml(addr)}" data-source="${mlsParam}" onclick="openPropertyModal(this.dataset.address, this.dataset.source)">
       <div class="viewed-property-info">
         <span class="viewed-property-address">${escHtml(addr)}</span>
         ${price ? `<span class="viewed-property-price">${escHtml(price)}</span>` : ''}

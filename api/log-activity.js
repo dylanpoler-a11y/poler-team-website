@@ -33,6 +33,10 @@ export default async function handler(req) {
 
     const { email, token, activityType, details } = body;
     if ((!email && !token) || !activityType) return json({ error: 'Missing required fields' }, 400);
+    // Whitelist before either value reaches filterByFormula (same regexes as
+    // api/remember.js / api/recalibrate.js) — this endpoint is public.
+    if (token && !/^[A-Za-z0-9_-]{10,80}$/.test(String(token))) return json({ error: 'Invalid token' }, 400);
+    if (email && !(/^[^\s@'"\\]+@[^\s@'"\\]+\.[^\s@'"\\]+$/.test(String(email)) && String(email).length <= 254)) return json({ error: 'Invalid email' }, 400);
 
     const headers = { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' };
 
@@ -73,7 +77,10 @@ export default async function handler(req) {
             const actRes = await fetch(tableUrl, {
                 method: 'POST',
                 headers,
-                body: JSON.stringify({ records: [{ fields: activityFields }] }),
+                // typecast: 'Activity Type' is a single-select — without it Airtable
+                // 422s any NEW type (the 2026-08-06 'Email Sent' silent no-op); with it
+                // the option is created on first use (probed live 2026-09-10).
+                body: JSON.stringify({ records: [{ fields: activityFields }], typecast: true }),
             });
             if (!actRes.ok) console.error(`log-activity write failed ${actRes.status}: ${(await actRes.text()).slice(0, 200)}`);
         } catch (err) { console.error(`log-activity write error: ${err.message}`); }
@@ -90,10 +97,13 @@ export default async function handler(req) {
                 if (!Array.isArray(viewedArr)) viewedArr = [];
 
                 const detailObj = typeof details === 'string' ? JSON.parse(details) : details;
+                // Stored values are rendered in the CRM — strip quotes/control
+                // chars and cap length so a hostile caller can't plant markup.
+                const clean = (v, n) => String(v == null ? '' : v).replace(/[<>"'`\\\u0000-\u001f]/g, '').slice(0, n);
                 const newView = {
-                    mlsId: detailObj.mlsId || '',
-                    address: detailObj.address || '',
-                    price: detailObj.price || 0,
+                    mlsId: clean(detailObj.mlsId, 40),
+                    address: clean(detailObj.address, 200),
+                    price: Number(detailObj.price) || 0,
                     viewedAt: now,
                 };
 

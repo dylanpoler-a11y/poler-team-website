@@ -282,7 +282,7 @@ export default async function handler(req, context) {
                         from: `The Poler Team <${fromEmail}>`,
                         to: [email],
                         subject: subjects[lang] || subjects.en,
-                        html: buildWelcomeEmail(first, email, accessPassword, lang),
+                        html: buildWelcomeEmail(first, email, accessPassword, lang, alertToken),
                     }),
                 }).catch(err => console.error('Welcome email failed:', err))
             );
@@ -358,7 +358,10 @@ export default async function handler(req, context) {
     return json({ success: true, id: data.records?.[0]?.id, token: alertToken, password: accessPassword });
 }
 
-function buildWelcomeEmail(firstName, email, password, lang) {
+function buildWelcomeEmail(firstName, email, password, lang, alertToken) {
+    // ?t= = popup-bypass token (2026-09-10): the bare /listing link re-gated every
+    // lead who clicked it from a device/browser without their localStorage.
+    const browseUrl = 'https://www.homesinsoflorida.com/listing' + (alertToken ? `?t=${alertToken}` : '');
     const i = {
         en: { hi: `Hi ${firstName}!`, msg: 'Your account has been created. Here are your login credentials:', emailLabel: 'Email', passLabel: 'Password', note: 'Use these credentials to browse properties without registering again. You\'ll also find them in every property alert email.', browse: 'Browse Properties', footer: 'Rosa Poler · The Poler Team · (954) 235-4046 · rosadasilvapoler@gmail.com' },
         es: { hi: `¡Hola ${firstName}!`, msg: 'Tu cuenta ha sido creada. Aquí están tus credenciales:', emailLabel: 'Correo', passLabel: 'Contraseña', note: 'Usa estas credenciales para ver propiedades sin registrarte de nuevo. También las encontrarás en cada alerta de propiedades.', browse: 'Explorar Propiedades', footer: 'Rosa Poler · The Poler Team · (954) 235-4046 · rosadasilvapoler@gmail.com' },
@@ -384,7 +387,7 @@ function buildWelcomeEmail(firstName, email, password, lang) {
     </div>
     <div style="font-size:13px;color:#64748b;margin-bottom:24px;">${t.note}</div>
     <div style="text-align:center;">
-      <a href="https://www.homesinsoflorida.com/listing" style="display:inline-block;padding:14px 36px;background:#c8a55a;color:#1a2744;text-decoration:none;border-radius:8px;font-size:15px;font-weight:700;">${t.browse} →</a>
+      <a href="${browseUrl}" style="display:inline-block;padding:14px 36px;background:#c8a55a;color:#1a2744;text-decoration:none;border-radius:8px;font-size:15px;font-weight:700;">${t.browse} →</a>
     </div>
   </td></tr>
   <tr><td style="background:#f1f5f9;padding:20px;text-align:center;font-size:12px;color:#64748b;border-top:1px solid #e2e8f0;">
