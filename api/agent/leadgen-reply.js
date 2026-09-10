@@ -223,7 +223,7 @@ export default async function handler(req) {
     const messageId = String(body.messageId || '').trim().slice(0, 300);
     const midTag    = messageId ? `[mid:${messageId}]` : '';
     if (messageId) {
-        const dup = await listAll(TABLES.activity, { filter: `FIND('${esc(midTag)}', {Details})` });
+        const dup = await listAll(TABLES.activity, { filter: `OR({Message ID} = '${esc(messageId)}', FIND('${esc(midTag)}', {Details}))` });
         if (dup.ok && dup.records.length) {
             return json({ ok: true, skipped: 'duplicate', routed: null, messageId, activityId: dup.records[0].id });
         }

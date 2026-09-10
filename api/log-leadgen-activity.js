@@ -74,7 +74,9 @@ export default async function handler(req) {
             if (fields['Subject'] && !existing.fields['Subject']) patch['Subject'] = fields['Subject'];
             if (fields['Mailbox'] && !existing.fields['Mailbox']) patch['Mailbox'] = fields['Mailbox'];
             if (fields.Details && fields.Details.length > (existing.fields['Details'] || '').length) patch['Details'] = fields.Details;
-            if (body.leadId && !(existing.fields['Lead'] || []).length) patch['Lead'] = [body.leadId];
+            // A message can name several LG leads (cc'd partners) — append, never gate on emptiness.
+            const linked = existing.fields['Lead'] || [];
+            if (body.leadId && !linked.includes(body.leadId)) patch['Lead'] = linked.concat([body.leadId]);
             const upd = await updateRecord(TABLES.activity, existing.id, patch);
             record = upd.ok ? upd.record : existing;
         }
