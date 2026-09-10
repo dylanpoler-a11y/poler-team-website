@@ -79,6 +79,14 @@ Live checks on www.homesinsoflorida.com:
   NOT show because the cookie restored `poler_lead_v1`; cookie removed + storage wiped +
   `?gclid=` → gate showed at 10 s, "Already registered?" → email → unlocked + cookie back.
 
+### 4. Gate now fires for ALL traffic (15:14 EDT redeploy)
+Kevin: "I want the popup to fire for all traffic, not just paid." `AUTO_POPUP = true` in
+`listing.js initLeadCapture`; the meta/gads flags stay for attribution only. Verified live on a
+wiped browser with a bare `/listing` URL: gate at 10 s. Note: browsers may serve the OLD
+listing.js from cache for a while (`s-maxage=0, stale-while-revalidate`) — a hard reload shows
+the new behavior. OTP screen (`#lead-step-2`) is still in the HTML but `skipOtp=true` — it never
+shows; "Step 1 of 2 / 2 of 2" refers to name+email → phone+timeline, not SMS.
+
 ## Pending / open
 - Sammy's FIRST WhatsApp message is still generic — context-aware first message (item 3 of the
   build list) needs an engine change in `whatsapp-lead-monitor` (Railway). Not touched.
