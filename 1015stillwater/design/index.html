@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <base href="/1015stillwater/design/">
+  <link rel="canonical" href="https://www.homesinsoflorida.com/1015stillwater/design">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="1015 Stillwater · Inside &amp; Out">
+  <meta property="og:description" content="Explore the waterfront residence and compare three furnished interior concepts with The Poler Team.">
+  <meta property="og:url" content="https://www.homesinsoflorida.com/1015stillwater/design">
+  <meta property="og:image" content="https://www.homesinsoflorida.com/1015stillwater/design/assets/ref-02.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+  <style>.brand-links{display:flex;align-items:center;gap:22px}.walkthrough-link{font-size:11px;text-decoration:none;white-space:nowrap;border-bottom:1px solid #758e60;padding:4px 0}@media(max-width:850px){.brand-links{align-items:flex-start;gap:3px;flex-direction:column}.walkthrough-link{font-size:9px;padding:0;border:0;margin-left:42px}}</style>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 40 40%27%3E%3Crect width=%2740%27 height=%2740%27 rx=%278%27 fill=%27%232c493b%27/%3E%3Ctext x=%2720%27 y=%2730%27 text-anchor=%27middle%27 font-family=%27Georgia%27 font-size=%2731%27 fill=%27%23f7f6f1%27%3ES%3C/text%3E%3C/svg%3E">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#efeee8">
+  <meta name="description" content="Explore 1015 Stillwater inside and out, with furnished room views, three switchable interior schemes and a model based on the architectural plans.">
+  <title>1015 Stillwater · Inside & Out</title>
+  <link rel="stylesheet" href="./style.css">
+  <script type="importmap">{"imports":{"three":"./vendor/three.module.js"}}</script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand-links"><a class="brand" href="/" aria-label="1015 Stillwater home"><span class="brand-mark">S<span>°</span></span><span>1015 STILLWATER<br><b>THE POLER TEAM</b></span></a><a class="walkthrough-link" href="/1015stillwater">Walkthrough ↗</a></div>
+    <nav class="mode-tabs" aria-label="Workspace"><button class="active" id="model-tab" aria-current="page">3D model</button><button id="gallery-open">References <span>44</span></button></nav>
+    <div class="header-end"><span class="local-badge"><i></i> Interactive residence</span><button class="icon-button" id="notes-open" aria-label="About this model" title="About this model">i</button></div>
+  </header>
+  <main class="workspace">
+    <section id="viewport" class="viewport" aria-label="Interactive 3D house model">
+      <div class="view-heading"><span class="eyebrow">ARCHITECTURAL EXPLORATION / 01</span><h1>At the water’s edge.</h1><p id="view-caption">A study in glass, shade, and open space.</p></div>
+      <div id="canvas-host"></div>
+      <div id="loading" role="status">Preparing the residence<span></span></div>
+      <div class="model-tag"><span class="dot"></span><span>Architectural plans · Rev 8</span><button id="model-note">Model notes ↗</button></div>
+      <div id="hotspots" aria-label="Explore architectural features"></div>
+      <div id="room-labels" aria-label="Rooms on the selected floor"></div>
+      <div class="view-tools" aria-label="Camera controls"><button id="zoom-in" title="Zoom in" aria-label="Zoom in">+</button><button id="zoom-out" title="Zoom out" aria-label="Zoom out">−</button><span></span><button id="reset" title="Reset view" aria-label="Reset view">↺</button><button id="rotate" title="Automatic orbit" aria-label="Automatic orbit" aria-pressed="false">⟳</button></div>
+      <div class="orientation"><span id="orientation-arrow">↑</span><b>WATER</b></div>
+      <div class="interior-toolbar" id="interior-toolbar" hidden>
+        <div class="interior-room-nav"><button id="room-prev" aria-label="Previous room">←</button><select id="room-select" aria-label="Interior room"></select><button id="room-next" aria-label="Next room">→</button><button id="interior-exit">Exterior ↗</button></div>
+        <div class="finish-options" id="viewport-finishes" aria-label="Compare interior finishes"></div>
+        <p>Drag to look <span>·</span> Scroll to zoom <span>·</span> Arrow keys to move</p>
+      </div>
+      <div class="bottom-controls"><button id="interior-open" class="enter-interior">Step inside <span>↗</span></button>
+        <div class="view-presets" aria-label="Choose a view">
+          <button class="selected" data-view="overview"><span>01</span> Overview</button>
+          <button data-view="waterfront"><span>02</span> Waterfront</button>
+          <button data-view="arrival"><span>03</span> Arrival</button>
+          <button data-view="aerial"><span>04</span> Above</button>
+        </div>
+        <p class="gesture-hint">Drag to orbit <span>·</span> Scroll to zoom <span>·</span> Right-drag to pan</p>
+      </div>
+    </section>
+    <aside class="sidebar" aria-label="Model and reference settings">
+      <div class="sidebar-title"><span class="eyebrow">THE RESIDENCE</span><span class="outline-tag">REV 8</span></div>
+      <h2>Coastal modern.</h2><p class="intro">Two open courtyards. Three levels.<br>A home to explore, inside and out.</p>
+      <section class="interior-panel" aria-labelledby="interior-panel-title"><span class="eyebrow">THE INTERIOR COLLECTION</span><h3 id="interior-panel-title">Three ways to make it yours.</h3><p>Explore the finished rooms and compare three material palettes.</p><div class="finish-options" id="sidebar-finishes" aria-label="Interior finish palette"></div><button id="interior-start" class="enter-interior">Explore the interiors <span>→</span></button><span class="staging-note">Proposed furnishing & finish concepts</span></section>
+      <button class="reference-hero" id="feature-image-open" aria-label="Open selected reference"><img id="feature-image" src="./assets/ref-02.jpg" alt="Client rendering of exterior stair, round columns and timber soffit"><span>CLIENT REFERENCE <b>↗</b></span></button>
+      <div class="feature-description"><span id="feature-kicker" class="eyebrow">DESIGN INTENT · 02 / 44</span><h3 id="feature-title">The arrival sequence</h3><p id="feature-copy">Floating stair treads, patterned screens, and a timber-lined canopy frame the entrance.</p></div>
+      <div class="setting-section"><span class="eyebrow">MODEL DISPLAY</span>
+        <div class="floor-control"><label for="floor-select">Explore a floor</label><select id="floor-select"><option value="all">Whole home</option><option value="ground">Understory</option><option value="main">First floor</option><option value="upper">Second floor</option></select><p id="floor-caption">Complete exterior and site.</p></div>
+        <div class="setting-row"><label for="roof-toggle">Roof & canopy</label><input id="roof-toggle" type="checkbox" role="switch" checked></div>
+        <div class="setting-row"><label for="landscape-toggle">Landscape</label><input id="landscape-toggle" type="checkbox" role="switch" checked></div>
+        <div class="setting-row"><label for="hotspot-toggle">Reference markers</label><input id="hotspot-toggle" type="checkbox" role="switch" checked></div>
+        <div class="segmented" aria-label="Model material"><button class="active" data-material="natural" aria-pressed="true">Natural materials</button><button data-material="clay" aria-pressed="false">Clay study</button></div>
+      </div>
+      <div class="light-section"><div class="setting-row"><span class="eyebrow">LIGHT</span><span id="light-label">Daylight</span></div><div class="light-control"><span aria-hidden="true">☀</span><input id="light" aria-label="Light from daylight to dusk" type="range" min="0" max="100" value="15"><span aria-hidden="true">☾</span></div></div>
+      <button class="all-references" id="all-references">Explore all references <span>44 images ↗</span></button>
+      <p class="sidebar-foot">ARCHITECTURAL SET REV 8 + 44 CLIENT IMAGES</p>
+    </aside>
+  </main>
+  <dialog id="gallery" aria-labelledby="gallery-title"><div class="dialog-header"><div><span class="eyebrow">CLIENT SOURCE MATERIAL</span><h2 id="gallery-title">The reference collection<span>44</span></h2></div><button class="close-button" data-close="gallery" aria-label="Close references">×</button></div><div class="gallery-filters" aria-label="Reference categories"><button class="active" data-filter="all">All images <span>44</span></button><button data-filter="rendering">Renderings <span>2</span></button><button data-filter="exterior">Exterior</button><button data-filter="interior">Interior & details</button></div><div id="gallery-grid"></div></dialog>
+  <dialog id="lightbox" aria-labelledby="lightbox-title"><div class="lightbox-top"><div><span class="eyebrow" id="lightbox-number"></span><h2 id="lightbox-title"></h2></div><button class="close-button" data-close="lightbox" aria-label="Close image">×</button></div><div class="lightbox-stage"><button id="photo-prev" aria-label="Previous image">←</button><img id="lightbox-image" alt=""><button id="photo-next" aria-label="Next image">→</button></div><p id="lightbox-caption"></p><a id="original-link" target="_blank" rel="noopener">Open original image ↗</a></dialog>
+  <dialog id="notes" aria-labelledby="notes-title"><div class="dialog-header"><span class="eyebrow">MODEL NOTES</span><button class="close-button" data-close="notes" aria-label="Close model notes">×</button></div><h2 id="notes-title">From the<br>architectural plans.</h2><p>This version uses the client-supplied 31-sheet architectural set labeled Revision 8, together with the two client renderings and 42 construction photographs.</p><h3>What has been revised</h3><p>The tapered site, building outlines, two open-to-sky courts, floor elevations, room layout, stairs, elevator, roof and waterfront pool are modeled from the drawings. Annotated dimensions control the geometry; details without dimensions are traced to the printed scale.</p><h3>Explore the layout</h3><p>Choose a floor to see a sectional view with room labels. Walls are cut down for visibility in these views; the whole-home view and downloaded model retain their full height.</p><h3>Finished interior concepts</h3><p>Warm contemporary, Bright coastal and Dramatic luxury are switchable staging schemes. Furniture, decorative lighting and unconfirmed finishes are proposed design concepts. Vanity timber, charcoal basins and pale bath stone are guided by the construction references. These schemes are not a finish selection approved by the owner.</p><h3>What remains illustrative</h3><p>This is a plan-based presentation model, not a surveyed as-built or a construction BIM file. Furniture, small fittings, structural details, landscaping and final finishes are illustrative or simplified. The drawings may differ from later site changes shown in the photographs. The original architectural PDF remains private.</p><button id="export-model" class="primary-button">Download 3D model <span>GLB ↓</span></button><p id="export-status" role="status"></p></dialog>
+  <div id="toast" role="status"></div>
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
