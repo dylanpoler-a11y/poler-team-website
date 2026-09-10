@@ -574,13 +574,10 @@ function initLeadCapture() {
     }
 
     // AUTO-POPUP POLICY (Kevin 2026-08-19, Google Ads re-added 2026-08-23): the
-    // 10s gate fires for PAID traffic only — Facebook/Instagram (fbclid param,
-    // meta utm_source, or FB/IG referrer) and Google Ads (gclid param or
-    // utm_source=googlead, the tag on every campaign final URL). Organic search
-    // and direct visitors browse with NO auto-popup — a bare google.com referrer
-    // without gclid/utm stays popup-free. Paid status is remembered for the whole
-    // visit (sessionStorage) so the gate still works when the visitor clicks into
-    // a property and URL params drop off.
+    // Paid-traffic detection — Facebook/Instagram (fbclid param, meta utm_source,
+    // or FB/IG referrer) and Google Ads (gclid param or utm_source=googlead).
+    // Used for attribution; since 2026-09-10 the gate itself fires for everyone.
+    // Paid status is remembered for the whole visit (sessionStorage).
     const META_KEY = 'poler_meta_visitor';
     const GADS_KEY = 'poler_gads_visitor';
     let isMetaTraffic = false;
@@ -605,7 +602,10 @@ function initLeadCapture() {
             isGoogleAdsTraffic = true;
         }
     } catch (e) { /* privacy-hardened browsers: no auto-popup */ }
-    const AUTO_POPUP = isMetaTraffic || isGoogleAdsTraffic;
+    // 2026-09-10 (Kevin): the gate fires for ALL traffic, not just paid. The
+    // meta/gads flags above are kept for attribution only. Team devices,
+    // captured leads and ?t= links still bypass via leadCaptured.
+    const AUTO_POPUP = true;
     if (AUTO_POPUP && !leadCaptured) {
         const DURATION    = 10000;
         const TIMER_KEY   = 'poler_lead_timer_start';
