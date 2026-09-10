@@ -15,6 +15,11 @@ import { TABLES, creds, json, preflight, createRecord, mapTask } from './_leadge
 
 const TYPES = ['Call', 'Email', 'Meeting', 'Follow-up', 'Other'];
 
+// Legacy date-only 'Due At' = the calendar day in America/New_York (a UTC slice would
+// roll a 9 PM ET reminder onto the next day).
+function etDay(iso) {
+    return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(iso));
+}
 export default async function handler(req) {
     if (req.method === 'OPTIONS') return preflight('POST');
     if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
@@ -42,7 +47,7 @@ export default async function handler(req) {
     };
     if (body.dueAt && !isNaN(Date.parse(body.dueAt))) {
         fields['Due']    = new Date(body.dueAt).toISOString();   // full date+time
-        fields['Due At'] = String(body.dueAt).slice(0, 10);      // legacy date-only
+        fields['Due At'] = etDay(body.dueAt);                     // legacy date-only (ET day)
     }
     if (body.notes)  fields['Notes']  = body.notes;
     if (body.leadId) fields['Lead']   = [body.leadId];

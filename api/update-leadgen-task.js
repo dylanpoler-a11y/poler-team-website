@@ -15,6 +15,11 @@ import { TABLES, creds, json, preflight, updateRecord, mapTask } from './_leadge
 const STATUS = ['Open', 'Done', 'Skipped'];
 const TYPES  = ['Call', 'Email', 'Meeting', 'Follow-up', 'Other'];
 
+// Legacy date-only 'Due At' = the calendar day in America/New_York (a UTC slice would
+// roll a 9 PM ET reminder onto the next day).
+function etDay(iso) {
+    return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(iso));
+}
 export default async function handler(req) {
     if (req.method === 'OPTIONS') return preflight('PATCH, POST');
     if (req.method !== 'PATCH' && req.method !== 'POST') {
@@ -47,7 +52,7 @@ export default async function handler(req) {
     if (body.dueAt  !== undefined) {
         const ok = body.dueAt && !isNaN(Date.parse(body.dueAt));
         fields['Due']    = ok ? new Date(body.dueAt).toISOString() : null;
-        fields['Due At'] = ok ? String(body.dueAt).slice(0, 10) : null;
+        fields['Due At'] = ok ? etDay(body.dueAt) : null;
     }
 
     if (!Object.keys(fields).length) return json({ error: 'nothing to update' }, 400);

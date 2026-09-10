@@ -5089,7 +5089,7 @@ function wireClientEvents() {
 // Wire client events once DOM is ready (independent of login flow so events
 // hook up even before showDashboard is called)
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', wireClientEvents);
+  document.addEventListener('DOMContentLoaded', () => { wireClientEvents(); wireLGEvents(); });
 } else {
   wireClientEvents();
   wireLGEvents();
@@ -5381,7 +5381,7 @@ function updatePipelineStats(deals) {
 }
 
 function wireKanbanInteractions() {
-  document.querySelectorAll('.kanban-card').forEach(card => {
+  document.querySelectorAll('#kanban-board .kanban-card').forEach(card => {   // scoped: LG pipeline cards share the class
     card.addEventListener('dragstart', e => {
       card.classList.add('dragging');
       e.dataTransfer.effectAllowed = 'move';
@@ -6994,7 +6994,7 @@ const LG_STAGES     = ['New', 'Contacted', 'Meeting Booked', 'Won', 'Lost'];
 const LG_SENTIMENTS = ['Positive', 'Question', 'Neutral', 'Not Now', 'Negative'];
 let allLGLeads   = [];
 let currentLGLead = null;
-let lgSaveTimer  = null;
+let lgSaveTimers = {};   // one debounce timer PER field — a shared timer would cancel another field's pending single-field PATCH
 
 function lgAuthQS() { return `password=${encodeURIComponent(currentPassword)}`; }
 function lgCss(v)   { return String(v || '').replace(/\s+/g, '-'); }
@@ -7845,7 +7845,7 @@ function wireLGEvents() {
       const leadId = currentLGLead.id;
       const value  = el.value;
       const status = document.getElementById('lg-save-status');
-      clearTimeout(lgSaveTimer);
+      clearTimeout(lgSaveTimers[id]);
       const run = async () => {
         try {
           if (status) status.textContent = 'Saving…';
@@ -7866,7 +7866,7 @@ function wireLGEvents() {
           if (status) status.textContent = 'Save failed';
         }
       };
-      if (evt === 'change') run(); else lgSaveTimer = setTimeout(run, 700);
+      if (evt === 'change') run(); else lgSaveTimers[id] = setTimeout(run, 700);
     });
   });
 
