@@ -56,8 +56,28 @@ GA4 `gtag('event')` for everyone; `/api/log-activity` row for captured non-team 
 - Local static preview (localhost:3002): card renders EN/ES/PT desktop + mobile, answer → thank-you
   state, "Already registered?" expands + translates. Fixed a real bug found there: rAF never fires
   in a background tab → card stayed at opacity 0 → switched to `setTimeout`.
-- Cold `code-reviewer` (sonnet) pass — see "Review fixes" below.
-- Live checks after deploy — see "Deploy" below.
+- Cold `code-reviewer` (sonnet) found 4 real defects, all fixed before deploy: (1) stored XSS in
+  `crm.js renderPropertiesViewed/renderSavedProperties` (address/mlsId re-parsed as JS inside an
+  inline `onclick`) → `data-*` + `this.dataset` pattern; (2) formula injection in the public
+  `api/log-activity.js` (token/email unvalidated in `filterByFormula`) → same whitelists as
+  remember/recalibrate, plus quote/control-char strip + length cap on stored `Properties Viewed`;
+  (3) `listing.js saveConversationToCRM` still `JSON.parse`d the plain `poler_lead_v1` string →
+  AI-chat transcripts never saved; (4) `?recalib=1` QA hook bypassed capture/gate checks → now
+  requires `leadCaptured` and no active gate. Left open: `/api/remember {email}` is an
+  email-existence oracle (no rate limit) — add throttling only if abuse shows.
+
+## Deploy (2026-09-10 11:19 EDT, `npx vercel --prod --yes`, commit 81c5d93)
+Live checks on www.homesinsoflorida.com:
+- `/api/remember {token:'badtoken1234'}` → 404, no cookie · `{email:testcheck@test.com}` → 200 +
+  `Set-Cookie poler_lt … Domain=.homesinsoflorida.com` · `/api/log-activity` with a formula in
+  `email` → 400 "Invalid email".
+- `/api/recalibrate` for the Test Check lead: `browsing` → `routed:["note"]`; `talk` →
+  `routed:["note","slack","email"]` (Kevin saw the Slack ping). Both Lead Activity
+  'Recalibration' rows + both Convo/Next notes verified in Airtable. Status untouched by design.
+- Browser (in-app pane, live site): email-only lead with no cookie self-healed (`poler_lt` set on
+  boot); `?recalib=1` card renders EN, no console errors; storage wiped + `?gclid=` → gate did
+  NOT show because the cookie restored `poler_lead_v1`; cookie removed + storage wiped +
+  `?gclid=` → gate showed at 10 s, "Already registered?" → email → unlocked + cookie back.
 
 ## Pending / open
 - Sammy's FIRST WhatsApp message is still generic — context-aware first message (item 3 of the
