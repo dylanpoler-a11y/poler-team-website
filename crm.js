@@ -7372,7 +7372,28 @@ async function loadLGActivity(id) {
       </div>`).join('') : '<p class="panel-empty-text">No notes yet</p>';
 
     const icon = t => ({ 'Positive Reply': '🟢', 'Reply': '💬', 'Email Sent': '✉️', 'Call': '📞', 'Meeting': '🤝', 'Status Change': '🔀' }[t] || '📄');
-    actBox.innerHTML = rest.length ? rest.map(a => `
+    // Full emails (thread sync): subject + mailbox + collapsible body + attachment chips.
+    const isEmail = a => !!(a.subject || a.messageId || (a.attachments || []).length);
+    const emailCard = a => {
+      const sent = a.type === 'Email Sent';
+      const body = (a.details || '').replace(/\s*\[mid:[^\]]+\]\s*$/, '').trim();
+      const preview = body.replace(/\s+/g, ' ').slice(0, 160);
+      const atts = (a.attachments || []).map(f => `<a class="lg-att" href="${escHtml(f.url)}" target="_blank" rel="noopener" title="${escHtml(f.filename)}">📎 ${escHtml(f.filename)}</a>`).join('');
+      return `
+      <div class="activity-item lg-email ${sent ? 'lg-email-sent' : 'lg-email-in'}">
+        <span class="activity-icon">${sent ? '📤' : '📥'}</span>
+        <div class="activity-info">
+          <span class="activity-type">${escHtml(a.subject || a.title || (sent ? 'Email sent' : 'Reply'))}</span>
+          <span class="lg-email-meta">${sent ? 'Sent from' : 'Received at'} ${escHtml(a.mailbox || '—')} · ${escHtml(lgFmtDateTime(a.at))}${a.agent && sent ? ` · ${escHtml(a.agent)}` : ''}</span>
+          <span class="activity-detail lg-email-preview">${escHtml(preview)}${body.length > 160 ? '…' : ''}</span>
+          <div class="activity-detail lg-email-full" style="display:none;white-space:pre-wrap;">${escHtml(body)}</div>
+          ${atts ? `<div class="lg-att-row">${atts}</div>` : ''}
+          ${body.length > 160 ? `<button type="button" class="lg-email-toggle" data-open="0">View full email</button>` : ''}
+        </div>
+        <span class="activity-time" title="${escHtml(a.at || '')}">${escHtml(a.at ? relativeTime(a.at) : '')}</span>
+      </div>`;
+    };
+    actBox.innerHTML = rest.length ? rest.map(a => isEmail(a) ? emailCard(a) : `
       <div class="activity-item">
         <span class="activity-icon">${icon(a.type)}</span>
         <div class="activity-info">
@@ -7381,6 +7402,12 @@ async function loadLGActivity(id) {
         </div>
         <span class="activity-time" title="${escHtml(a.at || '')}">${escHtml(a.at ? relativeTime(a.at) : '')}</span>
       </div>`).join('') : '<p class="panel-empty-text">No activity yet</p>';
+    actBox.querySelectorAll('.lg-email-toggle').forEach(btn => btn.addEventListener('click', () => {
+      const card = btn.closest('.lg-email'); const open = btn.dataset.open === '1';
+      card.querySelector('.lg-email-full').style.display = open ? 'none' : 'block';
+      card.querySelector('.lg-email-preview').style.display = open ? '' : 'none';
+      btn.dataset.open = open ? '0' : '1'; btn.textContent = open ? 'View full email' : 'Hide full email';
+    }));
   } catch (err) {
     notesBox.innerHTML = '<p class="panel-empty-text">Could not load notes</p>';
     actBox.innerHTML   = '<p class="panel-empty-text">Could not load activity</p>';

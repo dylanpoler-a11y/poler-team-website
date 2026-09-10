@@ -195,7 +195,33 @@ export function mapActivity(r) {
         details: f['Details'] || '',
         agent:   f['Agent']   || '',
         at:      f['At']      || r.createdTime || '',
+        // Email thread sync (2026-09-10): full emails live here — subject, our mailbox,
+        // the RFC Message-ID (idempotency key) and any files that travelled with it.
+        subject:     f['Subject']    || '',
+        mailbox:     f['Mailbox']    || '',
+        messageId:   f['Message ID'] || '',
+        attachments: (f['Attachments'] || []).map(a => ({
+            id: a.id, filename: a.filename, url: a.url, size: a.size || 0, type: a.type || '',
+        })),
     };
+}
+
+/**
+ * Upload one file onto an attachment field of an existing record via Airtable's
+ * content endpoint (base64 in, ≤5 MB per file). Same call the email cron uses.
+ */
+export async function uploadAttachment(recordId, field, { filename, contentType, base64 }) {
+    const { apiKey, baseId } = creds();
+    const res = await fetch(`https://content.airtable.com/v0/${baseId}/${recordId}/${encodeURIComponent(field)}/uploadAttachment`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contentType: contentType || 'application/octet-stream', file: base64, filename }),
+    });
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        return { ok: false, status: res.status, error: err.error?.message || `upload ${res.status}` };
+    }
+    return { ok: true };
 }
 
 /** Best-effort activity row. Never let a logging failure break the caller. */

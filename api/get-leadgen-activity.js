@@ -26,7 +26,12 @@ export default async function handler(req) {
     const leadId = url.searchParams.get('leadId');
     const limit  = parseInt(url.searchParams.get('limit') || '0', 10);
 
-    const res = await listAll(TABLES.activity, { sortField: 'At', sortDir: 'desc' });
+    // Filter by lead SERVER-side ({Lead Record ID} = lookup of RECORD_ID(); ARRAYJOIN({Lead})
+    // yields NAMES, not ids): listAll caps at 1,000 rows and the thread sync
+    // (every email in/out per lead) pushes the table well past that.
+    const filter = /^rec[A-Za-z0-9]{14}$/.test(leadId || '')
+        ? `FIND('${leadId}', ARRAYJOIN({Lead Record ID}))` : undefined;
+    const res = await listAll(TABLES.activity, { sortField: 'At', sortDir: 'desc', filter });
     if (!res.ok) return json({ error: res.error, activity: [] }, res.status || 502);
 
     let activity = res.records.map(mapActivity);

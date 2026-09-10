@@ -2681,3 +2681,13 @@ body {
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+\n
+/* ── LEAD GENERATION: full-email cards in the Activity Log (thread sync 2026-09-10) ── */
+.lg-email .activity-info { min-width: 0; }
+.lg-email-meta { display: block; font-size: 0.72rem; color: var(--color-text-muted, #6b7280); margin: 2px 0 4px; }
+.lg-email-sent .activity-icon { filter: saturate(1.2); }
+.lg-email-full { font-size: 0.82rem; line-height: 1.45; color: var(--color-text, #1f2937); background: var(--color-bg-soft, #f8f9fb); border: 1px solid var(--color-border, #e5e7eb); border-radius: 6px; padding: 8px 10px; margin-top: 6px; max-height: 60vh; overflow: auto; }
+.lg-email-toggle { margin-top: 6px; background: none; border: none; padding: 0; color: var(--color-navy, #1a2744); font: inherit; font-size: 0.75rem; font-weight: 600; cursor: pointer; text-decoration: underline; }
+.lg-att-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.lg-att { display: inline-flex; align-items: center; gap: 4px; font-size: 0.74rem; padding: 3px 8px; border-radius: 999px; background: var(--color-bg-soft, #f3f4f6); border: 1px solid var(--color-border, #e5e7eb); color: var(--color-navy, #1a2744); text-decoration: none; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lg-att:hover { background: #e8ebf2; }
