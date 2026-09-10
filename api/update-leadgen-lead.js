@@ -5,7 +5,7 @@
  * last-contact stamps. Logs a Status Change activity row when the stage moves.
  *
  *   PATCH { id, status?, notes?, owner?, name?, email?, company?, title?,
- *           phone?, website?, campaign?, sentiment?, summary?, stampContact?, agent? }
+ *           phone?, contactedFrom?, website?, campaign?, sentiment?, summary?, stampContact?, agent? }
  *   → { ok, lead }
  */
 
@@ -60,6 +60,7 @@ export default async function handler(req) {
     put('Company',  body.company);
     put('Title',    body.title);
     put('Phone',    body.phone);
+    put('Contacted From', body.contactedFrom);
     put('Website',  body.website);
     put('Campaign', body.campaign);
     put('Sentiment', body.sentiment);

@@ -9,6 +9,7 @@
  *   GET ?channel=Email         → filter by source channel (Email|Facebook|LinkedIn|WhatsApp|LoopNet|Manual)
  *   GET ?sentiment=Positive    → filter by reply sentiment
  *   GET ?campaign=exec_search  → filter by campaign slug
+ *   GET ?id=recXXXX            → exactly one lead (Flash coach)
  */
 
 export const config = { runtime: 'edge' };
@@ -30,6 +31,9 @@ export default async function handler(req) {
         const v = url.searchParams.get(param);
         if (v) clauses.push(`{${field}} = '${esc(v)}'`);
     }
+    // ?id=recXXXX → exactly one lead (Flash coach uses this; the CRM UI lists all).
+    const id = url.searchParams.get('id');
+    if (id) clauses.push(`RECORD_ID() = '${esc(id)}'`);
     const filter = clauses.length > 1 ? `AND(${clauses.join(',')})`
                  : clauses.length === 1 ? clauses[0]
                  : undefined;

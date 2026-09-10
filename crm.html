@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="crm.css?v=20260515c" />
+  <link rel="stylesheet" href="crm.css?v=20260910b" />
   <!-- MapLibre GL JS for alert map drawing (vector tiles — smooth zooming) -->
   <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.1.2/dist/maplibre-gl.css" />
   <!-- Chart.js for the AI Calls tab graph -->
@@ -118,6 +118,9 @@
           </a>
           <a class="nav-item" data-action="leadgen-pipeline" href="#">
             <span class="nav-icon">🎯</span> Pipeline
+          </a>
+          <a class="nav-item" data-action="leadgen-reminders" href="#">
+            <span class="nav-icon">🔔</span> Reminders <span id="leadgen-reminder-badge" class="reminder-badge" style="display:none;">0</span>
           </a>
           <div class="sidebar-section-divider">Tools</div>
           <a class="nav-item" data-action="export" href="#">
@@ -830,6 +833,50 @@
           <div id="lg-kanban-board" class="kanban-board"></div>
         </div><!-- /leadgen-pipeline-view -->
 
+        <!-- ═══════ LEAD GEN REMINDERS VIEW (LeadGen Tasks; same shape as the RE Reminders view) ═══════ -->
+        <div id="leadgen-reminders-view" style="display:none;">
+          <div class="crm-header">
+            <h1>Reminders <span id="lg-reminders-count-label" class="reminders-count-label"></span></h1>
+            <div class="header-right">
+              <select id="lg-reminder-status-filter" class="filter-select">
+                <option value="">All</option>
+                <option value="Open" selected>Pending</option>
+                <option value="Done">Completed</option>
+                <option value="Skipped">Cancelled</option>
+              </select>
+              <select id="lg-reminder-owner-filter" class="filter-select">
+                <option value="">All Agents</option>
+                <option value="Kevin">Kevin</option>
+                <option value="Dylan">Dylan</option>
+                <option value="Rosa">Rosa</option>
+              </select>
+              <button id="lg-refresh-reminders-btn" class="refresh-btn">↻ Refresh</button>
+            </div>
+          </div>
+
+          <div class="table-card">
+            <div id="lg-reminders-loading" style="display:none;">
+              <div class="loading-spinner"></div>
+              <div>Loading reminders…</div>
+            </div>
+            <div id="lg-reminders-empty" style="display:none;">No reminders found.</div>
+            <table class="leads-table" id="lg-reminders-table" style="display:none;">
+              <thead>
+                <tr>
+                  <th>Due</th>
+                  <th>Lead</th>
+                  <th>Action</th>
+                  <th>Note</th>
+                  <th>Agent</th>
+                  <th>Status</th>
+                  <th style="width:140px">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="lg-reminders-tbody"></tbody>
+            </table>
+          </div>
+        </div><!-- /leadgen-reminders-view -->
+
         <div id="listings-view" style="display:none;">
           <div class="crm-header">
             <h1>Listings <span id="listings-count-label" class="reminders-count-label"></span></h1>
@@ -1367,30 +1414,112 @@
 
   <!-- ═══════ LEAD GENERATION PANEL (slide-out) ═══════ -->
   <aside id="leadgen-panel">
-    <div class="panel-header">
-      <span style="font-size:0.875rem;font-weight:600;color:#1a2744;">Lead Generation</span>
-      <button id="lg-panel-close" class="panel-close" aria-label="Close panel">✕</button>
-    </div>
 
-    <div class="panel-lead-info">
-      <div class="panel-avatar"><span id="lg-avatar-text">?</span></div>
-      <div>
-        <div class="panel-name" id="lg-panel-name">—</div>
-        <div class="panel-date" id="lg-panel-sub">—</div>
+    <!-- Panel Header (same chrome as #lead-panel: expand + close) -->
+    <div class="panel-header">
+      <span style="font-size:0.875rem;font-weight:600;color:#1a2744;">Lead Details</span>
+      <div style="display:flex;align-items:center;gap:0.25rem;">
+        <button id="lg-panel-expand" class="panel-close" aria-label="Expand panel" title="Agrandar / reducir panel">⛶</button>
+        <button id="lg-panel-close" class="panel-close" aria-label="Close panel">✕</button>
       </div>
     </div>
 
+    <!-- Lead Info -->
+    <div class="panel-lead-info">
+      <div class="panel-avatar"><span id="lg-avatar-text">?</span></div>
+      <div style="flex:1;min-width:0;">
+        <div class="panel-name" id="lg-panel-name">—</div>
+        <div class="panel-date" id="lg-panel-sub">—</div>
+      </div>
+      <button id="lg-edit-contact-btn" type="button" title="Edit name / company / title / website" style="background:none;border:1px solid #e5e7eb;border-radius:6px;padding:4px 8px;font-size:12px;cursor:pointer;color:#475569;">✏️</button>
+    </div>
+
+    <!-- Contact Info -->
+    <div class="panel-section">
+      <div class="panel-section-title">Contact</div>
+
+      <!-- Editable identity (toggled by the ✏️ button) -->
+      <div id="lg-contact-edit" style="display:none;">
+        <div class="panel-field">
+          <div class="panel-field-label">Name</div>
+          <input type="text" id="lg-name" class="panel-input" placeholder="Full name" />
+        </div>
+        <div class="panel-field">
+          <div class="panel-field-label">Company</div>
+          <input type="text" id="lg-company" class="panel-input" placeholder="Company" />
+        </div>
+        <div class="panel-field">
+          <div class="panel-field-label">Title</div>
+          <input type="text" id="lg-title" class="panel-input" placeholder="Role / title" />
+        </div>
+        <div class="panel-field">
+          <div class="panel-field-label">Website</div>
+          <input type="url" id="lg-website" class="panel-input" placeholder="https://" />
+        </div>
+      </div>
+
+      <div class="panel-field">
+        <div class="panel-field-label">Phone</div>
+        <input type="tel" id="lg-phone" class="panel-input" placeholder="+1 305 555 0000" />
+      </div>
+      <div class="panel-field">
+        <div class="panel-field-label">Email</div>
+        <input type="email" id="lg-email" class="panel-input" placeholder="email@example.com" />
+      </div>
+      <div class="panel-field">
+        <div class="panel-field-label">Company · Title</div>
+        <div class="panel-field-value" id="lg-company-line">—</div>
+      </div>
+      <div class="panel-field">
+        <div class="panel-field-label">Website</div>
+        <div class="panel-field-value" id="lg-website-line">—</div>
+      </div>
+      <div class="panel-field">
+        <div class="panel-field-label">Contacted From</div>
+        <div class="panel-field-value" id="lg-contacted-from" title="The mailbox / account the outreach went out from">—</div>
+      </div>
+      <div class="panel-field">
+        <div class="panel-field-label">Channel · Campaign</div>
+        <div class="panel-field-value" id="lg-source-line">—</div>
+      </div>
+      <div class="panel-field">
+        <div class="panel-field-label">First Reply</div>
+        <div class="panel-field-value" id="lg-first-reply-date">—</div>
+      </div>
+      <div id="lg-save-status" class="panel-alert-status"></div>
+    </div>
+
+    <!-- Quick Action Buttons -->
     <div class="panel-actions">
       <a id="lg-call" href="#" class="action-btn">📞 Call</a>
       <a id="lg-email-action" href="#" class="action-btn">✉️ Email</a>
       <a id="lg-whatsapp" href="#" class="action-btn whatsapp" target="_blank" rel="noopener">💬 WhatsApp</a>
     </div>
 
+    <!-- Flash live coach (same lazy iframe as the RE panel, bucket=leadgen) -->
+    <div class="panel-section" id="lg-coach-section">
+      <div class="panel-section-title" style="display:flex;align-items:center;justify-content:space-between;">
+        <span>🎯 Coach en vivo (Flash)</span>
+        <button type="button" id="lg-coach-close" style="display:none;background:none;border:1px solid #e5e7eb;border-radius:6px;padding:3px 10px;font-size:12px;font-weight:600;cursor:pointer;color:#475569;">✕ Cerrar</button>
+      </div>
+      <div id="lg-coach-launch">
+        <button type="button" id="lg-coach-start" class="action-btn" style="width:100%;background:#1a2744;color:#fff;border:none;cursor:pointer;">
+          🎯 Iniciar coaching en vivo
+        </button>
+        <p id="lg-coach-hint" style="margin:0.5rem 0 0;font-size:11px;color:#718096;line-height:1.5;">
+          Pon la llamada en altavoz junto a la computadora. Flash escucha y te aconseja en vivo, ya conociendo a este lead. Al colgar, guarda la nota, los próximos pasos y un recordatorio en el CRM. Usa ⛶ para agrandar el panel.
+        </p>
+      </div>
+      <iframe id="lg-coach-iframe" title="Flash coach" allow="microphone" referrerpolicy="no-referrer"
+        style="display:none;width:100%;height:900px;border:1px solid #e5e7eb;border-radius:8px;background:#0f0f12;margin-top:0.5rem;"></iframe>
+    </div>
+
+    <!-- Status Section -->
     <div class="panel-section">
-      <div class="panel-section-title">Pipeline</div>
+      <div class="panel-section-title">Status</div>
       <div class="panel-field">
         <div class="panel-field-label">Stage</div>
-        <select id="lg-status" class="panel-input">
+        <select id="lg-status" class="panel-status-select">
           <option value="New">New</option>
           <option value="Contacted">Contacted</option>
           <option value="Meeting Booked">Meeting Booked</option>
@@ -1400,7 +1529,7 @@
       </div>
       <div class="panel-field">
         <div class="panel-field-label">Sentiment</div>
-        <select id="lg-sentiment" class="panel-input">
+        <select id="lg-sentiment" class="panel-status-select">
           <option value="">—</option>
           <option value="Positive">Positive</option>
           <option value="Question">Question</option>
@@ -1411,7 +1540,7 @@
       </div>
       <div class="panel-field">
         <div class="panel-field-label">Owner</div>
-        <select id="lg-owner" class="panel-input">
+        <select id="lg-owner" class="panel-status-select">
           <option value="Kevin">Kevin</option>
           <option value="Dylan">Dylan</option>
           <option value="Rosa">Rosa</option>
@@ -1419,68 +1548,75 @@
       </div>
     </div>
 
+    <!-- Conversation (running summary + the verbatim first reply) -->
     <div class="panel-section">
-      <div class="panel-section-title">Conversation</div>
+      <div class="panel-section-title">Conversation <span id="lg-reply-count" style="font-weight:400;color:#94a3b8;font-size:12px;"></span></div>
       <div class="panel-field">
-        <div class="panel-field-label">Summary <span id="lg-reply-count" style="font-weight:400;color:#94a3b8;"></span></div>
-        <textarea id="lg-summary" class="panel-input" rows="4" placeholder="Running summary of the conversation…" style="width:100%;"></textarea>
+        <div class="panel-field-label">Summary</div>
+        <textarea id="lg-summary" class="panel-notes" rows="4" placeholder="Running summary of the conversation…" style="min-height:70px;"></textarea>
       </div>
       <div class="panel-field">
-        <div class="panel-field-label">First reply <span id="lg-first-reply-date" style="font-weight:400;color:#94a3b8;"></span></div>
+        <div class="panel-field-label">Their reply</div>
         <div id="lg-first-reply" class="lg-reply-block">—</div>
       </div>
     </div>
 
+    <!-- Notes Section (multi-note, stored as Note-type activity rows) -->
     <div class="panel-section">
-      <div class="panel-section-title">Contact</div>
-      <div class="panel-field">
-        <div class="panel-field-label">Name</div>
-        <input type="text" id="lg-name" class="panel-input" placeholder="Full name" />
-      </div>
-      <div class="panel-field">
-        <div class="panel-field-label">Company</div>
-        <input type="text" id="lg-company" class="panel-input" placeholder="Company" />
-      </div>
-      <div class="panel-field">
-        <div class="panel-field-label">Title</div>
-        <input type="text" id="lg-title" class="panel-input" placeholder="Role / title" />
-      </div>
-      <div class="panel-field">
-        <div class="panel-field-label">Email</div>
-        <input type="email" id="lg-email" class="panel-input" placeholder="email@example.com" />
-      </div>
-      <div class="panel-field">
-        <div class="panel-field-label">Phone</div>
-        <input type="tel" id="lg-phone" class="panel-input" placeholder="+1 555 123 4567" />
-      </div>
-      <div class="panel-field">
-        <div class="panel-field-label">Website</div>
-        <input type="url" id="lg-website" class="panel-input" placeholder="https://" />
-      </div>
-      <div class="panel-field">
-        <div class="panel-field-label">Channel · Campaign</div>
-        <div class="panel-field-value" id="lg-source-line">—</div>
-      </div>
-      <div id="lg-save-status" class="panel-alert-status"></div>
+      <div class="panel-section-title">My Notes</div>
+      <textarea id="lg-new-note-text" class="panel-notes" placeholder="Write a new note…" style="min-height:70px"></textarea>
+      <button id="lg-save-new-note" class="panel-save-btn" type="button">Save Note</button>
+      <div id="lg-new-note-status"></div>
+      <div id="lg-notes-history" class="notes-history"></div>
     </div>
 
+    <!-- Activity Log -->
     <div class="panel-section">
-      <div class="panel-section-title" style="display:flex;justify-content:space-between;align-items:center;">
-        Activity
-        <button id="lg-add-note-toggle" type="button" class="alert-action-btn" style="padding:4px 10px;font-size:12px;">+ Add Note</button>
-      </div>
-      <div id="lg-new-note-form" style="display:none; margin-bottom: 1rem;">
-        <textarea id="lg-new-note-text" class="panel-input" rows="3" placeholder="Write a note…" style="width:100%;"></textarea>
-        <div style="display:flex; gap:8px; margin-top:8px;">
-          <button id="lg-save-new-note" type="button" class="alert-action-btn" style="padding:6px 12px;font-size:12px;flex:0 0 auto;">Save Note</button>
-          <button id="lg-cancel-new-note" type="button" class="alert-action-btn secondary" style="padding:6px 12px;font-size:12px;flex:0 0 auto;">Cancel</button>
-        </div>
-        <div id="lg-new-note-status" style="font-size:0.75rem;color:#6b7280;margin-top:4px;"></div>
-      </div>
-      <div id="lg-activity-list" class="company-notes-list">
-        <p class="panel-empty-text">Loading…</p>
+      <div class="panel-section-title">Activity Log</div>
+      <div id="lg-activity-list" class="panel-activity-wrap">
+        <p class="panel-empty-text">No activity yet</p>
       </div>
     </div>
+
+    <!-- Existing Reminders for this Lead (LeadGen Tasks, status Open) -->
+    <div class="panel-section" id="lg-existing-reminders-section" style="display:none;">
+      <div class="panel-section-title">Active Reminders</div>
+      <div id="lg-existing-reminders"></div>
+    </div>
+
+    <!-- Set Reminder Section -->
+    <div class="panel-section">
+      <div class="panel-section-title">Set Reminder</div>
+      <div class="panel-field">
+        <div class="panel-field-label">Action Type</div>
+        <select id="lg-reminder-action" class="panel-input">
+          <option value="Call">Call</option>
+          <option value="Email">Email</option>
+          <option value="Meeting">Meeting</option>
+          <option value="Follow-up">Follow Up</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="panel-field">
+        <div class="panel-field-label">Assign To</div>
+        <select id="lg-reminder-agent" class="panel-input">
+          <option value="Kevin">Kevin</option>
+          <option value="Dylan">Dylan</option>
+          <option value="Rosa">Rosa</option>
+        </select>
+      </div>
+      <div class="panel-field">
+        <div class="panel-field-label">Due Date & Time</div>
+        <input type="datetime-local" id="lg-reminder-due" class="panel-input" />
+      </div>
+      <div class="panel-field">
+        <div class="panel-field-label">Note</div>
+        <textarea id="lg-reminder-note" class="panel-input" rows="2" placeholder="Reminder note…" style="resize:vertical;min-height:50px;"></textarea>
+      </div>
+      <button id="lg-reminder-submit" class="alert-action-btn" type="button">Create Reminder</button>
+      <div id="lg-reminder-status" class="panel-alert-status"></div>
+    </div>
+
   </aside>
 
   <!-- ═══════ CONSULTING CLIENT PANEL ═══════ -->
@@ -2225,6 +2361,6 @@
   </div>
 
   <script src="https://unpkg.com/maplibre-gl@4.1.2/dist/maplibre-gl.js"></script>
-  <script src="crm.js?v=20260828a" defer></script>
+  <script src="crm.js?v=20260910b" defer></script>
 </body>
 </html>

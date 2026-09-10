@@ -148,6 +148,7 @@ export function mapLead(r) {
         company:       f['Company']         || '',
         title:         f['Title']           || '',
         phone:         f['Phone']           || '',
+        contactedFrom: f['Contacted From']   || '',
         channel:       f['Channel']         || '',
         campaign:      f['Campaign']        || '',
         status:        f['Status']          || 'New',
@@ -175,7 +176,8 @@ export function mapTask(r) {
         id:     r.id,
         title:  f['Title']  || '',
         type:   f['Type']   || '',
-        dueAt:  f['Due At'] || '',
+        // `Due` (dateTime, 2026-09-10) carries the time; `Due At` (date) is the legacy field.
+        dueAt:  f['Due'] || f['Due At'] || '',
         status: f['Status'] || 'Open',
         owner:  f['Owner']  || '',
         leadIds: f['Lead']  || [],

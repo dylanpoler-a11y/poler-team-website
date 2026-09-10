@@ -40,7 +40,10 @@ export default async function handler(req) {
         'Status': 'Open',
         'Owner':  body.owner || 'Kevin',
     };
-    if (body.dueAt)  fields['Due At'] = String(body.dueAt).slice(0, 10);
+    if (body.dueAt && !isNaN(Date.parse(body.dueAt))) {
+        fields['Due']    = new Date(body.dueAt).toISOString();   // full date+time
+        fields['Due At'] = String(body.dueAt).slice(0, 10);      // legacy date-only
+    }
     if (body.notes)  fields['Notes']  = body.notes;
     if (body.leadId) fields['Lead']   = [body.leadId];
 

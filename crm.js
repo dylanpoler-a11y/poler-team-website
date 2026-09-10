@@ -78,6 +78,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loadConsultingContacts();
     loadConsultingPartners();
     loadLGLeads();
+    loadLGTasks();
     return;
   }
 
@@ -152,6 +153,7 @@ document.addEventListener('DOMContentLoaded', () => {
       loadConsultingContacts();
       loadConsultingPartners();
       loadLGLeads();
+      loadLGTasks();
     } catch (err) {
       console.error('Login error:', err);
       loginError.textContent = 'Connection error. Please try again.';
@@ -296,6 +298,7 @@ function switchView(view) {
     autoresearch:  document.getElementById('autoresearch-view'),
     leadgen:       document.getElementById('leadgen-view'),
     'leadgen-pipeline': document.getElementById('leadgen-pipeline-view'),
+    'leadgen-reminders': document.getElementById('leadgen-reminders-view'),
   };
 
   Object.values(views).forEach(el => { if (el) el.style.display = 'none'; });
@@ -350,6 +353,11 @@ function switchView(view) {
     if (views['leadgen-pipeline']) views['leadgen-pipeline'].style.display = 'block';
     renderLGPipeline();
     loadLGLeads();
+  } else if (view === 'leadgen-reminders') {
+    if (views['leadgen-reminders']) views['leadgen-reminders'].style.display = 'block';
+    renderLGReminders();          // paint from cache, then refetch (same pattern as the RE view)
+    loadLGTasks();
+    if (!allLGLeads.length) loadLGLeads();
   } else {
     if (views.dashboard) views.dashboard.style.display = 'block';
   }
@@ -1068,7 +1076,7 @@ function setupEvents() {
         switchView('ai-calls');
       } else if (action === 'autoresearch') {
         switchView('autoresearch');
-      } else if (action === 'leadgen' || action === 'leadgen-pipeline') {
+      } else if (action === 'leadgen' || action === 'leadgen-pipeline' || action === 'leadgen-reminders') {
         switchView(action);
       } else if (action === 'refresh') {
         switchView('dashboard');
@@ -1845,10 +1853,21 @@ async function getFlashConfig() {
   return _flashConfig;
 }
 
-function resetCoachSection() {
-  const iframe = document.getElementById('panel-coach-iframe');
-  const launch = document.getElementById('panel-coach-launch');
-  const closeBtn = document.getElementById('panel-coach-close');
+// Two panels embed the coach — the RE lead panel and the Lead Gen panel — with
+// identical structure under different element ids. Every coach helper takes a
+// slot key ('re' | 'lg'); a non-string arg (a click Event from addEventListener)
+// falls back to 're'.
+const COACH_SLOTS = {
+  re: { panel: 'lead-panel',    iframe: 'panel-coach-iframe', launch: 'panel-coach-launch', close: 'panel-coach-close', start: 'panel-coach-start', bucket: 'leads' },
+  lg: { panel: 'leadgen-panel', iframe: 'lg-coach-iframe',    launch: 'lg-coach-launch',    close: 'lg-coach-close',    start: 'lg-coach-start',    bucket: 'leadgen' },
+};
+function coachSlot(slot) { return COACH_SLOTS[typeof slot === 'string' ? slot : 're'] || COACH_SLOTS.re; }
+
+function resetCoachSection(slot) {
+  const S = coachSlot(slot);
+  const iframe = document.getElementById(S.iframe);
+  const launch = document.getElementById(S.launch);
+  const closeBtn = document.getElementById(S.close);
   if (iframe) { iframe.src = ''; iframe.style.display = 'none'; }
   if (launch) launch.style.display = 'block';
   if (closeBtn) closeBtn.style.display = 'none';
@@ -1860,39 +1879,45 @@ function resetCoachSection() {
 // pressed — then keep the (hidden) iframe alive for a grace window so the submit and the
 // recording upload can finish before the document is destroyed. Every teardown path
 // (panel close, overlay click, Esc, coach ✕, switching to another lead) goes through here.
-let _coachBlankTimer = null;
+const _coachBlankTimers = { re: null, lg: null };
 const COACH_FINALIZE_GRACE_MS = 25000;
-function finalizeCoachSection() {
-  const iframe = document.getElementById('panel-coach-iframe');
-  if (!iframe || !iframe.src) { resetCoachSection(); return; }
+function finalizeCoachSection(slot) {
+  const key = typeof slot === 'string' ? slot : 're';
+  const S = coachSlot(key);
+  const iframe = document.getElementById(S.iframe);
+  if (!iframe || !iframe.src) { resetCoachSection(key); return; }
   try {
     iframe.contentWindow.postMessage({ type: 'flash:finalize' }, new URL(iframe.src).origin);
   } catch (e) { /* fire-and-forget — the grace-window blank still releases the mic */ }
   // UI returns to the launch state immediately; the doc dies quietly after the grace window.
   iframe.style.display = 'none';
-  const launch = document.getElementById('panel-coach-launch');
-  const closeBtn = document.getElementById('panel-coach-close');
+  const launch = document.getElementById(S.launch);
+  const closeBtn = document.getElementById(S.close);
   if (launch) launch.style.display = 'block';
   if (closeBtn) closeBtn.style.display = 'none';
-  clearTimeout(_coachBlankTimer);
-  _coachBlankTimer = setTimeout(resetCoachSection, COACH_FINALIZE_GRACE_MS);
+  clearTimeout(_coachBlankTimers[key]);
+  _coachBlankTimers[key] = setTimeout(() => resetCoachSection(key), COACH_FINALIZE_GRACE_MS);
 }
 
-async function openFlashCoach(lead) {
+async function openFlashCoach(lead, slot) {
   if (!lead || !lead.id) return;
-  const iframe = document.getElementById('panel-coach-iframe');
-  const launch = document.getElementById('panel-coach-launch');
-  const btn    = document.getElementById('panel-coach-start');
+  const key = typeof slot === 'string' ? slot : 're';
+  const S = coachSlot(key);
+  const iframe = document.getElementById(S.iframe);
+  const launch = document.getElementById(S.launch);
+  const btn    = document.getElementById(S.start);
   if (!iframe) return;
   if (btn) { btn.disabled = true; btn.textContent = 'Cargando coach…'; }
   try {
     // A pending grace-window blank from a just-finalized call must never kill THIS session.
-    clearTimeout(_coachBlankTimer);
+    clearTimeout(_coachBlankTimers[key]);
     const cfg = await getFlashConfig();
-    iframe.src = `${cfg.flashBaseUrl}/embed?leadId=${encodeURIComponent(lead.id)}&key=${encodeURIComponent(cfg.embedToken)}`;
+    // bucket=leadgen makes Flash read/write the LeadGen tables instead of the RE Leads table.
+    const bucketQS = S.bucket === 'leadgen' ? '&bucket=leadgen' : '';
+    iframe.src = `${cfg.flashBaseUrl}/embed?leadId=${encodeURIComponent(lead.id)}&key=${encodeURIComponent(cfg.embedToken)}${bucketQS}`;
     iframe.style.display = 'block';
     if (launch) launch.style.display = 'none';
-    const closeBtn = document.getElementById('panel-coach-close');
+    const closeBtn = document.getElementById(S.close);
     if (closeBtn) closeBtn.style.display = 'inline-block';
   } catch (e) {
     alert('No se pudo cargar Flash. Revisa la configuración (FLASH_EMBED_TOKEN / FLASH_BASE_URL).');
@@ -1901,8 +1926,8 @@ async function openFlashCoach(lead) {
   }
 }
 
-function togglePanelExpand() {
-  document.getElementById('lead-panel')?.classList.toggle('panel-expanded');
+function togglePanelExpand(slot) {
+  document.getElementById(coachSlot(slot).panel)?.classList.toggle('panel-expanded');
 }
 
 // Render the lead's Flash call recordings (newest first): dated audio players plus,
@@ -2004,6 +2029,9 @@ async function handleFlashMessage(event) {
 
   const data = event.data;
   if (!data) return;
+
+  // Lead Gen leads take their own path (LeadGen tables; no save-recording).
+  if (data.leadId && isLGLeadId(data.leadId, data.bucket)) { await handleFlashMessageLG(data); return; }
 
   // A coached call ended → save its recording (audio) and/or transcript (text) under
   // "Flash voice recordings". The two arrive as SEPARATE messages for the same callId;
@@ -7222,9 +7250,40 @@ async function updateLGStatus(id, status) {
 }
 
 // ── PANEL ──────────────────────────────────────────────────────────────────
+// Mirrors openPanel() for RE leads: display values + a ✏️ toggle for the
+// editable identity fields, Flash coach slot 'lg', notes/activity from
+// LeadGen Activity, reminders from LeadGen Tasks.
+function lgWebsiteHref(url) {
+  if (!url) return '';
+  return /^https?:\/\//i.test(url) ? url : `https://${url}`;
+}
+
+function renderLGContactDisplay(lead) {
+  const co = document.getElementById('lg-company-line');
+  if (co) co.textContent = [lead.company, lead.title].filter(Boolean).join(' · ') || '—';
+  const web = document.getElementById('lg-website-line');
+  if (web) {
+    web.innerHTML = lead.website
+      ? `<a href="${escHtml(lgWebsiteHref(lead.website))}" target="_blank" rel="noopener">${escHtml(lead.website)}</a>`
+      : '—';
+  }
+  // Which of the KPS / personal mailboxes the outreach went out from (Kevin 2026-09-10).
+  const from = document.getElementById('lg-contacted-from');
+  if (from) from.textContent = lead.contactedFrom || '—';
+  const src = document.getElementById('lg-source-line');
+  if (src) src.textContent = `${lead.channel || '—'}${lead.campaign ? ` · ${lead.campaign}` : ''}${lead.sourceLeadId ? ` · ${lead.sourceLeadId}` : ''}`;
+  const frd = document.getElementById('lg-first-reply-date');
+  if (frd) frd.textContent = lead.replyAt ? lgFmtDate(lead.replyAt) : '—';
+}
+
 function openLGPanel(id) {
   const lead = allLGLeads.find(l => l.id === id);
   if (!lead) return;
+  // Switching leads while the coach is live = the previous call ended.
+  const coachFrame = document.getElementById('lg-coach-iframe');
+  const coachOnThisLead = coachFrame && coachFrame.src &&
+    coachFrame.src.indexOf('leadId=' + encodeURIComponent(id)) !== -1;
+  if (!coachOnThisLead) finalizeCoachSection('lg');
   currentLGLead = lead;
 
   const avatar = document.getElementById('lg-avatar-text');
@@ -7243,15 +7302,12 @@ function openLGPanel(id) {
   setVal('lg-email',     lead.email || '');
   setVal('lg-phone',     lead.phone || '');
   setVal('lg-website',   lead.website || '');
+  renderLGContactDisplay(lead);
 
   const rc = document.getElementById('lg-reply-count');
   if (rc) rc.textContent = lead.replyCount ? `· ${lead.replyCount} repl${lead.replyCount === 1 ? 'y' : 'ies'}` : '';
   const fr = document.getElementById('lg-first-reply');
   if (fr) fr.textContent = lead.firstReply || lead.replySnippet || '—';
-  const frd = document.getElementById('lg-first-reply-date');
-  if (frd) frd.textContent = lead.replyAt ? `· ${lgFmtDate(lead.replyAt)}` : '';
-  const src = document.getElementById('lg-source-line');
-  if (src) src.textContent = `${lead.channel || '—'}${lead.campaign ? ` · ${lead.campaign}` : ''}${lead.sourceLeadId ? ` · ${lead.sourceLeadId}` : ''}`;
 
   // Quick actions
   const call = document.getElementById('lg-call');
@@ -7263,49 +7319,85 @@ function openLGPanel(id) {
   if (wa)   { wa.href = digits ? `https://wa.me/${digits}` : '#'; wa.style.opacity = digits ? '1' : '.4'; }
 
   const st = document.getElementById('lg-save-status'); if (st) st.textContent = '';
-  const nf = document.getElementById('lg-new-note-form'); if (nf) nf.style.display = 'none';
+  const edit = document.getElementById('lg-contact-edit'); if (edit) edit.style.display = 'none';
+  const nn = document.getElementById('lg-new-note-text'); if (nn) nn.value = '';
+  const ns = document.getElementById('lg-new-note-status'); if (ns) ns.textContent = '';
+  const rs = document.getElementById('lg-reminder-status'); if (rs) rs.textContent = '';
+  const rn = document.getElementById('lg-reminder-note'); if (rn) rn.value = '';
+  const rd = document.getElementById('lg-reminder-due'); if (rd) rd.value = '';
+  const coachBtn = document.getElementById('lg-coach-start');
+  if (coachBtn) coachBtn.onclick = () => openFlashCoach(lead, 'lg');
 
   loadLGActivity(id);
+  renderLGLeadReminders(lead);
+  if (!allLGTasks.length) loadLGTasks();
   document.getElementById('leadgen-panel').classList.add('open');
   const overlay = document.getElementById('panel-overlay');
   if (overlay) overlay.style.display = 'block';
 }
 
 function closeLGPanel() {
-  document.getElementById('leadgen-panel')?.classList.remove('open');
+  const panel = document.getElementById('leadgen-panel');
+  if (!panel) return;
+  panel.classList.remove('open');
+  panel.classList.remove('panel-expanded');
   const overlay = document.getElementById('panel-overlay');
   if (overlay) overlay.style.display = 'none';
+  finalizeCoachSection('lg'); // closing = call ended (same rule as the RE panel)
   currentLGLead = null;
 }
 
+// Notes (type Note) render under "My Notes"; everything else under "Activity Log".
 async function loadLGActivity(id) {
-  const box = document.getElementById('lg-activity-list');
-  if (!box) return;
-  box.innerHTML = '<p class="panel-empty-text">Loading…</p>';
+  const notesBox = document.getElementById('lg-notes-history');
+  const actBox   = document.getElementById('lg-activity-list');
+  if (!notesBox || !actBox) return;
+  notesBox.innerHTML = '<p class="panel-empty-text">Loading…</p>';
+  actBox.innerHTML   = '<p class="panel-empty-text">Loading activity...</p>';
   try {
     const res = await fetch(`${CRM_API_BASE}/api/get-leadgen-activity?leadId=${encodeURIComponent(id)}&${lgAuthQS()}`);
     const data = res.ok ? await res.json() : { activity: [] };
     const items = (data.activity || []).sort((a, b) => new Date(b.at) - new Date(a.at));
     if (!currentLGLead || currentLGLead.id !== id) return;
-    if (!items.length) { box.innerHTML = '<p class="panel-empty-text">No activity yet.</p>'; return; }
-    box.innerHTML = items.map(a => `
+    const notes = items.filter(a => a.type === 'Note');
+    const rest  = items.filter(a => a.type !== 'Note');
+
+    notesBox.innerHTML = notes.length ? notes.map(a => `
       <div class="note-card">
         <div class="note-header">
-          <span class="note-author">${escHtml(a.title || a.type || 'Activity')}</span>
-          <span class="note-date">${escHtml(a.agent || '')} · ${lgFmtDate(a.at)}</span>
+          <span class="note-author">${escHtml(a.agent || 'Kevin')}</span>
+          <span class="note-date">${escHtml(lgFmtDateTime(a.at))}</span>
         </div>
-        ${a.details ? `<div class="note-body" style="white-space:pre-wrap;">${escHtml(a.details)}</div>` : ''}
-      </div>`).join('');
+        <div class="note-body">${escHtml(a.details || a.title || '')}</div>
+      </div>`).join('') : '<p class="panel-empty-text">No notes yet</p>';
+
+    const icon = t => ({ 'Positive Reply': '🟢', 'Reply': '💬', 'Email Sent': '✉️', 'Call': '📞', 'Meeting': '🤝', 'Status Change': '🔀' }[t] || '📄');
+    actBox.innerHTML = rest.length ? rest.map(a => `
+      <div class="activity-item">
+        <span class="activity-icon">${icon(a.type)}</span>
+        <div class="activity-info">
+          <span class="activity-type">${escHtml(a.title || a.type || 'Activity')}</span>
+          ${a.details ? `<span class="activity-detail" style="white-space:pre-wrap;">${escHtml(a.details)}</span>` : ''}
+        </div>
+        <span class="activity-time" title="${escHtml(a.at || '')}">${escHtml(a.at ? relativeTime(a.at) : '')}</span>
+      </div>`).join('') : '<p class="panel-empty-text">No activity yet</p>';
   } catch (err) {
-    box.innerHTML = '<p class="panel-empty-text">Could not load activity.</p>';
+    notesBox.innerHTML = '<p class="panel-empty-text">Could not load notes</p>';
+    actBox.innerHTML   = '<p class="panel-empty-text">Could not load activity</p>';
   }
+}
+
+function lgFmtDateTime(iso) {
+  const d = new Date(iso);
+  if (!iso || isNaN(d)) return '';
+  return d.toLocaleString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });
 }
 
 async function saveLGNote() {
   if (!currentLGLead) return;
   const text = (document.getElementById('lg-new-note-text')?.value || '').trim();
   const status = document.getElementById('lg-new-note-status');
-  if (!text) return;
+  if (!text) { if (status) status.textContent = 'Write a note first.'; return; }
   if (status) status.textContent = 'Saving…';
   try {
     const res = await fetch(`${CRM_API_BASE}/api/log-leadgen-activity`, {
@@ -7318,12 +7410,366 @@ async function saveLGNote() {
     });
     if (!res.ok) throw new Error(res.status);
     document.getElementById('lg-new-note-text').value = '';
-    document.getElementById('lg-new-note-form').style.display = 'none';
-    if (status) status.textContent = '';
+    if (status) { status.textContent = 'Saved'; setTimeout(() => { if (status.textContent === 'Saved') status.textContent = ''; }, 1500); }
     loadLGActivity(currentLGLead.id);
   } catch (err) {
     if (status) status.textContent = 'Failed to save note.';
   }
+}
+
+// ── REMINDERS (LeadGen Tasks) ──────────────────────────────────────────────
+// Same shape as the RE Reminders view/panel cards, backed by LeadGen Tasks:
+// status Open = Pending, Done = Completed, Skipped = Cancelled.
+let allLGTasks = [];
+
+async function loadLGTasks() {
+  if (!currentPassword) return;
+  const loading = document.getElementById('lg-reminders-loading');
+  if (loading && !allLGTasks.length && currentView === 'leadgen-reminders') loading.style.display = 'block';
+  try {
+    const res = await fetch(`${CRM_API_BASE}/api/get-leadgen-tasks?${lgAuthQS()}`);
+    if (res.ok) {
+      const data = await res.json();
+      allLGTasks = data.tasks || [];
+    } else {
+      console.error('Failed to load lead-gen tasks:', res.status);
+    }
+  } catch (err) {
+    console.error('Failed to load lead-gen tasks:', err);
+  }
+  if (loading) loading.style.display = 'none';
+  updateLGReminderBadge();
+  if (currentView === 'leadgen-reminders') renderLGReminders();
+  if (currentLGLead) renderLGLeadReminders(currentLGLead);
+}
+
+function updateLGReminderBadge() {
+  const badge = document.getElementById('leadgen-reminder-badge');
+  if (!badge) return;
+  const now = Date.now();
+  const endOfToday = new Date(); endOfToday.setHours(23, 59, 59, 999);
+  const n = allLGTasks.filter(t => t.status === 'Open' && t.dueAt && new Date(t.dueAt).getTime() <= endOfToday.getTime()).length;
+  badge.textContent = n;
+  badge.style.display = n ? 'inline-block' : 'none';
+  void now;
+}
+
+function lgTaskLead(t) {
+  const id = (t.leadIds || [])[0];
+  return id ? allLGLeads.find(l => l.id === id) : null;
+}
+
+function lgTaskDtLocal(d) {
+  return d.getTime()
+    ? `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}T${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`
+    : '';
+}
+
+function renderLGReminders() {
+  const tbody   = document.getElementById('lg-reminders-tbody');
+  const table   = document.getElementById('lg-reminders-table');
+  const empty   = document.getElementById('lg-reminders-empty');
+  const loading = document.getElementById('lg-reminders-loading');
+  if (!tbody || !table) return;
+  if (loading) loading.style.display = 'none';
+
+  const filterStatus = document.getElementById('lg-reminder-status-filter')?.value || '';
+  const filterOwner  = document.getElementById('lg-reminder-owner-filter')?.value || '';
+  const rows = allLGTasks.filter(t => {
+    if (filterStatus && t.status !== filterStatus) return false;
+    // Blank-owner tasks (Flash follow-ups) stay visible under any selection — same rule as RE.
+    if (filterOwner && t.owner && t.owner !== filterOwner) return false;
+    return true;
+  }).sort((a, b) => new Date(a.dueAt || 0) - new Date(b.dueAt || 0));
+
+  const countLabel = document.getElementById('lg-reminders-count-label');
+  if (countLabel) {
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const endOfToday   = startOfToday + 24 * 60 * 60 * 1000;
+    let dueToday = 0, overdue = 0;
+    rows.forEach(t => {
+      if (t.status !== 'Open') return;
+      const due = t.dueAt ? new Date(t.dueAt).getTime() : NaN;
+      if (isNaN(due)) return;
+      if (due < startOfToday) overdue++; else if (due < endOfToday) dueToday++;
+    });
+    countLabel.textContent = `${rows.length} total · ${dueToday} due today · ${overdue} overdue · ${filterOwner || 'all agents'}`;
+    countLabel.style.display = 'inline-block';
+  }
+
+  if (!rows.length) { table.style.display = 'none'; if (empty) empty.style.display = 'block'; return; }
+  if (empty) empty.style.display = 'none';
+  table.style.display = 'table';
+
+  const now = Date.now();
+  tbody.innerHTML = rows.map(t => {
+    const lead = lgTaskLead(t);
+    const dueDate = new Date(t.dueAt);
+    const hasTime = /T\d{2}:\d{2}/.test(String(t.dueAt || ''));
+    const isOverdue = t.status === 'Open' && dueDate.getTime() < now;
+    const dueStr = !dueDate.getTime() ? '—'
+      : hasTime ? formatReminderDate(dueDate)
+      : dueDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+    const statusBadge = t.status === 'Open'
+      ? (isOverdue ? '<span class="reminder-status-badge overdue">Overdue</span>' : '<span class="reminder-status-badge pending">Pending</span>')
+      : t.status === 'Done'
+        ? '<span class="reminder-status-badge completed">Done</span>'
+        : '<span class="reminder-status-badge cancelled">Cancelled</span>';
+    const actionClass = 'action-type-' + (t.type || 'Other').replace(/\s+/g, '-');
+    const actions = t.status === 'Open'
+      ? `<button class="reminder-action-btn done" onclick="setLGTaskStatus('${t.id}','Done')">Done</button>
+         <button class="reminder-action-btn cancel" onclick="setLGTaskStatus('${t.id}','Skipped')">Cancel</button>
+         <button class="reminder-action-btn edit" onclick="toggleLGTaskEdit('${t.id}')">Edit</button>`
+      : '';
+    const ownerOptions = ['Kevin', 'Dylan', 'Rosa'].map(o => `<option value="${o}" ${o === t.owner ? 'selected' : ''}>${o}</option>`).join('');
+    const leadName = lead ? (lead.name || lead.email || '—') : '—';
+    const leadSub  = lead ? [lead.company, lead.phone].filter(Boolean).join(' · ') : '';
+    const leadId   = lead ? lead.id : '';
+    return `
+    <tr class="${isOverdue ? 'reminder-overdue' : ''}">
+      <td class="td-muted">
+        <span id="lg-task-due-text-${t.id}">${escHtml(dueStr)}</span>
+        <div id="lg-task-edit-${t.id}" class="reminder-edit-row" style="display:none;">
+          <input type="datetime-local" id="lg-task-dt-${t.id}" class="reminder-dt-input" value="${lgTaskDtLocal(dueDate)}">
+          <select id="lg-task-owner-${t.id}" class="reminder-dt-input" style="margin-top:4px">${ownerOptions}</select>
+          <button class="reminder-action-btn done" style="margin-top:4px" onclick="saveLGTaskEdit('${t.id}')">Save</button>
+        </div>
+      </td>
+      <td>
+        <div class="lead-name" style="cursor:pointer" onclick="${leadId ? `openLGPanelFromReminder('${leadId}')` : ''}">${escHtml(leadName)}</div>
+        <div class="td-muted" style="font-size:0.75rem">${escHtml(leadSub)}</div>
+      </td>
+      <td><span class="action-type-badge ${actionClass}">${escHtml(t.type || '—')}</span></td>
+      <td class="td-muted" style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escHtml(t.notes || t.title || '')}">${escHtml(t.notes || t.title || '—')}</td>
+      <td class="td-muted">${escHtml(t.owner || '—')}</td>
+      <td>${statusBadge}</td>
+      <td>${actions}</td>
+    </tr>`;
+  }).join('');
+}
+
+function openLGPanelFromReminder(leadId) {
+  if (!allLGLeads.find(l => l.id === leadId)) return;
+  openLGPanel(leadId);
+}
+
+function toggleLGTaskEdit(id) {
+  const row = document.getElementById(`lg-task-edit-${id}`);
+  if (row) row.style.display = row.style.display === 'none' ? 'block' : 'none';
+}
+
+async function lgPatchTask(id, fields) {
+  const res = await fetch(`${CRM_API_BASE}/api/update-leadgen-task`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id, password: currentPassword, ...fields }),
+  });
+  if (!res.ok) throw new Error(`update-leadgen-task ${res.status}`);
+  const data = await res.json();
+  if (data.task) {
+    const i = allLGTasks.findIndex(t => t.id === id);
+    if (i >= 0) allLGTasks[i] = data.task;
+  }
+  return data;
+}
+
+async function setLGTaskStatus(id, status) {
+  const t = allLGTasks.find(x => x.id === id);
+  if (!t) return;
+  const prev = t.status;
+  t.status = status;                                        // optimistic
+  updateLGReminderBadge();
+  if (currentView === 'leadgen-reminders') renderLGReminders();
+  if (currentLGLead) renderLGLeadReminders(currentLGLead);
+  try {
+    await lgPatchTask(id, { status });
+  } catch (err) {
+    console.error('Lead-gen task update failed:', err);
+    t.status = prev;
+    if (currentView === 'leadgen-reminders') renderLGReminders();
+    if (currentLGLead) renderLGLeadReminders(currentLGLead);
+  }
+}
+
+async function saveLGTaskEdit(id) {
+  const dt    = document.getElementById(`lg-task-dt-${id}`)?.value;
+  const owner = document.getElementById(`lg-task-owner-${id}`)?.value;
+  if (!dt) return;
+  try {
+    await lgPatchTask(id, { dueAt: new Date(dt).toISOString(), owner });
+    renderLGReminders();
+    updateLGReminderBadge();
+  } catch (err) {
+    alert('Could not save the reminder: ' + err.message);
+  }
+}
+
+// Panel cards — same markup as renderLeadReminders() for RE leads.
+function renderLGLeadReminders(lead) {
+  const section = document.getElementById('lg-existing-reminders-section');
+  const container = document.getElementById('lg-existing-reminders');
+  if (!section || !container || !lead) return;
+  const tasks = allLGTasks
+    .filter(t => t.status === 'Open' && (t.leadIds || []).includes(lead.id))
+    .sort((a, b) => new Date(a.dueAt || 0) - new Date(b.dueAt || 0));
+  if (!tasks.length) { section.style.display = 'none'; return; }
+  section.style.display = 'block';
+  const now = new Date();
+  container.innerHTML = tasks.map(t => {
+    const dueDate = new Date(t.dueAt);
+    const hasTime = /T\d{2}:\d{2}/.test(String(t.dueAt || ''));
+    const isOverdue = dueDate.getTime() && dueDate < now;
+    const dueStr = !dueDate.getTime() ? '—'
+      : hasTime
+        ? dueDate.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ' ' + dueDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        : dueDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+    return `
+    <div class="panel-reminder-card ${isOverdue ? 'overdue' : ''}">
+      <div class="panel-reminder-top">
+        <span class="panel-reminder-type">${escHtml(t.type || 'Follow-up')}${t.owner ? ` · ${escHtml(t.owner)}` : ''}</span>
+        <span class="panel-reminder-due ${isOverdue ? 'overdue' : ''}">${isOverdue ? '⚠️ ' : ''}${dueStr}</span>
+      </div>
+      ${(t.notes || t.title) ? `<div class="panel-reminder-note-text">${escHtml(t.notes || t.title)}</div>` : ''}
+      <div class="panel-reminder-edit-row" id="lg-r-edit-${t.id}" style="display:none;">
+        <input type="datetime-local" id="lg-r-dt-${t.id}" class="panel-input" value="${lgTaskDtLocal(dueDate)}" style="font-size:0.8rem;">
+        <input type="text" id="lg-r-note-${t.id}" class="panel-input" value="${escHtml(t.notes || '')}" placeholder="Note..." style="font-size:0.8rem;margin-top:4px;">
+      </div>
+      <div class="panel-reminder-actions">
+        <button class="panel-r-btn edit" onclick="toggleLGPanelReminderEdit('${t.id}')">Edit</button>
+        <button class="panel-r-btn save" id="lg-r-save-${t.id}" style="display:none;" onclick="saveLGPanelReminder('${t.id}')">Save</button>
+        <button class="panel-r-btn done" onclick="setLGTaskStatus('${t.id}','Done')">Done</button>
+        <button class="panel-r-btn cancel" onclick="setLGTaskStatus('${t.id}','Skipped')">Cancel</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleLGPanelReminderEdit(id) {
+  const row = document.getElementById(`lg-r-edit-${id}`);
+  const save = document.getElementById(`lg-r-save-${id}`);
+  const show = row && row.style.display === 'none';
+  if (row) row.style.display = show ? 'block' : 'none';
+  if (save) save.style.display = show ? 'inline-block' : 'none';
+}
+
+async function saveLGPanelReminder(id) {
+  const dt   = document.getElementById(`lg-r-dt-${id}`)?.value;
+  const note = document.getElementById(`lg-r-note-${id}`)?.value;
+  if (!dt) return;
+  try {
+    await lgPatchTask(id, { dueAt: new Date(dt).toISOString(), notes: note || '' });
+    if (currentLGLead) renderLGLeadReminders(currentLGLead);
+    if (currentView === 'leadgen-reminders') renderLGReminders();
+    updateLGReminderBadge();
+  } catch (err) {
+    alert('Could not save the reminder: ' + err.message);
+  }
+}
+
+async function createLGReminderFromPanel() {
+  if (!currentLGLead) return;
+  const type  = document.getElementById('lg-reminder-action')?.value || 'Follow-up';
+  const owner = document.getElementById('lg-reminder-agent')?.value || 'Kevin';
+  const due   = document.getElementById('lg-reminder-due')?.value;
+  const note  = (document.getElementById('lg-reminder-note')?.value || '').trim();
+  const status = document.getElementById('lg-reminder-status');
+  if (!due) { if (status) status.textContent = 'Pick a due date & time.'; return; }
+  if (status) status.textContent = 'Creating…';
+  const leadName = currentLGLead.name || currentLGLead.email || 'lead';
+  try {
+    const res = await fetch(`${CRM_API_BASE}/api/create-leadgen-task`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        password: currentPassword,
+        leadId: currentLGLead.id,
+        title: note ? note.slice(0, 80) : `${type} ${leadName}`,
+        type, owner, notes: note,
+        dueAt: new Date(due).toISOString(),
+      }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || res.status);
+    if (data.task) allLGTasks.push(data.task);
+    document.getElementById('lg-reminder-note').value = '';
+    document.getElementById('lg-reminder-due').value = '';
+    if (status) { status.textContent = '✓ Reminder created'; setTimeout(() => { if (status.textContent === '✓ Reminder created') status.textContent = ''; }, 2000); }
+    renderLGLeadReminders(currentLGLead);
+    updateLGReminderBadge();
+    if (currentView === 'leadgen-reminders') renderLGReminders();
+  } catch (err) {
+    if (status) status.textContent = 'Failed: ' + err.message;
+  }
+}
+
+// ── FLASH → LEAD GEN ───────────────────────────────────────────────────────
+// Flash's server (bucket=leadgen) already wrote the note, summary/next steps and
+// the follow-up task. Recordings/transcripts land as activity rows here because
+// save-recording only knows the RE Leads table. Then refresh whatever is open.
+function isLGLeadId(id, bucket) {
+  if (bucket === 'leadgen') return true;
+  if (currentLGLead && currentLGLead.id === id) return true;
+  return allLGLeads.some(l => l.id === id);
+}
+
+async function handleFlashMessageLG(data) {
+  if (data.type === 'flash:recording' || data.type === 'flash:transcript') {
+    if (!data.url) return;
+    const isRec = data.type === 'flash:recording';
+    try {
+      await fetch(`${CRM_API_BASE}/api/log-leadgen-activity`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          password: currentPassword, leadId: data.leadId, type: 'Call', agent: 'Flash Coach',
+          title: isRec ? 'Flash recording' : 'Flash transcript',
+          details: `${isRec ? 'Recording' : 'Transcript'}${data.durationSec ? ` (${Math.round(data.durationSec / 60)} min)` : ''}: ${data.url}`,
+          at: data.recordedAt || undefined,
+        }),
+      });
+    } catch (e) { /* best-effort */ }
+    if (currentLGLead && currentLGLead.id === data.leadId) loadLGActivity(data.leadId);
+    return;
+  }
+  if (data.type !== 'flash:call-ended') return;
+  // Note/reminder fallbacks when the server didn't write them (mirrors the RE path).
+  if (data.note && !data.noteLogged) {
+    try {
+      await fetch(`${CRM_API_BASE}/api/log-leadgen-activity`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: currentPassword, leadId: data.leadId, type: 'Note', agent: 'Flash Coach', title: 'Flash Coach call', details: data.note, stampContact: true }),
+      });
+    } catch (e) { /* best-effort */ }
+  }
+  if (data.reminder && data.reminder.dueAt && !isNaN(Date.parse(data.reminder.dueAt)) && !data.reminderCreated) {
+    try {
+      await fetch(`${CRM_API_BASE}/api/create-leadgen-task`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          password: currentPassword, leadId: data.leadId, owner: 'Kevin',
+          type: ['Call', 'Email', 'Meeting'].includes(data.reminder.actionType) ? data.reminder.actionType : 'Follow-up',
+          title: String(data.reminder.note || 'Seguimiento post-llamada').slice(0, 80),
+          notes: String(data.reminder.note || ''), dueAt: data.reminder.dueAt,
+        }),
+      });
+    } catch (e) { /* best-effort */ }
+  }
+  try {
+    await Promise.all([loadLGLeads(), loadLGTasks()]);
+    if (currentLGLead && currentLGLead.id === data.leadId) {
+      const fresh = allLGLeads.find(l => l.id === data.leadId);
+      if (fresh) {
+        currentLGLead = fresh;
+        setVal('lg-status', fresh.status || 'New');
+        setVal('lg-summary', fresh.summary || '');
+      }
+      loadLGActivity(data.leadId);
+      renderLGLeadReminders(currentLGLead);
+    }
+  } catch (e) { /* best-effort */ }
 }
 
 // Manual entry — a reply Kevin got somewhere the watchers don't see (a call, a
@@ -7362,9 +7808,26 @@ function wireLGEvents() {
     document.getElementById(id)?.addEventListener('change', renderLGPipeline));
   document.getElementById('lg-pipeline-refresh-btn')?.addEventListener('click', loadLGLeads);
 
+  // Reminders view
+  ['lg-reminder-status-filter', 'lg-reminder-owner-filter'].forEach(id =>
+    document.getElementById(id)?.addEventListener('change', renderLGReminders));
+  document.getElementById('lg-refresh-reminders-btn')?.addEventListener('click', loadLGTasks);
+
+  // Panel chrome
   document.getElementById('lg-panel-close')?.addEventListener('click', closeLGPanel);
+  document.getElementById('lg-panel-expand')?.addEventListener('click', () => togglePanelExpand('lg'));
+  document.getElementById('lg-coach-close')?.addEventListener('click', () => finalizeCoachSection('lg'));
   document.getElementById('panel-overlay')?.addEventListener('click', () => {
     if (document.getElementById('leadgen-panel')?.classList.contains('open')) closeLGPanel();
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && document.getElementById('leadgen-panel')?.classList.contains('open')) closeLGPanel();
+  });
+  document.getElementById('lg-edit-contact-btn')?.addEventListener('click', () => {
+    const editor = document.getElementById('lg-contact-edit');
+    if (!editor) return;
+    editor.style.display = editor.style.display === 'none' ? 'block' : 'none';
+    if (editor.style.display === 'block') document.getElementById('lg-name')?.focus();
   });
 
   // Auto-save panel fields (debounced for text, immediate for selects)
@@ -7390,6 +7853,12 @@ function wireLGEvents() {
           if (status) status.textContent = 'Saved';
           setTimeout(() => { if (status && status.textContent === 'Saved') status.textContent = ''; }, 1500);
           updateLGStats(); updateLGBadge();
+          if (currentLGLead && currentLGLead.id === leadId) {
+            renderLGContactDisplay(currentLGLead);
+            if (key === 'name') document.getElementById('lg-panel-name').textContent = currentLGLead.name || currentLGLead.email || '—';
+            if (key === 'sentiment' || key === 'company') document.getElementById('lg-panel-sub').innerHTML =
+              `${lgSentimentChip(currentLGLead.sentiment)} <span style="margin-left:6px;">${escHtml(currentLGLead.company || '')}</span>`;
+          }
           if (currentView === 'leadgen') renderLGLeads();
           if (currentView === 'leadgen-pipeline') renderLGPipeline();
           if (key === 'sentiment' || key === 'status') loadLGActivity(leadId);
@@ -7401,12 +7870,6 @@ function wireLGEvents() {
     });
   });
 
-  document.getElementById('lg-add-note-toggle')?.addEventListener('click', () => {
-    const f = document.getElementById('lg-new-note-form');
-    if (f) { f.style.display = f.style.display === 'none' ? 'block' : 'none'; if (f.style.display === 'block') document.getElementById('lg-new-note-text')?.focus(); }
-  });
-  document.getElementById('lg-cancel-new-note')?.addEventListener('click', () => {
-    const f = document.getElementById('lg-new-note-form'); if (f) f.style.display = 'none';
-  });
   document.getElementById('lg-save-new-note')?.addEventListener('click', saveLGNote);
+  document.getElementById('lg-reminder-submit')?.addEventListener('click', createLGReminderFromPanel);
 }

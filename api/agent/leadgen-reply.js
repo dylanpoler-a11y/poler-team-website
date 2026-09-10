@@ -18,7 +18,7 @@
  *   4. Idempotent upsert on Source Lead ID → Email. First reply stored verbatim;
  *      later replies append an Activity row, bump Reply Count, rewrite Summary.
  *
- *   POST { name?, email?, phone?, company?, title?, website?,
+ *   POST { name?, email?, phone?, company?, title?, website?, contactedFrom? (our sending mailbox),
  *          channel, campaign?, replyText, replyAt?, sourceLeadId?, messageId?, status?,
  *          subject?, ourLastMessage?, sentiment?, agent? }
  *   → { ok, routed: 'leadgen'|'consulting', created, skipped?, lead? | contact? }
@@ -245,6 +245,8 @@ export default async function handler(req) {
 
     // 3b. Phone: producer-supplied wins; otherwise pull it from the reply's signature.
     const phone = String(body.phone || '').trim() || extractPhone(replyText);
+    // 3c. Which of OUR mailboxes wrote to this lead (Kevin 2026-09-10: show it on every profile).
+    const contactedFrom = String(body.contactedFrom || body.fromMailbox || body.mailbox || '').trim().toLowerCase();
 
     // 4. Claude sentiment + summary; rules fallback.
     let sentiment = SENTIMENTS.includes(body.sentiment) ? body.sentiment : null;
@@ -293,6 +295,7 @@ export default async function handler(req) {
     put('Campaign', campaign);
     // Phone never overwrites a number already on the record (Kevin may have typed it in).
     if (phone && !existing?.fields?.['Phone']) fields['Phone'] = phone;
+    if (contactedFrom && /^[^@\s]+@[^@\s]+$/.test(contactedFrom)) fields['Contacted From'] = contactedFrom;
     fields['Channel']       = channel;
     fields['Sentiment']     = sentiment;
     fields['Summary']       = summaryFull;

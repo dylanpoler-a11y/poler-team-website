@@ -27,7 +27,7 @@ export default async function handler(req) {
     const leadId = url.searchParams.get('leadId');
 
     const res = await listAll(TABLES.tasks, {
-        sortField: 'Due At',
+        sortField: 'Due',
         sortDir:   'asc',
         filter:    status ? `{Status} = '${esc(status)}'` : undefined,
     });

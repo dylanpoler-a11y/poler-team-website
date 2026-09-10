@@ -316,9 +316,11 @@ const TOOLS = [
             properties: {
                 name:           { type: 'string' },
                 email:          { type: 'string' },
-                phone:          { type: 'string' },
+                phone:          { type: 'string', description: 'Optional — when omitted the endpoint extracts a phone from the reply signature' },
                 company:        { type: 'string' },
                 title:          { type: 'string' },
+                website:        { type: 'string' },
+                contactedFrom:  { type: 'string', description: 'OUR sending mailbox the lead replied to (e.g. outreach@kpsconnect.com) — shown as "Contacted From" in the lead panel' },
                 channel:        { type: 'string', description: 'Email | Facebook | LinkedIn | WhatsApp | LoopNet | Manual' },
                 campaign:       { type: 'string' },
                 replyText:      { type: 'string' },

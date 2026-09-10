@@ -44,7 +44,11 @@ export default async function handler(req) {
     if (body.owner  !== undefined) fields['Owner']  = body.owner;
     if (body.notes  !== undefined) fields['Notes']  = body.notes;
     if (body.type   !== undefined && TYPES.includes(body.type)) fields['Type'] = body.type;
-    if (body.dueAt  !== undefined) fields['Due At'] = body.dueAt ? String(body.dueAt).slice(0, 10) : null;
+    if (body.dueAt  !== undefined) {
+        const ok = body.dueAt && !isNaN(Date.parse(body.dueAt));
+        fields['Due']    = ok ? new Date(body.dueAt).toISOString() : null;
+        fields['Due At'] = ok ? String(body.dueAt).slice(0, 10) : null;
+    }
 
     if (!Object.keys(fields).length) return json({ error: 'nothing to update' }, 400);
 

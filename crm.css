@@ -906,6 +906,7 @@ body {
   border: 1px solid #d1d5db;
   border-radius: 0.5rem;
   font-size: 0.825rem;
+  font-family: inherit;   /* inputs/selects/textareas default to the system font otherwise */
   color: var(--text);
   background: #fff;
   transition: border-color 0.15s;
@@ -2567,7 +2568,7 @@ body {
   position: fixed;
   top: 0;
   right: 0;
-  width: 480px;
+  width: 440px;
   height: 100vh;
   background: white;
   box-shadow: -4px 0 24px rgba(0,0,0,0.12);
@@ -2579,6 +2580,13 @@ body {
   flex-direction: column;
 }
 #leadgen-panel.open { transform: translateX(0); }
+/* Same expand behaviour as #lead-panel so the Flash coach has room */
+#leadgen-panel.panel-expanded {
+  width: max(440px, calc(100vw - 450px));
+}
+#leadgen-panel.panel-expanded #lg-coach-iframe {
+  height: calc(100vh - 180px);
+}
 @media (max-width: 600px) {
   #leadgen-panel { width: 100%; }
 }
