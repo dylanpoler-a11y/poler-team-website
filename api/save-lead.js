@@ -11,6 +11,7 @@ export const config = { runtime: 'edge' };
 
 import { sendCapiEvent } from './_capi.js';
 import { authorize } from './_auth.js';
+import { stampNote } from '../lib/note-stamp.js';
 
 // ISO 2-letter code → country name (matches listing.html dropdown)
 const ISO_COUNTRY = {
@@ -199,7 +200,12 @@ export default async function handler(req, context) {
         'Access Password': accessPassword,
         'Preferred Language': language,
         ...(timeline && { 'Timeline': timeline }),
-        ...(typeof body.notes === 'string' && body.notes.trim() && { 'Notes': body.notes }),
+        // Every note gets the canonical "[M/D/YYYY, h:MM AM — agent]" stamp server-side —
+        // the same one /api/agent/log-note applies — so a lead created WITH a note reads
+        // exactly like one noted afterwards. `noteAgent` names the writer (LoopNet
+        // import, Claude, Kevin…); default "Manual entry".
+        ...(typeof body.notes === 'string' && body.notes.trim()
+            && { 'Notes': stampNote(body.notes, body.noteAgent || body.agent || 'Manual entry') }),
     };
 
     // Detect country: explicit full name (MCP create_lead) > ISO code from dropdown > phone prefix

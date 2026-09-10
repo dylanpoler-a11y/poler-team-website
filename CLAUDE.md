@@ -46,6 +46,7 @@ docs/                          # OMs, PDFs, reference docs (incl. the two split-
 
 | Task | Skill |
 |---|---|
+| **ANY add / change / fix to the CRM** ("add X to the CRM", "leads show wrong") | **`/crm-change`** (global skill) — loads `~/.claude/references/crm-conventions.md`, the one file holding every CRM rule Kevin has ever corrected. A NEW client CRM = the `/build-crm` workflow. |
 | Adding ANY endpoint under `api/` or `api/agent/` | **`new-agent-endpoint`** — scaffolds it on the `_auth.js` convention. Use it every time; hand-rolled endpoints drift. |
 | Changing the email→CRM pipeline (`api/cron/process-emails.js`) — classification, routing, what gets written | **`crm-email`** |
 | Meta or Google ad campaigns, CPL optimization, creatives | **`real-estate-ads-manager`** |

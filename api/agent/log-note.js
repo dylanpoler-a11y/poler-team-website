@@ -13,6 +13,7 @@
 export const config = { runtime: 'edge' };
 
 import { authorize } from '../_auth.js';
+import { stampNote } from '../../lib/note-stamp.js';
 
 export default async function handler(req) {
     if (req.method === 'OPTIONS') {
@@ -48,14 +49,9 @@ export default async function handler(req) {
     if (!cur.ok) return json({ error: 'Lead not found' }, 404);
     const existing = (await cur.json()).fields?.['Notes'] || '';
 
-    // Build prefix matching the saveLead() convention in crm.js
-    const now = new Date();
-    const dateStr = now.toLocaleString('en-US', {
-        month: 'numeric', day: 'numeric', year: 'numeric',
-        hour: 'numeric', minute: '2-digit', hour12: true,
-        timeZone: 'America/New_York', // server runs UTC — stamp notes in Kevin's ET
-    });
-    const entry = `[${dateStr} — ${agent}] ${note.trim()}`;
+    // Canonical stamp via lib/note-stamp.js (shared with save-lead.js). Also strips a
+    // hand-rolled foreign stamp ("[2026-09-10 17:36 ET]") so callers can't bypass it.
+    const entry = stampNote(note, agent);
     const newNotes = existing ? `${entry}\n\n${existing}` : entry;
 
     const patchRes = await fetch(`https://api.airtable.com/v0/${baseId}/Leads`, {

@@ -999,6 +999,7 @@ async function submitAddLead() {
         status:         document.getElementById('add-lead-status').value,
         listingAddress: val('add-lead-listing'),
         notes:          val('add-lead-notes'),
+        noteAgent:      (currentAgent && currentAgent.name) || 'Agent', // save-lead stamps the note server-side
         sourceUrl:      'CRM — added manually',
       }),
     });
