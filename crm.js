@@ -7083,7 +7083,7 @@ function renderLGLeads() {
   if (empty) empty.style.display = 'none';
 
   tbody.innerHTML = rows.map(l => {
-    const sub = [l.company, l.email || l.phone].filter(Boolean).join(' · ');
+    const sub = [l.company, l.email, l.phone].filter(Boolean).join(' · ');
     const stageOpts = LG_STAGES.map(s => `<option value="${s}"${(l.status || 'New') === s ? ' selected' : ''}>${s}</option>`).join('');
     const summary = l.summary || l.replySnippet || l.firstReply || '';
     return `

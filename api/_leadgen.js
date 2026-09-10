@@ -225,3 +225,58 @@ export function normChannel(v) {
     const hit = CHANNELS.find(x => x.toLowerCase() === c.toLowerCase());
     return hit || 'Manual';
 }
+
+// ---------------------------------------------------------------------------
+// Phone extraction from reply text (signatures) — Kevin 2026-09-10: "usually the
+// phone number is in the signature … make sure it gets added for leads moving forward".
+// Deterministic on purpose: label-scored regex, our own numbers and quoted mail excluded.
+// ---------------------------------------------------------------------------
+// Our own lines — never a lead's phone even when a reply quotes our signature.
+const OWN_PHONES = new Set([
+    '3057997290', '13057997290',   // Kevin cell / WhatsApp
+    '7864500711', '17864500711',   // 786 second line
+    '9548335106', '19548335106',   // Claudia / Twilio 954
+    '9542354046', '19542354046',   // Rosa
+]);
+const QUOTE_CUT = /^(>|On .{0,120}wrote:|From:|De:|Sent:|Enviado:|-{2,}\s*Original Message|-{2,}\s*Mensaje original|El .{0,120}escribió:)/im;
+const PHONE_RE  = /(?<![\w+])(?:\+ ?\d{1,3}[ .-]?)?(?:\(\d{2,4}\)[ .-]?|\d{2,4}[ .-])\d{3,4}[ .-]?\d{3,4}(?:[ .-]?\d{2,4})?(?: *(?:x|ext\.?|extensi[óo]n|extension) *\d{1,5})?(?!\w)|(?<![\w+])\+?\d{10,13}(?!\w)/gi;
+const LABEL_HI  = /(mobile|mobil|cell|celular|m[óo]vil|whatsapp|direct|directo|\bm\s*[:.]|\bc\s*[:.]|\bd\s*[:.])\s*$/i;
+const LABEL_MID = /(phone|tel[eé]fono|tel\.?|\bt\s*[:.]|\bp\s*[:.]|\bph\s*[:.]|office|oficina|\bo\s*[:.]|call|ll[áa]mame|contact)\s*$/i;
+const LABEL_NO  = /(fax|\bf\s*[:.]|zip|suite|ste\.?|#|mls|lic\.?|license|licencia|nit|rut|ein|acct|account|order|invoice|ref|po box|apt|unit)/i;
+
+/**
+ * Best phone number found in a reply body, or ''.
+ * Skips quoted/forwarded sections, fax lines, our own numbers, URLs/emails, dollar amounts and dates.
+ */
+export function extractPhone(text) {
+    if (!text) return '';
+    let body = String(text);
+    const cut = body.search(QUOTE_CUT);
+    if (cut > 0) body = body.slice(0, cut);
+    // Strip things that look like numbers but aren't phones.
+    body = body
+        .replace(/https?:\/\/\S+|www\.\S+/gi, ' ')
+        .replace(/[\w.+-]+@[\w-]+\.[\w.-]+/g, ' ')
+        .replace(/\$\s?[\d,.]+/g, ' ')
+        .replace(/\b\d{4}-\d{2}-\d{2}\b|\b\d{1,2}\/\d{1,2}\/\d{2,4}\b/g, ' ');
+
+    let best = null;
+    for (const m of body.matchAll(PHONE_RE)) {
+        const raw = m[0].trim();
+        const digits = raw.replace(/\D/g, '');
+        if (digits.length < 10 || digits.length > 15) continue;
+        if (OWN_PHONES.has(digits)) continue;
+        if (/^(\d)\1+$/.test(digits)) continue;                // 0000000000
+        const before = body.slice(Math.max(0, m.index - 40), m.index);
+        // Only the field this number sits in (after the last separator) decides its label.
+        const seg = before.split(/[\n|•·;]/).pop();
+        if (LABEL_NO.test(seg.slice(-14))) continue;   // the immediate label only
+        let score = 1;
+        if (LABEL_HI.test(seg)) score = 3;
+        else if (LABEL_MID.test(seg)) score = 2;
+        // A number that starts at line start in the signature block is a decent signal too.
+        if (score === 1 && /(^|\n)\s*[|•·]?\s*$/.test(before)) score = 1.5;
+        if (!best || score > best.score) best = { raw, score };
+    }
+    return best ? best.raw.replace(/\s+/g, ' ') : '';
+}

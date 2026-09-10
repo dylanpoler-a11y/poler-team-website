@@ -31,7 +31,7 @@ export const config = { runtime: 'edge' };
 import { authorize } from '../_auth.js';
 import {
     TABLES, creds, json, preflight, createRecord, updateRecord, listAll, esc, STATUSES,
-    findLead, mapLead, logActivity, normChannel, SENTIMENTS,
+    findLead, mapLead, logActivity, normChannel, SENTIMENTS, extractPhone,
 } from '../_leadgen.js';
 
 // ── Router: campaign slug / label patterns that belong to a CONSULTING client ──
@@ -243,6 +243,9 @@ export default async function handler(req) {
     const existing = found.record;
     const priorSummary = existing?.fields?.['Summary'] || '';
 
+    // 3b. Phone: producer-supplied wins; otherwise pull it from the reply's signature.
+    const phone = String(body.phone || '').trim() || extractPhone(replyText);
+
     // 4. Claude sentiment + summary; rules fallback.
     let sentiment = SENTIMENTS.includes(body.sentiment) ? body.sentiment : null;
     let summary   = '';
@@ -267,7 +270,7 @@ export default async function handler(req) {
     const route = CONSULTING_CAMPAIGNS.find(c => c.test.test(campaign) || c.test.test(body.company || ''));
     if (route) {
         const r = await routeToConsulting({
-            companyName: route.company, name, email, phone: body.phone, title: body.title,
+            companyName: route.company, name, email, phone, title: body.title,
             campaign, channel, replyText, replyAt, sentiment, summary: summaryFull, midTag,
         });
         if (!r.ok) {
@@ -286,9 +289,10 @@ export default async function handler(req) {
     put('Email',    email);
     put('Company',  body.company);
     put('Title',    body.title);
-    put('Phone',    body.phone);
     put('Website',  body.website);
     put('Campaign', campaign);
+    // Phone never overwrites a number already on the record (Kevin may have typed it in).
+    if (phone && !existing?.fields?.['Phone']) fields['Phone'] = phone;
     fields['Channel']       = channel;
     fields['Sentiment']     = sentiment;
     fields['Summary']       = summaryFull;
