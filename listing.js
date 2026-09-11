@@ -670,8 +670,6 @@ function initLeadCapture() {
         });
     });
 
-    initAlreadyRegistered(overlay, pageWrap);
-
     // ── STEP 1: Info form → send OTP (or skip for Brazil) ────
     const form      = document.getElementById('lead-form');
     const submitBtn = document.getElementById('lead-submit-btn');
@@ -1106,62 +1104,6 @@ function unlockPage(overlay, pageWrap) {
     overlay.classList.remove('active');
     overlay.setAttribute('aria-hidden', 'true');
     pageWrap.classList.remove('blurred');
-}
-
-// "Already registered?" on the gate (2026-09-10): a returning lead whose
-// storage was wiped types the email they signed up with → /api/remember sets
-// the 1-year cookie → unlock. Injected here (not in listing.html) so the gate
-// markup stays untouched; all copy via i18n keys.
-function initAlreadyRegistered(overlay, pageWrap) {
-    const form = document.getElementById('lead-form');
-    if (!form || document.getElementById('lead-registered')) return;
-    const wrap = document.createElement('div');
-    wrap.id = 'lead-registered';
-    wrap.className = 'lead-registered';
-    wrap.innerHTML =
-        `<button type="button" class="lead-registered-toggle" id="lead-registered-toggle" data-i18n="alreadyRegistered">${t('alreadyRegistered')}</button>` +
-        `<div class="lead-registered-form" id="lead-registered-form" hidden>` +
-            `<p class="lead-registered-hint" data-i18n="alreadyRegisteredHint">${t('alreadyRegisteredHint')}</p>` +
-            `<div class="lead-registered-row">` +
-                `<input type="email" id="lead-registered-email" autocomplete="email" data-i18n="emailAddress" placeholder="${t('emailAddress')}">` +
-                `<button type="button" id="lead-registered-btn" data-i18n="alreadyRegisteredBtn">${t('alreadyRegisteredBtn')}</button>` +
-            `</div>` +
-            `<p class="lead-error" id="lead-registered-error" style="display:none"></p>` +
-        `</div>`;
-    form.insertAdjacentElement('afterend', wrap);
-
-    const toggle = wrap.querySelector('#lead-registered-toggle');
-    const panel  = wrap.querySelector('#lead-registered-form');
-    const input  = wrap.querySelector('#lead-registered-email');
-    const btn    = wrap.querySelector('#lead-registered-btn');
-    const err    = wrap.querySelector('#lead-registered-error');
-    toggle.addEventListener('click', () => {
-        panel.hidden = !panel.hidden;
-        if (!panel.hidden) input.focus();
-    });
-    const submit = async () => {
-        const email = input.value.trim().toLowerCase();
-        err.style.display = 'none';
-        if (!email || email.indexOf('@') < 1) { input.focus(); return; }
-        btn.disabled = true;
-        const ok = await rememberLead({ email });
-        btn.disabled = false;
-        if (!ok) {
-            err.textContent = t('alreadyRegisteredNotFound');
-            err.style.display = 'block';
-            trackEvent('gate_recognize_fail', {});
-            return;
-        }
-        try { localStorage.setItem('poler_lead_v1', email); } catch (e) { /* cookie carries it */ }
-        const c = readCookies().poler_lt;
-        if (c) { try { localStorage.setItem('poler_alert_token', c); } catch (e) { /* ignore */ } }
-        leadCaptured = true;
-        clearInterval(timerInterval);
-        trackEvent('gate_recognized', {});
-        unlockPage(overlay, pageWrap);
-    };
-    btn.addEventListener('click', submit);
-    input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); submit(); } });
 }
 
 function showLeadError(elId, msg) {

@@ -6,7 +6,7 @@
    landing pages — and it must work the same way as the listing page."
 
    This is the listing.html / listing.js gate (initLeadCapture →
-   showLeadModal → completeLead → rememberLead → initAlreadyRegistered)
+   showLeadModal → completeLead → rememberLead)
    lifted into one self-contained file for every OTHER public page:
    index, preconstruction, str, home-valuation and the 41 /tower pages.
    listing.html keeps its own copy (it also has hero/OTP/A-B wiring);
@@ -26,7 +26,6 @@
    - same Meta Pixel / Google Ads conversion events
    - `rememberLead` is called SAME-ORIGIN so the 1-year cookie lands on
      .homesinsoflorida.com (never the vercel.app host)
-   - "Already registered?" email lookup → /api/remember → unlock
    - EN/ES/PT copy = the gate keys copied verbatim from i18n.js (these
      pages don't load i18n.js). Regenerate with tools/build-lead-gate.js
      whenever those keys change.
@@ -334,61 +333,6 @@
             el.textContent = msg;
             el.style.display = 'block';
         }
-
-        // ── "Already registered?" (email → /api/remember → cookie → unlock) ──
-        (function initAlreadyRegistered() {
-            var form = document.getElementById('lead-form');
-            if (!form || document.getElementById('lead-registered')) return;
-            var wrap = document.createElement('div');
-            wrap.id = 'lead-registered';
-            wrap.className = 'lead-registered';
-            wrap.innerHTML =
-                '<button type="button" class="lead-registered-toggle" id="lead-registered-toggle" data-i18n="alreadyRegistered"></button>' +
-                '<div class="lead-registered-form" id="lead-registered-form" hidden>' +
-                    '<p class="lead-registered-hint" data-i18n="alreadyRegisteredHint"></p>' +
-                    '<div class="lead-registered-row">' +
-                        '<input type="email" id="lead-registered-email" autocomplete="email" data-i18n="emailAddress">' +
-                        '<button type="button" id="lead-registered-btn" data-i18n="alreadyRegisteredBtn"></button>' +
-                    '</div>' +
-                    '<p class="lead-error" id="lead-registered-error" style="display:none"></p>' +
-                '</div>';
-            form.insertAdjacentElement('afterend', wrap);
-            applyGateTranslations(wrap);
-
-            var toggle = wrap.querySelector('#lead-registered-toggle');
-            var panel  = wrap.querySelector('#lead-registered-form');
-            var input  = wrap.querySelector('#lead-registered-email');
-            var btn    = wrap.querySelector('#lead-registered-btn');
-            var err    = wrap.querySelector('#lead-registered-error');
-            toggle.addEventListener('click', function () {
-                panel.hidden = !panel.hidden;
-                if (!panel.hidden) input.focus();
-            });
-            var submit = function () {
-                var email = input.value.trim().toLowerCase();
-                err.style.display = 'none';
-                if (!email || email.indexOf('@') < 1) { input.focus(); return; }
-                btn.disabled = true;
-                rememberLead({ email: email }).then(function (ok) {
-                    btn.disabled = false;
-                    if (!ok) {
-                        err.textContent = t('alreadyRegisteredNotFound');
-                        err.style.display = 'block';
-                        trackEvent('gate_recognize_fail', {});
-                        return;
-                    }
-                    try { localStorage.setItem('poler_lead_v1', email); } catch (e) { /* cookie carries it */ }
-                    var c = readCookies().poler_lt;
-                    if (c) { try { localStorage.setItem('poler_alert_token', c); } catch (e) { /* ignore */ } }
-                    leadCaptured = true;
-                    clearInterval(timerInterval);
-                    trackEvent('gate_recognized', {});
-                    unlockPage();
-                });
-            };
-            btn.addEventListener('click', submit);
-            input.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); submit(); } });
-        })();
 
         // ── 2-step form: name + email → phone + timeline → save ──
         var form      = document.getElementById('lead-form');

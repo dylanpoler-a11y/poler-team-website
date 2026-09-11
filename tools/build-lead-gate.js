@@ -4,8 +4,8 @@
  * gate) from the LISTING page's own sources so the two never drift:
  *
  *   tools/lead-gate.template.js   behaviour (a copy of listing.js's gate logic)
- *   i18n.js                       the gate's EN/ES/PT strings (27 keys)
- *   listing.css                   the gate's CSS (overlay + already-registered)
+ *   i18n.js                       the gate's EN/ES/PT strings (23 keys)
+ *   listing.css                   the gate's CSS (overlay)
  *   listing.html                  the country-code <option> list
  *
  * Run after editing any of those:   node tools/build-lead-gate.js
@@ -25,8 +25,7 @@ const KEYS = [
     'phonePlaceholder', 'timelineLabel', 'tl0to3', 'tl3to6', 'tl6to12', 'tl12plus',
     'continueBtn', 'consentDisclosure', 'contactTitle', 'contactSubtitle',
     'submitAndContinue', 'submitting', 'errFillAll', 'errInvalidEmail', 'errInvalidPhone',
-    'errSelectTimeline', 'errNetwork', 'alreadyRegistered', 'alreadyRegisteredHint',
-    'alreadyRegisteredBtn', 'alreadyRegisteredNotFound',
+    'errSelectTimeline', 'errNetwork',
 ];
 const ctx = {
     window: {}, console,
@@ -54,7 +53,6 @@ function slice(startMarker, endMarker) {
     return css.slice(bannerStart >= 0 ? bannerStart : a, b).trimEnd();
 }
 const gateCss = slice('LEAD CAPTURE OVERLAY', '/* OTP digit boxes */');
-const regCss  = slice('"Already registered?" on the lead gate', '/* ============================================================\n   Recalibration popup');
 const LOCK_CSS = `
 /* Site-wide lock (lead-gate.js): listing.css blurs #page-wrap; pages without
    one blur every body child except the overlay. Vars below are the listing.css
@@ -76,7 +74,7 @@ html.lead-gate-locked body > :not(#lead-overlay) {
 }
 .page-wrap.blurred { filter: blur(6px); pointer-events: none; user-select: none; }
 `;
-const fullCss = [gateCss, regCss, LOCK_CSS].join('\n\n');
+const fullCss = [gateCss, LOCK_CSS].join('\n\n');
 
 // ── 3. Country-code options from listing.html ──
 const html = read('listing.html');

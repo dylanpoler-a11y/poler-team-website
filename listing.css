@@ -2740,33 +2740,6 @@ a { color: inherit; text-decoration: none; }
 #results-grid:empty { min-height: 100vh; }
 
 /* ============================================================
-   "Already registered?" on the lead gate (2026-09-10)
-   ============================================================ */
-.lead-registered { margin-top: 0.75rem; text-align: center; }
-.lead-registered-toggle {
-    font-size: 0.8rem; font-weight: 600; color: var(--text-muted);
-    text-decoration: underline; text-underline-offset: 3px;
-    padding: 0.25rem 0.5rem;
-}
-.lead-registered-toggle:hover { color: var(--navy); }
-.lead-registered-form { margin-top: 0.5rem; text-align: left; }
-.lead-registered-hint { font-size: 0.78rem; color: var(--text-muted); margin: 0 0 0.5rem; }
-.lead-registered-row { display: flex; gap: 0.5rem; }
-.lead-registered-row input {
-    flex: 1; min-width: 0;
-    padding: 0.7rem 0.9rem;
-    border-radius: 8px; border: 1.5px solid var(--border);
-    background: var(--bg); color: var(--text); font-size: 0.875rem; outline: none;
-}
-.lead-registered-row input:focus { border-color: var(--navy); background: #fff; }
-.lead-registered-row button {
-    padding: 0.7rem 1rem; border-radius: 8px;
-    background: var(--navy); color: #fff; font-weight: 700; font-size: 0.85rem;
-}
-.lead-registered-row button:disabled { opacity: 0.6; cursor: not-allowed; }
-.lead-registered .lead-error { margin-top: 0.5rem; }
-
-/* ============================================================
    Recalibration popup (2026-09-10) — one-tap "what's stopping you?"
    card for captured leads. Non-blocking: bottom-right card on desktop,
    bottom sheet on mobile. Sits under the lead gate (9999).

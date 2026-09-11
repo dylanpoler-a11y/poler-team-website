@@ -642,28 +642,6 @@ const I18N = {
     langES: { en: 'Spanish', es: 'Español', pt: 'Espanhol' },
     langPT: { en: 'Portuguese', es: 'Portugués', pt: 'Português' },
 
-    // ── Lead gate: "Already registered?" (2026-09-10) ───────
-    alreadyRegistered: {
-        en: 'Already registered?',
-        es: '¿Ya te registraste?',
-        pt: 'Já se cadastrou?',
-    },
-    alreadyRegisteredHint: {
-        en: 'Enter the email you signed up with and we\'ll skip this.',
-        es: 'Escribe el email con el que te registraste y saltamos esto.',
-        pt: 'Digite o e-mail do seu cadastro e pulamos esta etapa.',
-    },
-    alreadyRegisteredBtn: {
-        en: 'Continue',
-        es: 'Continuar',
-        pt: 'Continuar',
-    },
-    alreadyRegisteredNotFound: {
-        en: 'We couldn\'t find that email — please register below.',
-        es: 'No encontramos ese email — regístrate abajo.',
-        pt: 'Não encontramos esse e-mail — cadastre-se abaixo.',
-    },
-
     // ── Recalibration popup (2026-09-10) ────────────────────
     recalibTitle: {
         en: 'Quick question — what\'s stopping you from booking a showing?',
