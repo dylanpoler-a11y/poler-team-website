@@ -79,6 +79,11 @@ var I18N = {
 /* ---- language helpers (self-contained; compatible with the site key) ---- */
 function getLang() {
   try {
+    // ?lang=es|pt|en (links from the /tower/es|pt pages) wins and is remembered
+    var q = new URLSearchParams(window.location.search).get('lang');
+    if (q === 'es' || q === 'pt' || q === 'en') { setLang(q); return q; }
+  } catch (e) {}
+  try {
     var l = localStorage.getItem('poler_lang') || localStorage.getItem('poler-lang');
     if (l === 'es' || l === 'pt' || l === 'en') return l;
   } catch (e) {}
@@ -128,8 +133,12 @@ function waLink(name) {
 function buildCardHTML(b) {
   // Links the card to the tower's own indexable page (/tower/<id>, built by
   // tools/build-tower-pages.js). Without this the detail pages are orphans.
+  // ES/PT visitors go to the indexable Spanish/Portuguese copy of the page
+  // (/tower/es/<id>, /tower/pt/<id>) — built by the same script since 2026-09-10.
+  var lang = (typeof getLang === 'function') ? getLang() : 'en';
+  var towerBase = (lang === 'es' || lang === 'pt') ? '/tower/' + lang + '/' : '/tower/';
   var name = b.id
-    ? '<a class="pc-name-link" href="/tower/' + esc(b.id) + '">' + esc(b.name) + '</a>'
+    ? '<a class="pc-name-link" href="' + towerBase + esc(b.id) + '">' + esc(b.name) + '</a>'
     : esc(b.name);
   var photos = (Array.isArray(b.photos) ? b.photos : []).filter(Boolean);
   var hasPhoto = photos.length > 0;

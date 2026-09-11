@@ -87,6 +87,55 @@ listing.js from cache for a while (`s-maxage=0, stale-while-revalidate`) — a h
 the new behavior. OTP screen (`#lead-step-2`) is still in the HTML but `skipOtp=true` — it never
 shows; "Step 1 of 2 / 2 of 2" refers to name+email → phone+timeline, not SMS.
 
+## 5. Site-wide lead gate + SEO (evening, same day)
+Kevin: "a popup for anybody who is on the page for the first time … the home page and any of the
+landing pages … make sure the 10 second popup works the same way as it currently does on the
+listing landing page."
+- **`lead-gate.js` (GENERATED — never hand-edit)** by `tools/build-lead-gate.js` from
+  `tools/lead-gate.template.js` (a self-contained copy of listing.js's gate logic) + the 27 gate
+  i18n keys pulled from `i18n.js` + the gate CSS sliced from `listing.css` + the `#country-code`
+  options from `listing.html`. Rebuild after touching any of those: `node tools/build-lead-gate.js`.
+- Loaded (defer, before nav.js) on `index.html`, `preconstruction.html`, `str.html`,
+  `home-valuation.html`, and every generated `/tower/**` page. It bails if `#lead-overlay` already
+  exists, so listing.html keeps its native gate. Same recognition order (team cookie/flag → `?t=` →
+  `poler_lt` cookie → `poler_lead_v1` / `poler_alert_token`), same 10 s timer (shared sessionStorage
+  key, fires immediately if the timer already expired on another page), scroll trigger past the 3rd
+  card (`.listing-card/.pc-card/.str-building-card/.neighborhood-card`) or 1.5 viewports, same 2-step
+  form (name+email → phone+timeline, no OTP), same save-lead POST + `rememberLead` (same-origin
+  `/api/remember`) + `poler_lead_v1` + Google Ads conversion. `listingAddress` = the page `<h1>` so
+  the CRM shows which page captured the lead. Page lock = `html.lead-gate-locked body > :not(#lead-overlay)`
+  blur + pointer-events none. Language: `?lang` → `<html lang>` (es/pt tower pages) → `poler_lang` → en.
+- nav.js's contact modal still sets `poler_lead_v1`, which the gate honors (no double-ask).
+- **ES/PT tower pages:** `tools/build-tower-pages.js` now writes `/tower/<id>`, `/tower/es/<id>`,
+  `/tower/pt/<id>` (41 × 3 = 123 pages) with `<html lang>`, localized chrome (`L` table), copy from
+  `lib/preconstructions-i18n.js` (`PRECON_I18N[lang][id]` — description/amenities/etc; EN fallback
+  when missing), hreflang en/es/pt/x-default, and a sitemap with `xhtml:link` alternates (130 URLs).
+  `/analytics.js` is now IN the template (it had been injected post-build and would have been lost
+  on rebuild). `/preconstruction?lang=es|pt` cards link to the matching language tower page.
+- **Photos:** the 5 towers with zero photos (Baccarat, Waldorf Astoria, 1428 Brickell, Okan, Lofty)
+  now have 6–7 validated (200 image/*) condoblackbook CDN photos each in `lib/preconstructions-data.js`.
+- **Google Business Profile:** no profile exists for The Poler Team / Kevin / Rosa (searched). Setup
+  package with paste-ready fields, 8 weekly posts EN/ES, review-ask script, weekly routine →
+  `~/business/real-estate/active/execution/seo/gbp/GBP-SETUP-PACKAGE.md`. Needs Kevin's Google account.
+- Caveat stated to Kevin: a hard interstitial on the SEO `/tower` pages works against Google's
+  intrusive-interstitial guidance; he was explicit, so it ships everywhere.
+
+- **Deployed 2026-09-10 ~20:00 EDT** (two `npx vercel --prod --yes` runs). Live checks on
+  www.homesinsoflorida.com: all 7 page types 200 + load `/lead-gate.js`; wiped browser on
+  `/preconstruction` → no gate at 5 s, gate at 12 s; real submission as Test Check → step 2 →
+  save-lead → `poler_lt` cookie + alert token + `poler_lead_v1` set, page unlocked, CRM row created
+  (`sourceUrl=/preconstruction`); storage wiped again on `/tower/es/…` → cookie re-seeded
+  localStorage, NO overlay injected. Sitemap 130 URLs live, `/tower/pt/*` serve `lang="pt-BR"`.
+- Cold review (sonnet) found 2 must-fixes, both fixed before deploy: (1) index.html's legacy
+  Meta-only 10 s `#hpl-overlay` auto-open (`.gated`, unclosable) would have stacked on top of the
+  new gate for fbclid/IG traffic → retired; the modal stays as the on-demand contact form.
+  (2) build-tower-pages.js replaced the `{es,pt}` default with whatever the i18n file exported →
+  now merges per language + warns when a language is short. Follow-ups logged, not blocking:
+  listing.js still double-sends lead emails (EmailJS + server Resend) — the new gate sends none
+  client-side; `window.openLeadGate` only exists for un-captured visitors on non-listing pages;
+  dead `isMetaTraffic`/`hplCaptured` vars in index.html.
+- Kevin-facing note: browsers may cache old JS for a bit (`stale-while-revalidate`) — hard refresh.
+
 ## Pending / open
 - Sammy's FIRST WhatsApp message is still generic — context-aware first message (item 3 of the
   build list) needs an engine change in `whatsapp-lead-monitor` (Railway). Not touched.
@@ -99,6 +148,10 @@ shows; "Step 1 of 2 / 2 of 2" refers to name+email → phone+timeline, not SMS.
 ## Touched
 listing.js, listing.css, i18n.js, crm.js, api/save-lead.js, api/log-activity.js,
 api/remember.js (new), api/recalibrate.js (new), this file.
+Evening: lead-gate.js (generated), tools/lead-gate.template.js, tools/build-lead-gate.js,
+tools/build-tower-pages.js, preconstruction.js, index.html, preconstruction.html, str.html,
+home-valuation.html, lib/preconstructions-data.js, lib/preconstructions-i18n.js (new), tower/**,
+sitemap.xml.
 External: Vercel prod deploy; one probe row written+deleted in Airtable `Lead Activity`
 (recWDDt5th3WAM0S5); live test rows noted under Deploy.
 

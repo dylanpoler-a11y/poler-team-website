@@ -703,10 +703,9 @@ document.addEventListener('DOMContentLoaded', function () {
         if ((e.key === 'Escape' || e.keyCode === 27) && hplOverlay.classList.contains('open')) closeHpLead();
     });
 
-    if (isMetaTraffic && !hplCaptured) {
-        hplOverlay.classList.add('gated');
-        setTimeout(function () { openHpLead(); }, 10000);
-    }
+    // 2026-09-10: the Meta-only 10 s auto-open + .gated lock was retired — the site-wide
+    // gate (/lead-gate.js) now handles first-visit capture on every page. This modal
+    // stays as the on-demand contact form (nav / CTA buttons) and is always closable.
 
     // Select placeholder color
     var hplTimeline = document.getElementById('hpl-timeline');
@@ -922,6 +921,7 @@ document.addEventListener('DOMContentLoaded', function () {
         .catch(function () { /* section stays empty on API failure */ });
 });
 </script>
+<script src="/lead-gate.js" defer></script>
 <script src="nav.js" defer></script>
 <script src="track-time.js" defer></script>
 </body>

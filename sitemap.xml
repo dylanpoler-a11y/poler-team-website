@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
     <loc>https://www.homesinsoflorida.com/</loc>
     <changefreq>weekly</changefreq>
@@ -37,207 +37,1109 @@
   </url>
   <url>
     <loc>https://www.homesinsoflorida.com/tower/cipriani-residences-miami</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/cipriani-residences-miami"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/cipriani-residences-miami"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/cipriani-residences-miami"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/cipriani-residences-miami"/>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/es/cipriani-residences-miami</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/cipriani-residences-miami"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/cipriani-residences-miami"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/cipriani-residences-miami"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/cipriani-residences-miami"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/pt/cipriani-residences-miami</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/cipriani-residences-miami"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/cipriani-residences-miami"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/cipriani-residences-miami"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/cipriani-residences-miami"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.homesinsoflorida.com/tower/baccarat-residences-miami</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/baccarat-residences-miami"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/baccarat-residences-miami"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/baccarat-residences-miami"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/baccarat-residences-miami"/>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/es/baccarat-residences-miami</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/baccarat-residences-miami"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/baccarat-residences-miami"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/baccarat-residences-miami"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/baccarat-residences-miami"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/pt/baccarat-residences-miami</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/baccarat-residences-miami"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/baccarat-residences-miami"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/baccarat-residences-miami"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/baccarat-residences-miami"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.homesinsoflorida.com/tower/waldorf-astoria-residences-miami</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/waldorf-astoria-residences-miami"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/waldorf-astoria-residences-miami"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/waldorf-astoria-residences-miami"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/waldorf-astoria-residences-miami"/>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/es/waldorf-astoria-residences-miami</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/waldorf-astoria-residences-miami"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/waldorf-astoria-residences-miami"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/waldorf-astoria-residences-miami"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/waldorf-astoria-residences-miami"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/pt/waldorf-astoria-residences-miami</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/waldorf-astoria-residences-miami"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/waldorf-astoria-residences-miami"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/waldorf-astoria-residences-miami"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/waldorf-astoria-residences-miami"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.homesinsoflorida.com/tower/one-twenty-brickell-signature-residences</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/one-twenty-brickell-signature-residences"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/one-twenty-brickell-signature-residences"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/one-twenty-brickell-signature-residences"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/one-twenty-brickell-signature-residences"/>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/es/one-twenty-brickell-signature-residences</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/one-twenty-brickell-signature-residences"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/one-twenty-brickell-signature-residences"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/one-twenty-brickell-signature-residences"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/one-twenty-brickell-signature-residences"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/pt/one-twenty-brickell-signature-residences</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/one-twenty-brickell-signature-residences"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/one-twenty-brickell-signature-residences"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/one-twenty-brickell-signature-residences"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/one-twenty-brickell-signature-residences"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.homesinsoflorida.com/tower/mercedes-benz-places-miami</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/mercedes-benz-places-miami"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/mercedes-benz-places-miami"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/mercedes-benz-places-miami"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/mercedes-benz-places-miami"/>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/es/mercedes-benz-places-miami</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/mercedes-benz-places-miami"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/mercedes-benz-places-miami"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/mercedes-benz-places-miami"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/mercedes-benz-places-miami"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/pt/mercedes-benz-places-miami</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/mercedes-benz-places-miami"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/mercedes-benz-places-miami"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/mercedes-benz-places-miami"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/mercedes-benz-places-miami"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.homesinsoflorida.com/tower/delano-residences-miami</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/delano-residences-miami"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/delano-residences-miami"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/delano-residences-miami"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/delano-residences-miami"/>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/es/delano-residences-miami</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/delano-residences-miami"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/delano-residences-miami"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/delano-residences-miami"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/delano-residences-miami"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/pt/delano-residences-miami</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/delano-residences-miami"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/delano-residences-miami"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/delano-residences-miami"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/delano-residences-miami"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.homesinsoflorida.com/tower/casa-bella-residences-by-b-b-italia</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/casa-bella-residences-by-b-b-italia"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/casa-bella-residences-by-b-b-italia"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/casa-bella-residences-by-b-b-italia"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/casa-bella-residences-by-b-b-italia"/>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/es/casa-bella-residences-by-b-b-italia</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/casa-bella-residences-by-b-b-italia"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/casa-bella-residences-by-b-b-italia"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/casa-bella-residences-by-b-b-italia"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/casa-bella-residences-by-b-b-italia"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/pt/casa-bella-residences-by-b-b-italia</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/casa-bella-residences-by-b-b-italia"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/casa-bella-residences-by-b-b-italia"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/casa-bella-residences-by-b-b-italia"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/casa-bella-residences-by-b-b-italia"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.homesinsoflorida.com/tower/e11even-residences-beyond</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/e11even-residences-beyond"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/e11even-residences-beyond"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/e11even-residences-beyond"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/e11even-residences-beyond"/>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/es/e11even-residences-beyond</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/e11even-residences-beyond"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/e11even-residences-beyond"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/e11even-residences-beyond"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/e11even-residences-beyond"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/pt/e11even-residences-beyond</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/e11even-residences-beyond"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/e11even-residences-beyond"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/e11even-residences-beyond"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/e11even-residences-beyond"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.homesinsoflorida.com/tower/palm-tree-residences-miami</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/palm-tree-residences-miami"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/palm-tree-residences-miami"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/palm-tree-residences-miami"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/palm-tree-residences-miami"/>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/es/palm-tree-residences-miami</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/palm-tree-residences-miami"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/palm-tree-residences-miami"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/palm-tree-residences-miami"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/palm-tree-residences-miami"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/pt/palm-tree-residences-miami</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/palm-tree-residences-miami"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/palm-tree-residences-miami"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/palm-tree-residences-miami"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/palm-tree-residences-miami"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.homesinsoflorida.com/tower/villa-miami</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/villa-miami"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/villa-miami"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/villa-miami"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/villa-miami"/>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/es/villa-miami</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/villa-miami"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/villa-miami"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/villa-miami"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/villa-miami"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/pt/villa-miami</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/villa-miami"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/villa-miami"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/villa-miami"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/villa-miami"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.homesinsoflorida.com/tower/lilli-miami-edgewater</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/lilli-miami-edgewater"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/lilli-miami-edgewater"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/lilli-miami-edgewater"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/lilli-miami-edgewater"/>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/es/lilli-miami-edgewater</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/lilli-miami-edgewater"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/lilli-miami-edgewater"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/lilli-miami-edgewater"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/lilli-miami-edgewater"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/pt/lilli-miami-edgewater</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/lilli-miami-edgewater"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/lilli-miami-edgewater"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/lilli-miami-edgewater"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/lilli-miami-edgewater"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.homesinsoflorida.com/tower/twentysixth-2nd-wynwood</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/twentysixth-2nd-wynwood"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/twentysixth-2nd-wynwood"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/twentysixth-2nd-wynwood"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/twentysixth-2nd-wynwood"/>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/es/twentysixth-2nd-wynwood</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/twentysixth-2nd-wynwood"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/twentysixth-2nd-wynwood"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/twentysixth-2nd-wynwood"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/twentysixth-2nd-wynwood"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/pt/twentysixth-2nd-wynwood</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/twentysixth-2nd-wynwood"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/twentysixth-2nd-wynwood"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/twentysixth-2nd-wynwood"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/twentysixth-2nd-wynwood"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.homesinsoflorida.com/tower/bentley-residences-sunny-isles-beach</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/bentley-residences-sunny-isles-beach"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/bentley-residences-sunny-isles-beach"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/bentley-residences-sunny-isles-beach"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/bentley-residences-sunny-isles-beach"/>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/es/bentley-residences-sunny-isles-beach</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/bentley-residences-sunny-isles-beach"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/bentley-residences-sunny-isles-beach"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/bentley-residences-sunny-isles-beach"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/bentley-residences-sunny-isles-beach"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/pt/bentley-residences-sunny-isles-beach</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/bentley-residences-sunny-isles-beach"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/bentley-residences-sunny-isles-beach"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/bentley-residences-sunny-isles-beach"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/bentley-residences-sunny-isles-beach"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.homesinsoflorida.com/tower/the-st-regis-residences-sunny-isles-beach</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/the-st-regis-residences-sunny-isles-beach"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/the-st-regis-residences-sunny-isles-beach"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/the-st-regis-residences-sunny-isles-beach"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/the-st-regis-residences-sunny-isles-beach"/>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/es/the-st-regis-residences-sunny-isles-beach</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/the-st-regis-residences-sunny-isles-beach"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/the-st-regis-residences-sunny-isles-beach"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/the-st-regis-residences-sunny-isles-beach"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/the-st-regis-residences-sunny-isles-beach"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/pt/the-st-regis-residences-sunny-isles-beach</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/the-st-regis-residences-sunny-isles-beach"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/the-st-regis-residences-sunny-isles-beach"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/the-st-regis-residences-sunny-isles-beach"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/the-st-regis-residences-sunny-isles-beach"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.homesinsoflorida.com/tower/rivage-bal-harbour</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/rivage-bal-harbour"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/rivage-bal-harbour"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/rivage-bal-harbour"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/rivage-bal-harbour"/>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/es/rivage-bal-harbour</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/rivage-bal-harbour"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/rivage-bal-harbour"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/rivage-bal-harbour"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/rivage-bal-harbour"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/pt/rivage-bal-harbour</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/rivage-bal-harbour"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/rivage-bal-harbour"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/rivage-bal-harbour"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/rivage-bal-harbour"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.homesinsoflorida.com/tower/the-delmore</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/the-delmore"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/the-delmore"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/the-delmore"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/the-delmore"/>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/es/the-delmore</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/the-delmore"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/the-delmore"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/the-delmore"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/the-delmore"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/pt/the-delmore</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/the-delmore"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/the-delmore"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/the-delmore"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/the-delmore"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.homesinsoflorida.com/tower/ocean-house-residences-surfside</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/ocean-house-residences-surfside"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/ocean-house-residences-surfside"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/ocean-house-residences-surfside"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/ocean-house-residences-surfside"/>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/es/ocean-house-residences-surfside</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/ocean-house-residences-surfside"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/ocean-house-residences-surfside"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/ocean-house-residences-surfside"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/ocean-house-residences-surfside"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/pt/ocean-house-residences-surfside</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/ocean-house-residences-surfside"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/ocean-house-residences-surfside"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/ocean-house-residences-surfside"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/ocean-house-residences-surfside"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.homesinsoflorida.com/tower/surf-row-residences</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/surf-row-residences"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/surf-row-residences"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/surf-row-residences"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/surf-row-residences"/>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/es/surf-row-residences</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/surf-row-residences"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/surf-row-residences"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/surf-row-residences"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/surf-row-residences"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/pt/surf-row-residences</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/surf-row-residences"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/surf-row-residences"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/surf-row-residences"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/surf-row-residences"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.homesinsoflorida.com/tower/aman-miami-beach-residences</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/aman-miami-beach-residences"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/aman-miami-beach-residences"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/aman-miami-beach-residences"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/aman-miami-beach-residences"/>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/es/aman-miami-beach-residences</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/aman-miami-beach-residences"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/aman-miami-beach-residences"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/aman-miami-beach-residences"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/aman-miami-beach-residences"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/pt/aman-miami-beach-residences</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/aman-miami-beach-residences"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/aman-miami-beach-residences"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/aman-miami-beach-residences"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/aman-miami-beach-residences"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.homesinsoflorida.com/tower/the-perigon-miami-beach</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/the-perigon-miami-beach"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/the-perigon-miami-beach"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/the-perigon-miami-beach"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/the-perigon-miami-beach"/>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/es/the-perigon-miami-beach</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/the-perigon-miami-beach"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/the-perigon-miami-beach"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/the-perigon-miami-beach"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/the-perigon-miami-beach"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/pt/the-perigon-miami-beach</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/the-perigon-miami-beach"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/the-perigon-miami-beach"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/the-perigon-miami-beach"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/the-perigon-miami-beach"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.homesinsoflorida.com/tower/rosewood-residences-at-the-raleigh</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/rosewood-residences-at-the-raleigh"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/rosewood-residences-at-the-raleigh"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/rosewood-residences-at-the-raleigh"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/rosewood-residences-at-the-raleigh"/>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/es/rosewood-residences-at-the-raleigh</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/rosewood-residences-at-the-raleigh"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/rosewood-residences-at-the-raleigh"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/rosewood-residences-at-the-raleigh"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/rosewood-residences-at-the-raleigh"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/pt/rosewood-residences-at-the-raleigh</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/rosewood-residences-at-the-raleigh"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/rosewood-residences-at-the-raleigh"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/rosewood-residences-at-the-raleigh"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/rosewood-residences-at-the-raleigh"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.homesinsoflorida.com/tower/shore-club-private-collection</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/shore-club-private-collection"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/shore-club-private-collection"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/shore-club-private-collection"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/shore-club-private-collection"/>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/es/shore-club-private-collection</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/shore-club-private-collection"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/shore-club-private-collection"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/shore-club-private-collection"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/shore-club-private-collection"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/pt/shore-club-private-collection</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/shore-club-private-collection"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/shore-club-private-collection"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/shore-club-private-collection"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/shore-club-private-collection"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.homesinsoflorida.com/tower/ocean-terrace-residences</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/ocean-terrace-residences"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/ocean-terrace-residences"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/ocean-terrace-residences"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/ocean-terrace-residences"/>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/es/ocean-terrace-residences</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/ocean-terrace-residences"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/ocean-terrace-residences"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/ocean-terrace-residences"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/ocean-terrace-residences"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/pt/ocean-terrace-residences</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/ocean-terrace-residences"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/ocean-terrace-residences"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/ocean-terrace-residences"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/ocean-terrace-residences"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.homesinsoflorida.com/tower/7200-collins</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/7200-collins"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/7200-collins"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/7200-collins"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/7200-collins"/>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/es/7200-collins</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/7200-collins"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/7200-collins"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/7200-collins"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/7200-collins"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/pt/7200-collins</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/7200-collins"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/7200-collins"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/7200-collins"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/7200-collins"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.homesinsoflorida.com/tower/bay-harbor-towers</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/bay-harbor-towers"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/bay-harbor-towers"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/bay-harbor-towers"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/bay-harbor-towers"/>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/es/bay-harbor-towers</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/bay-harbor-towers"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/bay-harbor-towers"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/bay-harbor-towers"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/bay-harbor-towers"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/pt/bay-harbor-towers</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/bay-harbor-towers"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/bay-harbor-towers"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/bay-harbor-towers"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/bay-harbor-towers"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.homesinsoflorida.com/tower/bay-harbor-villas</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/bay-harbor-villas"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/bay-harbor-villas"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/bay-harbor-villas"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/bay-harbor-villas"/>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/es/bay-harbor-villas</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/bay-harbor-villas"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/bay-harbor-villas"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/bay-harbor-villas"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/bay-harbor-villas"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/pt/bay-harbor-villas</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/bay-harbor-villas"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/bay-harbor-villas"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/bay-harbor-villas"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/bay-harbor-villas"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.homesinsoflorida.com/tower/viceroy-residences-aventura</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/viceroy-residences-aventura"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/viceroy-residences-aventura"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/viceroy-residences-aventura"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/viceroy-residences-aventura"/>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/es/viceroy-residences-aventura</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/viceroy-residences-aventura"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/viceroy-residences-aventura"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/viceroy-residences-aventura"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/viceroy-residences-aventura"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/pt/viceroy-residences-aventura</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/viceroy-residences-aventura"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/viceroy-residences-aventura"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/viceroy-residences-aventura"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/viceroy-residences-aventura"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.homesinsoflorida.com/tower/the-william-north-miami-beach</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/the-william-north-miami-beach"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/the-william-north-miami-beach"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/the-william-north-miami-beach"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/the-william-north-miami-beach"/>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/es/the-william-north-miami-beach</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/the-william-north-miami-beach"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/the-william-north-miami-beach"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/the-william-north-miami-beach"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/the-william-north-miami-beach"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/pt/the-william-north-miami-beach</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/the-william-north-miami-beach"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/the-william-north-miami-beach"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/the-william-north-miami-beach"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/the-william-north-miami-beach"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.homesinsoflorida.com/tower/nexo-residences</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/nexo-residences"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/nexo-residences"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/nexo-residences"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/nexo-residences"/>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/es/nexo-residences</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/nexo-residences"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/nexo-residences"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/nexo-residences"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/nexo-residences"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/pt/nexo-residences</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/nexo-residences"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/nexo-residences"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/nexo-residences"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/nexo-residences"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.homesinsoflorida.com/tower/four-seasons-private-residences-coconut-grove</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/four-seasons-private-residences-coconut-grove"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/four-seasons-private-residences-coconut-grove"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/four-seasons-private-residences-coconut-grove"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/four-seasons-private-residences-coconut-grove"/>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/es/four-seasons-private-residences-coconut-grove</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/four-seasons-private-residences-coconut-grove"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/four-seasons-private-residences-coconut-grove"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/four-seasons-private-residences-coconut-grove"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/four-seasons-private-residences-coconut-grove"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/pt/four-seasons-private-residences-coconut-grove</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/four-seasons-private-residences-coconut-grove"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/four-seasons-private-residences-coconut-grove"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/four-seasons-private-residences-coconut-grove"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/four-seasons-private-residences-coconut-grove"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.homesinsoflorida.com/tower/the-well-coconut-grove</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/the-well-coconut-grove"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/the-well-coconut-grove"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/the-well-coconut-grove"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/the-well-coconut-grove"/>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/es/the-well-coconut-grove</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/the-well-coconut-grove"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/the-well-coconut-grove"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/the-well-coconut-grove"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/the-well-coconut-grove"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/pt/the-well-coconut-grove</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/the-well-coconut-grove"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/the-well-coconut-grove"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/the-well-coconut-grove"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/the-well-coconut-grove"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.homesinsoflorida.com/tower/ziggurat-coconut-grove</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/ziggurat-coconut-grove"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/ziggurat-coconut-grove"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/ziggurat-coconut-grove"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/ziggurat-coconut-grove"/>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/es/ziggurat-coconut-grove</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/ziggurat-coconut-grove"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/ziggurat-coconut-grove"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/ziggurat-coconut-grove"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/ziggurat-coconut-grove"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/pt/ziggurat-coconut-grove</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/ziggurat-coconut-grove"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/ziggurat-coconut-grove"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/ziggurat-coconut-grove"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/ziggurat-coconut-grove"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.homesinsoflorida.com/tower/the-avenue-coral-gables</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/the-avenue-coral-gables"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/the-avenue-coral-gables"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/the-avenue-coral-gables"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/the-avenue-coral-gables"/>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/es/the-avenue-coral-gables</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/the-avenue-coral-gables"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/the-avenue-coral-gables"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/the-avenue-coral-gables"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/the-avenue-coral-gables"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/pt/the-avenue-coral-gables</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/the-avenue-coral-gables"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/the-avenue-coral-gables"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/the-avenue-coral-gables"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/the-avenue-coral-gables"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.homesinsoflorida.com/tower/andare-residences-by-pininfarina</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/andare-residences-by-pininfarina"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/andare-residences-by-pininfarina"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/andare-residences-by-pininfarina"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/andare-residences-by-pininfarina"/>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/es/andare-residences-by-pininfarina</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/andare-residences-by-pininfarina"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/andare-residences-by-pininfarina"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/andare-residences-by-pininfarina"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/andare-residences-by-pininfarina"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/pt/andare-residences-by-pininfarina</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/andare-residences-by-pininfarina"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/andare-residences-by-pininfarina"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/andare-residences-by-pininfarina"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/andare-residences-by-pininfarina"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.homesinsoflorida.com/tower/the-ritz-carlton-residences-fort-lauderdale-beach</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/the-ritz-carlton-residences-fort-lauderdale-beach"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/the-ritz-carlton-residences-fort-lauderdale-beach"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/the-ritz-carlton-residences-fort-lauderdale-beach"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/the-ritz-carlton-residences-fort-lauderdale-beach"/>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/es/the-ritz-carlton-residences-fort-lauderdale-beach</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/the-ritz-carlton-residences-fort-lauderdale-beach"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/the-ritz-carlton-residences-fort-lauderdale-beach"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/the-ritz-carlton-residences-fort-lauderdale-beach"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/the-ritz-carlton-residences-fort-lauderdale-beach"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/pt/the-ritz-carlton-residences-fort-lauderdale-beach</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/the-ritz-carlton-residences-fort-lauderdale-beach"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/the-ritz-carlton-residences-fort-lauderdale-beach"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/the-ritz-carlton-residences-fort-lauderdale-beach"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/the-ritz-carlton-residences-fort-lauderdale-beach"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.homesinsoflorida.com/tower/st-regis-resort-residences-bahia-mar-fort-lauderdale</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/st-regis-resort-residences-bahia-mar-fort-lauderdale"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/st-regis-resort-residences-bahia-mar-fort-lauderdale"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/st-regis-resort-residences-bahia-mar-fort-lauderdale"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/st-regis-resort-residences-bahia-mar-fort-lauderdale"/>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/es/st-regis-resort-residences-bahia-mar-fort-lauderdale</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/st-regis-resort-residences-bahia-mar-fort-lauderdale"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/st-regis-resort-residences-bahia-mar-fort-lauderdale"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/st-regis-resort-residences-bahia-mar-fort-lauderdale"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/st-regis-resort-residences-bahia-mar-fort-lauderdale"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/pt/st-regis-resort-residences-bahia-mar-fort-lauderdale</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/st-regis-resort-residences-bahia-mar-fort-lauderdale"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/st-regis-resort-residences-bahia-mar-fort-lauderdale"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/st-regis-resort-residences-bahia-mar-fort-lauderdale"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/st-regis-resort-residences-bahia-mar-fort-lauderdale"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.homesinsoflorida.com/tower/the-ritz-carlton-residences-pompano-beach</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/the-ritz-carlton-residences-pompano-beach"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/the-ritz-carlton-residences-pompano-beach"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/the-ritz-carlton-residences-pompano-beach"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/the-ritz-carlton-residences-pompano-beach"/>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/es/the-ritz-carlton-residences-pompano-beach</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/the-ritz-carlton-residences-pompano-beach"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/the-ritz-carlton-residences-pompano-beach"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/the-ritz-carlton-residences-pompano-beach"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/the-ritz-carlton-residences-pompano-beach"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/pt/the-ritz-carlton-residences-pompano-beach</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/the-ritz-carlton-residences-pompano-beach"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/the-ritz-carlton-residences-pompano-beach"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/the-ritz-carlton-residences-pompano-beach"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/the-ritz-carlton-residences-pompano-beach"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.homesinsoflorida.com/tower/icon-beach-waterfront-residences</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/icon-beach-waterfront-residences"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/icon-beach-waterfront-residences"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/icon-beach-waterfront-residences"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/icon-beach-waterfront-residences"/>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/es/icon-beach-waterfront-residences</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/icon-beach-waterfront-residences"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/icon-beach-waterfront-residences"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/icon-beach-waterfront-residences"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/icon-beach-waterfront-residences"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/pt/icon-beach-waterfront-residences</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/icon-beach-waterfront-residences"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/icon-beach-waterfront-residences"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/icon-beach-waterfront-residences"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/icon-beach-waterfront-residences"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.homesinsoflorida.com/tower/the-residences-at-1428-brickell</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/the-residences-at-1428-brickell"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/the-residences-at-1428-brickell"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/the-residences-at-1428-brickell"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/the-residences-at-1428-brickell"/>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/es/the-residences-at-1428-brickell</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/the-residences-at-1428-brickell"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/the-residences-at-1428-brickell"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/the-residences-at-1428-brickell"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/the-residences-at-1428-brickell"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/pt/the-residences-at-1428-brickell</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/the-residences-at-1428-brickell"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/the-residences-at-1428-brickell"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/the-residences-at-1428-brickell"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/the-residences-at-1428-brickell"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.homesinsoflorida.com/tower/okan-tower</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/okan-tower"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/okan-tower"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/okan-tower"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/okan-tower"/>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://www.homesinsoflorida.com/tower/es/okan-tower</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/okan-tower"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/okan-tower"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/okan-tower"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/okan-tower"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/pt/okan-tower</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/okan-tower"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/okan-tower"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/okan-tower"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/okan-tower"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://www.homesinsoflorida.com/tower/lofty-brickell</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/lofty-brickell"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/lofty-brickell"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/lofty-brickell"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/lofty-brickell"/>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/es/lofty-brickell</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/lofty-brickell"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/lofty-brickell"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/lofty-brickell"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/lofty-brickell"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.homesinsoflorida.com/tower/pt/lofty-brickell</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.homesinsoflorida.com/tower/lofty-brickell"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.homesinsoflorida.com/tower/es/lofty-brickell"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://www.homesinsoflorida.com/tower/pt/lofty-brickell"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.homesinsoflorida.com/tower/lofty-brickell"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>
 </urlset>

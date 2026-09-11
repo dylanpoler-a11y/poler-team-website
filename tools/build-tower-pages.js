@@ -21,6 +21,115 @@ const WA_NUMBER = '19542354046'; // Rosa Poler — point of contact for ALL prec
 const mod = await import(path.join(ROOT, 'lib', 'preconstructions-data.js'));
 const TOWERS = mod.PRECONSTRUCTIONS || mod.default;
 
+/* ── ES / PT (2026-09-10) ─────────────────────────────────────────────────────
+   Kevin's leads are mostly Latin American and the on-page i18n toggle is JS
+   Google can't index — so every tower is also emitted as a real URL:
+     /tower/<id>        English  (unchanged)
+     /tower/es/<id>     Spanish
+     /tower/pt/<id>     Brazilian Portuguese
+   Marketing copy per tower comes from lib/preconstructions-i18n.js (PRECON_I18N,
+   keyed by language → tower id, same shape as the English fields); the page
+   chrome comes from the L table below. All three pages cross-link with
+   hreflang and share one canonical per language. */
+const LANGS = ['en', 'es', 'pt'];
+let PRECON_I18N = { es: {}, pt: {} };
+try {
+    const i18nMod = await import(path.join(ROOT, 'lib', 'preconstructions-i18n.js'));
+    const got = i18nMod.PRECON_I18N || {};
+    PRECON_I18N = { es: got.es || {}, pt: got.pt || {} }; // merge, never replace the safe default
+} catch (e) {
+    console.warn('lib/preconstructions-i18n.js not found — ES/PT pages will reuse English copy');
+}
+for (const lang of ['es', 'pt']) {
+    const n = Object.keys(PRECON_I18N[lang]).length;
+    if (n < TOWERS.length) {
+        console.warn(`i18n ${lang}: ${n}/${TOWERS.length} towers translated — the rest ship English copy`);
+    }
+}
+
+const L = {
+    en: {
+        titleTail: 'Preconstruction Prices & Floor Plans | The Poler Team',
+        in: 'in', delivering: 'delivering', stories: 'stories', residences: 'residences',
+        metaTail: 'Floor plans, deposit schedule, amenities and availability from The Poler Team.',
+        waMsg: (name) => `Hi Rosa, I'm interested in ${name} preconstruction`,
+        facts: { developer: 'Developer', architecture: 'Architecture', interiors: 'Interiors', address: 'Address',
+                 stories: 'Stories', totalUnits: 'Total residences', sizes: 'Residence sizes', bedrooms: 'Bedrooms',
+                 pricing: 'Pricing', ppsf: 'Price per sq ft', delivery: 'Delivery', views: 'Views',
+                 waterfront: 'Waterfront', str: 'Short-term rentals', status: 'Construction status' },
+        yes: 'Yes', allowed: 'Allowed', sqft: 'sq ft',
+        bedroom: (n) => `${n} bedroom`, bedrooms: (a, b) => `${a}–${b} bedrooms`,
+        about: (name) => `About ${name}`, glance: (name) => `${name} at a glance`,
+        amenities: (name) => `Amenities at ${name}`, deposit: (name) => `${name} deposit schedule`,
+        depositNote: 'Deposit structures are set by the developer and can change between release phases. Confirm the current schedule before signing — Rosa tracks these directly with the sales teams.',
+        parking: 'Parking', related: (area) => `Other new developments near ${area}`,
+        delivery: 'delivery', from: 'from', deliveryCap: 'Delivery',
+        cta: (name) => `Ask about availability at ${name}`,
+        ctaBody: "Inventory, current release pricing, and floor plans change weekly. Rosa Poler handles every preconstruction inquiry for The Poler Team directly with the developer's sales team.",
+        waBtn: 'WhatsApp Rosa', crumbHome: 'Home', crumbPrecon: 'Preconstruction',
+        back: '&larr; All South Florida preconstruction towers',
+        footerNote: 'All preconstruction inquiries handled by Rosa Poler, The Poler Team &middot; Optimar International Realty.',
+        nav: {},
+    },
+    es: {
+        titleTail: 'Preconstrucción en Miami: Precios y Planos | The Poler Team',
+        in: 'en', delivering: 'entrega', stories: 'pisos', residences: 'residencias',
+        metaTail: 'Planos, plan de depósitos, amenidades y disponibilidad con The Poler Team.',
+        waMsg: (name) => `Hola Rosa, me interesa la preconstrucción ${name}`,
+        facts: { developer: 'Desarrollador', architecture: 'Arquitectura', interiors: 'Interiores', address: 'Dirección',
+                 stories: 'Pisos', totalUnits: 'Total de residencias', sizes: 'Tamaños de residencias', bedrooms: 'Habitaciones',
+                 pricing: 'Precios', ppsf: 'Precio por pie cuadrado', delivery: 'Entrega', views: 'Vistas',
+                 waterfront: 'Frente al agua', str: 'Alquiler a corto plazo', status: 'Estado de la obra' },
+        yes: 'Sí', allowed: 'Permitido', sqft: 'pies²',
+        bedroom: (n) => `${n} habitación${n === 1 ? '' : 'es'}`, bedrooms: (a, b) => `${a} a ${b} habitaciones`,
+        about: (name) => `Sobre ${name}`, glance: (name) => `${name} en resumen`,
+        amenities: (name) => `Amenidades de ${name}`, deposit: (name) => `Plan de depósitos de ${name}`,
+        depositNote: 'El plan de depósitos lo define el desarrollador y puede cambiar entre fases de venta. Confirma el plan vigente antes de firmar — Rosa lo verifica directamente con los equipos de ventas.',
+        parking: 'Estacionamiento', related: (area) => `Otros nuevos desarrollos cerca de ${area}`,
+        delivery: 'entrega', from: 'desde', deliveryCap: 'Entrega',
+        cta: (name) => `Consulta disponibilidad en ${name}`,
+        ctaBody: 'El inventario, los precios de la fase actual y los planos cambian cada semana. Rosa Poler atiende cada consulta de preconstrucción de The Poler Team directamente con el equipo de ventas del desarrollador.',
+        waBtn: 'WhatsApp con Rosa', crumbHome: 'Inicio', crumbPrecon: 'Preconstrucción',
+        back: '&larr; Todas las torres en preconstrucción del sur de Florida',
+        footerNote: 'Todas las consultas de preconstrucción las atiende Rosa Poler, The Poler Team &middot; Optimar International Realty.',
+        nav: { 'Home': 'Inicio', 'Listings': 'Propiedades', 'Preconstruction': 'Preconstrucción',
+               'Short-Term Rentals': 'Alquileres Cortos', 'Home Valuation': 'Valoración', 'About': 'Nosotros' },
+    },
+    pt: {
+        titleTail: 'Pré-construção em Miami: Preços e Plantas | The Poler Team',
+        in: 'em', delivering: 'entrega', stories: 'andares', residences: 'residências',
+        metaTail: 'Plantas, cronograma de depósitos, comodidades e disponibilidade com The Poler Team.',
+        waMsg: (name) => `Oi Rosa, tenho interesse na pré-construção ${name}`,
+        facts: { developer: 'Incorporadora', architecture: 'Arquitetura', interiors: 'Interiores', address: 'Endereço',
+                 stories: 'Andares', totalUnits: 'Total de residências', sizes: 'Tamanhos das residências', bedrooms: 'Quartos',
+                 pricing: 'Preços', ppsf: 'Preço por pé quadrado', delivery: 'Entrega', views: 'Vistas',
+                 waterfront: 'Beira-mar', str: 'Aluguel de curta temporada', status: 'Status da obra' },
+        yes: 'Sim', allowed: 'Permitido', sqft: 'pés²',
+        bedroom: (n) => `${n} quarto${n === 1 ? '' : 's'}`, bedrooms: (a, b) => `${a} a ${b} quartos`,
+        about: (name) => `Sobre ${name}`, glance: (name) => `${name} em resumo`,
+        amenities: (name) => `Comodidades do ${name}`, deposit: (name) => `Cronograma de depósitos do ${name}`,
+        depositNote: 'O cronograma de depósitos é definido pela incorporadora e pode mudar entre fases de venda. Confirme o cronograma vigente antes de assinar — Rosa acompanha isso diretamente com as equipes de vendas.',
+        parking: 'Estacionamento', related: (area) => `Outros novos empreendimentos perto de ${area}`,
+        delivery: 'entrega', from: 'a partir de', deliveryCap: 'Entrega',
+        cta: (name) => `Consulte a disponibilidade no ${name}`,
+        ctaBody: 'Estoque, preços da fase atual e plantas mudam toda semana. Rosa Poler cuida de cada consulta de pré-construção da The Poler Team diretamente com a equipe de vendas da incorporadora.',
+        waBtn: 'WhatsApp com a Rosa', crumbHome: 'Início', crumbPrecon: 'Pré-construção',
+        back: '&larr; Todas as torres em pré-construção do sul da Flórida',
+        footerNote: 'Todas as consultas de pré-construção são atendidas por Rosa Poler, The Poler Team &middot; Optimar International Realty.',
+        nav: { 'Home': 'Início', 'Listings': 'Imóveis', 'Preconstruction': 'Pré-construção',
+               'Short-Term Rentals': 'Aluguéis Curtos', 'Home Valuation': 'Avaliação', 'About': 'Sobre' },
+    },
+};
+
+// Tower fields with a translation take the translated value; everything else
+// (numbers, names, developers, photos) is shared across languages.
+function localizeTower(t, lang) {
+    if (lang === 'en') return t;
+    const tr = (PRECON_I18N[lang] || {})[t.id] || {};
+    return Object.assign({}, t, tr, { id: t.id, name: t.name });
+}
+const towerPath = (id, lang) => lang === 'en' ? `/tower/${id}` : `/tower/${lang}/${id}`;
+
 const esc = (s) => String(s == null ? '' : s)
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
@@ -39,10 +148,17 @@ const money = (n) => {
                         : '$' + Math.round(n / 1000) + 'K';
 };
 
-const bedLabel = (beds) => {
+const bedLabel = (beds, U) => {
     if (!Array.isArray(beds) || !beds.length) return '';
     const min = Math.min(...beds), max = Math.max(...beds);
-    return min === max ? `${min} bedroom` : `${min}–${max} bedrooms`;
+    return min === max ? U.bedroom(min) : U.bedrooms(min, max);
+};
+
+// Nav lifted from preconstruction.html is English; swap the link labels per language.
+const navFor = (lang) => {
+    const map = L[lang].nav;
+    return NAV.replace(/class="lp-nav-link( active)?">([^<]+)</g, (m, act, label) =>
+        `class="lp-nav-link${act || ''}">${map[label] || label}<`);
 };
 
 /* ── Nav + footer lifted from preconstruction.html so tower pages read as native ── */
@@ -65,54 +181,60 @@ const NAV = `    <header class="lp-header">
         </nav>
     </header>`;
 
+const FOOTER_NOTE_EN = 'All preconstruction inquiries handled by Rosa Poler, The Poler Team &middot; Optimar International Realty.';
 const FOOTER = `<footer class="pc-footer">
     <p>The Poler Team &nbsp;|&nbsp; <a href="/">homesinsoflorida.com</a> &nbsp;|&nbsp; <a href="tel:+13057997290">(305) 799-7290</a></p>
-    <p class="tw-footer-note">All preconstruction inquiries handled by Rosa Poler, The Poler Team &middot; Optimar International Realty.</p>
+    <p class="tw-footer-note">${FOOTER_NOTE_EN}</p>
 </footer>`;
 
 /* ── Per-tower page ─────────────────────────────────────────────────────────── */
-function renderTower(t, all) {
-    const url = `${ORIGIN}/tower/${t.id}`;
+function renderTower(src, all, lang = 'en') {
+    const U = L[lang];
+    const t = localizeTower(src, lang);
+    const url = ORIGIN + towerPath(t.id, lang);
     // Several towers carry area === city (e.g. Sunny Isles Beach) — dedupe so the
     // title doesn't read "Sunny Isles Beach, Sunny Isles Beach".
     const where = [...new Set([t.area, t.city].filter(Boolean))].join(', ');
-    const priceStr = t.priceFrom ? `from ${money(t.priceFrom)}` : '';
+    const priceStr = t.priceFrom ? `${U.from} ${money(t.priceFrom)}` : '';
 
     // Title targets the real query shape: "<tower name> <city> preconstruction"
-    const title = `${t.name} — ${where} Preconstruction Prices & Floor Plans | The Poler Team`;
+    const title = lang === 'en'
+        ? `${t.name} — ${where} Preconstruction Prices & Floor Plans | The Poler Team`
+        : `${t.name} — ${where} · ${U.titleTail}`;
 
     // Meta description built from this tower's own facts, never a fixed template string
     const metaBits = [
-        `${t.name} in ${where}`,
-        t.deliveryLabel ? `delivering ${t.deliveryLabel}` : '',
+        `${t.name} ${U.in} ${where}`,
+        t.deliveryLabel ? `${U.delivering} ${t.deliveryLabel}` : '',
         t.pricingFrom || priceStr,
-        t.stories ? `${t.stories} stories` : '',
-        t.totalUnits ? `${t.totalUnits} residences` : '',
+        t.stories ? `${t.stories} ${U.stories}` : '',
+        t.totalUnits ? `${t.totalUnits} ${U.residences}` : '',
     ].filter(Boolean);
-    const metaDesc = (metaBits.join(' · ') + '. Floor plans, deposit schedule, amenities and availability from The Poler Team.').slice(0, 320);
+    const metaDesc = (metaBits.join(' · ') + '. ' + U.metaTail).slice(0, 320);
 
     const hero = (t.photos && t.photos[0]) || '';
-    const waMsg = `Hi Rosa, I'm interested in ${t.name} preconstruction`;
+    const waMsg = U.waMsg(t.name);
     const waUrl = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(waMsg)}`;
 
     /* Fast-facts rows — only render a row when this tower actually has the datum,
        so pages differ structurally, not just by swapped words. */
+    const F = U.facts;
     const facts = [
-        ['Developer', t.developer],
-        ['Architecture', t.architecture],
-        ['Interiors', t.interiors],
-        ['Address', t.address],
-        ['Stories', t.stories],
-        ['Total residences', t.totalUnits],
-        ['Residence sizes', (t.sqftMin && t.sqftMax) ? `${t.sqftMin.toLocaleString()}–${t.sqftMax.toLocaleString()} sq ft` : ''],
-        ['Bedrooms', bedLabel(t.bedrooms)],
-        ['Pricing', t.pricingFrom],
-        ['Price per sq ft', t.pricePerSqft ? `$${t.pricePerSqft.toLocaleString()}` : ''],
-        ['Delivery', t.deliveryLabel],
-        ['Views', t.views],
-        ['Waterfront', t.waterfront ? 'Yes' : ''],
-        ['Short-term rentals', t.shortTermRental ? 'Allowed' : ''],
-        ['Construction status', t.constructionStatus],
+        [F.developer, t.developer],
+        [F.architecture, t.architecture],
+        [F.interiors, t.interiors],
+        [F.address, t.address],
+        [F.stories, t.stories],
+        [F.totalUnits, t.totalUnits],
+        [F.sizes, (t.sqftMin && t.sqftMax) ? `${t.sqftMin.toLocaleString()}–${t.sqftMax.toLocaleString()} ${U.sqft}` : ''],
+        [F.bedrooms, bedLabel(t.bedrooms, U)],
+        [F.pricing, t.pricingFrom],
+        [F.ppsf, t.pricePerSqft ? `$${t.pricePerSqft.toLocaleString()}` : ''],
+        [F.delivery, t.deliveryLabel],
+        [F.views, t.views],
+        [F.waterfront, t.waterfront ? U.yes : ''],
+        [F.str, t.shortTermRental ? U.allowed : ''],
+        [F.status, t.constructionStatus],
     ].filter(([, v]) => v !== '' && v != null);
 
     const factRows = facts.map(([k, v]) =>
@@ -120,7 +242,7 @@ function renderTower(t, all) {
 
     const amenities = (t.amenities || []).length
         ? `  <section class="tw-section" id="amenities">
-    <h2>Amenities at ${esc(t.name)}</h2>
+    <h2>${esc(U.amenities(t.name))}</h2>
     <ul class="tw-amenities">
 ${t.amenities.map(a => `      <li>${esc(a)}</li>`).join('\n')}
     </ul>
@@ -128,14 +250,14 @@ ${t.amenities.map(a => `      <li>${esc(a)}</li>`).join('\n')}
 
     const deposit = t.deposit
         ? `  <section class="tw-section" id="deposit">
-    <h2>${esc(t.name)} deposit schedule</h2>
+    <h2>${esc(U.deposit(t.name))}</h2>
     <p class="tw-deposit">${esc(t.deposit)}</p>
-    <p class="tw-note">Deposit structures are set by the developer and can change between release phases. Confirm the current schedule before signing — Rosa tracks these directly with the sales teams.</p>
+    <p class="tw-note">${esc(U.depositNote)}</p>
   </section>` : '';
 
     const parking = t.parkingSpaces
         ? `  <section class="tw-section" id="parking">
-    <h2>Parking</h2>
+    <h2>${esc(U.parking)}</h2>
     <p>${esc(t.parkingSpaces)}</p>
   </section>` : '';
 
@@ -148,9 +270,9 @@ ${t.amenities.map(a => `      <li>${esc(a)}</li>`).join('\n')}
 
     const relatedBlock = related.length
         ? `  <section class="tw-section" id="related">
-    <h2>Other new developments near ${esc(t.area || t.city)}</h2>
+    <h2>${esc(U.related(t.area || t.city))}</h2>
     <ul class="tw-related">
-${related.map(r => `      <li><a href="/tower/${esc(r.id)}">${esc(r.name)}</a> <span>${esc([r.area, r.deliveryLabel && 'delivery ' + r.deliveryLabel, r.priceFrom && 'from ' + money(r.priceFrom)].filter(Boolean).join(' · '))}</span></li>`).join('\n')}
+${related.map(r => `      <li><a href="${esc(towerPath(r.id, lang))}">${esc(r.name)}</a> <span>${esc([r.area, r.deliveryLabel && U.delivery + ' ' + r.deliveryLabel, r.priceFrom && U.from + ' ' + money(r.priceFrom)].filter(Boolean).join(' · '))}</span></li>`).join('\n')}
     </ul>
   </section>` : '';
 
@@ -186,23 +308,29 @@ ${related.map(r => `      <li><a href="/tower/${esc(r.id)}">${esc(r.name)}</a> <
             {
                 '@type': 'BreadcrumbList',
                 itemListElement: [
-                    { '@type': 'ListItem', position: 1, name: 'Home', item: ORIGIN + '/' },
-                    { '@type': 'ListItem', position: 2, name: 'Preconstruction', item: ORIGIN + '/preconstruction' },
+                    { '@type': 'ListItem', position: 1, name: U.crumbHome, item: ORIGIN + '/' },
+                    { '@type': 'ListItem', position: 2, name: U.crumbPrecon, item: ORIGIN + '/preconstruction' },
                     { '@type': 'ListItem', position: 3, name: t.name, item: url },
                 ],
             },
         ],
     };
 
+    const hreflang = LANGS.map(l => `<link rel="alternate" hreflang="${l}" href="${ORIGIN}${towerPath(t.id, l)}">`).join('\n')
+        + `\n<link rel="alternate" hreflang="x-default" href="${ORIGIN}${towerPath(t.id, 'en')}">`;
+
     return `<!DOCTYPE html>
-<html lang="en">
+<html lang="${lang === 'pt' ? 'pt-BR' : lang}">
 <head>
+<!-- Google Analytics 4 + Google Ads -->
+<script src="/analytics.js"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>${esc(title)}</title>
 <meta name="description" content="${esc(metaDesc)}">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="${url}">
+${hreflang}
 <meta property="og:type" content="website">
 <meta property="og:title" content="${esc(title)}">
 <meta property="og:description" content="${esc(metaDesc)}">
@@ -219,28 +347,28 @@ ${hero ? `<meta property="og:image" content="${esc(hero)}">` : ''}
 <script type="application/ld+json">${jsonLdSafe(jsonld)}</script>
 </head>
 <body>
-${NAV}
+${navFor(lang)}
 
 <nav class="tw-crumbs" aria-label="Breadcrumb">
-  <a href="/">Home</a> <span>/</span> <a href="/preconstruction">Preconstruction</a> <span>/</span> <span aria-current="page">${esc(t.name)}</span>
+  <a href="/">${esc(U.crumbHome)}</a> <span>/</span> <a href="/preconstruction${lang === 'en' ? '' : '?lang=' + lang}">${esc(U.crumbPrecon)}</a> <span>/</span> <span aria-current="page">${esc(t.name)}</span>
 </nav>
 
 <main class="tw-main">
   <header class="tw-hero">
     ${t.badge ? `<span class="tw-badge">${esc(t.badge)}</span>` : ''}
     <h1>${esc(t.name)}</h1>
-    <p class="tw-sub">${esc([where, t.deliveryLabel && `Delivery ${t.deliveryLabel}`, t.pricingFrom].filter(Boolean).join(' · '))}</p>
+    <p class="tw-sub">${esc([where, t.deliveryLabel && `${U.deliveryCap} ${t.deliveryLabel}`, t.pricingFrom].filter(Boolean).join(' · '))}</p>
   </header>
 
-  ${hero ? `<img class="tw-photo" src="${esc(hero)}" alt="${esc(t.name)} in ${esc(where)}" loading="eager" width="1200" height="700">` : ''}
+  ${hero ? `<img class="tw-photo" src="${esc(hero)}" alt="${esc(t.name)} ${U.in} ${esc(where)}" loading="eager" width="1200" height="700">` : ''}
 
   ${t.description ? `  <section class="tw-section" id="overview">
-    <h2>About ${esc(t.name)}</h2>
+    <h2>${esc(U.about(t.name))}</h2>
     <p class="tw-lede">${esc(t.description)}</p>
   </section>` : ''}
 
   <section class="tw-section" id="facts">
-    <h2>${esc(t.name)} at a glance</h2>
+    <h2>${esc(U.glance(t.name))}</h2>
     <dl class="tw-facts">
 ${factRows}
     </dl>
@@ -253,20 +381,21 @@ ${deposit}
 ${parking}
 
   <section class="tw-cta" id="inquire">
-    <h2>Ask about availability at ${esc(t.name)}</h2>
-    <p>Inventory, current release pricing, and floor plans change weekly. Rosa Poler handles every preconstruction inquiry for The Poler Team directly with the developer's sales team.</p>
+    <h2>${esc(U.cta(t.name))}</h2>
+    <p>${esc(U.ctaBody)}</p>
     <div class="tw-cta-row">
-      <a class="tw-btn tw-btn-primary" href="${esc(waUrl)}" rel="noopener">WhatsApp Rosa</a>
+      <a class="tw-btn tw-btn-primary" href="${esc(waUrl)}" rel="noopener">${esc(U.waBtn)}</a>
       <a class="tw-btn" href="tel:+19542354046">(954) 235-4046</a>
     </div>
   </section>
 
 ${relatedBlock}
 
-  <p class="tw-back"><a href="/preconstruction">&larr; All South Florida preconstruction towers</a></p>
+  <p class="tw-back"><a href="/preconstruction${lang === 'en' ? '' : '?lang=' + lang}">${U.back}</a></p>
 </main>
 
-${FOOTER}
+${FOOTER.replace(FOOTER_NOTE_EN, U.footerNote)}
+<script src="/lead-gate.js" defer></script>
 <script src="/nav.js" defer></script>
 </body>
 </html>
@@ -286,13 +415,18 @@ function renderSitemap(towers) {
     ];
     const urls = statics.map(([p, cf, pr]) =>
         `  <url>\n    <loc>${ORIGIN}${p}</loc>\n    <changefreq>${cf}</changefreq>\n    <priority>${pr}</priority>\n  </url>`);
-    towers.forEach(t => urls.push(
-        `  <url>\n    <loc>${ORIGIN}/tower/${t.id}</loc>\n    <changefreq>monthly</changefreq>\n    <priority>0.8</priority>\n  </url>`));
-    return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join('\n')}\n</urlset>\n`;
+    // One <url> per language per tower, each listing all three as xhtml alternates
+    towers.forEach(t => LANGS.forEach(lang => {
+        const alts = LANGS.map(l => `    <xhtml:link rel="alternate" hreflang="${l}" href="${ORIGIN}${towerPath(t.id, l)}"/>`)
+            .concat([`    <xhtml:link rel="alternate" hreflang="x-default" href="${ORIGIN}${towerPath(t.id, 'en')}"/>`]).join('\n');
+        urls.push(`  <url>\n    <loc>${ORIGIN}${towerPath(t.id, lang)}</loc>\n${alts}\n    <changefreq>monthly</changefreq>\n    <priority>${lang === 'en' ? '0.8' : '0.7'}</priority>\n  </url>`);
+    }));
+    return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">\n${urls.join('\n')}\n</urlset>\n`;
 }
 
 /* ── Run ────────────────────────────────────────────────────────────────────── */
 fs.mkdirSync(OUT_DIR, { recursive: true });
+for (const lang of LANGS) if (lang !== 'en') fs.mkdirSync(path.join(OUT_DIR, lang), { recursive: true });
 
 const seen = new Set();
 let written = 0;
@@ -300,11 +434,14 @@ for (const t of TOWERS) {
     if (!t.id || !t.name) { console.warn('SKIP (missing id/name):', JSON.stringify(t).slice(0, 80)); continue; }
     if (seen.has(t.id)) { console.warn('SKIP (duplicate id):', t.id); continue; }
     seen.add(t.id);
-    fs.writeFileSync(path.join(OUT_DIR, `${t.id}.html`), renderTower(t, TOWERS));
-    written++;
+    for (const lang of LANGS) {
+        const file = lang === 'en' ? path.join(OUT_DIR, `${t.id}.html`) : path.join(OUT_DIR, lang, `${t.id}.html`);
+        fs.writeFileSync(file, renderTower(t, TOWERS, lang));
+        written++;
+    }
 }
 
 fs.writeFileSync(path.join(ROOT, 'sitemap.xml'), renderSitemap(TOWERS.filter(t => seen.has(t.id))));
 
-console.log(`Wrote ${written} tower pages to tower/`);
-console.log(`Sitemap: ${seen.size + 7} URLs`);
+console.log(`Wrote ${written} tower pages to tower/ (${seen.size} towers × ${LANGS.length} languages)`);
+console.log(`Sitemap: ${seen.size * LANGS.length + 7} URLs`);
