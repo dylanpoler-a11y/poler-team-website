@@ -661,6 +661,8 @@ function initLeadCapture() {
         window.addEventListener('scroll', checkScrollTrigger, { passive: true });
     }
 
+    initCountryCodeDefault();
+
     // ── Timeline pills (single-select) ────────────────────────
     document.querySelectorAll('#timeline-pills .timeline-pill').forEach(pill => {
         pill.addEventListener('click', () => {
@@ -1104,6 +1106,34 @@ function unlockPage(overlay, pageWrap) {
     overlay.classList.remove('active');
     overlay.setAttribute('aria-hidden', 'true');
     pageWrap.classList.remove('blurred');
+}
+
+// Default the phone country code from the visitor's locale, then Vercel geo
+// (2026-09-12). The hard-coded +1 was catching LatAm ad traffic: since 8/25 only
+// 31% of leads tagged "United States" had a real number, and ~1 in 5 of the bad
+// ones was a real CO/PE/AR mobile typed under +1. Browser language region is the
+// instant first guess; /api/geo overrides it unless the visitor already changed
+// the dropdown. Falls back to the existing +1 when neither matches an option.
+function initCountryCodeDefault() {
+    const sel = document.getElementById('country-code');
+    if (!sel) return;
+    let touched = false;
+    sel.addEventListener('change', () => { touched = true; });
+    const pick = (iso) => {
+        if (!iso || touched) return false;
+        const tag = '(' + String(iso).toUpperCase() + ')';
+        const opt = Array.from(sel.options).find(o => o.text.includes(tag));
+        if (!opt) return false;
+        sel.value = opt.value;
+        return true;
+    };
+    const langs = navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || ''];
+    const region = langs.map(l => (String(l).split('-')[1] || '').toUpperCase()).find(r => /^[A-Z]{2}$/.test(r));
+    pick(region);
+    fetch('/api/geo', { cache: 'no-store' })
+        .then(r => r.json())
+        .then(j => pick(j && j.country))
+        .catch(() => { /* keep the locale/default pick */ });
 }
 
 function showLeadError(elId, msg) {

@@ -319,6 +319,33 @@
         if (wantsSignup) showLeadModal();
 
         // ── Timeline pills (single-select) ──
+        // ── Default phone country code: browser locale, then /api/geo (2026-09-12) ──
+        (function initCountryCodeDefault() {
+            var sel = document.getElementById('country-code');
+            if (!sel) return;
+            var touched = false;
+            sel.addEventListener('change', function () { touched = true; });
+            function pick(iso) {
+                if (!iso || touched) return false;
+                var tag = '(' + String(iso).toUpperCase() + ')';
+                for (var i = 0; i < sel.options.length; i++) {
+                    if (sel.options[i].text.indexOf(tag) !== -1) { sel.value = sel.options[i].value; return true; }
+                }
+                return false;
+            }
+            var langs = (navigator.languages && navigator.languages.length) ? navigator.languages : [navigator.language || ''];
+            var region = null;
+            for (var k = 0; k < langs.length; k++) {
+                var r = (String(langs[k]).split('-')[1] || '').toUpperCase();
+                if (/^[A-Z]{2}$/.test(r)) { region = r; break; }
+            }
+            pick(region);
+            fetch('/api/geo', { cache: 'no-store' })
+                .then(function (r) { return r.json(); })
+                .then(function (j) { pick(j && j.country); })
+                .catch(function () { /* keep the locale/default pick */ });
+        })();
+
         overlay.querySelectorAll('#timeline-pills .timeline-pill').forEach(function (pill) {
             pill.addEventListener('click', function () {
                 overlay.querySelectorAll('#timeline-pills .timeline-pill').forEach(function (p) { p.classList.remove('selected'); });
