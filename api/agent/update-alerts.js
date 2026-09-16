@@ -24,6 +24,8 @@
  *     count?: number,  // properties per alert
  *     channels?: { email?: bool, whatsapp?: bool },  // delivery channels (default email-only).
  *                      // Stored inside the Alert Profiles wrapper; setting one preserves profiles.
+ *     autoProfileConfirm?: true,  // 2026-09-16: lead confirmed (or restated) a site-derived
+ *                      // auto profile → profile #1 gets auto:false, autoConfirmed:true
  *     profiles?: [     // MULTI-PROFILE (e.g. a house budget AND a land budget):
  *       { name?, types: ['Single Family'|'Condo'|'Townhouse'|'Multi Family'|'Land'|'For Rent'],
  *         cities: 'Miramar, Homestead',  // comma-separated STRING (engine format)
@@ -40,7 +42,7 @@
 export const config = { runtime: 'edge' };
 
 import { authorize } from '../_auth.js';
-import { parseAlertProfiles, serializeAlertProfiles } from '../../lib/alert-search.js';
+import { computeAlertFields, needsCurrentRecord } from '../../lib/alert-profile-fields.js';
 
 export default async function handler(req) {
     if (req.method === 'OPTIONS') {
@@ -67,98 +69,18 @@ export default async function handler(req) {
     const { leadId, profile = {} } = body;
     if (!leadId) return json({ error: 'leadId required' }, 400);
 
-    const fields = {};
-    if (profile.active !== undefined) fields['Alert Active'] = !!profile.active;
-    // Comma+space, NEVER newline (Kevin 2026-07-16): newline-joined values render as one
-    // glued word in the CRM panel's single-line input ("Boca RatonFort Lauderdale") and the
-    // email engine's comma-only split treated the whole thing as ONE unmatchable city.
-    if (Array.isArray(profile.cities)) fields['Alert Cities'] = profile.cities.map(c => String(c).trim()).filter(Boolean).join(', ');
-    if (profile.priceMin !== undefined) fields['Alert Price Min'] = Number(profile.priceMin) || 0;
-    if (profile.priceMax !== undefined) fields['Alert Price Max'] = Number(profile.priceMax) || 0;
-    if (profile.bedsMin !== undefined) fields['Alert Beds Min'] = Number(profile.bedsMin) || 0;
-    if (profile.bathsMin !== undefined) fields['Alert Baths Min'] = Number(profile.bathsMin) || 0;
-    if (Array.isArray(profile.propertyTypes)) fields['Alert Property Types'] = profile.propertyTypes;
-    if (profile.frequency !== undefined) fields['Alert Frequency'] = profile.frequency;
-    if (profile.count !== undefined) fields['Alert Count'] = Number(profile.count) || 5;
-
-    // Alert Profiles wrapper: profiles[] and/or channels{email,whatsapp}. When only
-    // one is provided, preserve the other from the record's current value so a
-    // channel toggle never drops profiles (and vice-versa).
-    const wantsProfiles = Array.isArray(profile.profiles);
-    const wantsChannels = profile.channels && typeof profile.channels === 'object';
-    // Flat features can only live inside the wrapper (no flat Airtable column) — fold
-    // them into profile #1. When the caller sends profiles[] too, those win untouched:
-    // features there belong per-profile.
-    const wantsFeatures = !wantsProfiles && Array.isArray(profile.features);
-    // Flat CRITERIA (price/cities/beds/baths/types) must ALSO fold into profile #1 when
-    // the lead already has a wrapper: profilesFromLead() prefers profiles[] and ignores
-    // the flat columns entirely, so writing only the flat fields is a SILENT NO-OP for
-    // every wrapper lead. Root: 2026-08-10, Yasser Lenis — raising his cap $550k→$650k
-    // updated 'Alert Price Max' while the engine kept reading $550k off the profile.
-    const wantsFlatCriteria = !wantsProfiles && (
-        profile.priceMin !== undefined || profile.priceMax !== undefined ||
-        profile.bedsMin  !== undefined || profile.bathsMin !== undefined ||
-        Array.isArray(profile.cities)  || Array.isArray(profile.propertyTypes)
-    );
-    if (wantsProfiles || wantsChannels || wantsFeatures || wantsFlatCriteria) {
-        let curRaw = '';
-        let curFields = {};
+    // All folding rules (flat columns ↔ Alert Profiles wrapper, features, auto metadata)
+    // live in lib/alert-profile-fields.js — shared with api/agent/derive-profile.js.
+    let curFields = {};
+    if (needsCurrentRecord(profile)) {
         try {
             const cur = await fetch(`https://api.airtable.com/v0/${baseId}/Leads/${leadId}`, {
                 headers: { 'Authorization': `Bearer ${apiKey}` },
             });
-            if (cur.ok) {
-                curFields = (await cur.json()).fields || {};
-                curRaw = curFields['Alert Profiles'] || '';
-            }
+            if (cur.ok) curFields = (await cur.json()).fields || {};
         } catch (_) { /* fall through with defaults */ }
-        const parsed = parseAlertProfiles(curRaw);
-        let nextProfiles = wantsProfiles
-            ? profile.profiles.slice(0, 5).filter(p => p && typeof p === 'object')
-            : parsed.profiles;
-        // Merge whatever the caller explicitly sent into profile #1 (same convention as
-        // features: profile #1 is the flat-field mirror). Keys the caller omitted are
-        // left untouched, so a price-only update can't wipe cities/features.
-        if (wantsFlatCriteria && nextProfiles.length > 0) {
-            const patch = {};
-            if (Array.isArray(profile.propertyTypes)) patch.types = fields['Alert Property Types'];
-            if (Array.isArray(profile.cities))        patch.cities = fields['Alert Cities'];
-            if (profile.priceMin !== undefined)       patch.priceMin = fields['Alert Price Min'];
-            if (profile.priceMax !== undefined)       patch.priceMax = fields['Alert Price Max'];
-            if (profile.bedsMin  !== undefined)       patch.bedsMin  = fields['Alert Beds Min'];
-            if (profile.bathsMin !== undefined)       patch.bathsMin = fields['Alert Baths Min'];
-            nextProfiles = nextProfiles.map((p, i) => (i === 0 ? { ...p, ...patch } : p));
-        }
-        if (wantsFeatures) {
-            const feats = profile.features.map(f => String(f).trim()).filter(Boolean).slice(0, 15);
-            if (nextProfiles.length > 0) {
-                nextProfiles = nextProfiles.map((p, i) => (i === 0 ? { ...p, features: feats } : p));
-            } else {
-                // Flat-only lead: synthesize the single profile the engine would have
-                // built from the flat fields (profilesFromLead), request values first,
-                // stored values as fallback, plus the features.
-                nextProfiles = [{
-                    types:    Array.isArray(profile.propertyTypes) ? profile.propertyTypes : (curFields['Alert Property Types'] || []),
-                    cities:   fields['Alert Cities'] !== undefined ? fields['Alert Cities'] : (curFields['Alert Cities'] || ''),
-                    priceMin: profile.priceMin !== undefined ? (Number(profile.priceMin) || 0) : (curFields['Alert Price Min'] || 0),
-                    priceMax: profile.priceMax !== undefined ? (Number(profile.priceMax) || 0) : (curFields['Alert Price Max'] || 0),
-                    bedsMin:  profile.bedsMin  !== undefined ? (Number(profile.bedsMin)  || 0) : (curFields['Alert Beds Min']  || 0),
-                    bathsMin: profile.bathsMin !== undefined ? (Number(profile.bathsMin) || 0) : (curFields['Alert Baths Min'] || 0),
-                    features: feats,
-                }];
-            }
-        }
-        const nextChannels = wantsChannels
-            ? { email: profile.channels.email !== false, whatsapp: !!profile.channels.whatsapp }
-            : parsed.channels;
-        // Only touch the wrapper when there's something real to store. A flat-only lead
-        // whose update carried just criteria must NOT gain an empty profiles wrapper —
-        // wantsFlatCriteria now opens this block for those leads too. wantsProfiles with
-        // [] stays an explicit clear-back-to-flat.
-        if (wantsProfiles || wantsChannels || nextProfiles.length > 0) {
-            fields['Alert Profiles'] = serializeAlertProfiles(nextProfiles, nextChannels);
-        }
     }
+    const fields = computeAlertFields(profile, curFields);
 
     if (Object.keys(fields).length === 0) {
         return json({ error: 'profile must contain at least one field to update' }, 400);

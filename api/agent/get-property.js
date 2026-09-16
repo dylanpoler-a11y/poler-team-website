@@ -6,22 +6,9 @@
 export const config = { runtime: 'edge' };
 
 import { authorize } from '../_auth.js';
+import { fetchListingByMls } from '../../lib/bridge-listing.js';
 
-// Bridge MLS fields that actually exist. Removed:
-//   UnparsedFirstLineAddress, MIAMIRE_TypeofGoverningBodies, MIAMIRE_LPAmtSqFt
-// (Bridge returns 400 BadRequest if any field doesn't exist on the schema.)
-const FULL_FIELDS = [
-    'ListingId','ListingKey','ListPrice','City','PropertySubType','PropertyType',
-    'BedroomsTotal','BathroomsTotalInteger','LivingArea','LotSizeSquareFeet','LotSizeAcres',
-    'AssociationFee','AssociationAmenities','YearBuilt','Latitude','Longitude','PublicRemarks',
-    'UnparsedAddress','PostalCode','StateOrProvince','CountyOrParish',
-    'WaterfrontYN','WaterfrontFeatures','View','PoolFeatures','PoolPrivateYN',
-    'PatioAndPorchFeatures','CommunityFeatures','MIAMIRE_Restrictions',
-    'ArchitecturalStyle','Media','ListOfficeName','ListAgentFullName','ListAgentEmail','ListAgentDirectPhone',
-    'ModificationTimestamp','CloseDate','OnMarketDate','DaysOnMarket',
-    'PhotosCount','FeedTypes','StandardStatus','PreviousListPrice','OriginalListPrice',
-    'TaxAnnualAmount','TaxYear','ParcelNumber','StreetName','StreetNumber',
-].join(',');
+// Field list lives in lib/bridge-listing.js (FULL_FIELDS) — shared with derive-profile.
 
 export default async function handler(req) {
     if (req.method === 'OPTIONS') return new Response(null, { headers: cors() });
@@ -39,13 +26,10 @@ export default async function handler(req) {
     }
     if (!mlsId) return json({ error: 'mlsId required' }, 400);
 
-    const token = process.env.BRIDGE_API_TOKEN;
-    const res = await fetch(
-        `https://api.bridgedataoutput.com/api/v2/miamire/listings?access_token=${token}&ListingId=${mlsId}&fields=${FULL_FIELDS}`
-    );
-    if (!res.ok) return json({ error: 'Bridge fetch failed', status: res.status }, 502);
-    const data = await res.json();
-    const listing = (data.bundle || data.value || [])[0];
+    if (!/^[A-Za-z0-9_-]{4,20}$/.test(String(mlsId))) return json({ error: 'Invalid mlsId' }, 400);
+    let listing;
+    try { listing = await fetchListingByMls(process.env.BRIDGE_API_TOKEN, mlsId); }
+    catch (e) { return json({ error: 'Bridge fetch failed', detail: e.message }, 502); }
     if (!listing) return json({ error: 'Listing not found' }, 404);
 
     return json({ listing });
