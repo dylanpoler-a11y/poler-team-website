@@ -9,6 +9,10 @@
       "destination": "/api/city?slug=:city-condos-for-sale"
     },
     {
+      "source": "/:city-homes-for-sale",
+      "destination": "/api/city?slug=:city-homes-for-sale"
+    },
+    {
       "source": "/via-ventura",
       "destination": "/api/vv-ab/route"
     },
