@@ -2984,7 +2984,9 @@ function initSearch() {
 
     // Pre-fill location from ?city= URL param and auto-run
     const urlParams = new URLSearchParams(window.location.search);
-    const cityParam = urlParams.get('city');
+    // /<city>-condos-for-sale serves this same page with window.CITY_PAGE set
+    // (api/city.js) — identical to /listing?city=<city>, just at its own URL.
+    const cityParam = urlParams.get('city') || (window.CITY_PAGE && window.CITY_PAGE.city) || null;
     const qParam    = urlParams.get('q'); // free text (address/ZIP/city) — handled by initSearchBar()
     if (cityParam) {
         const locInput = document.getElementById('f-location');

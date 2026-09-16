@@ -1,30 +1,23 @@
 /**
- * /api/city?slug=<city-slug> — server-rendered per-city SEO landing page.
+ * /api/city?slug=<city-slug> — the listing page, landed on one city.
  *
  * Reached ONLY through the vercel.json rewrite `/:city-condos-for-sale` →
- * this function, so the public URL Google sees is /sunny-isles-beach-condos-for-sale.
- * (2026-09-16) Why a function and not a static file like /tower: the page
- * embeds LIVE MLS listings + counts in the HTML so Google indexes real
- * inventory, and the listing page's client-side fetch could never give it that.
+ * this function, so the public URL Google sees is /hallandale-beach-condos-for-sale.
+ * Serves listing.html verbatim (see lib/city-page.js) with the city's newest
+ * 50 active listings already in the grid and city-specific SEO tags, so Google
+ * indexes real inventory instead of the JS-filtered /listing?city= view.
  *
- * Data: Bridge MLS via the same BRIDGE_API_TOKEN api/bridge/listings.js uses.
- * Three upstream calls per render (newest 24 for sale, 200-sample for stats,
- * rentals count), all fail-soft — a Bridge outage still serves the page with
- * the prose/FAQ/towers and a short cache so it heals itself. Vercel's CDN
- * caches the HTML 30 min (s-maxage) and serves stale for a day while it
- * revalidates, so crawlers and buyers never wait on Bridge.
+ * One Bridge call per render (same BRIDGE_API_TOKEN api/bridge/listings.js
+ * uses), fail-soft: a Bridge outage still serves the page (listing.js fetches
+ * client-side as usual) with a short cache so the next crawl gets real data.
+ * Healthy renders are CDN-cached 30 min and served stale for a day.
  */
 
-import { CITIES, findCity } from '../lib/cities-data.js';
-import { renderCityPage, renderNotFound, computeStats } from '../lib/city-page.js';
-import * as precon from '../lib/preconstructions-data.js';
+import { findCity } from '../lib/cities-data.js';
+import { renderCityPage, renderNotFound, PAGE_SIZE } from '../lib/city-page.js';
 
-const TOWERS = precon.PRECONSTRUCTIONS || precon.default || [];
 const BRIDGE_BASE = 'https://api.bridgedataoutput.com/api/v2/miamire/listings';
-const CARD_FIELDS = 'ListingId,ListPrice,UnparsedAddress,City,BedroomsTotal,BathroomsTotalInteger,LivingArea,PropertySubType,Media,ListingContractDate,WaterfrontYN,BuildingName';
-const STAT_FIELDS = 'ListPrice,LivingArea,PropertySubType,WaterfrontYN';
-const NEWEST = 24;
-const SAMPLE = 200;
+const CARD_FIELDS = 'ListingId,ListPrice,UnparsedAddress,City,BedroomsTotal,BathroomsTotalInteger,LivingArea,PropertySubType,Media,ListingContractDate,StandardStatus';
 
 async function bridge(params, token, timeoutMs = 8000) {
     const qs = new URLSearchParams({ access_token: token, ...params });
@@ -49,45 +42,32 @@ export default async function handler(req, res) {
 
     if (!city) {
         res.setHeader('Cache-Control', 'public, s-maxage=600');
-        return res.status(404).send(renderNotFound(CITIES));
+        return res.status(404).send(renderNotFound());
     }
 
     const token = process.env.BRIDGE_API_TOKEN;
-    const base = { StandardStatus: 'Active', City: city.bridgeCity };
     let listings = [];
-    let sample = [];
-    let totals = { sale: 0, rent: 0 };
+    let total = 0;
     let degraded = !token;
-
     if (token) {
-        const [newest, stat, rent] = await Promise.allSettled([
-            bridge({ ...base, PropertyType: 'Residential', sortBy: 'ListingContractDate', order: 'desc', limit: String(NEWEST), fields: CARD_FIELDS }, token),
-            bridge({ ...base, PropertyType: 'Residential', sortBy: 'ListingContractDate', order: 'desc', limit: String(SAMPLE), fields: STAT_FIELDS }, token),
-            bridge({ ...base, PropertyType: 'Residential Lease', limit: '1', fields: 'ListingId' }, token),
-        ]);
-        if (newest.status === 'fulfilled') {
-            listings = (newest.value.bundle || []).filter(l => l && l.ListPrice > 0);
-            totals.sale = Number(newest.value.total) || listings.length;
-        } else degraded = true;
-        if (stat.status === 'fulfilled') sample = (stat.value.bundle || []).filter(l => l && l.ListPrice > 0);
-        else sample = listings;
-        if (rent.status === 'fulfilled') totals.rent = Number(rent.value.total) || 0;
-        if (newest.status === 'rejected') console.error('[city] newest failed', city.slug, newest.reason && newest.reason.message);
-        if (stat.status === 'rejected') console.error('[city] stats failed', city.slug, stat.reason && stat.reason.message);
+        try {
+            // Same query listing.js runs for ?city=: active, for sale, newest first, 50/page.
+            const j = await bridge({
+                StandardStatus: 'Active', City: city.bridgeCity, PropertyType: 'Residential',
+                sortBy: 'ListingContractDate', order: 'desc', 'ListingContractDate.gte': '1900-01-01',
+                limit: String(PAGE_SIZE), fields: CARD_FIELDS,
+            }, token);
+            listings = (j.bundle || []).filter(l => l && l.ListPrice > 0);
+            total = Number(j.total) || listings.length;
+        } catch (e) {
+            degraded = true;
+            console.error('[city] bridge failed', city.slug, e && e.message);
+        }
     } else {
         console.error('[city] BRIDGE_API_TOKEN missing');
     }
 
-    const stats = computeStats(sample, totals);
-    const towerCities = new Set(city.towerCities || [city.bridgeCity]);
-    const towers = TOWERS.filter(t => towerCities.has(t.city) || towerCities.has(t.area))
-        .sort((a, b) => (a.city === city.bridgeCity ? 0 : 1) - (b.city === city.bridgeCity ? 0 : 1) || (a.priceFrom || 0) - (b.priceFrom || 0))
-        .slice(0, 8);
-
-    const html = renderCityPage({ city, listings, stats, towers, allCities: CITIES });
-
-    // Healthy render: CDN-cache 30 min, serve stale up to a day while revalidating.
-    // Degraded render (Bridge down): short cache so the next crawl gets real data.
+    const html = renderCityPage({ city, listings, total });
     res.setHeader('Cache-Control', degraded ? 'public, s-maxage=60' : 'public, s-maxage=1800, stale-while-revalidate=86400');
     res.setHeader('X-Robots-Tag', 'index, follow');
     return res.status(200).send(html);
