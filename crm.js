@@ -4314,11 +4314,32 @@ async function loadActivity(email) {
       return;
     }
 
-    wrap.innerHTML = activities.map(a => {
+    // Recalibration popup ("What's stopping you from booking a showing?" on
+    // /listing) writes two rows per tap: 'Recalibration' (api/recalibrate.js,
+    // has the label) and 'Recalibration Answer' (trackEvent). Show ONE line
+    // with the actual answer — Kevin 2026-09-16: "I want to see the answers".
+    const RECALIB_LABELS = { price: 'Prices are too high', area: 'Wrong area', financing: 'Needs financing without a SSN', browsing: 'Just browsing', talk: 'Wants to talk to a person' };
+    const parseDetails = (d) => { try { return typeof d === 'string' ? JSON.parse(d) : (d || {}); } catch { return {}; } };
+    const isRecalib = (a) => a.activityType === 'Recalibration' || a.activityType === 'Recalibration Answer';
+    const shown = activities.filter((a, i) => {
+      if (a.activityType !== 'Recalibration Answer') return true;
+      // drop the duplicate when the 'Recalibration' row for the same tap exists (within 5 min)
+      const t = Date.parse(a.timestamp || '') || 0;
+      return !activities.some(b => b.activityType === 'Recalibration' && Math.abs((Date.parse(b.timestamp || '') || 0) - t) < 5 * 60 * 1000);
+    });
+
+    wrap.innerHTML = shown.map(a => {
       const time = a.timestamp ? relativeTime(a.timestamp) : '';
-      const icon = a.activityType === 'Search' ? '🔍' : '📄';
+      let icon = a.activityType === 'Search' ? '🔍' : '📄';
+      let typeLabel = a.activityType;
       let detail = '';
-      if (a.activityType === 'Search' && a.details) {
+      if (isRecalib(a)) {
+        const d = parseDetails(a.details);
+        const answer = d.label || RECALIB_LABELS[d.answer] || d.answer || '';
+        icon = '💬';
+        typeLabel = 'Popup answer';
+        detail = answer ? `"${answer}"` + (d.mls ? ` · while viewing ${d.mls}` : '') : '';
+      } else if (a.activityType === 'Search' && a.details) {
         try {
           const d = typeof a.details === 'string' ? JSON.parse(a.details) : a.details;
           const parts = [];
@@ -4332,7 +4353,7 @@ async function loadActivity(email) {
         <div class="activity-item">
           <span class="activity-icon">${icon}</span>
           <div class="activity-info">
-            <span class="activity-type">${escHtml(a.activityType)}</span>
+            <span class="activity-type">${escHtml(typeLabel)}</span>
             ${detail ? `<span class="activity-detail">${escHtml(detail)}</span>` : ''}
           </div>
           <span class="activity-time">${escHtml(time)}</span>
