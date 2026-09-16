@@ -12,6 +12,7 @@ export const config = { runtime: 'edge' };
 
 import { authorize } from './_auth.js';
 import { sendCapiEvent } from './_capi.js';
+import { fireQualifiedLeadOnce } from '../lib/qualified-lead.js';
 
 // Status → funnel rank, used ONLY to detect an UPWARD transition (advancement, not a
 // re-set/downgrade) for the server-side Meta CAPI quality-signal event below.
@@ -123,7 +124,13 @@ export default async function handler(req, context) {
             const newRank = STATUS_RANK[status] ?? 0;
             if (newRank >= 1 && newRank > oldRank) {
                 const capiEventName = STATUS_CAPI_EVENT[newRank];
-                if (capiEventName) {
+                if (capiEventName === 'QualifiedLead') {
+                    // Once per lead, shared marker with the alerts routes (lib/qualified-lead.js):
+                    // a lead that already fired on "alerts set" doesn't fire again on Hot.
+                    const _ql = fireQualifiedLeadOnce({ apiKey, baseId, leadId: id, fields: { ...(cur.fields || {}), ...fields }, reason: `status_${String(status).toLowerCase()}`, req, force: true }).catch(() => {});
+                    if (typeof context?.waitUntil === 'function') { context.waitUntil(_ql); }
+                    else { try { await _ql; } catch (_) {} }
+                } else if (capiEventName) {
                     const f = cur.fields || {};
                     // Prefer context.waitUntil (Vercel Edge prod) so the CAPI fetch runs AFTER
                     // the response — zero added latency; fall back to awaiting so the event is

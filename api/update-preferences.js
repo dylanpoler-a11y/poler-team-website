@@ -17,8 +17,9 @@ export const config = { runtime: 'edge' };
 
 import { authorize } from './_auth.js';
 import { parseAlertProfiles, serializeAlertProfiles } from '../lib/alert-search.js';
+import { fireQualifiedLeadOnce, markHumanSet } from '../lib/qualified-lead.js';
 
-export default async function handler(req) {
+export default async function handler(req, context) {
     if (req.method === 'OPTIONS') {
         return new Response(null, {
             headers: {
@@ -92,19 +93,33 @@ export default async function handler(req) {
     if (prefs.alertPolygon !== undefined)     fields['Alert Polygon']        = String(prefs.alertPolygon);
     if (prefs.alertProfiles !== undefined)   fields['Alert Profiles']       = String(prefs.alertProfiles);
 
+    // 2026-09-16: criteria on this route come from a person (CRM panel, only when the
+    // alert form was touched) or from the lead on /preferences — both count as a SET
+    // profile for the Meta QualifiedLead (lib/qualified-lead.js). Read the current
+    // record so (a) a site-derived profile #1 loses its `auto` flag and (b) the
+    // qualification check sees the merged view.
+    const wroteCriteria = prefs.cities !== undefined || prefs.priceMin !== undefined || prefs.priceMax !== undefined
+        || prefs.bedsMin !== undefined || prefs.bathsMin !== undefined || prefs.propertyTypes !== undefined
+        || prefs.alertProfiles !== undefined;
+    let curFields = {};
+    try {
+        const cur = await fetch(`https://api.airtable.com/v0/${baseId}/Leads/${recordId}`, {
+            headers: { 'Authorization': `Bearer ${apiKey}` },
+        });
+        if (cur.ok) curFields = (await cur.json()).fields || {};
+    } catch (_) { /* fall through — QualifiedLead check just sees less */ }
+    if (wroteCriteria) {
+        const raw = fields['Alert Profiles'] !== undefined ? fields['Alert Profiles'] : (curFields['Alert Profiles'] || '');
+        const marked = markHumanSet(raw);
+        if (marked !== raw) fields['Alert Profiles'] = marked;
+    }
+
     // Delivery channels (email/whatsapp). The /preferences page sends just
     // { channels } — merge into the existing Alert Profiles wrapper so the lead's
     // saved profiles are preserved. Skipped if the caller already sent a fully
     // serialized alertProfiles string (which carries its own channels).
     if (prefs.channels !== undefined && prefs.alertProfiles === undefined) {
-        let curRaw = '';
-        try {
-            const cur = await fetch(`https://api.airtable.com/v0/${baseId}/Leads/${recordId}`, {
-                headers: { 'Authorization': `Bearer ${apiKey}` },
-            });
-            if (cur.ok) curRaw = (await cur.json()).fields?.['Alert Profiles'] || '';
-        } catch (_) { /* fall through with defaults */ }
-        const parsed = parseAlertProfiles(curRaw);
+        const parsed = parseAlertProfiles(curFields['Alert Profiles'] || '');
         const ch = {
             email:    prefs.channels.email !== false,
             whatsapp: !!prefs.channels.whatsapp,
@@ -134,6 +149,10 @@ export default async function handler(req) {
         const err = await res.json().catch(() => ({}));
         return json({ error: err.error?.message || 'Failed to update preferences' }, 500);
     }
+
+    // Meta CAPI QualifiedLead — once per lead, only for a confirmed / human-set profile.
+    const _ql = fireQualifiedLeadOnce({ apiKey, baseId, leadId: recordId, fields: { ...curFields, ...fields }, reason: token ? 'alerts_set_by_lead' : 'alerts_set', req }).catch(() => {});
+    if (typeof context?.waitUntil === 'function') context.waitUntil(_ql); else { try { await _ql; } catch (_) {} }
 
     return json({ success: true });
 }

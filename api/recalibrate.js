@@ -28,7 +28,7 @@
  */
 import { getOwnerSlackWebhook, sendSlackPing } from '../lib/slack.js';
 import { profilesFromLead } from '../lib/alert-search.js';
-import { timelineQualifies } from '../lib/lead-quality.js';
+import { timelineIsNearTerm } from '../lib/lead-quality.js';
 
 export const config = { runtime: 'edge' };
 
@@ -143,7 +143,7 @@ export default async function handler(req) {
     } else {
         // browsing. If they told the gate "buying within 12 months" Meta already
         // got a Lead for them; nothing to un-fire, so just record the contradiction.
-        next = timelineQualifies(f['Timeline'])
+        next = timelineIsNearTerm(f['Timeline'])
             ? `Contradicción: al registrarse dijo "${f['Timeline']}", ahora "solo mirando". Seguir drip de Sammy; sin acción inmediata.`
             : 'Seguir drip de Sammy; sin acción inmediata.';
     }

@@ -131,7 +131,8 @@ const listings = new Map([
     let w = parseAlertProfiles(f['Alert Profiles']);
     assert.equal(w.profiles[0].priceMax, 600000);
     assert.deepEqual(w.profiles[0].features, ['pool']);
-    assert.equal(w.profiles[0].auto, true);          // untouched
+    assert.equal(w.profiles[0].auto, false);         // 2026-09-16 PM: a human criteria write clears the site-derived flag (lib/qualified-lead.js)
+    assert.equal(w.profiles[0].setBy, 'human');
     assert.equal(w.channels.whatsapp, true);
     f = computeAlertFields({ profiles: [{ types: ['Land'], cities: 'Homestead' }] }, cur);
     w = parseAlertProfiles(f['Alert Profiles']);

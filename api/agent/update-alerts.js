@@ -42,9 +42,10 @@
 export const config = { runtime: 'edge' };
 
 import { authorize } from '../_auth.js';
-import { computeAlertFields, needsCurrentRecord } from '../../lib/alert-profile-fields.js';
+import { computeAlertFields } from '../../lib/alert-profile-fields.js';
+import { fireQualifiedLeadOnce } from '../../lib/qualified-lead.js';
 
-export default async function handler(req) {
+export default async function handler(req, context) {
     if (req.method === 'OPTIONS') {
         return new Response(null, {
             headers: {
@@ -71,8 +72,10 @@ export default async function handler(req) {
 
     // All folding rules (flat columns ↔ Alert Profiles wrapper, features, auto metadata)
     // live in lib/alert-profile-fields.js — shared with api/agent/derive-profile.js.
+    // Always read the current record: the folding rules need it for any criteria write,
+    // and the QualifiedLead check below needs the merged (current + written) view.
     let curFields = {};
-    if (needsCurrentRecord(profile)) {
+    {
         try {
             const cur = await fetch(`https://api.airtable.com/v0/${baseId}/Leads/${leadId}`, {
                 headers: { 'Authorization': `Bearer ${apiKey}` },
@@ -102,6 +105,11 @@ export default async function handler(req) {
         const err = await res.json().catch(() => ({}));
         return json({ error: err.error?.message || 'Failed to update alerts' }, 500);
     }
+
+    // Meta CAPI QualifiedLead — once per lead, only for a confirmed / human-set profile
+    // (lib/qualified-lead.js). Runs after the response via waitUntil; never throws.
+    const _ql = fireQualifiedLeadOnce({ apiKey, baseId, leadId, fields: { ...curFields, ...fields }, reason: 'alerts_set', req }).catch(() => {});
+    if (typeof context?.waitUntil === 'function') context.waitUntil(_ql); else { try { await _ql; } catch (_) {} }
 
     return json({ success: true, updated: Object.keys(fields) });
 }
