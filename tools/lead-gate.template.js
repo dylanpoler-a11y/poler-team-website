@@ -139,10 +139,6 @@
                   '<div class="lead-field"><input type="email" id="lead-email" data-i18n="emailAddress" required autocomplete="email"></div>' +
                 '</div>' +
                 '<div id="lead-fields-2" style="display:none">' +
-                  '<div class="lead-field lead-phone-wrap">' +
-                    '<select id="country-code" aria-label="Country code">' + __CC_OPTIONS__ + '</select>' +
-                    '<input type="tel" id="lead-phone" data-i18n="phonePlaceholder" required autocomplete="tel">' +
-                  '</div>' +
                   '<div class="timeline-field">' +
                     '<label class="timeline-label" data-i18n="timelineLabel"></label>' +
                     '<div class="timeline-pills" id="timeline-pills">' +
@@ -152,6 +148,10 @@
                       '<button type="button" class="timeline-pill" data-value="12+ months" data-i18n="tl12plus"></button>' +
                     '</div>' +
                     '<input type="hidden" id="lead-timeline" value="">' +
+                  '</div>' +
+                  '<div class="lead-field lead-phone-wrap">' +
+                    '<select id="country-code" aria-label="Country code">' + __CC_OPTIONS__ + '</select>' +
+                    '<input type="tel" id="lead-phone" data-i18n="phonePlaceholder" required autocomplete="tel">' +
                   '</div>' +
                 '</div>' +
                 '<p class="lead-error" id="lead-error" style="display:none"></p>' +
@@ -397,20 +397,33 @@
             return txt.slice(0, 120);
         }
 
+        // Browser-side junk-number screen (mirrors the tighter server check). ES5 on purpose.
+        function phoneLooksImpossible(ccDigits, localDigits) {
+            var d = String(localDigits || '');
+            if (d.length < 6 || d.length > 12) return true;
+            if (ccDigits === '1' && (d.length !== 10 || /555\d{4}$/.test(d))) return true;
+            if (/(\d)\1{5,}/.test(d)) return true;                       // 999999…, 000000…
+            if (/1234567|2345678|3456789|7654321/.test(d)) return true;   // keypad runs
+            return false;
+        }
+
         function completeLead() {
             var first = leadFormData.first, last = leadFormData.last, email = leadFormData.email;
             var metaEventId = (typeof crypto !== 'undefined' && crypto.randomUUID && crypto.randomUUID())
                 || (String(Date.now()) + Math.random().toString(16).slice(2));
 
+            // Meta Pixel, two events (2026-09-12): RawSubmit (custom) fires NOW for every
+            // submission so reporting keeps 100% of form fills; Lead (standard, the adset's
+            // optimization event) fires only after /api/save-lead answers leadFired:true —
+            // the phone passed the server's validity check. Both mirrored via CAPI.
+            var metaPayload = {
+                content_name: pageLabel(),
+                content_category: 'Real Estate',
+                value: 0,
+                currency: 'USD',
+            };
             if (typeof fbq === 'function') {
-                try {
-                    fbq('track', 'Lead', {
-                        content_name: pageLabel(),
-                        content_category: 'Real Estate',
-                        value: 0,
-                        currency: 'USD',
-                    }, { eventID: metaEventId });
-                } catch (e) {}
+                try { fbq('trackCustom', 'RawSubmit', metaPayload, { eventID: 'raw-' + metaEventId }); } catch (e) {}
             }
             if (typeof gtag === 'function') {
                 try {
@@ -451,6 +464,10 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload),
             }).then(function (r) { return r.json(); }).then(function (saveData) {
+                // Server-confirmed Lead: only real phone numbers reward the optimization.
+                if (saveData && saveData.leadFired === true && typeof fbq === 'function') {
+                    try { fbq('track', 'Lead', metaPayload, { eventID: metaEventId }); } catch (e) {}
+                }
                 if (saveData && saveData.token) {
                     try { localStorage.setItem('poler_alert_token', saveData.token); } catch (e) {}
                     rememberLead({ token: saveData.token }); // 1-year cookie so the gate never re-asks
@@ -509,7 +526,9 @@
             if (!localPhone) { showLeadError('lead-error', t('errFillAll')); return; }
             var timeline = (document.getElementById('lead-timeline') || {}).value || '';
             if (!timeline) { showLeadError('lead-error', t('errSelectTimeline') || 'Please select when you plan to buy'); return; }
-            if (localPhone.replace(/\D/g, '').length < 7) { showLeadError('lead-error', t('errInvalidPhone')); return; }
+            // Structural junk screen (999999…, 555-xxxx, keypad runs, wrong length). The server
+            // (lib/phone-quality.js) is the authority; this only stops the obvious ones early.
+            if (phoneLooksImpossible(ccDigits, localDigits)) { showLeadError('lead-error', t('errInvalidPhone')); return; }
 
             submitBtn.disabled = true;
             if (errBox) errBox.style.display = 'none';

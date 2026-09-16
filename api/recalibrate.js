@@ -28,6 +28,7 @@
  */
 import { getOwnerSlackWebhook, sendSlackPing } from '../lib/slack.js';
 import { profilesFromLead } from '../lib/alert-search.js';
+import { timelineQualifies } from '../lib/lead-quality.js';
 
 export const config = { runtime: 'edge' };
 
@@ -140,7 +141,22 @@ export default async function handler(req) {
     } else if (answer === 'talk') {
         next = 'Kevin: contactar AHORA por WhatsApp/llamada.';
     } else {
-        next = 'Seguir drip de Sammy; sin acción inmediata.';
+        // browsing. If they told the gate "buying within 12 months" Meta already
+        // got a Lead for them; nothing to un-fire, so just record the contradiction.
+        next = timelineQualifies(f['Timeline'])
+            ? `Contradicción: al registrarse dijo "${f['Timeline']}", ahora "solo mirando". Seguir drip de Sammy; sin acción inmediata.`
+            : 'Seguir drip de Sammy; sin acción inmediata.';
+    }
+
+    // 4b. talk / financing = a buyer asking for a human → Status Hot through the
+    // site's own update-lead, which fires the CAPI QualifiedLead on the upward
+    // transition (rank guard makes a repeat tap a no-op). 2026-09-16.
+    if ((answer === 'talk' || answer === 'financing') && agentToken) {
+        await fetch(`${origin}/api/update-lead`, {
+            method: 'PATCH',
+            headers: { Authorization: `Bearer ${agentToken}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: leadId, status: 'Hot' }),
+        }).then(r => { routed.push(r.ok ? 'status_hot' : 'status_hot_failed'); }).catch(() => { routed.push('status_hot_failed'); });
     }
 
     if (Object.keys(leadPatch).length) {
@@ -204,7 +220,7 @@ export default async function handler(req) {
 }
 
 async function findLead(baseId, headers, formula) {
-    const fields = ['Email', 'Name', 'First Name', 'Last Name', 'Phone', 'Alert Price Max', 'Alert Profiles', 'Alert Token'];
+    const fields = ['Email', 'Name', 'First Name', 'Last Name', 'Phone', 'Timeline', 'Alert Price Max', 'Alert Profiles', 'Alert Token'];
     const url = `https://api.airtable.com/v0/${baseId}/Leads?maxRecords=1` +
         `&filterByFormula=${encodeURIComponent(formula)}` +
         fields.map(x => `&fields%5B%5D=${encodeURIComponent(x)}`).join('');

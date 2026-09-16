@@ -10,6 +10,8 @@
 export const config = { runtime: 'edge' };
 
 import { sendCapiEvent } from './_capi.js';
+import { assessPhone } from '../lib/phone-quality.js';
+import { leadQualifies } from '../lib/lead-quality.js';
 import { authorize } from './_auth.js';
 import { stampNote } from '../lib/note-stamp.js';
 
@@ -336,37 +338,87 @@ export default async function handler(req, context) {
         await Promise.allSettled(emailPromises);
     }
 
-    // Server-side Meta Conversions API mirror of the browser 'Lead' pixel event (listing.js
-    // completeLead()). No-ops entirely unless META_CAPI_ACCESS_TOKEN is set. A CAPI failure
-    // must NEVER break the lead save, which has already fully succeeded by this point.
-    // Prefer context.waitUntil (Vercel Edge prod) so the CAPI fetch runs AFTER the response
-    // is sent — zero added latency. If waitUntil is ever absent, fall back to awaiting so the
-    // event is never silently dropped (token-less it returns instantly anyway). The trailing
-    // .catch(()=>{}) guarantees a late CAPI error can never surface.
-    const _capiCall = sendCapiEvent({
-        eventName: 'Lead',
-        eventId: body.metaEventId || 'srv-' + (data.records?.[0]?.id || Date.now()),
-        eventSourceUrl: body.pageUrl || sourceUrl || req.headers.get('referer') || '',
-        userData: {
+    // ── Meta signal (Conversions API) ──────────────────────────────────────────────────
+    // Only a real website submission talks to Meta: the browser gate always sends
+    // `metaEventId`. MCP create_lead / LoopNet import / CRM "+ Add Contact" (manualEntry)
+    // are not ad conversions and fire nothing.
+    //
+    // Two events per web submission, both deduped against the browser pixel by event_id
+    // (browser fires first, this leg is the server mirror — Meta merges them):
+    //   RawSubmit (custom, id "raw-<metaEventId>") — EVERY submission, junk included. Never
+    //              optimized on; it is the "cost per raw submit" reporting column.
+    //   Lead      (standard, id <metaEventId>)      — ONLY when the phone passes
+    //              lib/phone-quality.js. The adset optimizes on `Lead`, so a 999… / 555… /
+    //              short-string number must never reward Meta. The CRM row above is saved
+    //              either way; the notification email is unchanged.
+    // The browser fires its own pixel `Lead` only after this endpoint answers
+    // `leadFired: true`, so both legs agree. (2026-09-12 consensus+debate, S1.)
+    //
+    // sendCapiEvent no-ops without META_CAPI_ACCESS_TOKEN and never throws. Prefer
+    // context.waitUntil (Vercel Edge prod) so the Graph calls run AFTER the response —
+    // zero added latency; fall back to awaiting so nothing is silently dropped.
+    const recordId = data.records?.[0]?.id || '';
+    const isWebSubmission = !manualEntry && typeof body.metaEventId === 'string' && body.metaEventId.trim();
+    // countryIso = the gate's dropdown ISO (hint for numbers typed without a country
+    // code, e.g. the nav "Connect With Us" popup which has no dropdown → US, then raw).
+    const phoneQuality = assessPhone(phone, countryIso || '');
+    // 2026-09-16: a "12+ months" (or blank / "Just exploring") timeline no longer
+    // counts either — see lib/lead-quality.js. Row saved, emails unchanged.
+    const leadFired = Boolean(isWebSubmission && leadQualifies({ phoneQuality, timeline }));
+    const phoneMasked = String(phone || '').replace(/\d(?=\d{4})/g, '*');  // keep last 4 only in logs
+    console.log(`[lead-quality] ${recordId} ${phoneMasked} -> ${phoneQuality.reason}${phoneQuality.country ? ' ' + phoneQuality.country : ''} timeline=${timeline || '(none)'} web=${!!isWebSubmission} leadFired=${leadFired}`);
+
+    if (isWebSubmission) {
+        const metaEventId = body.metaEventId.trim();
+        const capiUserData = {
             email,
             phone,
-            firstName: first,
-            lastName:  last,
-            country:   countryIso,
-            fbp:       body.fbp,
-            fbc:       body.fbc,
-        },
-        customData: {
-            content_category: 'Real Estate',
-            currency: 'USD',
-            value: Number(body.listPrice) || Number(listingPrice) || 0,
-        },
-        req,
-    }).catch(() => {});
-    if (typeof context?.waitUntil === 'function') { context.waitUntil(_capiCall); }
-    else { try { await _capiCall; } catch (_) {} }
+            firstName:  first,
+            lastName:   last,
+            country:    countryIso,
+            externalId: recordId,
+            fbp:        body.fbp,
+            fbc:        body.fbc,
+        };
+        const capiCommon = {
+            eventSourceUrl: body.pageUrl || sourceUrl || req.headers.get('referer') || '',
+            userData: capiUserData,
+            req,
+        };
+        const listValue = Number(body.listPrice) || Number(listingPrice) || 0;
+        const calls = [
+            sendCapiEvent({
+                ...capiCommon,
+                eventName: 'RawSubmit',
+                eventId: 'raw-' + metaEventId,
+                customData: {
+                    content_category: 'Real Estate',
+                    phone_valid: phoneQuality.ok,
+                    phone_reason: phoneQuality.reason,
+                    phone_country: phoneQuality.country || countryIso || '',
+                },
+            }).catch(() => {}),
+        ];
+        if (leadFired) {
+            calls.push(sendCapiEvent({
+                ...capiCommon,
+                eventName: 'Lead',
+                eventId: metaEventId,
+                customData: {
+                    content_category: 'Real Estate',
+                    currency: 'USD',
+                    value: listValue,
+                    phone_country: phoneQuality.country || countryIso || '',
+                    timeline,   // for later value stamping (0-3 > 3-6 > 6-12)
+                },
+            }).catch(() => {}));
+        }
+        const _capiAll = Promise.allSettled(calls);
+        if (typeof context?.waitUntil === 'function') { context.waitUntil(_capiAll); }
+        else { try { await _capiAll; } catch (_) {} }
+    }
 
-    return json({ success: true, id: data.records?.[0]?.id, token: alertToken, password: accessPassword });
+    return json({ success: true, id: recordId, token: alertToken, password: accessPassword, leadFired, phoneValid: phoneQuality.ok });
 }
 
 function buildWelcomeEmail(firstName, email, password, lang, alertToken) {

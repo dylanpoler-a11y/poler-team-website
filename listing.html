@@ -98,6 +98,17 @@
                     </div>
                     <!-- Step 2 fields: phone + timeline (revealed after Step 1) -->
                     <div id="lead-fields-2" style="display:none">
+                    <!-- Timeline pills -->
+                    <div class="timeline-field">
+                        <label class="timeline-label" data-i18n="timelineLabel">When do you plan to buy?</label>
+                        <div class="timeline-pills" id="timeline-pills">
+                            <button type="button" class="timeline-pill" data-value="0-3 months" data-i18n="tl0to3">0-3 Mo</button>
+                            <button type="button" class="timeline-pill" data-value="3-6 months" data-i18n="tl3to6">3-6 Mo</button>
+                            <button type="button" class="timeline-pill" data-value="6-12 months" data-i18n="tl6to12">6-12 Mo</button>
+                            <button type="button" class="timeline-pill" data-value="12+ months" data-i18n="tl12plus">12+ Mo</button>
+                        </div>
+                        <input type="hidden" id="lead-timeline" value="">
+                    </div>
                     <div class="lead-field lead-phone-wrap">
                         <select id="country-code" aria-label="Country code">
                             <option value="+1" selected>🇺🇸 +1 (US)</option>
@@ -176,17 +187,6 @@
                             <option value="+58">🇻🇪 +58 (VE)</option>
                         </select>
                         <input type="tel" id="lead-phone" placeholder="(555) 123-4567" data-i18n="phonePlaceholder" required autocomplete="tel">
-                    </div>
-                    <!-- Timeline pills -->
-                    <div class="timeline-field">
-                        <label class="timeline-label" data-i18n="timelineLabel">When do you plan to buy?</label>
-                        <div class="timeline-pills" id="timeline-pills">
-                            <button type="button" class="timeline-pill" data-value="0-3 months" data-i18n="tl0to3">0-3 Mo</button>
-                            <button type="button" class="timeline-pill" data-value="3-6 months" data-i18n="tl3to6">3-6 Mo</button>
-                            <button type="button" class="timeline-pill" data-value="6-12 months" data-i18n="tl6to12">6-12 Mo</button>
-                            <button type="button" class="timeline-pill" data-value="12+ months" data-i18n="tl12plus">12+ Mo</button>
-                        </div>
-                        <input type="hidden" id="lead-timeline" value="">
                     </div>
                     </div><!-- /lead-fields-2 -->
 

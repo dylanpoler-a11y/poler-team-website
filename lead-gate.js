@@ -140,10 +140,6 @@
                   '<div class="lead-field"><input type="email" id="lead-email" data-i18n="emailAddress" required autocomplete="email"></div>' +
                 '</div>' +
                 '<div id="lead-fields-2" style="display:none">' +
-                  '<div class="lead-field lead-phone-wrap">' +
-                    '<select id="country-code" aria-label="Country code">' + "<option value=\"+1\" selected>🇺🇸 +1 (US)</option><option value=\"+355\">🇦🇱 +355 (AL)</option><option value=\"+1AG\">🇦🇬 +1 (AG)</option><option value=\"+54\">🇦🇷 +54 (AR)</option><option value=\"+297\">🇦🇼 +297 (AW)</option><option value=\"+43\">🇦🇹 +43 (AT)</option><option value=\"+1BS\">🇧🇸 +1 (BS)</option><option value=\"+1BB\">🇧🇧 +1 (BB)</option><option value=\"+32\">🇧🇪 +32 (BE)</option><option value=\"+501\">🇧🇿 +501 (BZ)</option><option value=\"+591\">🇧🇴 +591 (BO)</option><option value=\"+55\">🇧🇷 +55 (BR)</option><option value=\"+359\">🇧🇬 +359 (BG)</option><option value=\"+1CA\">🇨🇦 +1 (CA)</option><option value=\"+1KY\">🇰🇾 +1 (KY)</option><option value=\"+56\">🇨🇱 +56 (CL)</option><option value=\"+57\">🇨🇴 +57 (CO)</option><option value=\"+506\">🇨🇷 +506 (CR)</option><option value=\"+385\">🇭🇷 +385 (HR)</option><option value=\"+53\">🇨🇺 +53 (CU)</option><option value=\"+599\">🇨🇼 +599 (CW)</option><option value=\"+357\">🇨🇾 +357 (CY)</option><option value=\"+420\">🇨🇿 +420 (CZ)</option><option value=\"+45\">🇩🇰 +45 (DK)</option><option value=\"+1DM\">🇩🇲 +1 (DM)</option><option value=\"+1DO\">🇩🇴 +1 (DO)</option><option value=\"+593\">🇪🇨 +593 (EC)</option><option value=\"+503\">🇸🇻 +503 (SV)</option><option value=\"+372\">🇪🇪 +372 (EE)</option><option value=\"+358\">🇫🇮 +358 (FI)</option><option value=\"+33\">🇫🇷 +33 (FR)</option><option value=\"+49\">🇩🇪 +49 (DE)</option><option value=\"+30\">🇬🇷 +30 (GR)</option><option value=\"+1GD\">🇬🇩 +1 (GD)</option><option value=\"+502\">🇬🇹 +502 (GT)</option><option value=\"+592\">🇬🇾 +592 (GY)</option><option value=\"+509\">🇭🇹 +509 (HT)</option><option value=\"+504\">🇭🇳 +504 (HN)</option><option value=\"+36\">🇭🇺 +36 (HU)</option><option value=\"+354\">🇮🇸 +354 (IS)</option><option value=\"+353\">🇮🇪 +353 (IE)</option><option value=\"+39\">🇮🇹 +39 (IT)</option><option value=\"+1JM\">🇯🇲 +1 (JM)</option><option value=\"+371\">🇱🇻 +371 (LV)</option><option value=\"+370\">🇱🇹 +370 (LT)</option><option value=\"+352\">🇱🇺 +352 (LU)</option><option value=\"+356\">🇲🇹 +356 (MT)</option><option value=\"+52\">🇲🇽 +52 (MX)</option><option value=\"+31\">🇳🇱 +31 (NL)</option><option value=\"+505\">🇳🇮 +505 (NI)</option><option value=\"+47\">🇳🇴 +47 (NO)</option><option value=\"+507\">🇵🇦 +507 (PA)</option><option value=\"+595\">🇵🇾 +595 (PY)</option><option value=\"+51\">🇵🇪 +51 (PE)</option><option value=\"+48\">🇵🇱 +48 (PL)</option><option value=\"+351\">🇵🇹 +351 (PT)</option><option value=\"+1PR\">🇵🇷 +1 (PR)</option><option value=\"+40\">🇷🇴 +40 (RO)</option><option value=\"+381\">🇷🇸 +381 (RS)</option><option value=\"+421\">🇸🇰 +421 (SK)</option><option value=\"+386\">🇸🇮 +386 (SI)</option><option value=\"+34\">🇪🇸 +34 (ES)</option><option value=\"+1KN\">🇰🇳 +1 (KN)</option><option value=\"+1LC\">🇱🇨 +1 (LC)</option><option value=\"+1VC\">🇻🇨 +1 (VC)</option><option value=\"+597\">🇸🇷 +597 (SR)</option><option value=\"+46\">🇸🇪 +46 (SE)</option><option value=\"+41\">🇨🇭 +41 (CH)</option><option value=\"+1TT\">🇹🇹 +1 (TT)</option><option value=\"+90\">🇹🇷 +90 (TR)</option><option value=\"+380\">🇺🇦 +380 (UA)</option><option value=\"+44\">🇬🇧 +44 (UK)</option><option value=\"+598\">🇺🇾 +598 (UY)</option><option value=\"+58\">🇻🇪 +58 (VE)</option>" + '</select>' +
-                    '<input type="tel" id="lead-phone" data-i18n="phonePlaceholder" required autocomplete="tel">' +
-                  '</div>' +
                   '<div class="timeline-field">' +
                     '<label class="timeline-label" data-i18n="timelineLabel"></label>' +
                     '<div class="timeline-pills" id="timeline-pills">' +
@@ -153,6 +149,10 @@
                       '<button type="button" class="timeline-pill" data-value="12+ months" data-i18n="tl12plus"></button>' +
                     '</div>' +
                     '<input type="hidden" id="lead-timeline" value="">' +
+                  '</div>' +
+                  '<div class="lead-field lead-phone-wrap">' +
+                    '<select id="country-code" aria-label="Country code">' + "<option value=\"+1\" selected>🇺🇸 +1 (US)</option><option value=\"+355\">🇦🇱 +355 (AL)</option><option value=\"+1AG\">🇦🇬 +1 (AG)</option><option value=\"+54\">🇦🇷 +54 (AR)</option><option value=\"+297\">🇦🇼 +297 (AW)</option><option value=\"+43\">🇦🇹 +43 (AT)</option><option value=\"+1BS\">🇧🇸 +1 (BS)</option><option value=\"+1BB\">🇧🇧 +1 (BB)</option><option value=\"+32\">🇧🇪 +32 (BE)</option><option value=\"+501\">🇧🇿 +501 (BZ)</option><option value=\"+591\">🇧🇴 +591 (BO)</option><option value=\"+55\">🇧🇷 +55 (BR)</option><option value=\"+359\">🇧🇬 +359 (BG)</option><option value=\"+1CA\">🇨🇦 +1 (CA)</option><option value=\"+1KY\">🇰🇾 +1 (KY)</option><option value=\"+56\">🇨🇱 +56 (CL)</option><option value=\"+57\">🇨🇴 +57 (CO)</option><option value=\"+506\">🇨🇷 +506 (CR)</option><option value=\"+385\">🇭🇷 +385 (HR)</option><option value=\"+53\">🇨🇺 +53 (CU)</option><option value=\"+599\">🇨🇼 +599 (CW)</option><option value=\"+357\">🇨🇾 +357 (CY)</option><option value=\"+420\">🇨🇿 +420 (CZ)</option><option value=\"+45\">🇩🇰 +45 (DK)</option><option value=\"+1DM\">🇩🇲 +1 (DM)</option><option value=\"+1DO\">🇩🇴 +1 (DO)</option><option value=\"+593\">🇪🇨 +593 (EC)</option><option value=\"+503\">🇸🇻 +503 (SV)</option><option value=\"+372\">🇪🇪 +372 (EE)</option><option value=\"+358\">🇫🇮 +358 (FI)</option><option value=\"+33\">🇫🇷 +33 (FR)</option><option value=\"+49\">🇩🇪 +49 (DE)</option><option value=\"+30\">🇬🇷 +30 (GR)</option><option value=\"+1GD\">🇬🇩 +1 (GD)</option><option value=\"+502\">🇬🇹 +502 (GT)</option><option value=\"+592\">🇬🇾 +592 (GY)</option><option value=\"+509\">🇭🇹 +509 (HT)</option><option value=\"+504\">🇭🇳 +504 (HN)</option><option value=\"+36\">🇭🇺 +36 (HU)</option><option value=\"+354\">🇮🇸 +354 (IS)</option><option value=\"+353\">🇮🇪 +353 (IE)</option><option value=\"+39\">🇮🇹 +39 (IT)</option><option value=\"+1JM\">🇯🇲 +1 (JM)</option><option value=\"+371\">🇱🇻 +371 (LV)</option><option value=\"+370\">🇱🇹 +370 (LT)</option><option value=\"+352\">🇱🇺 +352 (LU)</option><option value=\"+356\">🇲🇹 +356 (MT)</option><option value=\"+52\">🇲🇽 +52 (MX)</option><option value=\"+31\">🇳🇱 +31 (NL)</option><option value=\"+505\">🇳🇮 +505 (NI)</option><option value=\"+47\">🇳🇴 +47 (NO)</option><option value=\"+507\">🇵🇦 +507 (PA)</option><option value=\"+595\">🇵🇾 +595 (PY)</option><option value=\"+51\">🇵🇪 +51 (PE)</option><option value=\"+48\">🇵🇱 +48 (PL)</option><option value=\"+351\">🇵🇹 +351 (PT)</option><option value=\"+1PR\">🇵🇷 +1 (PR)</option><option value=\"+40\">🇷🇴 +40 (RO)</option><option value=\"+381\">🇷🇸 +381 (RS)</option><option value=\"+421\">🇸🇰 +421 (SK)</option><option value=\"+386\">🇸🇮 +386 (SI)</option><option value=\"+34\">🇪🇸 +34 (ES)</option><option value=\"+1KN\">🇰🇳 +1 (KN)</option><option value=\"+1LC\">🇱🇨 +1 (LC)</option><option value=\"+1VC\">🇻🇨 +1 (VC)</option><option value=\"+597\">🇸🇷 +597 (SR)</option><option value=\"+46\">🇸🇪 +46 (SE)</option><option value=\"+41\">🇨🇭 +41 (CH)</option><option value=\"+1TT\">🇹🇹 +1 (TT)</option><option value=\"+90\">🇹🇷 +90 (TR)</option><option value=\"+380\">🇺🇦 +380 (UA)</option><option value=\"+44\">🇬🇧 +44 (UK)</option><option value=\"+598\">🇺🇾 +598 (UY)</option><option value=\"+58\">🇻🇪 +58 (VE)</option>" + '</select>' +
+                    '<input type="tel" id="lead-phone" data-i18n="phonePlaceholder" required autocomplete="tel">' +
                   '</div>' +
                 '</div>' +
                 '<p class="lead-error" id="lead-error" style="display:none"></p>' +
@@ -398,20 +398,33 @@
             return txt.slice(0, 120);
         }
 
+        // Browser-side junk-number screen (mirrors the tighter server check). ES5 on purpose.
+        function phoneLooksImpossible(ccDigits, localDigits) {
+            var d = String(localDigits || '');
+            if (d.length < 6 || d.length > 12) return true;
+            if (ccDigits === '1' && (d.length !== 10 || /555\d{4}$/.test(d))) return true;
+            if (/(\d)\1{5,}/.test(d)) return true;                       // 999999…, 000000…
+            if (/1234567|2345678|3456789|7654321/.test(d)) return true;   // keypad runs
+            return false;
+        }
+
         function completeLead() {
             var first = leadFormData.first, last = leadFormData.last, email = leadFormData.email;
             var metaEventId = (typeof crypto !== 'undefined' && crypto.randomUUID && crypto.randomUUID())
                 || (String(Date.now()) + Math.random().toString(16).slice(2));
 
+            // Meta Pixel, two events (2026-09-12): RawSubmit (custom) fires NOW for every
+            // submission so reporting keeps 100% of form fills; Lead (standard, the adset's
+            // optimization event) fires only after /api/save-lead answers leadFired:true —
+            // the phone passed the server's validity check. Both mirrored via CAPI.
+            var metaPayload = {
+                content_name: pageLabel(),
+                content_category: 'Real Estate',
+                value: 0,
+                currency: 'USD',
+            };
             if (typeof fbq === 'function') {
-                try {
-                    fbq('track', 'Lead', {
-                        content_name: pageLabel(),
-                        content_category: 'Real Estate',
-                        value: 0,
-                        currency: 'USD',
-                    }, { eventID: metaEventId });
-                } catch (e) {}
+                try { fbq('trackCustom', 'RawSubmit', metaPayload, { eventID: 'raw-' + metaEventId }); } catch (e) {}
             }
             if (typeof gtag === 'function') {
                 try {
@@ -452,6 +465,10 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload),
             }).then(function (r) { return r.json(); }).then(function (saveData) {
+                // Server-confirmed Lead: only real phone numbers reward the optimization.
+                if (saveData && saveData.leadFired === true && typeof fbq === 'function') {
+                    try { fbq('track', 'Lead', metaPayload, { eventID: metaEventId }); } catch (e) {}
+                }
                 if (saveData && saveData.token) {
                     try { localStorage.setItem('poler_alert_token', saveData.token); } catch (e) {}
                     rememberLead({ token: saveData.token }); // 1-year cookie so the gate never re-asks
@@ -510,7 +527,9 @@
             if (!localPhone) { showLeadError('lead-error', t('errFillAll')); return; }
             var timeline = (document.getElementById('lead-timeline') || {}).value || '';
             if (!timeline) { showLeadError('lead-error', t('errSelectTimeline') || 'Please select when you plan to buy'); return; }
-            if (localPhone.replace(/\D/g, '').length < 7) { showLeadError('lead-error', t('errInvalidPhone')); return; }
+            // Structural junk screen (999999…, 555-xxxx, keypad runs, wrong length). The server
+            // (lib/phone-quality.js) is the authority; this only stops the obvious ones early.
+            if (phoneLooksImpossible(ccDigits, localDigits)) { showLeadError('lead-error', t('errInvalidPhone')); return; }
 
             submitBtn.disabled = true;
             if (errBox) errBox.style.display = 'none';
