@@ -5,10 +5,6 @@
   "cleanUrls": true,
   "rewrites": [
     {
-      "source": "/:city-condos-for-sale",
-      "destination": "/api/city?slug=:city-condos-for-sale"
-    },
-    {
       "source": "/:city-homes-for-sale",
       "destination": "/api/city?slug=:city-homes-for-sale"
     },
@@ -22,6 +18,11 @@
     }
   ],
   "redirects": [
+    {
+      "source": "/:city-condos-for-sale",
+      "destination": "/:city-homes-for-sale",
+      "permanent": true
+    },
     {
       "source": "/thelauderdalehotel",
       "destination": "https://the-lauderdale-dashboard.netlify.app/",

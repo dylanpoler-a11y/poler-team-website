@@ -3,7 +3,9 @@
 ## Goal
 Rank homesinsoflorida.com for city-level buyer searches ("sunny isles condos for sale", "apartments in sunny isles", "aventura condos") with server-rendered pages that carry LIVE MLS inventory, so Google indexes real listings instead of the JS-filtered `/listing?city=` view (generic title + canonical `/listing`, no listings in the HTML).
 
-## 53 CITIES LIVE — deployed ~09:30 ET 2026-09-16 (deploy 1nf3rlzpf)
+## URL RULE (Kevin 09:22 ET): EVERY city page is `/<city>-homes-for-sale` — "it's not just condos, it's single family homes, all kinds of homes." Deploy qrrxder0m. `/<city>-condos-for-sale` → permanent redirect (308) to the homes URL via vercel.json `redirects`; the rewrite only matches `-homes-for-sale`. Titles are `<City> Homes & Condos for Sale | The Poler Team` (Golden Beach: `Homes for Sale`). Never reintroduce a condos slug.
+
+## 53 CITIES LIVE — deployed ~09:30 ET 2026-09-16 (deploy 1nf3rlzpf; slugs since renamed, see above)
 Kevin: "build the rest of the south florida cities." Every city in listing.js `SOUTH_FL_CITIES` with active inventory now has a page (Indian Creek, Lauderdale-by-the-Sea, Lake Worth Beach had 0 listings → skipped). 50 new entries appended to `lib/cities-data.js` with ONLY the fields the v4 page uses; county, lat/lng (median of active listings) and zips came from Bridge, not typed. Slug rule (data, not taste): Condominium > SFR+Townhouse+Villa in a 200-listing sample → `/<city>-condos-for-sale` (33), else `/<city>-homes-for-sale` (20; e.g. weston, coral-gables, miramar, davie). `vercel.json` rewrites BOTH patterns to `api/city.js`. All 53 verified 200 with cards + `window.CITY_PAGE`; unknown slug 404; sitemap has 53 city URLs; tower pages regenerated (each tower links to its city page). The 16 `listing?city=X` links on / and /listing (neighborhood cards + footer "Popular Searches") now point at the city pages — same page, just with the SEO head. Homepage search box still goes to `listing?city=` (JS, left alone).
 Full list: `node -e 'import("./lib/cities-data.js").then(m=>m.CITIES.forEach(c=>console.log(c.slug)))'`.
 
