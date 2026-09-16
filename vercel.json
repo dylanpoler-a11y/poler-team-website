@@ -25,8 +25,8 @@
     },
     {
       "source": "/thelauderdalehotel",
-      "destination": "https://the-lauderdale-dashboard.netlify.app/",
-      "statusCode": 308
+      "destination": "/lauderdale-om.pdf",
+      "statusCode": 307
     }
   ],
   "crons": [
