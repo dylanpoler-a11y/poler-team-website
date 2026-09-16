@@ -766,8 +766,11 @@ function initLeadCapture() {
             showLeadError('lead-error', t('errSelectTimeline') || 'Please select when you plan to buy');
             return;
         }
-        const digitsOnly = localPhone.replace(/\D/g, '');
-        if (digitsOnly.length < 7) {
+        // Reject numbers that cannot be real before anything fires: too short/long,
+        // US without 10 digits or a 555-xxxx exchange, 6+ repeated digits, keypad runs.
+        // Structural only — the server (lib/phone-quality.js) is the authority and does
+        // the full per-country check; this just stops the obvious 999999999 / 1234567.
+        if (phoneLooksImpossible(ccDigits, localDigits)) {
             showLeadError('lead-error', t('errInvalidPhone'));
             return;
         }
@@ -897,6 +900,16 @@ function getCookieValue(name) {
     return match ? decodeURIComponent(match[1]) : '';
 }
 
+// ── Browser-side junk-number screen (mirrors the tighter server check) ────────
+function phoneLooksImpossible(ccDigits, localDigits) {
+    const d = String(localDigits || '');
+    if (d.length < 6 || d.length > 12) return true;
+    if (ccDigits === '1' && (d.length !== 10 || /555\d{4}$/.test(d))) return true;
+    if (/(\d)\1{5,}/.test(d)) return true;                       // 999999…, 000000…
+    if (/1234567|2345678|3456789|7654321/.test(d)) return true;   // keypad runs
+    return false;
+}
+
 // ── Shared lead completion — save to CRM, send emails, fire pixel, unlock page
 async function completeLead(overlay, pageWrap) {
     const { first, last, email, phone } = leadFormData;
@@ -907,14 +920,21 @@ async function completeLead(overlay, pageWrap) {
     const metaEventId = (typeof crypto !== 'undefined' && crypto.randomUUID && crypto.randomUUID())
         || (String(Date.now()) + Math.random().toString(16).slice(2));
 
-    // Fire Meta Pixel Lead event for ad conversion tracking
+    // Meta Pixel, two events (2026-09-12):
+    //   RawSubmit (custom) — fires NOW for every submission, so Meta reporting still
+    //                        shows 100% of form fills and a cost-per-raw-submit column.
+    //   Lead (standard)    — fires BELOW only after /api/save-lead answers leadFired:true,
+    //                        i.e. the phone passed the server's validity check. The adset
+    //                        optimizes on Lead, so junk numbers must never reach it.
+    // Both are mirrored server-side via CAPI with the same event ids ('raw-'+id / id).
+    const metaPayload = {
+        content_name: heroListing ? (heroListing.UnparsedAddress || heroListing.City || '') : 'Browse page',
+        content_category: 'Real Estate',
+        value: heroListing ? (heroListing.ListPrice || 0) : 0,
+        currency: 'USD',
+    };
     if (typeof fbq === 'function') {
-        fbq('track', 'Lead', {
-            content_name: heroListing ? (heroListing.UnparsedAddress || heroListing.City || '') : 'Browse page',
-            content_category: 'Real Estate',
-            value: heroListing ? (heroListing.ListPrice || 0) : 0,
-            currency: 'USD',
-        }, { eventID: metaEventId });
+        fbq('trackCustom', 'RawSubmit', metaPayload, { eventID: 'raw-' + metaEventId });
     }
 
     // Fire Google Ads conversion event
@@ -967,6 +987,10 @@ async function completeLead(overlay, pageWrap) {
             }),
         });
         const saveData = await saveRes.json();
+        // Server-confirmed Lead: only real phone numbers reward the adset's optimization.
+        if (saveData.leadFired === true && typeof fbq === 'function') {
+            fbq('track', 'Lead', metaPayload, { eventID: metaEventId });
+        }
         if (saveData.token) {
             localStorage.setItem('poler_alert_token', saveData.token);
             rememberLead({ token: saveData.token }); // 1-year cookie so the gate never re-asks
@@ -2002,6 +2026,10 @@ async function fetchBrowseListings(page = 0) {
             offset: page * PAGE_SIZE,
         });
 
+        // A deep-linked search (?city= / ?q= from the city landing pages) may have
+        // started after this browse fetch — never let the browse result overwrite it.
+        if (hasActiveSearch) return;
+
         const all = (data.success && Array.isArray(data.bundle)) ? data.bundle : [];
         const total = (data.success && typeof data.total === 'number') ? data.total : all.length;
         clientSort(all); // within-page order always matches the date on the card
@@ -2547,6 +2575,21 @@ function initTabs() {
     } catch (e) { /* non-critical */ }
 }
 
+// Filter deep links from the city landing pages' search band
+// (/<city>-condos-for-sale): ?pmin=&pmax= in thousands, ?beds=&baths= as "N+".
+// Idempotent; must run BEFORE the first runSearch() (initSearchBar's ?q= path
+// fires before initSearch) and after initTabs() (a ?tab=rent click clears prices).
+function prefillFiltersFromUrl() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const prefill = (id, key) => {
+        const v = urlParams.get(key);
+        const el = document.getElementById(id);
+        if (v && el && /^\d+(\.\d+)?$/.test(v)) el.value = v;
+    };
+    prefill('f-price-min', 'pmin'); prefill('f-price-max', 'pmax');
+    prefill('f-beds', 'beds');      prefill('f-baths', 'baths');
+}
+
 // ============================================================
 // SEARCH BAR AUTOCOMPLETE + GO BUTTON
 // ============================================================
@@ -2623,6 +2666,13 @@ function initSearchBar() {
     input.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') { e.preventDefault(); doSearch(); }
     });
+
+    // ?q= deep link (the city landing pages' search box): address, ZIP or city —
+    // same path as the Go button. initSearch() skips the browse fetch when q is set.
+    try {
+        const q = new URLSearchParams(window.location.search).get('q');
+        if (q && q.trim()) { prefillFiltersFromUrl(); input.value = q.trim(); hasActiveSearch = true; doSearch(); }
+    } catch (e) { /* non-critical */ }
 
     // Simple autocomplete from city list
     let debounce;
@@ -2935,18 +2985,21 @@ function initSearch() {
     // Pre-fill location from ?city= URL param and auto-run
     const urlParams = new URLSearchParams(window.location.search);
     const cityParam = urlParams.get('city');
+    const qParam    = urlParams.get('q'); // free text (address/ZIP/city) — handled by initSearchBar()
     if (cityParam) {
         const locInput = document.getElementById('f-location');
         if (locInput) locInput.value = decodeURIComponent(cityParam.replace(/\+/g, ' '));
     }
 
+    prefillFiltersFromUrl();
+
     // If search-specific params exist, run search; otherwise browse the full
     // South-FL inventory newest-first (paginated).
     // Note: 'id' and 'mls' are for the hero property display, not for grid search.
-    const hasSearchParam = urlParams.get('city');
-    if (hasSearchParam) {
+    if (cityParam) {
+        hasActiveSearch = true;
         runSearch(0);
-    } else {
+    } else if (!qParam) {
         fetchBrowseListings(0);
     }
 }

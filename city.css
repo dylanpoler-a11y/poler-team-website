@@ -6,6 +6,15 @@
 
 .cp-body { background: var(--bg); }
 
+/* Search band (listing.css draws it); wrap the row on narrow screens */
+.cp-search .search-tabs a.search-tab { text-decoration: none; }
+.cp-search .search-bar-container { display: flex; }
+@media (max-width: 900px) {
+    .cp-search .search-row { flex-wrap: wrap; }
+    .cp-search .filter-bar { flex: 1 1 100%; }
+    .cp-search .filter-bar-row { flex-wrap: wrap; }
+}
+
 /* Breadcrumb + header row */
 .cp-crumbs { font-size: 0.8rem; color: var(--text-muted); padding: 0.9rem 0 0.4rem; }
 .cp-crumbs a:hover { color: var(--navy); text-decoration: underline; }

@@ -14,6 +14,8 @@ Live URLs (all 200, indexable, canonical self, GA4 `analytics.js` + `lead-gate.j
 - Vercel CDN: healthy render `s-maxage=1800, stale-while-revalidate=86400` (second hit = `x-vercel-cache: HIT`); degraded (Bridge down / token missing) → `s-maxage=60`, page still renders prose/FAQ/towers, never 500.
 - Cold `code-reviewer` (sonnet) verdict SHIP; its one SHOULD-FIX (array `?slug=` guard) applied before deploy.
 
+**v3 (~09:50 ET, Kevin: "there also needs to be an ability to search other properties and areas, just like the listing landing page"):** the listing page's search band now sits under the nav on every city page — Buy/Rent/Sell pills, address/city/ZIP box, an **Area** select (the 3 city guides + 10 more cities → `/listing?city=`), Min/Max price (000s; raw $ in Rent), Beds, Baths, Search. It is a plain GET form to `/listing` (`searchBand()` in `lib/city-page.js`, listing.css classes, ~30 lines of inline JS to build a clean URL: free text → `?q=`, empty → `?city=<this city>`, `tab=rent`, `pmin/pmax/beds/baths` only when set). `listing.js` learned the deep links: `?q=` runs the same address/ZIP/city path as the Go button, `prefillFiltersFromUrl()` fills price/beds/baths BEFORE the first `runSearch()`, and `fetchBrowseListings()` now bails if a deep-linked search is active (race guard). Verified live: `/listing?q=Miami+Beach&pmin=500&beds=2` → Bridge query carries `ListPrice.gte=500000&BedroomsTotal.gte=2` (788 results); `/listing?tab=rent&city=Aventura&pmax=4000` → 367 rentals ≤ $4,000.
+
 ## Architecture (add a city = one object in `lib/cities-data.js`, then `node tools/build-tower-pages.js`, then deploy)
 - `vercel.json` rewrite `/:city-condos-for-sale` → `/api/city?slug=:city-condos-for-sale` (first rewrite; public URL never shows `/api`, so `robots.txt Disallow: /api/` is irrelevant).
 - `api/city.js` — Node function: sanitizes slug, 3 Bridge calls via `Promise.allSettled` (newest 24 w/ `CARD_FIELDS`, 200-sample for stats, rentals total), `TOWERS` filtered by `city.towerCities` (city OR area), renders. `BRIDGE_API_TOKEN` server-side only.
@@ -33,8 +35,8 @@ Live URLs (all 200, indexable, canonical self, GA4 `analytics.js` + `lead-gate.j
 
 ## Touched
 - NEW: `api/city.js`, `lib/city-page.js`, `lib/cities-data.js`, `city.css`, this handoff.
-- MODIFIED: `vercel.json` (rewrite), `tools/build-tower-pages.js` (CITIES import, tower→city link, sitemap), `sitemap.xml` + `tower/**` (regenerated), `listing.html` (footer Popular Searches), `index.html` (footer "Browse by area" nav), `.claude/rules/learnings.md`.
-- External: Vercel production deploys `poler-team-website-f6g1o1pup` (v1) → `poler-team-website-66gymc0c1-investor-os-1.vercel.app` (v2, live) → www.homesinsoflorida.com. No env changes, no Airtable writes.
+- MODIFIED: `listing.js` (v3: `?q=`/`?pmin=`/`?pmax=`/`?beds=`/`?baths=` deep links + browse race guard — NOTE this file also carried the 2026-09-12 lead-gate session's uncommitted edits, committed together in f-series commit below), `vercel.json` (rewrite), `tools/build-tower-pages.js` (CITIES import, tower→city link, sitemap), `sitemap.xml` + `tower/**` (regenerated), `listing.html` (footer Popular Searches), `index.html` (footer "Browse by area" nav), `.claude/rules/learnings.md`.
+- External: Vercel production deploys `poler-team-website-f6g1o1pup` (v1) → `66gymc0c1` (v2) → `5sggcfhgj-investor-os-1.vercel.app` (v3, live) → www.homesinsoflorida.com. No env changes, no Airtable writes.
 - Research: `~/business/real-estate/active/research/2026-09-16-openseo-first-audit-homesinsoflorida.md` (§4 = all-cities keyword table + build order).
 
 ## Gotchas
@@ -45,4 +47,6 @@ Live URLs (all 200, indexable, canonical self, GA4 `analytics.js` + `lead-gate.j
 - impeccable hook flags Inter as "overused" on every edit — false positive; the site IS Inter (`listing.css` body + `.results-title`) and Kevin demands one font family across pages. Playfair is defined in `--font-heading` but no visible heading on `/listing` uses it — don't use it on inner pages.
 - **Layout law for every inner page (memory `feedback_full_bleed_web_design.md`):** variation of `/listing` — no hero/video, properties first, `.browse-inner` 20px gutters, Inter 800 headings, fixed-column grids with full rows. v1 of this page broke all of it and cost a rebuild.
 - Never edit `tower/**` or `sitemap.xml` by hand — regenerate with `node tools/build-tower-pages.js`.
+- Static JS is served `cache-control: s-maxage=0, stale-while-revalidate` — the FIRST request after a deploy can still get the OLD `listing.js` from the CDN. When verifying in a browser, `fetch('/listing.js',{cache:'reload'})` once, then reload; don't debug the old file.
+- In Rent mode the price fields are raw dollars (`pmax=4000`), in Buy mode thousands (`pmin=500` = $500,000) — same convention as the listing page placeholders.
 - Deploy is CLI only: `cd ~/business/real-estate/poler-team-website && npx vercel --prod --yes`.
