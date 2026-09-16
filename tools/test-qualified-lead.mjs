@@ -12,10 +12,10 @@ console.log('lead-quality (Lead gate)');
 t('valid phone + 12+ months fires Lead (revert)', () => assert.equal(leadQualifies({ phoneQuality: ok, timeline: '12+ months' }), true));
 t('valid phone + 0-3 months fires Lead', () => assert.equal(leadQualifies({ phoneQuality: ok, timeline: '0-3 months' }), true));
 t('valid phone + blank timeline fires Lead', () => assert.equal(leadQualifies({ phoneQuality: ok, timeline: '' }), true));
-t('"Just exploring" never fires Lead', () => assert.equal(leadQualifies({ phoneQuality: ok, timeline: 'Just exploring' }), false));
+t('"Just exploring" + valid phone fires Lead too (Kevin 2026-09-16)', () => assert.equal(leadQualifies({ phoneQuality: ok, timeline: 'Just exploring' }), true));
 t('junk phone never fires Lead', () => assert.equal(leadQualifies({ phoneQuality: { ok: false }, timeline: '0-3 months' }), false));
 t('timelineIsNearTerm is 0-12 only', () => { assert.equal(timelineIsNearTerm('6-12 months'), true); assert.equal(timelineIsNearTerm('12+ months'), false); });
-t('timelineQualifies only rejects exploring', () => { assert.equal(timelineQualifies('12+ months'), true); assert.equal(timelineQualifies('just exploring'), false); });
+t('timelineQualifies accepts everything', () => { assert.equal(timelineQualifies('12+ months'), true); assert.equal(timelineQualifies('Just exploring'), true); assert.equal(timelineQualifies(''), true); });
 
 console.log('qualified-lead');
 const auto = JSON.stringify([{ types: ['Single Family'], cities: 'North Miami Beach', priceMin: 2450000, priceMax: 4200000, bedsMin: 3, auto: true, autoBasis: 'signup' }]);

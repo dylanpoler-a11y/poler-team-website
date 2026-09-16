@@ -362,8 +362,8 @@ export default async function handler(req, context) {
     // countryIso = the gate's dropdown ISO (hint for numbers typed without a country
     // code, e.g. the nav "Connect With Us" popup which has no dropdown → US, then raw).
     const phoneQuality = assessPhone(phone, countryIso || '');
-    // 2026-09-16 PM: Lead = valid phone, any timeline except an explicit "Just
-    // exploring" (the 12+ month cut from this morning was reverted — see
+    // 2026-09-16 PM: Lead = valid phone, ANY timeline, "Just exploring" included
+    // (Kevin; the 12+ month cut from this morning was reverted — see
     // lib/lead-quality.js). Row saved, emails unchanged either way.
     const leadFired = Boolean(isWebSubmission && leadQualifies({ phoneQuality, timeline }));
     const phoneMasked = String(phone || '').replace(/\d(?=\d{4})/g, '*');  // keep last 4 only in logs
