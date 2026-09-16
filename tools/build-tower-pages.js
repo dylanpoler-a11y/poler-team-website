@@ -21,6 +21,12 @@ const WA_NUMBER = '19542354046'; // Rosa Poler — point of contact for ALL prec
 const mod = await import(path.join(ROOT, 'lib', 'preconstructions-data.js'));
 const TOWERS = mod.PRECONSTRUCTIONS || mod.default;
 
+/* City landing pages (2026-09-16): rendered live by api/city.js from
+   lib/cities-data.js. They are not files, so they only exist in the sitemap
+   and in the tower pages' links if we emit them here. */
+const CITIES = (await import(path.join(ROOT, 'lib', 'cities-data.js'))).CITIES || [];
+const cityPageFor = (t) => CITIES.find(c => (c.towerCities || [c.bridgeCity]).includes(t.city) || (c.towerCities || []).includes(t.area)) || null;
+
 /* ── ES / PT (2026-09-10) ─────────────────────────────────────────────────────
    Kevin's leads are mostly Latin American and the on-page i18n toggle is JS
    Google can't index — so every tower is also emitted as a real URL:
@@ -316,6 +322,7 @@ ${related.map(r => `      <li><a href="${esc(towerPath(r.id, lang))}">${esc(r.na
         ],
     };
 
+    const cityPage = cityPageFor(src);
     const hreflang = LANGS.map(l => `<link rel="alternate" hreflang="${l}" href="${ORIGIN}${towerPath(t.id, l)}">`).join('\n')
         + `\n<link rel="alternate" hreflang="x-default" href="${ORIGIN}${towerPath(t.id, 'en')}">`;
 
@@ -391,6 +398,7 @@ ${parking}
 
 ${relatedBlock}
 
+${cityPage ? `  <p class="tw-back"><a href="/${esc(cityPage.slug)}">${esc(cityPage.name)} condos for sale &rarr;</a></p>` : ''}
   <p class="tw-back"><a href="/preconstruction${lang === 'en' ? '' : '?lang=' + lang}">${U.back}</a></p>
 </main>
 
@@ -415,6 +423,7 @@ function renderSitemap(towers) {
     ];
     const urls = statics.map(([p, cf, pr]) =>
         `  <url>\n    <loc>${ORIGIN}${p}</loc>\n    <changefreq>${cf}</changefreq>\n    <priority>${pr}</priority>\n  </url>`);
+    CITIES.forEach(c => urls.push(`  <url>\n    <loc>${ORIGIN}/${c.slug}</loc>\n    <changefreq>daily</changefreq>\n    <priority>0.9</priority>\n  </url>`));
     // One <url> per language per tower, each listing all three as xhtml alternates
     towers.forEach(t => LANGS.forEach(lang => {
         const alts = LANGS.map(l => `    <xhtml:link rel="alternate" hreflang="${l}" href="${ORIGIN}${towerPath(t.id, l)}"/>`)
@@ -444,4 +453,4 @@ for (const t of TOWERS) {
 fs.writeFileSync(path.join(ROOT, 'sitemap.xml'), renderSitemap(TOWERS.filter(t => seen.has(t.id))));
 
 console.log(`Wrote ${written} tower pages to tower/ (${seen.size} towers × ${LANGS.length} languages)`);
-console.log(`Sitemap: ${seen.size * LANGS.length + 7} URLs`);
+console.log(`Sitemap: ${seen.size * LANGS.length + 7 + CITIES.length} URLs (${CITIES.length} city pages)`);

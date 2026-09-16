@@ -5,6 +5,10 @@
   "cleanUrls": true,
   "rewrites": [
     {
+      "source": "/:city-condos-for-sale",
+      "destination": "/api/city?slug=:city-condos-for-sale"
+    },
+    {
       "source": "/via-ventura",
       "destination": "/api/vv-ab/route"
     },
@@ -38,44 +42,68 @@
     {
       "source": "/crm",
       "headers": [
-        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
+        }
       ]
     },
     {
       "source": "/crm.html",
       "headers": [
-        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
+        }
       ]
     },
     {
       "source": "/crm.js",
       "headers": [
-        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
+        }
       ]
     },
     {
       "source": "/crm.css",
       "headers": [
-        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
+        }
       ]
     },
     {
       "source": "/(.*)",
       "headers": [
-        { "key": "Cache-Control", "value": "s-maxage=0, stale-while-revalidate" }
+        {
+          "key": "Cache-Control",
+          "value": "s-maxage=0, stale-while-revalidate"
+        }
       ]
     },
     {
       "source": "/investultralux",
       "headers": [
-        { "key": "Content-Type", "value": "text/html; charset=utf-8" },
-        { "key": "Content-Disposition", "value": "inline" }
+        {
+          "key": "Content-Type",
+          "value": "text/html; charset=utf-8"
+        },
+        {
+          "key": "Content-Disposition",
+          "value": "inline"
+        }
       ]
     },
     {
       "source": "/investultralux/(.*)",
       "headers": [
-        { "key": "Content-Disposition", "value": "inline" }
+        {
+          "key": "Content-Disposition",
+          "value": "inline"
+        }
       ]
     }
   ]
