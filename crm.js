@@ -1131,8 +1131,10 @@ function setupEvents() {
   // Escape key closes panel
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closePanel(); });
 
-  // Panel save
+  // Panel save — the button now exists for the NOTE only; every other field persists
+  // itself on change (Kevin 2026-09-16: "no need to press save changes").
   document.getElementById('panel-save').addEventListener('click', saveLead);
+  initLeadAutoSave();
 
   // Edit-contact toggle (shows/hides First Name + Last Name inputs)
   document.getElementById('panel-edit-contact-btn')?.addEventListener('click', () => {
@@ -1439,6 +1441,27 @@ async function refreshLeadInPanel(id) {
   } catch (e) { /* stale render survives — same as before this refresh existed */ }
 }
 
+// ── PANEL OVERLAY (single owner) ───────────────────────────────────────────
+// Every side panel (RE lead, LG lead, consulting client/deal) shares #panel-overlay.
+// ONLY these two helpers may touch it. Bug 2026-09-16: LG/consulting set inline
+// `display:none` on close, which out-ranked the RE panel's `.show` class from then on —
+// no dim, click-outside dead. Inline style is cleared here so the class is the truth.
+const PANEL_IDS = ['lead-panel', 'leadgen-panel', 'client-panel', 'deal-panel'];
+function showPanelOverlay() {
+  const o = document.getElementById('panel-overlay');
+  if (!o) return;
+  o.style.display = '';
+  o.classList.add('show');
+}
+function hidePanelOverlay() {
+  const o = document.getElementById('panel-overlay');
+  if (!o) return;
+  // Another panel still open (deal over client) → keep the dim.
+  if (PANEL_IDS.some(id => document.getElementById(id)?.classList.contains('open'))) return;
+  o.style.display = '';
+  o.classList.remove('show');
+}
+
 function openPanel(id) {
   const lead = allLeads.find(l => String(l.id) === String(id));
   if (!lead) { console.warn('[openPanel] lead not found for id:', id); return; }
@@ -1452,8 +1475,7 @@ function openPanel(id) {
   const panelEl = document.getElementById('lead-panel');
   panelEl.classList.add('open');
   panelEl.classList.add('panel-expanded');
-  const overlay = document.getElementById('panel-overlay');
-  if (overlay) overlay.classList.add('show');
+  showPanelOverlay();
 
   try {
     populatePanel(lead);
@@ -1575,7 +1597,7 @@ function populatePanel(lead) {
   saveStatus.textContent   = '';
   saveStatus.style.color   = '#16a34a';
   saveBtn.disabled         = false;
-  saveBtn.textContent      = 'Save Changes';
+  saveBtn.textContent      = 'Save Note';
 
   // Reset reminder form
   const reminderStatus = document.getElementById('panel-reminder-status');
@@ -1835,7 +1857,7 @@ function closePanel() {
   const panel = document.getElementById('lead-panel');
   panel.classList.remove('open');
   panel.classList.remove('panel-expanded');
-  document.getElementById('panel-overlay').classList.remove('show');
+  hidePanelOverlay();
   finalizeCoachSection(); // Flash treats the close as call-ended: mic off + note/reminder/alerts
   resetMapSelection();
   activeLead = null;
@@ -2580,6 +2602,91 @@ async function rebuildAndSaveNotes() {
   } catch (err) { console.warn('Failed to save edited note:', err); }
 }
 
+// ── RE PANEL AUTO-SAVE ─────────────────────────────────────────────────────
+// Status / Assigned To / name / phone / email PATCH themselves the moment they change
+// (selects on change, text inputs 700ms after the last keystroke — same pattern as the
+// LG panel). Only the changed field is sent, never `notes` (notes stay on the button +
+// server-side stamp). Alert prefs persist through the existing touched-gated
+// persistAlertPrefs() so the 2026-07-23 stale-cache guard still applies.
+const leadSaveTimers = {};
+function initLeadAutoSave() {
+  const status = document.getElementById('panel-save-status');
+  const flash = (msg, ok) => {
+    if (!status) return;
+    status.style.color = ok ? '#16a34a' : '#dc2626';
+    status.textContent = msg;
+    status.style.display = 'block';
+    if (ok) setTimeout(() => { if (status.textContent === msg) status.style.display = 'none'; }, 1500);
+  };
+  const FIELDS = [
+    ['panel-status',      'status'],
+    ['panel-assigned-to', 'assignedTo'],
+    ['panel-first-name',  'firstName'],
+    ['panel-last-name',   'lastName'],
+    ['panel-phone-input', 'phone'],
+    ['panel-email-input', 'email'],
+  ];
+  FIELDS.forEach(([id, key]) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const evt = el.tagName === 'SELECT' ? 'change' : 'input';
+    el.addEventListener(evt, () => {
+      if (!activeLead) return;
+      const leadId = activeLead.id;
+      const value  = el.value.trim();
+      clearTimeout(leadSaveTimers[id]);
+      const run = () => autoSaveLeadField(leadId, key, value, flash);
+      if (evt === 'change') run(); else leadSaveTimers[id] = setTimeout(run, 700);
+    });
+  });
+  // Alert prefs: any edit already sets _alertFormTouched; persist 800ms after the last one.
+  const alertFields = document.getElementById('panel-alert-fields');
+  const alertActive = document.getElementById('panel-alert-active');
+  const scheduleAlertSave = () => {
+    clearTimeout(leadSaveTimers.alerts);
+    leadSaveTimers.alerts = setTimeout(async () => {
+      if (!activeLead) return;
+      const ok = await persistAlertPrefs();
+      flash(ok ? 'Saved' : 'Failed to save alerts', !!ok);
+    }, 800);
+  };
+  alertFields?.addEventListener('input', scheduleAlertSave);
+  alertFields?.addEventListener('change', scheduleAlertSave);
+  alertActive?.addEventListener('change', scheduleAlertSave);
+}
+
+async function autoSaveLeadField(leadId, key, value, flash) {
+  try {
+    if (flash) flash('Saving…', true);
+    const res = await fetch(`${CRM_API_BASE}/api/update-lead`, {
+      method:  'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ id: leadId, [key]: value, password: currentPassword }),
+    });
+    const data = await res.json();
+    if (!data.success) { flash && flash(data.error || 'Failed to save', false); return; }
+    const lead = allLeads.find(l => String(l.id) === String(leadId));
+    if (lead) {
+      lead[key] = value;
+      if (key === 'firstName' || key === 'lastName') {
+        lead.name = `${lead.firstName || ''} ${lead.lastName || ''}`.trim();
+        if (activeLead && String(activeLead.id) === String(leadId)) {
+          const nameEl = document.getElementById('panel-name');
+          if (nameEl) nameEl.textContent = lead.name || '—';
+        }
+      }
+      const fIdx = filteredLeads.findIndex(l => String(l.id) === String(leadId));
+      if (fIdx >= 0 && filteredLeads[fIdx] !== lead) filteredLeads[fIdx] = lead;
+    }
+    renderTable();
+    renderStats();
+    flash && flash('Saved', true);
+  } catch (err) {
+    console.error('[autoSave] failed:', key, err);
+    flash && flash('Network error — not saved', false);
+  }
+}
+
 // ── SAVE LEAD ──────────────────────────────────────────────────────────────
 async function saveLead() {
   if (!activeLead) return;
@@ -2674,7 +2781,7 @@ async function saveLead() {
   await persistAlertPrefs();
 
   btn.disabled    = false;
-  btn.textContent = 'Save Changes';
+  btn.textContent = 'Save Note';
 }
 
 // Persist the panel's alert prefs (incl. the full alertProfiles array) to Airtable NOW.
@@ -4673,8 +4780,7 @@ function openClientPanel(id) {
 
   // Open the panel + overlay
   document.getElementById('client-panel').classList.add('open');
-  const overlay = document.getElementById('panel-overlay');
-  if (overlay) overlay.style.display = 'block';
+  showPanelOverlay();
 }
 
 // ── COMPANY NOTES (as separate cards from Consulting Activity) ─────────────
@@ -4756,8 +4862,7 @@ async function deleteClientNote(activityId) {
 
 function closeClientPanel() {
   document.getElementById('client-panel')?.classList.remove('open');
-  const overlay = document.getElementById('panel-overlay');
-  if (overlay) overlay.style.display = 'none';
+  hidePanelOverlay();
   currentClient = null;
 }
 
@@ -5518,16 +5623,12 @@ function openDealPanel(id) {
   });
 
   document.getElementById('deal-panel').classList.add('open');
-  const overlay = document.getElementById('panel-overlay');
-  if (overlay) overlay.style.display = 'block';
+  showPanelOverlay();
 }
 
 function closeDealPanel() {
   document.getElementById('deal-panel')?.classList.remove('open');
-  const overlay = document.getElementById('panel-overlay');
-  if (overlay && !document.getElementById('client-panel')?.classList.contains('open')) {
-    overlay.style.display = 'none';
-  }
+  hidePanelOverlay();
   currentDeal = null;
 }
 
@@ -7378,9 +7479,10 @@ function openLGPanel(id) {
   loadLGActivity(id);
   renderLGLeadReminders(lead);
   if (!allLGTasks.length) loadLGTasks();
-  document.getElementById('leadgen-panel').classList.add('open');
-  const overlay = document.getElementById('panel-overlay');
-  if (overlay) overlay.style.display = 'block';
+  const lgPanel = document.getElementById('leadgen-panel');
+  lgPanel.classList.add('open');
+  lgPanel.classList.add('panel-expanded'); // default = wide, same as the RE panel (Kevin 2026-09-16); ⛶ shrinks
+  showPanelOverlay();
 }
 
 function closeLGPanel() {
@@ -7388,8 +7490,7 @@ function closeLGPanel() {
   if (!panel) return;
   panel.classList.remove('open');
   panel.classList.remove('panel-expanded');
-  const overlay = document.getElementById('panel-overlay');
-  if (overlay) overlay.style.display = 'none';
+  hidePanelOverlay();
   finalizeCoachSection('lg'); // closing = call ended (same rule as the RE panel)
   currentLGLead = null;
 }
@@ -7893,6 +7994,8 @@ function wireLGEvents() {
   document.getElementById('lg-coach-close')?.addEventListener('click', () => finalizeCoachSection('lg'));
   document.getElementById('panel-overlay')?.addEventListener('click', () => {
     if (document.getElementById('leadgen-panel')?.classList.contains('open')) closeLGPanel();
+    if (document.getElementById('deal-panel')?.classList.contains('open')) closeDealPanel();
+    if (document.getElementById('client-panel')?.classList.contains('open')) closeClientPanel();
   });
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape' && document.getElementById('leadgen-panel')?.classList.contains('open')) closeLGPanel();
