@@ -27,7 +27,8 @@ Deployed to production (`npx vercel --prod --yes`) and verified live: dry runs o
 
 ## Still open
 
-- **Twilio templates pending Meta approval**: `poler_props1_auto` HXa2d53e…, `poler_props3_auto` HXac0ee5…, `_en` HXd4520a… / HX2638f8… (MARKETING; SIDs set in monitor `.env` + Railway `TWILIO_WA_TPL_PROPS*_AUTO*`). Until approved, out-of-window first drips go through the plain props templates without the question; the question is asked on the next in-window send.
+- **Twilio templates**: `poler_props1_auto` HXa2d53e…, `poler_props3_auto` HXac0ee5…, `poler_props1_auto_en` HXd4520a… APPROVED by Meta within the hour; `poler_props3_auto_en` HX2638f8… still pending (EN 3-slot out-of-window sends fall back to plain `props3_en` without the question until then). SIDs in monitor `.env` + Railway `TWILIO_WA_TPL_PROPS*_AUTO*`.
+- **Verified live 2026-09-16 16:27–16:34 UTC**: two poller ticks built 20 profiles (13 signup basis, 7 browsing) and sent 20 first drips through `props3_auto` on the 954; Twilio shows delivered/read for the LATAM numbers, 1× 63049 and 1× 63024 (the Test lead, US number). `autoAskedAt` stamped on each profile.
 - **Side effect to confirm with Kevin**: derive-profile sets `Alert Active = true` with real criteria, so `api/send-alerts.js` (email cron) will also start emailing these leads on their frequency.
 - Backfill: dry run of the 5 newest eligible leads looked right (2 signup basis, 3 browsing). Run `node tools/backfill-auto-profiles.mjs --live --limit 25` once Kevin has seen the list; repeat daily until the eligible pool drains.
 - Verify one real new signup end to end in Railway logs (`[auto-profile]` then `[drip]` with the confirmation line) — nothing was 24 h old at deploy time.
