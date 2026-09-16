@@ -1,184 +1,114 @@
 /* city.css — per-city SEO landing pages (/<city>-condos-for-sale), rendered by
-   api/city.js + lib/city-page.js. Layered on preconstruction.css (tokens, nav,
-   footer) and tower.css (nav sizing, .tw-facts, .tw-cta, .tw-btn).
-   Layout rule for every Kevin site: full-viewport hero, edge-to-edge media,
-   fluid wrap — never a boxed hero or a fixed 1180px column. */
+   api/city.js + lib/city-page.js. A thin layer over listing.css: the page IS a
+   variation of /listing (same nav, same .results-grid/.listing-card, Inter
+   everywhere, 20px side padding, edge to edge). No hero, no video — Kevin,
+   2026-09-16. Anything that looks like a hero or a narrow text column is wrong. */
 
-.cp-body { background: var(--bg); color: var(--text); font-family: var(--font-body); }
-.cp-main { width: 100%; }
-.cp-wrap { width: min(1720px, 92vw); margin: 0 auto; }
+.cp-body { background: var(--bg); }
 
-/* ── Hero: full viewport, photo edge to edge, copy bottom-left ─────────── */
-.cp-hero {
-    position: relative;
-    min-height: 100vh;
-    min-height: 100dvh;
-    display: flex;
-    align-items: flex-end;
-    color: #fff;
-    background: var(--navy);
-    background-image: var(--cp-hero-img);
-    background-size: cover;
-    background-position: center;
-    padding: 6.5rem 0 3rem;
-    overflow: hidden;
-}
-/* Readability scrim sits above the photo AND the optional video layer */
-.cp-hero::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    z-index: 1;
-    background: linear-gradient(180deg, rgba(15, 20, 32, 0.35) 0%, rgba(15, 20, 32, 0.15) 35%, rgba(15, 20, 32, 0.78) 100%);
-    pointer-events: none;
-}
-.cp-hero-video {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    z-index: 0;
-}
-.cp-hero-plain { background-image: linear-gradient(160deg, var(--navy) 0%, var(--navy-deep) 100%); min-height: 62vh; }
-.cp-hero-inner { position: relative; z-index: 2; flex: 1 1 auto; width: min(1720px, 92vw); }
-.cp-crumbs { font-size: 0.82rem; color: rgba(255, 255, 255, 0.78); margin-bottom: 1.1rem; }
-.cp-crumbs a { color: rgba(255, 255, 255, 0.78); text-decoration: none; }
-.cp-crumbs a:hover { color: #fff; text-decoration: underline; }
-.cp-crumbs span { margin: 0 0.35rem; }
-.cp-crumbs [aria-current] { color: #fff; font-weight: 600; margin: 0; }
-.cp-hero h1 {
-    font-family: var(--font-heading);
-    font-size: clamp(2.4rem, 6vw, 5rem);
-    line-height: 1.04;
-    letter-spacing: -0.025em;
-    margin: 0 0 0.9rem;
-    max-width: 18ch;
-    text-wrap: balance;
-    text-shadow: 0 2px 24px rgba(0, 0, 0, 0.35);
-}
-.cp-tagline {
-    font-size: clamp(1.05rem, 1.6vw, 1.35rem);
-    line-height: 1.5;
-    max-width: 60ch;
-    margin: 0 0 0.6rem;
-    color: rgba(255, 255, 255, 0.92);
-}
-.cp-hero-count { margin: 0 0 1.5rem; font-size: 0.98rem; color: rgba(255, 255, 255, 0.8); }
-.cp-hero-cta { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 2.25rem; }
-.cp-hero .tw-btn { border-color: rgba(255, 255, 255, 0.5); }
+/* Breadcrumb + header row */
+.cp-crumbs { font-size: 0.8rem; color: var(--text-muted); padding: 0.9rem 0 0.4rem; }
+.cp-crumbs a:hover { color: var(--navy); text-decoration: underline; }
+.cp-crumbs span { margin: 0 0.3rem; }
+.cp-crumbs [aria-current] { color: var(--text); font-weight: 600; margin: 0; }
+.results-header { flex-wrap: wrap; }
+.results-count { max-width: none; }
 
-.cp-kpis {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-    gap: 1px;
-    margin: 0;
-    background: rgba(255, 255, 255, 0.18);
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    border-radius: var(--radius);
-    overflow: hidden;
-    backdrop-filter: blur(6px);
+/* Cards are anchors here (listing.js uses div+onclick) */
+.results-grid a.listing-card { display: block; color: inherit; }
+
+/* Buttons — same weight/radius as the listing page controls */
+.cp-row { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; }
+.cp-btn {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    padding: 0.55rem 1.05rem; border-radius: 8px;
+    font-size: 0.86rem; font-weight: 700; white-space: nowrap;
+    border: 1.5px solid var(--navy); color: var(--navy); background: #fff;
+    transition: background 0.15s, color 0.15s;
 }
-.cp-kpis div { background: rgba(15, 20, 32, 0.55); padding: 1rem 1.25rem; }
-.cp-kpis dt { font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.08em; color: rgba(255, 255, 255, 0.72); margin-bottom: 0.3rem; }
-.cp-kpis dd { margin: 0; font-family: var(--font-heading); font-size: clamp(1.3rem, 2vw, 1.8rem); font-variant-numeric: tabular-nums; line-height: 1.15; }
+.cp-btn:hover { background: var(--orange-light); }
+.cp-btn-primary { background: var(--navy); color: #fff; }
+.cp-btn-primary:hover { background: var(--orange-dark); }
+.pagination-wrap .cp-page-more { min-width: 0; padding: 0 1.2rem; }
 
-/* ── Sections ───────────────────────────────────────────────────────────── */
-.cp-section { padding: clamp(3rem, 6vw, 5.5rem) 0; }
-.cp-section-alt { background: var(--bg-card); border-top: 1px solid var(--border-light); border-bottom: 1px solid var(--border-light); }
-.cp-section h2 {
-    font-family: var(--font-heading);
-    font-size: clamp(1.6rem, 3.2vw, 2.4rem);
-    line-height: 1.15;
-    letter-spacing: -0.015em;
-    color: var(--navy);
-    margin: 0 0 0.9rem;
-    text-wrap: balance;
+/* Content sections: full width, multi-column so no row leaves empty space */
+.cp-section { padding: 2.25rem 0 0.5rem; margin-top: 2rem; border-top: 1px solid var(--border); }
+.cp-section h2, .cp-cta h2 {
+    font-family: var(--font-body);
+    font-size: 1.35rem; font-weight: 800; letter-spacing: -0.02em;
+    color: var(--text); margin: 0 0 0.6rem;
 }
-.cp-section h3 { font-family: var(--font-heading); font-size: 1.2rem; color: var(--navy); margin: 0 0 0.5rem; }
-.cp-section p { line-height: 1.72; max-width: 68ch; }
-.cp-lede { font-size: 1.05rem; color: var(--text-muted); margin: 0 0 1.75rem; }
-.cp-link { color: var(--navy); font-weight: 600; text-decoration: none; }
-.cp-link:hover { color: var(--gold-dark); text-decoration: underline; }
+.cp-section h3 { font-family: var(--font-body); font-size: 0.98rem; font-weight: 700; color: var(--text); margin: 0 0 0.35rem; }
+.cp-sub { margin-top: 1.5rem !important; margin-bottom: 0.75rem !important; }
+.cp-note { font-size: 0.9rem; color: var(--text-muted); margin: 0 0 1.1rem; }
+.cp-empty { padding: 2rem 0; color: var(--text-muted); }
+.cp-empty a { color: var(--navy); font-weight: 600; text-decoration: underline; }
 
-/* ── Listing grid ───────────────────────────────────────────────────────── */
-.cp-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
-    gap: clamp(1rem, 1.6vw, 1.6rem);
+.cp-cols { display: grid; gap: 1.25rem; }
+.cp-cols-3 { grid-template-columns: repeat(3, 1fr); }
+.cp-cols-4 { grid-template-columns: repeat(4, 1fr); }
+.cp-cols > p { margin: 0; font-size: 0.95rem; line-height: 1.7; color: var(--text); }
+.cp-tile {
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 1.1rem 1.2rem; box-shadow: var(--shadow-sm);
 }
-.cp-card {
-    display: block;
-    background: var(--bg-card);
-    border-radius: var(--radius);
-    overflow: hidden;
-    box-shadow: var(--shadow-sm);
-    border: 1px solid var(--border-light);
-    color: inherit;
-    text-decoration: none;
-    transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.22s;
+.cp-tile p { margin: 0; font-size: 0.9rem; line-height: 1.6; color: var(--text-muted); }
+
+/* Market snapshot tiles */
+.cp-stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.9rem; margin: 0; }
+.cp-stat { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 0.9rem 1rem; }
+.cp-stat dt { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); }
+.cp-stat dd { margin: 0.25rem 0 0; font-size: 1.2rem; font-weight: 800; letter-spacing: -0.02em; color: var(--text); font-variant-numeric: tabular-nums; }
+
+/* Towers */
+.cp-towers { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 0.9rem; }
+.cp-towers li { flex: 1 1 280px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 0.9rem 1rem; }
+.cp-towers a { font-weight: 700; color: var(--navy); }
+.cp-towers a:hover { text-decoration: underline; }
+.cp-towers span { display: block; font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem; }
+
+/* FAQ in two columns */
+.cp-faq { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0 2.5rem; }
+.cp-faq details { border-bottom: 1px solid var(--border); padding: 0.25rem 0; }
+.cp-faq summary {
+    cursor: pointer; font-weight: 700; font-size: 0.95rem; padding: 0.7rem 0; color: var(--text);
+    list-style: none; display: flex; justify-content: space-between; gap: 1rem;
 }
-.cp-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
-.cp-card-media { position: relative; aspect-ratio: 16 / 11; background: var(--border-light); overflow: hidden; }
-.cp-card-media img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1); }
-.cp-card:hover .cp-card-media img { transform: scale(1.04); }
-.cp-card-ph { width: 100%; height: 100%; background: linear-gradient(135deg, var(--border-light), var(--border)); }
-.cp-card-type {
-    position: absolute; left: 0.75rem; top: 0.75rem;
-    background: rgba(15, 20, 32, 0.72); color: #fff;
-    font-size: 0.7rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase;
-    padding: 0.3rem 0.55rem; border-radius: 4px; backdrop-filter: blur(4px);
-}
-.cp-card-body { padding: 0.9rem 1rem 1.05rem; }
-.cp-card-price { font-family: var(--font-heading); font-size: 1.35rem; color: var(--navy); letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
-.cp-card-stats { font-size: 0.86rem; color: var(--text-muted); margin-top: 0.2rem; }
-.cp-card-addr { font-size: 0.92rem; margin-top: 0.45rem; line-height: 1.4; }
-.cp-card-bldg { font-size: 0.78rem; color: var(--text-light); margin-top: 0.2rem; text-transform: capitalize; }
-.cp-more { margin: 2rem 0 0; }
-.cp-more .tw-btn-primary { color: #23180a; }
-
-/* ── About + buyer notes ────────────────────────────────────────────────── */
-.cp-two { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(280px, 0.8fr); gap: clamp(2rem, 4vw, 4.5rem); align-items: start; }
-.cp-notes { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem 1.6rem; position: sticky; top: 5.5rem; }
-.cp-notes ul { list-style: none; padding: 0; margin: 0; }
-.cp-notes li { position: relative; padding: 0.55rem 0 0.55rem 1.15rem; line-height: 1.55; font-size: 0.94rem; border-bottom: 1px solid var(--border-light); }
-.cp-notes li:last-child { border-bottom: 0; }
-.cp-notes li::before { content: ''; position: absolute; left: 0; top: 1.15em; width: 5px; height: 5px; border-radius: 50%; background: var(--gold); }
-
-/* ── Neighborhoods ──────────────────────────────────────────────────────── */
-.cp-hoods { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 1.25rem; }
-.cp-hood { background: var(--bg-card); border: 1px solid var(--border-light); border-radius: var(--radius); padding: 1.35rem 1.4rem; box-shadow: var(--shadow-sm); }
-.cp-hood p { margin: 0; font-size: 0.94rem; color: var(--text-muted); line-height: 1.6; }
-
-/* ── Snapshot table, towers, FAQ, areas ─────────────────────────────────── */
-.cp-facts { max-width: 900px; }
-.cp-towers, .cp-areas { list-style: none; padding: 0; margin: 0 0 1rem; }
-.cp-towers li { padding: 0.7rem 0; border-bottom: 1px solid var(--border); display: flex; flex-wrap: wrap; gap: 0.25rem 0.75rem; align-items: baseline; }
-.cp-towers a, .cp-areas a { color: var(--navy); font-weight: 600; text-decoration: none; }
-.cp-towers a:hover, .cp-areas a:hover { color: var(--gold-dark); text-decoration: underline; }
-.cp-towers span { font-size: 0.84rem; color: var(--text-muted); }
-.cp-areas { display: flex; flex-wrap: wrap; gap: 0.6rem 1.75rem; }
-
-.cp-faq details { border-bottom: 1px solid var(--border); padding: 0.35rem 0; }
-.cp-faq summary { cursor: pointer; font-weight: 600; font-size: 1.02rem; padding: 0.7rem 0; color: var(--navy); list-style: none; display: flex; justify-content: space-between; gap: 1rem; }
 .cp-faq summary::-webkit-details-marker { display: none; }
-.cp-faq summary::after { content: '+'; color: var(--gold-dark); font-weight: 400; font-size: 1.3rem; line-height: 1; }
-.cp-faq details[open] summary::after { content: '–'; }
-.cp-faq p { margin: 0 0 1rem; color: var(--text); }
+.cp-faq summary::after { content: '+'; color: var(--text-muted); font-weight: 400; font-size: 1.2rem; line-height: 1; }
+.cp-faq details[open] summary::after { content: '\2013'; }
+.cp-faq p { margin: 0 0 0.9rem; font-size: 0.92rem; line-height: 1.65; color: var(--text); }
 
-.cp-cta { margin-top: 0; }
-.cp-cta h2 { color: #fff; }
+/* Areas */
+.cp-areas { list-style: none; padding: 0; margin: 0 0 1rem; display: flex; flex-wrap: wrap; gap: 0.5rem 1.75rem; }
+.cp-areas a { font-weight: 600; color: var(--navy); font-size: 0.92rem; }
+.cp-areas a:hover { text-decoration: underline; }
 
+/* CTA band: full width navy strip */
+.cp-cta { background: var(--navy); color: #fff; padding: 2rem 0; margin-top: 1rem; }
+.cp-cta-inner { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1.25rem 2rem; }
+.cp-cta h2 { color: #fff; margin-bottom: 0.35rem; }
+.cp-cta p { margin: 0; font-size: 0.92rem; color: rgba(255, 255, 255, 0.82); max-width: 78ch; }
+.cp-cta .cp-btn { border-color: rgba(255, 255, 255, 0.55); color: #fff; background: transparent; }
+.cp-cta .cp-btn:hover { background: rgba(255, 255, 255, 0.1); }
+.cp-cta .cp-btn-primary { background: #fff; color: var(--navy); border-color: #fff; }
+.cp-cta .cp-btn-primary:hover { background: var(--orange-light); }
+
+/* Fixed column counts by width: every row is full, no empty cells on the right */
+@media (max-width: 1100px) {
+    .cp-cols-3 { grid-template-columns: repeat(3, 1fr); }
+    .cp-cols-4, .cp-stats { grid-template-columns: repeat(2, 1fr); }
+    .cp-faq { grid-template-columns: repeat(2, 1fr); }
+}
 @media (max-width: 900px) {
-    .cp-two { grid-template-columns: 1fr; }
-    .cp-notes { position: static; }
-    .cp-hero { padding-top: 5.5rem; }
+    .cp-cols-3 { grid-template-columns: 1fr; }
+    .cp-stats { grid-template-columns: repeat(2, 1fr); }
 }
-@media (max-width: 560px) {
-    .cp-kpis { grid-template-columns: 1fr 1fr; }
-    .cp-hero-cta .tw-btn { width: 100%; text-align: center; }
-}
-@media (prefers-reduced-motion: reduce) {
-    .cp-card, .cp-card-media img { transition: none; }
-    .cp-hero-video { display: none; }
+@media (max-width: 680px) {
+    .cp-cols-4, .cp-faq { grid-template-columns: 1fr; }
+    .cp-section { padding-top: 1.75rem; margin-top: 1.5rem; }
+    .results-header .cp-row { width: 100%; }
+    .results-header .cp-btn { flex: 1 1 auto; justify-content: center; }
+    .cp-cta .cp-row { width: 100%; }
+    .cp-cta .cp-btn { flex: 1 1 auto; justify-content: center; }
 }
