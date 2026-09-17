@@ -18,7 +18,10 @@ import { fireQualifiedLeadOnce } from '../lib/qualified-lead.js';
 // re-set/downgrade) for the server-side Meta CAPI quality-signal event below.
 const STATUS_RANK = { '': 0, New: 0, Contacted: 1, Warm: 2, Hot: 3, Client: 4 };
 // rank → Meta event name fired on advancement into that rank.
-const STATUS_CAPI_EVENT = { 1: 'Contact', 2: 'QualifiedLead', 3: 'QualifiedLead', 4: 'Purchase' };
+// Kevin 2026-09-16: a lead who WROTE BACK (Claudia marks Contacted on any real reply) is the
+// Meta quality signal, same as Warm/Hot or a set alert profile — so Contacted fires
+// QualifiedLead too (once per lead via lib/qualified-lead.js), no separate Contact event.
+const STATUS_CAPI_EVENT = { 1: 'QualifiedLead', 2: 'QualifiedLead', 3: 'QualifiedLead', 4: 'Purchase' };
 
 export default async function handler(req, context) {
     if (req.method === 'OPTIONS') {
@@ -113,7 +116,7 @@ export default async function handler(req, context) {
     }
 
     // Server-side Meta CAPI "quality signal" event — fires ONLY on an UPWARD status
-    // transition (New→Contacted, →Warm/Hot, →Client), never on a re-set or downgrade.
+    // transition (New→Contacted/Warm/Hot → QualifiedLead, →Client → Purchase), never on a re-set or downgrade.
     // `cur` was snapshotted BEFORE this PATCH, above. No-ops entirely unless
     // META_CAPI_ACCESS_TOKEN is set; sendCapiEvent() never throws. Server-only event — no
     // browser counterpart, so no event_id / dedup needed. Wrapped defensively so a CAPI
