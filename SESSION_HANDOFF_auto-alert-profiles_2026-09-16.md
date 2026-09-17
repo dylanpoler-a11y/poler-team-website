@@ -33,3 +33,15 @@ Deployed to production (`npx vercel --prod --yes`) and verified live: dry runs o
 - Backfill: dry run of the 5 newest eligible leads looked right (2 signup basis, 3 browsing). Run `node tools/backfill-auto-profiles.mjs --live --limit 25` once Kevin has seen the list; repeat daily until the eligible pool drains.
 - Verify one real new signup end to end in Railway logs (`[auto-profile]` then `[drip]` with the confirmation line) — nothing was 24 h old at deploy time.
 - `meta-ads` MCP connector authorization still needs Kevin's "done".
+
+## Addendum 20:10 ET — Contacted is the Meta quality signal
+
+**Correction to the top of this file:** the morning's 0–12-month `Lead` cut (cd6e334) was REVERTED at 16:34 by another session (6586dc5, 8deb759): `Lead` = valid phone, any timeline. Quality reaches Meta through `QualifiedLead` (lib/qualified-lead.js, once per lead: confirmed/human-set alert profile, or status Warm/Hot).
+
+Kevin 20:04: "a lead that talks to Claudia and gives any sort of information goes to Contacted, and I want Meta to optimize for that." Shipped (site 7d9618a → Vercel 2mvy0dm10; monitor cd86a29 → Railway 7d5d382a SUCCESS, booted 00:07Z):
+- `whatsapp-lead-monitor/contacted-rule.js` (+ `test-contacted-rule.mjs`, 5 pass): `shouldMarkContacted({status,text})` — any real reply on a New lead marks; low-signal (links/emoji), ack-only ("ok", "gracias"), opt-outs ("no me interesa", "stop", "wrong number"…) and leads past New do not. `isLowSignalInbound` moved here from reply-handler.
+- `reply-handler.js`: after the Dead-revive block, before the mute check: PATCH `/api/update-lead {status:'Contacted'}` + headerless note "Respondió por WhatsApp (954|305) — status New → Contacted." Best-effort, never blocks the reply.
+- `api/update-lead.js`: rank 1 (Contacted) now fires `QualifiedLead` via `fireQualifiedLeadOnce` (was the server-only `Contact` event). Manual CRM/MCP status changes fire it the same way.
+- Adset 120248601575180556 still optimizes on `LEAD` ($15/day). The flip to QualifiedLead is a separate go from Kevin (ideally after 1–2 weeks of events). Baseline: 19 Contacted+ in the 30 days to 09-16, 10 of them "12+ months".
+- Edge: the once-per-lead marker lives on alert profile #1; a lead with NO profile yet dedups only by event_id (48 h). Every signup gets an auto profile within 24 h, so the window is small.
+- Live proof pending: next real reply → CRM note + Vercel `[qualified-lead] … reason=status_contacted capi=sent` + Events Manager QualifiedLead.
