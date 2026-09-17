@@ -45,3 +45,13 @@ Kevin 20:04: "a lead that talks to Claudia and gives any sort of information goe
 - Adset 120248601575180556 still optimizes on `LEAD` ($15/day). The flip to QualifiedLead is a separate go from Kevin (ideally after 1–2 weeks of events). Baseline: 19 Contacted+ in the 30 days to 09-16, 10 of them "12+ months".
 - Edge: the once-per-lead marker lives on alert profile #1; a lead with NO profile yet dedups only by event_id (48 h). Every signup gets an auto profile within 24 h, so the window is small.
 - Live proof pending: next real reply → CRM note + Vercel `[qualified-lead] … reason=status_contacted capi=sent` + Events Manager QualifiedLead.
+
+## Addendum 2026-09-17 11:20 ET — Contacted tightened (no website change)
+
+Kevin found leads who never answered sitting on Contacted. Writers were Flash Coach (promoted on any answered call) and the reply-handler Dead-revive (any inbound), not Claudia's rule (never fired). 18 leads reverted to New; Flash now promotes only on a buy-box or booked meeting; `contacted-rule.js` refuses greetings / "quién eres" / "todavía no"; Dead-revive → New. 0 of 106 Contacted leads carried a QualifiedLead marker (2 events total, both from confirmed profiles), so Meta never received the bad marks. Full audit: `~/business/real-estate/active/execution/contacted-audit-2026-09-17.md`. `api/update-lead.js` unchanged.
+
+## Addendum 2026-09-17 12:05 ET — auto profiles are always Weekly
+
+Kevin: leads who only browsed and got an auto profile were landing on Monthly (timeline "12+ months"); he wants them weekly. `lib/derive-profile.js frequencyForTimeline` now returns `'Weekly'` for every timeline (signature kept; tests (b)/(c) re-pinned; 13 pass). Deployed (`poler-team-website-8ywl1hasz`). Backfilled 177 leads (137 Monthly + 40 Bi-Weekly, profile #1 `auto:true`) through `/api/agent/update-alerts {profile:{frequency:'Weekly'}}`; re-pull shows 249 auto profiles, all Weekly. Human-set profiles untouched. The email cron will now also email these leads weekly (same "side effect to confirm" as above).
+
+Also today: 15 more Contacted leads with no profile reverted to New (evidence in `~/business/real-estate/active/execution/contacted-audit-2026-09-17.md`, "No-profile" section); Contacted is 74, down from 106.

@@ -42,7 +42,7 @@ const listings = new Map([
     assert.equal(r.profile.priceMax, 2_750_000);                    // 2.4M*1.15=2.76M → 2,750,000
     assert.deepEqual(r.profile.propertyTypes, ['Condo']);
     assert.equal(r.profile.bedsMin, 2);
-    assert.equal(r.profile.frequency, 'Bi-Weekly');
+    assert.equal(r.profile.frequency, 'Weekly');            // 2026-09-17: auto profiles are always Weekly
     ok('browsing: favorite dominates');
 }
 // (c) only the ad listing → signup basis, 70–120%
@@ -54,7 +54,7 @@ const listings = new Map([
     assert.equal(r.profile.priceMax, 3_550_000);   // 2.95M*1.2=3.54M → 3,550,000
     assert.deepEqual(r.profile.propertyTypes, ['Single Family']);
     assert.equal(r.profile.bedsMin, 4);
-    assert.equal(r.profile.frequency, 'Monthly');
+    assert.equal(r.profile.frequency, 'Weekly');            // 2026-09-17: auto profiles are always Weekly
     ok('signup basis from the ad listing');
 }
 // (d) search overrides: Ricardo-style $1M+ single family/townhouse search
