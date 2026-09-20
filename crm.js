@@ -7234,12 +7234,13 @@ function renderLGInbox() {
       const overdue = key === 'needsReply' && (l.waitingDays || 0) >= 2;
       const meta = key === 'waiting'
         ? (l.waitingOn || [l.company, l.campaign, l.sentiment].filter(Boolean).join(' · '))
-        : [l.company, l.campaign, l.sentiment, key === 'hot' ? l.status : ''].filter(Boolean).join(' · ') + (key === 'hot' && l.waitingOn ? ' · ' + l.waitingOn : '');
+        : [l.company, l.campaign, l.sentiment, key === 'hot' ? l.status : ''].filter(Boolean).join(' · ') + (key === 'hot' && l.waitingOn ? ' · ' + l.waitingOn : '')
+          + (key === 'hot' && (l.replySnippet || l.firstReply) ? `\n“${String(l.replySnippet || l.firstReply).replace(/\s+/g, ' ').trim().slice(0, 140)}”` : '');
       return `
         <div class="lg-inbox-row" data-lg-id="${escHtml(l.id)}" title="${escHtml((l.summary || l.replySnippet || '').slice(0, 300))}">
           <div class="lg-inbox-name">${escHtml(l.name || l.email || '—')}</div>
           <div class="lg-inbox-days${overdue ? ' overdue' : ''}">${escHtml(days)}</div>
-          <div class="lg-inbox-meta">${escHtml(meta)}</div>
+          <div class="lg-inbox-meta" style="white-space:pre-line;">${escHtml(meta)}</div>
         </div>`;
     }).join('');
   }
@@ -7780,7 +7781,10 @@ function renderLGReminders() {
         <div class="td-muted" style="font-size:0.75rem">${escHtml(leadSub)}</div>
       </td>
       <td><span class="action-type-badge ${actionClass}">${escHtml(t.type || '—')}</span></td>
-      <td class="td-muted" style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escHtml(t.notes || t.title || '')}">${escHtml(t.notes || t.title || '—')}</td>
+      <td style="max-width:360px;">
+        <div style="font-weight:600;font-size:0.8rem;">${escHtml(t.title || '—')}</div>
+        ${t.notes ? `<div class="td-muted" style="font-size:0.75rem;white-space:pre-wrap;max-height:4.6em;overflow:hidden;" title="${escHtml(t.notes)}">${/^Reply to\b/i.test(t.title || '') ? 'They wrote: ' : ''}${escHtml(t.notes)}</div>` : ''}
+      </td>
       <td class="td-muted">${escHtml(t.owner || '—')}</td>
       <td>${statusBadge}</td>
       <td>${actions}</td>
@@ -7900,7 +7904,8 @@ function renderLGLeadReminders(lead) {
         <span class="panel-reminder-type">${escHtml(t.type || 'Follow-up')}${t.owner ? ` · ${escHtml(t.owner)}` : ''}</span>
         <span class="panel-reminder-due ${isOverdue ? 'overdue' : ''}">${isOverdue ? '⚠️ ' : ''}${dueStr}</span>
       </div>
-      ${(t.notes || t.title) ? `<div class="panel-reminder-note-text">${escHtml(t.notes || t.title)}</div>` : ''}
+      ${t.title ? `<div class="panel-reminder-title">${escHtml(t.title)}</div>` : ''}
+      ${t.notes ? `<div class="panel-reminder-note-text" style="white-space:pre-wrap;">${/^Reply to\b/i.test(t.title || '') ? 'They wrote: ' : ''}${escHtml(t.notes)}</div>` : ''}
       <div class="panel-reminder-edit-row" id="lg-r-edit-${t.id}" style="display:none;">
         <input type="datetime-local" id="lg-r-dt-${t.id}" class="panel-input" value="${lgTaskDtLocal(dueDate)}" style="font-size:0.8rem;">
         <input type="text" id="lg-r-note-${t.id}" class="panel-input" value="${escHtml(t.notes || '')}" placeholder="Note..." style="font-size:0.8rem;margin-top:4px;">
