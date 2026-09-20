@@ -612,17 +612,22 @@ export async function writeConvoNote(leadId, { focusActivityId = '', catchUp = f
             lang === 'es' ? 'ESCRIBE TODOS LOS BULLETS Y EL TITULO DEL REMINDER EN ESPAÑOL (tú, nunca usted). Números como cifras. Sin rayas largas.' : 'WRITE EVERY BULLET AND THE REMINDER TITLE IN ENGLISH (the lead writes in English). Numbers as numerals. No em dashes.',
             'Keep it tight: each bullet under 22 words, at most 4 convo bullets and 2 next bullets. Do not wrap the JSON in code fences.',
         ].filter(Boolean).join('\n');
-        const res = await fetch('https://api.anthropic.com/v1/messages', {
-            method: 'POST',
-            headers: { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
-            body: JSON.stringify({ model: 'claude-sonnet-5', max_tokens: 1600, messages: [{ role: 'user', content: prompt }] }),
-        });
-        if (!res.ok) { out.error = `anthropic ${res.status}`; return out; }
-        const data = await res.json();
-        const text = (data.content || []).map(c => c.text || '').join('');
-        const jm = /\{[\s\S]*\}/.exec(text);
-        if (!jm) { out.error = 'no json: ' + text.slice(0, 200); return out; }
-        let j; try { j = JSON.parse(jm[0]); } catch { out.error = 'bad json: ' + jm[0].slice(-200); return out; }
+        let j = null, lastErr = '';
+        for (let attempt = 0; attempt < 2 && !j; attempt++) {
+            const msgs = [{ role: 'user', content: prompt + (attempt ? '\n\nYour previous answer was not valid JSON. Return strictly valid JSON: no double quotes inside strings (use single quotes for quoted words), no trailing commas, no code fences.' : '') }];
+            const res = await fetch('https://api.anthropic.com/v1/messages', {
+                method: 'POST',
+                headers: { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
+                body: JSON.stringify({ model: 'claude-sonnet-5', max_tokens: 1600, messages: msgs }),
+            });
+            if (!res.ok) { lastErr = `anthropic ${res.status}`; continue; }
+            const data = await res.json();
+            const text = (data.content || []).map(c => c.text || '').join('');
+            const jm = /\{[\s\S]*\}/.exec(text);
+            if (!jm) { lastErr = 'no json: ' + text.slice(0, 200); continue; }
+            try { j = JSON.parse(jm[0]); } catch { lastErr = 'bad json: ' + jm[0].slice(-200); }
+        }
+        if (!j) { out.error = lastErr; return out; }
         const convo = (Array.isArray(j.convo) ? j.convo : []).map(x => String(x).trim()).filter(Boolean).slice(0, 4);
         const next  = (Array.isArray(j.next)  ? j.next  : []).map(x => String(x).trim()).filter(Boolean).slice(0, 3);
         if (convo.length) {
