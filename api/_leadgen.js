@@ -643,7 +643,8 @@ export async function writeConvoNote(leadId, { focusActivityId = '', catchUp = f
         }
         const line = String(j.waiting_on || '').split('\n')[0].replace(/^waiting on:\s*/i, '').trim().slice(0, 160);
         if (line) { await updateRecord(TABLES.leads, leadId, { 'Summary': (summary ? summary + '\n' : '') + 'Waiting on: ' + line }); out.waitingOn = line; }
-        if (!openTasks.length && !['Prospect', 'Lost', 'Won'].includes(lf['Status'] || '')) {
+        // Negative repliers ("No thanks") get no reminder: nothing to follow up (found in the 9/20 backfill).
+        if (!openTasks.length && !['Prospect', 'Lost', 'Won'].includes(lf['Status'] || '') && lf['Sentiment'] !== 'Negative') {
             const r = j.reminder && typeof j.reminder === 'object' ? j.reminder : null;
             const dueAt = etIsoFromLocal(r?.due) || defaultDue(2);
             const title = String(r?.title || `Follow up with ${lf['Name'] || 'lead'}`).slice(0, 120);
