@@ -65,6 +65,13 @@ Kevin's own sends never stamped the lead (Asnel looked untouched a day after Kev
 - Verified in the local harness (live JSON): Status column rows carry the waiting-on line;
   Sasha's panel shows Touch 1/4 Tue 9/22 ... Touch 4/4 Tue 9/29 with the bodies.
 
+## Pass 3 (~12:50 PM ET, commits 978b2d1 / 81737e5 + 1) — Kevin: "notes like the RE side, every lead a reminder, Joel is wrong, check Rony and all of them"
+- **Courtesy close rule** (`isCourtesyClose`): "thank you." / "ok" / "gracias" / any "Not Now reply" row never puts the ball on Kevin. Joel flipped to waiting; needsReply 6→4, stale 50→9.
+- **Convo:/Next: note per communication** (`writeConvoNote`, agent `Summary (channel)`, in BOT_AGENTS so it never counts as our last word): fired from `log-leadgen-activity` on every created communication row (<3 d, not quiet) and from `leadgen-reply`; on demand `PATCH update-leadgen-lead {id, convoNote:true, catchUp?, activityId?}`. Same pass rewrites `Waiting on:` and creates ONE open reminder when none exists (Negative repliers excluded; queued touches don't count). Language picked from the lead's own reply text (Sonnet kept picking Spanish for English leads); JSON retry once.
+- **Backfill** (`~/business/active/execution/leadgen-crm/backfill-notes-2026-09-20/run.py`, log `run.log`): 94 catch-up notes; 115 of 119 open leads now carry a reminder (3 Negative by rule, Rony on hold). 19 Lauderdale Crexi buyers got notes via the live path today but NO reminder — created by hand; **verify the live path creates the reminder on the next real communication** (unexplained).
+- **Full-source sweep of the 15 revival leads** (3 opus subagents): `~/business/active/execution/leadgen-crm/revival-2026-09-20/sweep-summary.md` + README rev 2. Greg + John Erixon → Lost, Mercy + Pam → Prospect, phones added (Randy, Julio), John's campaign tag fixed. Rony: every readable source says unsigned + ghosted since 7/22; Kevin says hired — HOLD, his answer decides the record and agency/CLAUDE.md:23/:50 + abrams CLAUDE.md:78.
+- Not touched: the 6 open pre-existing reminders (Geane x2, Michael, Yoana x2, Alicia). Sasha's cadence ran through her positive reply (9/4, 9/9): runner stop rule should also key on an inbound reply in-thread (open item).
+
 ## Open
 - Revival touches for the old Positive repliers (Edy Pyles, Bruno Turrini, Bhryan Cardenas,
   Pamela, Mercedes, Greg, John/NAI, Brad Levine, Rony Karam, Julio Navarro, Sean O'Toole,
