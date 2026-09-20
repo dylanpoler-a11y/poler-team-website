@@ -21,7 +21,7 @@ export const config = { runtime: 'edge' };
 import { authorize } from './_auth.js';
 import {
     TABLES, creds, json, preflight, createRecord, updateRecord, mapActivity, listAll, esc, uploadAttachment,
-    OUTBOUND_TYPES, BOT_AGENTS, closeReplyTasks, refreshWaitingOn,
+    OUTBOUND_TYPES, BOT_AGENTS, closeReplyTasks, writeConvoNote, NOTE_TYPES,
 } from './_leadgen.js';
 
 const TYPES = ['Positive Reply', 'Reply', 'Email Sent', 'Call', 'Meeting', 'Note', 'Status Change', 'WhatsApp', 'SMS'];   // WhatsApp/SMS (2026-09-20): off-email contact mirrored by ~/bin/leadgen-spoke-sync.py
@@ -109,12 +109,18 @@ export default async function handler(req) {
     // Kevin answered (2026-09-20): close the "Reply to …" reminder and rewrite the one-line
     // "Waiting on:" status. Only for NEW rows less than 3 days old (thread_sync backfills of
     // old mail must not churn the summary). Best-effort, never fails the call.
-    let replyTasksClosed = 0, waitingOn = '';
+    let replyTasksClosed = 0, waitingOn = '', convoNote = null;
     const recent = Date.now() - Date.parse(at) < 3 * 86_400_000;
     if (created && outbound && body.leadId && recent && !body.quiet) {
         try { replyTasksClosed = await closeReplyTasks(body.leadId); } catch { /* ignore */ }
-        try { waitingOn = await refreshWaitingOn(body.leadId); } catch { /* ignore */ }
+    }
+    // Every communication gets its own Convo:/Next: note + the lead keeps one open reminder
+    // (Kevin 2026-09-20). Inbound rows from any writer, outbound rows by a person. Bot-mirrored
+    // outbound (thread sync / Railway campaign touches) and Kevin's own manual notes are skipped.
+    const isComm = NOTE_TYPES.has(fields['Type']) && (outbound || !BOT_AGENTS.test(fields['Agent'] || '') || /reply/i.test(fields['Type']));
+    if (created && isComm && body.leadId && recent && !body.quiet) {
+        try { convoNote = await writeConvoNote(body.leadId, { focusActivityId: record.id }); waitingOn = convoNote.waitingOn || ''; } catch { /* ignore */ }
     }
 
-    return json({ ok: true, created, activity: mapActivity(record), attachmentsUploaded, attachmentsFailed, replyTasksClosed, waitingOn });
+    return json({ ok: true, created, activity: mapActivity(record), attachmentsUploaded, attachmentsFailed, replyTasksClosed, waitingOn, convoNote });
 }

@@ -260,7 +260,16 @@ export const OUTBOUND_TYPES = new Set(['Email Sent', 'Call', 'Meeting', 'WhatsAp
 export const NO_ANSWER_RE   = /no atendi|no contest|buz[oó]n|voicemail|voice mail|no answer|missed|left a (voice)?message|dej[eé] mensaje|no contiene conversaci|sin conversaci|colg[oó]|hung up|se cort[oó]|dropped|sin audio|test call|no fue posible conversar/i;
 export const WAITING_ON_RE  = /^Waiting on:\s*(.+)$/m;
 export const INBOUND_TYPES  = new Set(['Reply', 'Positive Reply']);
-export const BOT_AGENTS     = /\b(responder bot|thread sync|sammy|claudia|site|import|railway)\b/i;
+// A courtesy close is not a message that needs an answer (Kevin 2026-09-20, Joel: "thank you." after
+// the keep-warm email showed as "needs my reply"). Short inbound bodies made only of a closer, and
+// any "Not Now" reply, leave the ball on THEIR side as "waiting", never "needs_reply".
+export const CLOSER_RE = /^(?:re:\s*)?(?:ok(?:ay)?|k|thanks?(?: you)?(?: so much| a lot| kevin)?|thank you kevin|ty|got it|sounds good|perfect|great|noted|will do|understood|cheers|no problem|np|you too|same to you|gracias(?: kevin)?|muchas gracias|perfecto|listo|de acuerdo|vale|ok gracias|entendido|recibido|igualmente|dale)[.!\s]*$/i;
+export function isCourtesyClose(title = '', details = '') {
+    if (/^not now reply/i.test(title)) return true;
+    const body = String(details || '').split(/\n\[mid:/)[0].split(/\n(?:on .* wrote:|el .* escribi)/i)[0].replace(/\s+/g, ' ').trim();
+    return body.length <= 40 && CLOSER_RE.test(body);
+}
+export const BOT_AGENTS     = /\b(responder bot|thread sync|sammy|claudia|site|import|railway|summary)\b/i;   // 'summary' = the auto convo notes (never our last word)
 export const INBOX_STALE_DAYS = 14;
 /** Statuses that never appear in the Inbox lists. */
 export const INBOX_EXCLUDED = new Set(['Prospect', 'Lost', 'Won']);
@@ -307,13 +316,16 @@ export function computeInbox(leads, activityRecords, now = new Date()) {
         if (!at || at > now.getTime() + 60_000) continue;   // a Meeting booked for next week is not "our last word"
         
         const inbound  = INBOUND_TYPES.has(t);
+        // "thank you." / "ok" / a Not Now reply = their close, not their question: it does not take our turn
+        // and does not put the ball on Kevin. Recorded as an inbound that counts like our last word.
+        const closer   = inbound && isCourtesyClose(f['Title'], f['Details']);
         // A no-answer / hang-up note (Flash) is an attempt, not contact — it does not take our turn.
         const attemptOnly = t === 'Note' && NO_ANSWER_RE.test(`${f['Title'] || ''} ${(f['Details'] || '').slice(0, 300)}`);
         const outbound = OUTBOUND_TYPES.has(t) && !BOT_AGENTS.test(f['Agent'] || '') && !attemptOnly;
         if (!inbound && !outbound) continue;
         for (const id of f['Lead'] || []) {
-            const m = inbound ? lastIn : lastOut;
-            if (!m.has(id) || at > m.get(id)) { m.set(id, at); if (outbound) lastOutTitle.set(id, f['Title'] || ''); }
+            const m = (inbound && !closer) ? lastIn : lastOut;
+            if (!m.has(id) || at > m.get(id)) { m.set(id, at); if (outbound || closer) lastOutTitle.set(id, closer ? `They closed: ${(f['Details'] || '').split('\n')[0].slice(0, 60)}` : (f['Title'] || '')); }
         }
     }
     const nowMs = now.getTime();
@@ -522,4 +534,118 @@ export async function refreshWaitingOn(leadId) {
         await updateRecord(TABLES.leads, leadId, { 'Summary': next });
         return line;
     } catch { return ''; }
+}
+
+// ── Conversation notes + one reminder per lead (Kevin 2026-09-20) ─────────────────────────
+// "Every communication we have, there should be a summary of the communication with the same
+//  rules as the real-estate lead: bulleted, with next-step recommendations. And every lead needs
+//  a reminder." One Note row per communication (Convo: / Next:, the crm-note-format shape), written
+// by Sonnet from that row + the thread so far; the same pass rewrites the `Waiting on:` line and
+// makes sure the lead has ONE open reminder (queued cadence touches do not count).
+export const CONVO_NOTE_AGENT = 'Summary';
+export const QUEUED_TASK_RE = /^Queued touch\b/i;
+export const NOTE_TYPES = new Set(['Email Sent', 'Reply', 'Positive Reply', 'Call', 'Meeting', 'WhatsApp', 'SMS']);
+const BULLET = '•';
+function etIsoFromLocal(str) {
+    // "2026-09-23 10:00" (ET) → ISO. Tries EDT then EST and keeps the one that renders at that hour in ET.
+    const m = /^(\d{4}-\d{2}-\d{2})[T ](\d{2}):(\d{2})/.exec(String(str || '').trim());
+    if (!m) return '';
+    for (const off of ['-04:00', '-05:00']) {
+        const d = new Date(`${m[1]}T${m[2]}:${m[3]}:00${off}`);
+        const h = new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', hour: 'numeric', hour12: false }).format(d);
+        if (Number(h) % 24 === Number(m[2])) return d.toISOString();
+    }
+    return new Date(`${m[1]}T${m[2]}:${m[3]}:00-04:00`).toISOString();
+}
+/** Default reminder when the model gives none: next weekday 10:00 AM ET, `days` business days out. */
+function defaultDue(days = 2, now = new Date()) {
+    let d = new Date(now.getTime());
+    let left = days;
+    while (left > 0) { d = new Date(d.getTime() + 86_400_000); if (!etParts(d).weekend) left--; }
+    return etIsoFromLocal(`${etDay(d.toISOString())} 10:00`);
+}
+/**
+ * Write the conversation note for one activity row (or, with no focus row, a catch-up note for the
+ * whole thread), refresh `Waiting on:`, and ensure one open reminder. Never throws.
+ * Returns { note, waitingOn, reminder } (fields present when written).
+ */
+export async function writeConvoNote(leadId, { focusActivityId = '', catchUp = false } = {}) {
+    const out = {};
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey || !leadId) return out;
+    try {
+        const lead = await listAll(TABLES.leads, { filter: `RECORD_ID() = '${esc(leadId)}'` });
+        const rec = lead.ok && lead.records[0];
+        if (!rec) return out;
+        const lf = rec.fields || {};
+        const acts = await listAll(TABLES.activity, { filter: `FIND('${esc(leadId)}', ARRAYJOIN({Lead Record ID}))`, sortField: 'At', sortDir: 'desc', maxPages: 1 });
+        const all = (acts.ok ? acts.records : []);
+        const comms = all.filter(r => NOTE_TYPES.has(r.fields?.['Type']));
+        if (!comms.length) return out;
+        const focus = focusActivityId ? all.find(r => r.id === focusActivityId) : comms[0];
+        const fmt = r => { const f = r.fields || {}; return `[${(f['At'] || '').slice(0, 16)}Z] ${f['Type']} by ${f['Agent'] || '?'}${f['Subject'] ? ' · ' + f['Subject'] : ''}: ${f['Title'] || ''}\n${String(f['Details'] || '').replace(/\n+/g, ' ').slice(0, 700)}`; };
+        const history = comms.slice(0, 12).reverse().map(fmt).join('\n\n');
+        const openTasks = (await openTasksFor(leadId)).filter(t => !QUEUED_TASK_RE.test(t.title || ''));
+        const queued = (await openTasksFor(leadId)).filter(t => QUEUED_TASK_RE.test(t.title || '')).map(t => `${t.title} (due ${(t.dueAt || '').slice(0, 10)})`);
+        const summary = String(lf['Summary'] || '').replace(WAITING_ON_RE, '').trim();
+        // Language = what the LEAD wrote (deterministic, the model kept picking Spanish for English leads)
+        const theirText = comms.filter(r => /reply/i.test(r.fields?.['Type'] || '')).map(r => String(r.fields?.['Details'] || '')).join(' ').toLowerCase()
+            || String(lf['First Reply'] || '').toLowerCase() || comms.map(r => String(r.fields?.['Details'] || '')).join(' ').toLowerCase();
+        const esHits = (theirText.match(/\b(el|la|de|que|para|con|por|gracias|hola|buenos|puedes|podemos|estoy|semana|llamada|interesa)\b/g) || []).length;
+        const enHits = (theirText.match(/\b(the|and|you|call|thanks|happy|works|for|with|please|me|let)\b/g) || []).length;
+        const lang = esHits > enHits ? 'es' : 'en';
+        const nowEt = new Date().toLocaleString('en-US', { timeZone: 'America/New_York', weekday: 'short', month: 'numeric', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
+        const prompt = [
+            `You write CRM notes for Kevin Poler (real-estate broker in Miami who also sells outreach / ads / website services). Now: ${nowEt} ET.`,
+            `Lead: ${lf['Name'] || '?'}${lf['Company'] ? ' at ' + lf['Company'] : ''} · status ${lf['Status'] || 'New'} · sentiment ${lf['Sentiment'] || '?'} · campaign ${lf['Campaign'] || '?'}.`,
+            summary ? `Running summary so far:\n"""${summary.slice(0, 1200)}"""` : '',
+            `Communications, oldest first (the last one is the newest):\n"""${history.slice(0, 9000)}"""`,
+            focus && !catchUp ? `THE COMMUNICATION TO SUMMARIZE (write the note about THIS one, using the rest only as context):\n"""${fmt(focus).slice(0, 2500)}"""` : 'Write ONE catch-up note covering the whole conversation so far.',
+            openTasks.length ? `Open reminders already on this lead: ${openTasks.map(t => `${t.title} (due ${(t.dueAt || '').slice(0, 16)})`).join('; ')}` : 'No open reminder on this lead.',
+            queued.length ? `Automated follow-up emails already queued: ${queued.join('; ')}` : '',
+            '',
+            'Return ONLY a JSON object, no prose, with:',
+            ' "convo": 1 to 4 short bullets (strings, no bullet characters) summarizing the substance: what we sent / what they said, a brief key quote if useful. Never "sent an email"; say what it was about. Never paste the message.',
+            ' "next": 1 to 3 short bullets with the concrete recommended next actions for Kevin (who does what, by when).',
+            ' "waiting_on": one line, max 140 chars, what Kevin is waiting on from this lead and what was agreed; start with "Kevin owes:" if the next move is his.',
+            ' "reminder": null if an open reminder already covers the next step, else {"type": one of Call|Email|Meeting|Follow-up, "due": "YYYY-MM-DD HH:MM" in ET on a weekday between 09:00 and 18:00, "title": short imperative, e.g. "Call Edy re pricing PDF"}. If a follow-up email is already queued for that step, prefer a Call reminder 1 business day after the last queued touch, or the concrete date the lead gave. Live conversation (contact in the last 10 days) → 1 to 3 business days out. Lead said not now / went silent for weeks → 3 to 5 weeks out, titled as a check-in. Never in the past.',
+            lang === 'es' ? 'ESCRIBE TODOS LOS BULLETS Y EL TITULO DEL REMINDER EN ESPAÑOL (tú, nunca usted). Números como cifras. Sin rayas largas.' : 'WRITE EVERY BULLET AND THE REMINDER TITLE IN ENGLISH (the lead writes in English). Numbers as numerals. No em dashes.',
+            'Keep it tight: each bullet under 22 words, at most 4 convo bullets and 2 next bullets. Do not wrap the JSON in code fences.',
+        ].filter(Boolean).join('\n');
+        const res = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
+            body: JSON.stringify({ model: 'claude-sonnet-5', max_tokens: 1600, messages: [{ role: 'user', content: prompt }] }),
+        });
+        if (!res.ok) { out.error = `anthropic ${res.status}`; return out; }
+        const data = await res.json();
+        const text = (data.content || []).map(c => c.text || '').join('');
+        const jm = /\{[\s\S]*\}/.exec(text);
+        if (!jm) { out.error = 'no json: ' + text.slice(0, 200); return out; }
+        let j; try { j = JSON.parse(jm[0]); } catch { out.error = 'bad json: ' + jm[0].slice(-200); return out; }
+        const convo = (Array.isArray(j.convo) ? j.convo : []).map(x => String(x).trim()).filter(Boolean).slice(0, 4);
+        const next  = (Array.isArray(j.next)  ? j.next  : []).map(x => String(x).trim()).filter(Boolean).slice(0, 3);
+        if (convo.length) {
+            const body = `Convo:\n${convo.map(b => `${BULLET} ${b}`).join('\n')}\nNext:\n${(next.length ? next : ['Esperar respuesta.']).map(b => `${BULLET} ${b}`).join('\n')}`;
+            const ff = focus?.fields || {};
+            const chan = ({ 'Email Sent': 'email', 'Reply': 'reply', 'Positive Reply': 'reply', 'Call': 'call', 'Meeting': 'meeting', 'WhatsApp': 'WhatsApp', 'SMS': 'SMS' })[ff['Type']] || 'thread';
+            const noteAt = catchUp ? new Date().toISOString() : (ff['At'] || new Date().toISOString());
+            const cr = await createRecord(TABLES.activity, {
+                'Title': `${catchUp ? 'Catch-up' : 'Note'} · ${chan}`, 'Type': 'Note', 'Lead': [leadId],
+                'Details': body, 'Agent': `${CONVO_NOTE_AGENT} (${chan})`, 'At': noteAt,
+            });
+            if (cr.ok) out.note = body;
+        }
+        const line = String(j.waiting_on || '').split('\n')[0].replace(/^waiting on:\s*/i, '').trim().slice(0, 160);
+        if (line) { await updateRecord(TABLES.leads, leadId, { 'Summary': (summary ? summary + '\n' : '') + 'Waiting on: ' + line }); out.waitingOn = line; }
+        if (!openTasks.length && !['Prospect', 'Lost', 'Won'].includes(lf['Status'] || '')) {
+            const r = j.reminder && typeof j.reminder === 'object' ? j.reminder : null;
+            const dueAt = etIsoFromLocal(r?.due) || defaultDue(2);
+            const title = String(r?.title || `Follow up with ${lf['Name'] || 'lead'}`).slice(0, 120);
+            const type = TASK_TYPES.includes(r?.type) ? r.type : 'Follow-up';
+            const t = await createTask({ leadId, title, type, dueAt, notes: next.join('\n') });
+            if (t.ok) out.reminder = { title, type, dueAt };
+        }
+    } catch (e) { out.error = String(e?.message || e).slice(0, 200); }
+    return out;
 }

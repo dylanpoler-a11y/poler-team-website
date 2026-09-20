@@ -32,6 +32,7 @@ import { authorize } from '../_auth.js';
 import {
     TABLES, creds, json, preflight, createRecord, updateRecord, listAll, esc, STATUSES, createTask, openTasksFor, replyDueAt,
     findLead, mapLead, logActivity, normChannel, SENTIMENTS, extractPhone,
+    writeConvoNote,
 } from '../_leadgen.js';
 
 // ── Router: campaign slug / label patterns that belong to a CONSULTING client ──
@@ -327,6 +328,7 @@ export default async function handler(req) {
             agent: 'Responder Bot', at: replyAt,
         });
         await ensureReplyTask(existing.id, name || existing.fields?.['Name'], sentiment, replyAt, replyText);
+        try { await writeConvoNote(existing.id); } catch { /* best effort */ }
         return json({ ok: true, routed: 'leadgen', created: false, sentiment, lead: mapLead(res.record) });
     }
 
@@ -346,6 +348,7 @@ export default async function handler(req) {
         agent: 'Responder Bot', at: replyAt,
     });
     await ensureReplyTask(res.record.id, name, sentiment, replyAt, replyText);
+    try { await writeConvoNote(res.record.id); } catch { /* best effort */ }
     return json({ ok: true, routed: 'leadgen', created: true, sentiment, lead: mapLead(res.record) });
 }
 

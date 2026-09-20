@@ -14,7 +14,7 @@ export const config = { runtime: 'edge' };
 import { authorize } from './_auth.js';
 import {
     TABLES, creds, json, preflight, listAll, updateRecord,
-    mapLead, logActivity, STATUSES, SENTIMENTS, esc, refreshWaitingOn,
+    mapLead, logActivity, STATUSES, SENTIMENTS, esc, refreshWaitingOn, writeConvoNote,
 } from './_leadgen.js';
 
 export default async function handler(req) {
@@ -71,6 +71,12 @@ export default async function handler(req) {
     if (body.refreshWaitingOn && !Object.keys(fields).length) {
         const line = await refreshWaitingOn(body.id);
         return json({ ok: true, waitingOn: line });
+    }
+    // { id, convoNote: true, activityId?, catchUp? } (2026-09-20): write the Convo:/Next: note for one
+    // communication (or a catch-up note for the thread), refresh "Waiting on:", ensure one open reminder.
+    if (body.convoNote && !Object.keys(fields).length) {
+        const r = await writeConvoNote(body.id, { focusActivityId: body.activityId || '', catchUp: !!body.catchUp });
+        return json({ ok: true, ...r });
     }
     if (!Object.keys(fields).length) return json({ error: 'nothing to update' }, 400);
 
