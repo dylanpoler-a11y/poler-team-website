@@ -7138,7 +7138,8 @@ if (document.readyState === 'loading') {
 // Backend: api/get-leadgen-leads, update-leadgen-lead, log-leadgen-activity,
 // get-leadgen-activity, agent/leadgen-reply (the ingest hook).
 // ══════════════════════════════════════════════════════════════════════════
-const LG_STAGES     = ['New', 'Contacted', 'Meeting Booked', 'Won', 'Lost'];
+const LG_STAGES     = ['Prospect', 'New', 'Contacted', 'Meeting Booked', 'Won', 'Lost'];   // Prospect (2026-09-20) = has not replied
+let lgInbox = null;   // { needsReply:[ids], waiting:[ids], hot:[ids] } from ?inbox=1 (derived server-side)
 const LG_SENTIMENTS = ['Positive', 'Question', 'Neutral', 'Not Now', 'Negative'];
 let allLGLeads   = [];
 let currentLGLead = null;
@@ -7171,10 +7172,12 @@ async function loadLGLeads() {
   if (table && !allLGLeads.length)   table.style.display = 'none';
   if (empty) empty.style.display = 'none';
   try {
-    const res = await fetch(`${CRM_API_BASE}/api/get-leadgen-leads?${lgAuthQS()}`);
+    // inbox=1 → the server derives ball / waitingDays / hot from the activity log (2026-09-20)
+    const res = await fetch(`${CRM_API_BASE}/api/get-leadgen-leads?inbox=1&${lgAuthQS()}`);
     if (res.ok) {
       const data = await res.json();
       allLGLeads = data.leads || [];
+      lgInbox = data.inbox || null;
     } else {
       console.error('Failed to load lead-gen leads:', res.status);
     }
@@ -7185,8 +7188,62 @@ async function loadLGLeads() {
   populateLGCampaignFilters();
   updateLGStats();
   updateLGBadge();
+  renderLGInbox();
   if (currentView === 'leadgen') renderLGLeads();
   if (currentView === 'leadgen-pipeline') renderLGPipeline();
+}
+
+// ── INBOX (2026-09-20) ─────────────────────────────────────────────────────
+// Kevin: "I'm very confused as to who I've sent emails to, who I'm waiting a reply
+// on, who are my hottest leads." Nothing here is a status anyone sets by hand: the
+// server reads the activity log (thread sync, cadence runner, post-send hook, CRM
+// notes) and says whose turn it is.
+function lgBallLabel(l) {
+  if (!l || !l.ball || l.ball === 'none') return '';
+  const d = l.waitingDays == null ? '' : (l.waitingDays === 0 ? 'today' : `${l.waitingDays}d`);
+  if (l.ball === 'needs_reply') return `⬅ needs my reply ${d}`.trim();
+  if (l.ball === 'waiting')     return `⏳ waiting ${d}`.trim();
+  return '';
+}
+function lgBallChip(l) {
+  if (['Lost', 'Won', 'Prospect'].includes(l.status || 'New')) return '';   // closed or never-replied rows: no turn to take
+  const label = lgBallLabel(l);
+  if (!label) return '';
+  const cls = l.stale ? 'lg-ball-stale' : `lg-ball-${l.ball}`;
+  return `<span class="lg-ball ${cls}" title="Derived from the email/call log: ${escHtml(l.lastInAt ? 'their last message ' + new Date(l.lastInAt).toLocaleString('en-US', { timeZone: 'America/New_York' }) : 'no message from them on record')}${escHtml(l.lastOutAt ? ' · our last message ' + new Date(l.lastOutAt).toLocaleString('en-US', { timeZone: 'America/New_York' }) : '')}">${escHtml(label)}</span>`;
+}
+function renderLGInbox() {
+  const box = document.getElementById('lg-inbox');
+  if (!box) return;
+  if (!lgInbox) { box.style.display = 'none'; return; }
+  box.style.display = 'grid';
+  const byId = new Map(allLGLeads.map(l => [l.id, l]));
+  const lists = { needsReply: lgInbox.needsReply || [], waiting: lgInbox.waiting || [], hot: lgInbox.hot || [] };
+  for (const [key, ids] of Object.entries(lists)) {
+    const count = document.getElementById(`lg-inbox-count-${key}`);
+    const list  = document.getElementById(`lg-inbox-list-${key}`);
+    const older = key === 'needsReply' ? (lgInbox.staleNeedsReply || 0) : key === 'waiting' ? (lgInbox.staleWaiting || 0) : 0;
+    if (count) count.textContent = older ? `${ids.length} · +${older} older than 14d` : ids.length;
+    if (!list) continue;
+    if (!ids.length) {
+      list.innerHTML = `<div class="lg-inbox-empty">${key === 'needsReply' ? 'Nobody is waiting on you.' : key === 'waiting' ? 'No open threads waiting on a reply.' : 'No hot leads in the last 14 days.'}</div>`;
+      continue;
+    }
+    list.innerHTML = ids.map(id => byId.get(id)).filter(Boolean).map(l => {
+      const days = l.waitingDays == null ? '' : (l.waitingDays === 0 ? 'today' : `${l.waitingDays}d`);
+      const overdue = key === 'needsReply' && (l.waitingDays || 0) >= 2;
+      const meta = [l.company, l.campaign, l.sentiment, key === 'hot' ? l.status : ''].filter(Boolean).join(' · ');
+      return `
+        <div class="lg-inbox-row" data-lg-id="${escHtml(l.id)}" title="${escHtml((l.summary || l.replySnippet || '').slice(0, 300))}">
+          <div class="lg-inbox-name">${escHtml(l.name || l.email || '—')}</div>
+          <div class="lg-inbox-days${overdue ? ' overdue' : ''}">${escHtml(days)}</div>
+          <div class="lg-inbox-meta">${escHtml(meta)}</div>
+        </div>`;
+    }).join('');
+  }
+  box.querySelectorAll('.lg-inbox-row[data-lg-id]').forEach(row => {
+    row.addEventListener('click', () => openLGPanel(row.dataset.lgId));
+  });
 }
 
 function populateLGCampaignFilters() {
@@ -7203,9 +7260,10 @@ function populateLGCampaignFilters() {
 
 function updateLGStats() {
   const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
-  set('lg-stat-total',    allLGLeads.length);
-  set('lg-stat-positive', allLGLeads.filter(l => l.sentiment === 'Positive').length);
-  set('lg-stat-new',      allLGLeads.filter(l => (l.status || 'New') === 'New').length);
+  const replied = allLGLeads.filter(l => (l.status || 'New') !== 'Prospect');   // Prospect rows never replied
+  set('lg-stat-total',    replied.length);
+  set('lg-stat-positive', replied.filter(l => l.sentiment === 'Positive').length);
+  set('lg-stat-new',      replied.filter(l => (l.status || 'New') === 'New').length);
   set('lg-stat-meetings', allLGLeads.filter(l => l.status === 'Meeting Booked' || l.status === 'Won').length);
 }
 
@@ -7213,7 +7271,10 @@ function updateLGStats() {
 function updateLGBadge() {
   const badge = document.getElementById('leadgen-badge');
   if (!badge) return;
-  const n = allLGLeads.filter(l => (l.status || 'New') === 'New' && (l.sentiment === 'Positive' || l.sentiment === 'Question')).length;
+  // Since 2026-09-20 the badge = leads whose message is the last word (the Inbox's "Needs my reply").
+  const n = lgInbox && Array.isArray(lgInbox.needsReply)
+    ? lgInbox.needsReply.length
+    : allLGLeads.filter(l => (l.status || 'New') === 'New' && (l.sentiment === 'Positive' || l.sentiment === 'Question')).length;
   badge.textContent = n;
   badge.style.display = n ? 'inline-block' : 'none';
 }
@@ -7267,6 +7328,7 @@ function renderLGLeads() {
         <td>
           <div style="font-weight:600;color:var(--navy,#1a2744);">${escHtml(l.name || l.email || '—')}</div>
           <div class="lg-contact-sub">${escHtml(sub)}</div>
+          ${lgBallChip(l)}
         </td>
         <td><span class="lg-channel">${lgChannelIcon(l.channel)} ${escHtml(l.channel || '—')}</span></td>
         <td>${l.campaign ? `<span class="lg-campaign">${escHtml(l.campaign)}</span>` : '—'}</td>

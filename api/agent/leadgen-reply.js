@@ -315,6 +315,8 @@ export default async function handler(req) {
         if (!existing.fields?.['Reply Snippet']) fields['Reply Snippet'] = replyText.slice(0, 300);
         // A fresh positive after a Lost/Negative → bring it back to New so it resurfaces.
         if (sentiment === 'Positive' && existing.fields?.['Status'] === 'Lost') fields['Status'] = 'New';
+        // Prospect (2026-09-20) = never replied; the first real reply makes it a New lead so the Inbox sees it.
+        if (existing.fields?.['Status'] === 'Prospect') fields['Status'] = status || 'New';
         if (status && !['Won', 'Meeting Booked'].includes(existing.fields?.['Status'] || '')) fields['Status'] = status;
 
         const res = await updateRecord(TABLES.leads, existing.id, fields);

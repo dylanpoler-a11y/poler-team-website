@@ -67,12 +67,12 @@ async function at(path, init = {}) {
     return { ok: res.ok, status: res.status, body };
 }
 
-/** Fetch every record from a table (bounded at 10 pages / 1000 rows). */
-export async function listAll(table, { sortField, sortDir = 'desc', filter } = {}) {
+/** Fetch every record from a table (bounded at maxPages × 100 rows; default 10 pages / 1000 rows). */
+export async function listAll(table, { sortField, sortDir = 'desc', filter, maxPages = 10 } = {}) {
     let out = [];
     let offset = null;
 
-    for (let page = 0; page < 10; page++) {
+    for (let page = 0; page < maxPages; page++) {
         const params = new URLSearchParams({ pageSize: '100' });
         if (sortField) {
             params.set('sort[0][field]', sortField);
@@ -240,10 +240,120 @@ export async function logActivity({ title, type, leadId, details, agent = 'Respo
     }
 }
 
-export const STATUSES   = ['New', 'Contacted', 'Meeting Booked', 'Won', 'Lost'];
+// 'Prospect' (2026-09-20) = a row that has NOT replied (LoopNet visitor companies, sourced
+// contacts). It sits BELOW New so the upgrade-only ladders promote it to New on the first
+// real reply, and the Inbox / "Untouched" counts ignore it.
+export const STATUSES   = ['Prospect', 'New', 'Contacted', 'Meeting Booked', 'Won', 'Lost'];
 // 'Email' covers all cold-email outreach, past and present, sent through the Railway cloud sender.
 export const CHANNELS   = ['Email', 'Facebook', 'LinkedIn', 'WhatsApp', 'LoopNet', 'Manual'];
 export const SENTIMENTS = ['Positive', 'Question', 'Neutral', 'Not Now', 'Negative'];
+
+// ---------------------------------------------------------------------------
+// Ball / Inbox (Kevin 2026-09-20: "I'm very confused as to who I've sent emails to,
+// who I'm waiting a reply on, who are my hottest leads"). Status says how far a lead
+// got; BALL says whose turn it is. It is DERIVED from the activity log on every read
+// (no Airtable field — the prod PAT has no schema scope), so nothing has to be kept
+// by hand: thread_sync (10 min), the cadence runner, the post-send hook and the CRM
+// all write activity rows and the Inbox follows.
+// ---------------------------------------------------------------------------
+export const OUTBOUND_TYPES = new Set(['Email Sent', 'Call', 'Meeting']);
+export const INBOUND_TYPES  = new Set(['Reply', 'Positive Reply']);
+export const BOT_AGENTS     = /\b(responder bot|thread sync|sammy|claudia|site|import|railway)\b/i;
+export const INBOX_STALE_DAYS = 14;
+/** Statuses that never appear in the Inbox lists. */
+export const INBOX_EXCLUDED = new Set(['Prospect', 'Lost', 'Won']);
+
+/**
+ * Pull the activity rows the Inbox needs — only At / Type / Lead / Agent, newest first,
+ * outbound + inbound types only. Own pager (the generic listAll caps at 1,000 rows and
+ * the activity table is already at ~980).
+ */
+export async function listActivityLite({ maxPages = 40 } = {}) {
+    const types = [...OUTBOUND_TYPES, ...INBOUND_TYPES].map(t => `{Type} = '${esc(t)}'`).join(',');
+    let out = [];
+    let offset = null;
+    for (let page = 0; page < maxPages; page++) {
+        const params = new URLSearchParams({ pageSize: '100', filterByFormula: `OR(${types})` });
+        params.set('sort[0][field]', 'At');
+        params.set('sort[0][direction]', 'desc');
+        for (const f of ['At', 'Type', 'Lead', 'Agent']) params.append('fields[]', f);
+        if (offset) params.set('offset', offset);
+        const { ok, status, body } = await at(`${TABLES.activity}?${params}`);
+        if (!ok) return { ok: false, status, error: body.error?.message || 'Airtable fetch failed' };
+        out = out.concat(body.records || []);
+        if (!body.offset) break;
+        offset = body.offset;
+    }
+    return { ok: true, records: out };
+}
+
+/**
+ * Attach ball / waitingDays / hot to each mapped lead, and return the three Inbox lists
+ * (actionable = traffic within INBOX_STALE_DAYS; older ones are only counted).
+ *   ball: 'needs_reply' (their message is the last word) | 'waiting' (our message is the
+ *         last word) | 'none' (no traffic on record). stale=true when the last traffic is
+ *         older than INBOX_STALE_DAYS.
+ * Fallbacks when a lead has no activity rows: Last Reply At counts as inbound, Last
+ * Contact (date-only, stamped by Flash/notes) as outbound at end of that day ET.
+ */
+export function computeInbox(leads, activityRecords, now = new Date()) {
+    const lastIn = new Map(), lastOut = new Map();
+    for (const r of activityRecords || []) {
+        const f = r.fields || {};
+        const t = f['Type'];
+        const at = Date.parse(f['At'] || r.createdTime || '');
+        if (!at || at > now.getTime() + 60_000) continue;   // a Meeting booked for next week is not "our last word"
+        
+        const inbound  = INBOUND_TYPES.has(t);
+        const outbound = OUTBOUND_TYPES.has(t) && !BOT_AGENTS.test(f['Agent'] || '');
+        if (!inbound && !outbound) continue;
+        for (const id of f['Lead'] || []) {
+            const m = inbound ? lastIn : lastOut;
+            if (!m.has(id) || at > m.get(id)) m.set(id, at);
+        }
+    }
+    const nowMs = now.getTime();
+    const DAY = 86_400_000;
+    const inbox = { needsReply: [], waiting: [], hot: [], staleNeedsReply: 0, staleWaiting: 0 };
+    for (const l of leads) {
+        let inAt  = lastIn.get(l.id)  || 0;
+        let outAt = lastOut.get(l.id) || 0;
+        const replyFallback = Date.parse(l.lastReplyAt || l.replyAt || '') || 0;
+        if (replyFallback > inAt) inAt = replyFallback;
+        if (!outAt && l.lastContact) {
+            // date-only stamp → 11:59 PM ET that day (ET = UTC-4/-5; use -4, the error is 1 h)
+            const d = Date.parse(`${l.lastContact}T23:59:00-04:00`);
+            if (d) outAt = d;
+        }
+        const last = Math.max(inAt, outAt);
+        l.lastInAt  = inAt  ? new Date(inAt).toISOString()  : '';
+        l.lastOutAt = outAt ? new Date(outAt).toISOString() : '';
+        l.ball = !last ? 'none' : (inAt > outAt ? 'needs_reply' : 'waiting');
+        l.ballSince = last ? new Date(last).toISOString() : '';
+        l.waitingDays = last ? Math.floor((nowMs - last) / DAY) : null;
+        l.stale = !!last && (nowMs - last) > INBOX_STALE_DAYS * DAY;
+        const status = l.status || 'New';
+        const excluded = INBOX_EXCLUDED.has(status);
+        l.hot = !excluded && !l.stale && (l.sentiment === 'Positive' || l.sentiment === 'Question' || status === 'Meeting Booked');
+        if (excluded) continue;
+        // The lists are the ACTIONABLE set: traffic in the last INBOX_STALE_DAYS. Older rows keep
+        // their ball chip in the table and are counted here so the UI can say "+N older".
+        // A "no thanks" (Negative) never needs a reply — the triage sweep moves those to Lost.
+        if (l.ball === 'needs_reply' && l.sentiment !== 'Negative') {
+            if (l.stale) inbox.staleNeedsReply++; else inbox.needsReply.push(l.id);
+        } else if (l.ball === 'waiting') {
+            if (l.stale) inbox.staleWaiting++; else inbox.waiting.push(l.id);
+        }
+        if (l.hot) inbox.hot.push(l.id);
+    }
+    const byId = new Map(leads.map(l => [l.id, l]));
+    const since = (id) => Date.parse(byId.get(id).ballSince || '') || 0;   // '' → NaN → 0, keeps the sort stable
+    const oldestFirst = (a, b) => since(a) - since(b);
+    inbox.needsReply.sort(oldestFirst);
+    inbox.waiting.sort(oldestFirst);
+    inbox.hot.sort((a, b) => since(b) - since(a));
+    return inbox;
+}
 
 /** Normalize a caller-supplied channel to one of the canonical values. */
 export function normChannel(v) {

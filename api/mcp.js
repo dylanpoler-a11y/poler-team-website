@@ -296,7 +296,7 @@ const TOOLS = [
     // ── Lead Generation (outreach replies — every non-auto reply, any sentiment) ──
     {
         name: 'leadgen_list_leads',
-        description: 'List Lead Generation leads — outreach prospects who replied (email/Facebook/LinkedIn/WhatsApp). Filter by status (New|Contacted|Meeting Booked|Won|Lost), channel, campaign, sentiment (Positive|Question|Neutral|Not Now|Negative).',
+        description: 'List Lead Generation leads — outreach prospects who replied (email/Facebook/LinkedIn/WhatsApp). Filter by status (Prospect|New|Contacted|Meeting Booked|Won|Lost; Prospect = has not replied), channel, campaign, sentiment (Positive|Question|Neutral|Not Now|Negative).',
         inputSchema: {
             type: 'object',
             properties: {
@@ -307,6 +307,19 @@ const TOOLS = [
             },
         },
         endpoint: { method: 'GET', path: '/api/get-leadgen-leads' },
+    },
+    {
+        name: 'leadgen_inbox',
+        description: 'Lead Generation INBOX — whose turn is it? Returns three ordered lists derived from the email/call activity log: needsReply (their message is the last word, oldest first), waiting (our message is the last word, with days waiting), hot (Positive/Question sentiment or Meeting Booked, active in the last 14 days). Prospect/Lost/Won rows are excluded. Use this for "who do I owe a reply", "who am I waiting on", "hottest leads".',
+        inputSchema: { type: 'object', properties: {} },
+        endpoint: { method: 'GET', path: '/api/get-leadgen-leads' },
+        argRemap: () => ({ inbox: '1' }),
+        shape: (data) => {
+            const byId = new Map((data.leads || []).map(l => [l.id, l]));
+            const pick = (id) => { const l = byId.get(id) || {}; return { id, name: l.name, company: l.company, email: l.email, campaign: l.campaign, status: l.status, sentiment: l.sentiment, ball: l.ball, waitingDays: l.waitingDays, lastInAt: l.lastInAt, lastOutAt: l.lastOutAt, summary: (l.summary || '').slice(0, 240) }; };
+            const ib = data.inbox || { needsReply: [], waiting: [], hot: [] };
+            return { needsReply: ib.needsReply.map(pick), waiting: ib.waiting.map(pick), hot: ib.hot.map(pick), counts: { needsReply: ib.needsReply.length, waiting: ib.waiting.length, hot: ib.hot.length } };
+        },
     },
     {
         name: 'leadgen_ingest_reply',
@@ -1093,7 +1106,9 @@ export default async function handler(req) {
                     return jsonRpcResponse(rpcError(id, -32602, `Unknown tool: ${name}`));
                 }
                 try {
-                    const result = await proxyTool(tool, args, bearerToken);
+                    const raw = await proxyTool(tool, args, bearerToken);
+                    // Optional per-tool reshaping of the endpoint payload (leadgen_inbox trims 236 leads to 3 lists).
+                    const result = typeof tool.shape === 'function' ? tool.shape(raw) : raw;
                     return jsonRpcResponse(rpcResult(id, {
                         content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
                     }));

@@ -745,6 +745,7 @@
               </select>
               <select id="lg-status-filter" class="filter-select">
                 <option value="">All Stages</option>
+                <option value="Prospect">Prospect (no reply yet)</option>
                 <option value="New">New</option>
                 <option value="Contacted">Contacted</option>
                 <option value="Meeting Booked">Meeting Booked</option>
@@ -754,6 +755,35 @@
               <input type="text" id="lg-search" class="filter-select" placeholder="Search name, company, email…" style="min-width:220px;" />
               <button id="lg-add-btn" class="refresh-btn" title="Log a reply by hand">+ Add Reply</button>
               <button id="lg-refresh-btn" class="refresh-btn">↻ Refresh</button>
+            </div>
+          </div>
+
+          <!-- INBOX (2026-09-20): whose turn is it? Derived from the activity log by
+               /api/get-leadgen-leads?inbox=1 — nothing here is set by hand. -->
+          <div id="lg-inbox" class="lg-inbox" style="display:none;">
+            <div class="lg-inbox-col" data-inbox="needsReply">
+              <div class="lg-inbox-head">
+                <span class="lg-inbox-title">⬅ Needs my reply</span>
+                <span class="lg-inbox-count" id="lg-inbox-count-needsReply">0</span>
+              </div>
+              <div class="lg-inbox-sub">Their message is the last word · oldest first</div>
+              <div class="lg-inbox-list" id="lg-inbox-list-needsReply"></div>
+            </div>
+            <div class="lg-inbox-col" data-inbox="waiting">
+              <div class="lg-inbox-head">
+                <span class="lg-inbox-title">⏳ Waiting on them</span>
+                <span class="lg-inbox-count" id="lg-inbox-count-waiting">0</span>
+              </div>
+              <div class="lg-inbox-sub">Our message is the last word · longest wait first</div>
+              <div class="lg-inbox-list" id="lg-inbox-list-waiting"></div>
+            </div>
+            <div class="lg-inbox-col" data-inbox="hot">
+              <div class="lg-inbox-head">
+                <span class="lg-inbox-title">🔥 Hot</span>
+                <span class="lg-inbox-count" id="lg-inbox-count-hot">0</span>
+              </div>
+              <div class="lg-inbox-sub">Positive / Question / Meeting Booked · active in the last 14 days</div>
+              <div class="lg-inbox-list" id="lg-inbox-list-hot"></div>
             </div>
           </div>
 
@@ -1520,6 +1550,7 @@
       <div class="panel-field">
         <div class="panel-field-label">Stage</div>
         <select id="lg-status" class="panel-status-select">
+          <option value="Prospect">Prospect (no reply yet)</option>
           <option value="New">New</option>
           <option value="Contacted">Contacted</option>
           <option value="Meeting Booked">Meeting Booked</option>

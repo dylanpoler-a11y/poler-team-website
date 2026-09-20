@@ -2694,3 +2694,106 @@ body {
 
 /* Buyer-lead count on a Listings card (Listings → card → panel "Buyer Leads") */
 .listing-card-buyers { display:inline-block; margin-left:8px; padding:1px 7px; border-radius:999px; background:rgba(26,39,68,0.08); color:var(--color-navy); font-size:0.7rem; font-weight:600; }
+
+/* ── LEAD GENERATION: Inbox (2026-09-20) — whose turn is it? ─────────────────
+   Three derived lists above the stats. Colors reuse the sentiment palette. */
+.lg-inbox {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+.lg-inbox-col {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.85rem 0.9rem 0.6rem;
+  min-width: 0;
+}
+.lg-inbox-col[data-inbox="needsReply"] { border-top: 3px solid #b91c1c; }
+.lg-inbox-col[data-inbox="waiting"]    { border-top: 3px solid #c2410c; }
+.lg-inbox-col[data-inbox="hot"]        { border-top: 3px solid #166534; }
+.lg-inbox-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.lg-inbox-title {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--navy);
+}
+.lg-inbox-count {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  background: var(--bg);
+  border-radius: 999px;
+  padding: 0.15rem 0.55rem;
+}
+.lg-inbox-sub {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  margin: 0.15rem 0 0.5rem;
+}
+.lg-inbox-list {
+  max-height: 300px;
+  overflow-y: auto;
+}
+.lg-inbox-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.25rem 0.6rem;
+  padding: 0.45rem 0.35rem;
+  border-top: 1px solid var(--border);
+  cursor: pointer;
+}
+.lg-inbox-row:hover { background: var(--bg); }
+.lg-inbox-row .lg-inbox-name {
+  font-weight: 600;
+  font-size: 0.8rem;
+  color: var(--navy);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.lg-inbox-row .lg-inbox-days {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.lg-inbox-row .lg-inbox-days.overdue { color: #b91c1c; }
+.lg-inbox-row .lg-inbox-meta {
+  grid-column: 1 / -1;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.lg-inbox-empty {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  padding: 0.5rem 0.35rem 0.6rem;
+}
+/* Ball chip in the Contact cell of the replies table */
+.lg-ball {
+  display: inline-block;
+  margin-top: 0.2rem;
+  font-size: 0.66rem;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 0.12rem 0.5rem;
+  white-space: nowrap;
+}
+.lg-ball-needs_reply { background: #fef2f2; color: #b91c1c; }
+.lg-ball-waiting     { background: #fff7ed; color: #c2410c; }
+.lg-ball-none        { background: #f8fafc; color: #94a3b8; }
+.lg-ball-stale       { background: #f9fafb; color: #9ca3af; }
+.status-Prospect     { background: #f8fafc; color: #64748b; }
+@media (max-width: 900px) {
+  .lg-inbox { grid-template-columns: 1fr; }
+}

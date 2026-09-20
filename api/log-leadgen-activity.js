@@ -21,6 +21,7 @@ export const config = { runtime: 'edge' };
 import { authorize } from './_auth.js';
 import {
     TABLES, creds, json, preflight, createRecord, updateRecord, mapActivity, listAll, esc, uploadAttachment,
+    OUTBOUND_TYPES, BOT_AGENTS,
 } from './_leadgen.js';
 
 const TYPES = ['Positive Reply', 'Reply', 'Email Sent', 'Call', 'Meeting', 'Note', 'Status Change'];
@@ -99,7 +100,10 @@ export default async function handler(req) {
     }
 
     // Touching a lead counts as contact — keeps the Leads view's Last Contact honest.
-    if (body.stampContact && body.leadId) {
+    // Since 2026-09-20 every OUTBOUND row (Email Sent / Call / Meeting by a person) stamps it
+    // automatically, so the stamp no longer depends on each producer remembering stampContact.
+    const outbound = OUTBOUND_TYPES.has(fields['Type']) && !BOT_AGENTS.test(fields['Agent'] || '');
+    if ((body.stampContact || outbound) && body.leadId) {
         await updateRecord(TABLES.leads, body.leadId, { 'Last Contact': at.slice(0, 10) });
     }
 
