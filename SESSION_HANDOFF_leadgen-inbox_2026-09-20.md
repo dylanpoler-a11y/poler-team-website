@@ -42,10 +42,33 @@ Kevin's own sends never stamped the lead (Asnel looked untouched a day after Kev
 - OPTIONS preflight 200 + ACAO; `?inbox=1` live JSON; cadence runner `--dry-run` clean;
   harness screenshot of the Inbox block (login-gated CRM → local harness with the live JSON).
 
+## Pass 2 (deployed ~1:40 PM ET, commit 8c65bd4) — Kevin's corrections after seeing pass 1
+- "Waiting on them" column is now **Status**: one line per lead saying what we are waiting on
+  (`Waiting on:` line in the lead Summary, written by Sonnet via `_leadgen.js refreshWaitingOn`
+  after every human outbound row < 3 d old, or on demand with
+  `PATCH /api/update-leadgen-lead {id, refreshWaitingOn:true}`; "Kevin owes:" prefix when the
+  ball is really his). Backfilled for the 19 waiting leads.
+- Off-email conversations count: `~/bin/leadgen-spoke-sync.py` (launchd
+  `com.kevinpoler.leadgen-spoke-sync`, hourly) mirrors call log / WhatsApp / iMessage hits from
+  `spoke_since` as Call / WhatsApp / SMS / Reply activity rows, so a lead Kevin phoned leaves
+  "needs my reply" on its own. First run logged 4 rows (Jen, Edy, Bhryan, Brad Levine).
+- Reminders: a Positive/Question reply now creates "Reply to <name> (positive reply)" (due +3 h
+  on a weekday 7-15 ET, else next weekday 10:00 ET); any human outbound row marks those Done
+  (`closeReplyTasks`). Audit of the open tasks: Geane Brito x2 (overdue 9/11), Michael (9/15),
+  Yoana (9/18 + 9/21), Alicia (9/24) — no calls found after their due dates, left as is.
+- Queued emails: every unsent cadence touch is mirrored as an Open task "Queued touch i/n: <subject>"
+  (Notes = body, Due = 10:05 ET send day, weekend -> Monday); sent -> Done, cadence stop ->
+  Skipped. Lead panel section "📤 Queued emails" (`renderLGQueued`), hidden from the reminders list.
+  Nav now has a **Leads** tab. Backfilled 8 tasks (Sasha + Diana).
+- Cadence runner: ledger persisted right after each send, CRM calls 20 s timeout + soft, so the
+  CRM can never cause a double send.
+- Verified in the local harness (live JSON): Status column rows carry the waiting-on line;
+  Sasha's panel shows Touch 1/4 Tue 9/22 ... Touch 4/4 Tue 9/29 with the bodies.
+
 ## Open
 - Revival touches for the old Positive repliers (Edy Pyles, Bruno Turrini, Bhryan Cardenas,
   Pamela, Mercedes, Greg, John/NAI, Brad Levine, Rony Karam, Julio Navarro, Sean O'Toole,
-  Sammy/Unicorn, John Engler, Randy Haney): NOT drafted — needs Kevin's brief (ask-first rule).
+  Sammy/Unicorn, John Engler, Randy Haney): brief taken (all 15, 4 touches day 3/5/7/10, show every body); drafting in progress 9/20 PM. Sasha already has a live cadence (armed 9/19) and is skipped.
 - `Rachel Baumgardner` (lauderdale_hotel) is an auto-reply that got ingested, and real-estate
   campaigns are not supposed to land in Lead Gen; leave or Lost — Kevin's call.
 - Old "Not Now" rows (50 needs-reply older than 14 d) stay New; a "circle back" cadence or
