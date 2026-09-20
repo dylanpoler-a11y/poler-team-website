@@ -256,7 +256,9 @@ export const SENTIMENTS = ['Positive', 'Question', 'Neutral', 'Not Now', 'Negati
 // by hand: thread_sync (10 min), the cadence runner, the post-send hook and the CRM
 // all write activity rows and the Inbox follows.
 // ---------------------------------------------------------------------------
-export const OUTBOUND_TYPES = new Set(['Email Sent', 'Call', 'Meeting']);
+export const OUTBOUND_TYPES = new Set(['Email Sent', 'Call', 'Meeting', 'WhatsApp', 'SMS', 'Note']);   // Note = a HUMAN note (Kevin/Rosa/Flash real call) counts as "we acted"
+export const NO_ANSWER_RE   = /no atendi|no contest|buz[oó]n|voicemail|voice mail|no answer|missed|left a (voice)?message|dej[eé] mensaje|no contiene conversaci|sin conversaci|colg[oó]|hung up|se cort[oó]|dropped|sin audio|test call|no fue posible conversar/i;
+export const WAITING_ON_RE  = /^Waiting on:\s*(.+)$/m;
 export const INBOUND_TYPES  = new Set(['Reply', 'Positive Reply']);
 export const BOT_AGENTS     = /\b(responder bot|thread sync|sammy|claudia|site|import|railway)\b/i;
 export const INBOX_STALE_DAYS = 14;
@@ -276,7 +278,7 @@ export async function listActivityLite({ maxPages = 40 } = {}) {
         const params = new URLSearchParams({ pageSize: '100', filterByFormula: `OR(${types})` });
         params.set('sort[0][field]', 'At');
         params.set('sort[0][direction]', 'desc');
-        for (const f of ['At', 'Type', 'Lead', 'Agent']) params.append('fields[]', f);
+        for (const f of ['At', 'Type', 'Lead', 'Agent', 'Title', 'Details']) params.append('fields[]', f);
         if (offset) params.set('offset', offset);
         const { ok, status, body } = await at(`${TABLES.activity}?${params}`);
         if (!ok) return { ok: false, status, error: body.error?.message || 'Airtable fetch failed' };
@@ -297,7 +299,7 @@ export async function listActivityLite({ maxPages = 40 } = {}) {
  * Contact (date-only, stamped by Flash/notes) as outbound at end of that day ET.
  */
 export function computeInbox(leads, activityRecords, now = new Date()) {
-    const lastIn = new Map(), lastOut = new Map();
+    const lastIn = new Map(), lastOut = new Map(), lastOutTitle = new Map();
     for (const r of activityRecords || []) {
         const f = r.fields || {};
         const t = f['Type'];
@@ -305,11 +307,13 @@ export function computeInbox(leads, activityRecords, now = new Date()) {
         if (!at || at > now.getTime() + 60_000) continue;   // a Meeting booked for next week is not "our last word"
         
         const inbound  = INBOUND_TYPES.has(t);
-        const outbound = OUTBOUND_TYPES.has(t) && !BOT_AGENTS.test(f['Agent'] || '');
+        // A no-answer / hang-up note (Flash) is an attempt, not contact — it does not take our turn.
+        const attemptOnly = t === 'Note' && NO_ANSWER_RE.test(`${f['Title'] || ''} ${(f['Details'] || '').slice(0, 300)}`);
+        const outbound = OUTBOUND_TYPES.has(t) && !BOT_AGENTS.test(f['Agent'] || '') && !attemptOnly;
         if (!inbound && !outbound) continue;
         for (const id of f['Lead'] || []) {
             const m = inbound ? lastIn : lastOut;
-            if (!m.has(id) || at > m.get(id)) m.set(id, at);
+            if (!m.has(id) || at > m.get(id)) { m.set(id, at); if (outbound) lastOutTitle.set(id, f['Title'] || ''); }
         }
     }
     const nowMs = now.getTime();
@@ -332,6 +336,12 @@ export function computeInbox(leads, activityRecords, now = new Date()) {
         l.ballSince = last ? new Date(last).toISOString() : '';
         l.waitingDays = last ? Math.floor((nowMs - last) / DAY) : null;
         l.stale = !!last && (nowMs - last) > INBOX_STALE_DAYS * DAY;
+        // One line of "what we are waiting on" (Kevin 2026-09-20): the Sonnet-written `Waiting on:` line
+        // in Summary (refreshed by log-leadgen-activity on every human send), else the summary's Next:,
+        // else the title of our last outbound row.
+        const wo = WAITING_ON_RE.exec(l.summary || '');
+        const nx = /^Next:\s*(.+)$/m.exec(l.summary || '');
+        l.waitingOn = (wo && wo[1].trim()) || (nx && nx[1].trim()) || (lastOutTitle.get(l.id) || '').replace(/^Email sent:\s*/i, 'Sent: ') || '';
         const status = l.status || 'New';
         const excluded = INBOX_EXCLUDED.has(status);
         l.hot = !excluded && !l.stale && (l.sentiment === 'Positive' || l.sentiment === 'Question' || status === 'Meeting Booked');
@@ -416,4 +426,100 @@ export function extractPhone(text) {
         if (!best || score > best.score) best = { raw, score };
     }
     return best ? best.raw.replace(/\s+/g, ' ') : '';
+}
+
+// ── LeadGen Tasks helpers (2026-09-20) ────────────────────────────────────────
+export const TASK_TYPES = ['Call', 'Email', 'Meeting', 'Follow-up', 'Other'];
+export function etDay(iso) {
+    return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(iso));
+}
+/** Hour of day in ET + weekday index for an instant. */
+function etParts(d) {
+    const f = new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', hour: 'numeric', hour12: false, weekday: 'short' }).formatToParts(d);
+    const hour = Number(f.find(p => p.type === 'hour')?.value || 0) % 24;
+    const wd = f.find(p => p.type === 'weekday')?.value || 'Mon';
+    return { hour, weekend: wd === 'Sat' || wd === 'Sun' };
+}
+/**
+ * When should Kevin answer a positive reply? Kevin 2026-09-20: "a reminder to reply set up
+ * immediately." Reply lands on a weekday before 3 PM ET → due 3 h later (same day); otherwise
+ * the next weekday at 10:00 AM ET.
+ */
+export function replyDueAt(replyIso, now = new Date()) {
+    const base = new Date(Math.max(Date.parse(replyIso || '') || 0, now.getTime()));
+    const { hour, weekend } = etParts(base);
+    if (!weekend && hour >= 7 && hour < 15) return new Date(base.getTime() + 3 * 3_600_000).toISOString();
+    // next weekday 10:00 AM ET: walk day by day from the ET calendar day of `base`
+    let d = new Date(base.getTime());
+    for (let i = 0; i < 4; i++) {
+        d = new Date(d.getTime() + 86_400_000);
+        if (!etParts(d).weekend) break;
+    }
+    const day = etDay(d.toISOString());
+    // 10:00 ET is 14:00Z in EDT, 15:00Z in EST; pick by testing which one renders as 10 in ET
+    for (const hh of ['14', '15']) {
+        const cand = new Date(`${day}T${hh}:00:00Z`);
+        if (etParts(cand).hour === 10) return cand.toISOString();
+    }
+    return new Date(`${day}T14:00:00Z`).toISOString();
+}
+export async function createTask({ leadId, title, type = 'Follow-up', dueAt, owner = 'Kevin', notes = '' }) {
+    const fields = { 'Title': title, 'Type': TASK_TYPES.includes(type) ? type : 'Follow-up', 'Status': 'Open', 'Owner': owner };
+    if (dueAt && !isNaN(Date.parse(dueAt))) { fields['Due'] = new Date(dueAt).toISOString(); fields['Due At'] = etDay(dueAt); }
+    if (notes) fields['Notes'] = String(notes).slice(0, 5000);
+    if (leadId) fields['Lead'] = [leadId];
+    return createRecord(TABLES.tasks, fields);
+}
+/** Open tasks for one lead (client-side filter: linked-record formulas are unreliable). */
+export async function openTasksFor(leadId) {
+    const res = await listAll(TABLES.tasks, { filter: `{Status} = 'Open'`, maxPages: 20 });
+    if (!res.ok) return [];
+    return res.records.filter(r => (r.fields?.['Lead'] || []).includes(leadId)).map(mapTask);
+}
+/** Kevin answered → close the "Reply to …" reminder(s) for that lead (Kevin 2026-09-20). */
+export async function closeReplyTasks(leadId) {
+    const open = await openTasksFor(leadId);
+    let n = 0;
+    for (const t of open) if (/^Reply to\b/i.test(t.title || '')) { const r = await updateRecord(TABLES.tasks, t.id, { 'Status': 'Done' }); if (r.ok) n++; }
+    return n;
+}
+/**
+ * Rewrite the `Waiting on:` line of a lead's Summary from the last few activity rows (Sonnet).
+ * Called after a human outbound row lands. Never throws; returns the line or ''.
+ */
+export async function refreshWaitingOn(leadId) {
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) return '';
+    try {
+        const lead = await listAll(TABLES.leads, { filter: `RECORD_ID() = '${esc(leadId)}'` });
+        const rec = lead.ok && lead.records[0];
+        if (!rec) return '';
+        const acts = await listAll(TABLES.activity, { filter: `FIND('${esc(leadId)}', ARRAYJOIN({Lead Record ID}))`, sortField: 'At', sortDir: 'desc', maxPages: 1 });
+        const rows = (acts.ok ? acts.records : []).slice(0, 8).reverse().map(r => {
+            const f = r.fields || {};
+            return `[${(f['At'] || '').slice(0, 16)}] ${f['Type']} by ${f['Agent'] || '?'}: ${f['Title'] || ''}\n${String(f['Details'] || '').replace(/\n+/g, ' ').slice(0, 500)}`;
+        }).join('\n\n');
+        const summary = String(rec.fields?.['Summary'] || '').replace(WAITING_ON_RE, '').trim();
+        const prompt = [
+            `Kevin Poler (real-estate broker / outreach) is tracking a lead: ${rec.fields?.['Name'] || '?'}${rec.fields?.['Company'] ? ' at ' + rec.fields['Company'] : ''} (status ${rec.fields?.['Status'] || 'New'}).`,
+            summary ? `Conversation summary:\n"""${summary.slice(0, 1200)}"""` : '',
+            `Most recent activity, oldest first:\n"""${rows.slice(0, 5000)}"""`,
+            '',
+            'In ONE line (max 140 characters, plain text, no quotes, no leading label), say exactly what Kevin is waiting on from this lead right now',
+            'and what was agreed, e.g. "Told him Keystone closed; coffee when he is back in Miami" or "Sent the recap after the 9/9 call; he picks a time to start".',
+            'If Kevin owes the reply instead, start with "Kevin owes:".',
+        ].filter(Boolean).join('\n');
+        const res = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
+            body: JSON.stringify({ model: 'claude-sonnet-5', max_tokens: 120, messages: [{ role: 'user', content: prompt }] }),
+        });
+        if (!res.ok) return '';
+        const data = await res.json();
+        const line = (data.content || []).map(c => c.text || '').join('').split('\n')[0].replace(/^waiting on:\s*/i, '').trim().slice(0, 160);
+        if (!line) return '';
+        const next = (summary ? summary + '\n' : '') + 'Waiting on: ' + line;
+        await updateRecord(TABLES.leads, leadId, { 'Summary': next });
+        return line;
+    } catch { return ''; }
 }

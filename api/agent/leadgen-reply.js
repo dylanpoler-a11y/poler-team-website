@@ -30,7 +30,7 @@ export const config = { runtime: 'edge' };
 
 import { authorize } from '../_auth.js';
 import {
-    TABLES, creds, json, preflight, createRecord, updateRecord, listAll, esc, STATUSES,
+    TABLES, creds, json, preflight, createRecord, updateRecord, listAll, esc, STATUSES, createTask, openTasksFor, replyDueAt,
     findLead, mapLead, logActivity, normChannel, SENTIMENTS, extractPhone,
 } from '../_leadgen.js';
 
@@ -326,6 +326,7 @@ export default async function handler(req) {
             type: activityType, leadId: existing.id, details: replyText.slice(0, 2000) + (midTag ? '\n' + midTag : ''),
             agent: 'Responder Bot', at: replyAt,
         });
+        await ensureReplyTask(existing.id, name || existing.fields?.['Name'], sentiment, replyAt, replyText);
         return json({ ok: true, routed: 'leadgen', created: false, sentiment, lead: mapLead(res.record) });
     }
 
@@ -344,5 +345,18 @@ export default async function handler(req) {
         type: activityType, leadId: res.record.id, details: replyText.slice(0, 2000) + (midTag ? '\n' + midTag : ''),
         agent: 'Responder Bot', at: replyAt,
     });
+    await ensureReplyTask(res.record.id, name, sentiment, replyAt, replyText);
     return json({ ok: true, routed: 'leadgen', created: true, sentiment, lead: mapLead(res.record) });
+}
+
+// Kevin 2026-09-20: "any lead that replies positive to our emails should have a reminder to
+// reply set up immediately" — Positive or Question → one open "Reply to <name>" Email task
+// (closed by log-leadgen-activity when Kevin's answer lands). Best-effort.
+async function ensureReplyTask(leadId, name, sentiment, replyAt, replyText) {
+    if (!['Positive', 'Question'].includes(sentiment)) return;
+    try {
+        const open = await openTasksFor(leadId);
+        if (open.some(t => /^Reply to\b/i.test(t.title || ''))) return;
+        await createTask({ leadId, type: 'Email', title: `Reply to ${name || 'lead'} (${sentiment.toLowerCase()} reply)`, dueAt: replyDueAt(replyAt), notes: String(replyText || '').slice(0, 300) });
+    } catch { /* ignore */ }
 }

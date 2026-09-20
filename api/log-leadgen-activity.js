@@ -21,10 +21,10 @@ export const config = { runtime: 'edge' };
 import { authorize } from './_auth.js';
 import {
     TABLES, creds, json, preflight, createRecord, updateRecord, mapActivity, listAll, esc, uploadAttachment,
-    OUTBOUND_TYPES, BOT_AGENTS,
+    OUTBOUND_TYPES, BOT_AGENTS, closeReplyTasks, refreshWaitingOn,
 } from './_leadgen.js';
 
-const TYPES = ['Positive Reply', 'Reply', 'Email Sent', 'Call', 'Meeting', 'Note', 'Status Change'];
+const TYPES = ['Positive Reply', 'Reply', 'Email Sent', 'Call', 'Meeting', 'Note', 'Status Change', 'WhatsApp', 'SMS'];   // WhatsApp/SMS (2026-09-20): off-email contact mirrored by ~/bin/leadgen-spoke-sync.py
 
 export default async function handler(req) {
     if (req.method === 'OPTIONS') return preflight('POST');
@@ -102,10 +102,19 @@ export default async function handler(req) {
     // Touching a lead counts as contact — keeps the Leads view's Last Contact honest.
     // Since 2026-09-20 every OUTBOUND row (Email Sent / Call / Meeting by a person) stamps it
     // automatically, so the stamp no longer depends on each producer remembering stampContact.
-    const outbound = OUTBOUND_TYPES.has(fields['Type']) && !BOT_AGENTS.test(fields['Agent'] || '');
+    const outbound = OUTBOUND_TYPES.has(fields['Type']) && fields['Type'] !== 'Note' && !BOT_AGENTS.test(fields['Agent'] || '');
     if ((body.stampContact || outbound) && body.leadId) {
         await updateRecord(TABLES.leads, body.leadId, { 'Last Contact': at.slice(0, 10) });
     }
+    // Kevin answered (2026-09-20): close the "Reply to …" reminder and rewrite the one-line
+    // "Waiting on:" status. Only for NEW rows less than 3 days old (thread_sync backfills of
+    // old mail must not churn the summary). Best-effort, never fails the call.
+    let replyTasksClosed = 0, waitingOn = '';
+    const recent = Date.now() - Date.parse(at) < 3 * 86_400_000;
+    if (created && outbound && body.leadId && recent && !body.quiet) {
+        try { replyTasksClosed = await closeReplyTasks(body.leadId); } catch { /* ignore */ }
+        try { waitingOn = await refreshWaitingOn(body.leadId); } catch { /* ignore */ }
+    }
 
-    return json({ ok: true, created, activity: mapActivity(record), attachmentsUploaded, attachmentsFailed });
+    return json({ ok: true, created, activity: mapActivity(record), attachmentsUploaded, attachmentsFailed, replyTasksClosed, waitingOn });
 }

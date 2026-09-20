@@ -7232,7 +7232,9 @@ function renderLGInbox() {
     list.innerHTML = ids.map(id => byId.get(id)).filter(Boolean).map(l => {
       const days = l.waitingDays == null ? '' : (l.waitingDays === 0 ? 'today' : `${l.waitingDays}d`);
       const overdue = key === 'needsReply' && (l.waitingDays || 0) >= 2;
-      const meta = [l.company, l.campaign, l.sentiment, key === 'hot' ? l.status : ''].filter(Boolean).join(' · ');
+      const meta = key === 'waiting'
+        ? (l.waitingOn || [l.company, l.campaign, l.sentiment].filter(Boolean).join(' · '))
+        : [l.company, l.campaign, l.sentiment, key === 'hot' ? l.status : ''].filter(Boolean).join(' · ') + (key === 'hot' && l.waitingOn ? ' · ' + l.waitingOn : '');
       return `
         <div class="lg-inbox-row" data-lg-id="${escHtml(l.id)}" title="${escHtml((l.summary || l.replySnippet || '').slice(0, 300))}">
           <div class="lg-inbox-name">${escHtml(l.name || l.email || '—')}</div>
@@ -7843,12 +7845,43 @@ async function saveLGTaskEdit(id) {
 }
 
 // Panel cards — same markup as renderLeadReminders() for RE leads.
+// Queued cadence touches (2026-09-20, Kevin: "inside each lead profile panel I want to see what is
+// queued up"). The cadence engine mirrors every unsent touch as an Open task titled "Queued touch
+// i/n: …" (Notes = the body); sent → Done, cadence stopped → Skipped, so this list self-updates.
+const LG_QUEUED_RE = /^Queued touch\b/i;
+function renderLGQueued(lead) {
+  const section = document.getElementById('lg-queued-section');
+  const box = document.getElementById('lg-queued');
+  if (!section || !box || !lead) return;
+  const q = allLGTasks
+    .filter(t => t.status === 'Open' && LG_QUEUED_RE.test(t.title || '') && (t.leadIds || []).includes(lead.id))
+    .sort((a, b) => new Date(a.dueAt || 0) - new Date(b.dueAt || 0));
+  if (!q.length) { section.style.display = 'none'; return; }
+  section.style.display = 'block';
+  box.innerHTML = q.map(t => {
+    const d = new Date(t.dueAt);
+    const when = d.getTime() ? d.toLocaleString('en-US', { timeZone: 'America/New_York', weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '—';
+    return `
+      <div class="panel-reminder-card lg-queued-card">
+        <div class="panel-reminder-top">
+          <span class="panel-reminder-type">${escHtml(t.title.replace(/^Queued touch\s*/i, 'Touch '))}</span>
+          <span class="panel-reminder-due">${escHtml(when)}</span>
+        </div>
+        ${t.notes ? `<details class="lg-queued-body"><summary>View email</summary><pre>${escHtml(t.notes)}</pre></details>` : ''}
+        <div class="panel-reminder-actions">
+          <button class="panel-r-btn cancel" onclick="setLGTaskStatus('${t.id}','Skipped')" title="Removes it from the CRM view only; run the cadence runner's stop command to cancel the send">Hide</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
 function renderLGLeadReminders(lead) {
+  renderLGQueued(lead);
   const section = document.getElementById('lg-existing-reminders-section');
   const container = document.getElementById('lg-existing-reminders');
   if (!section || !container || !lead) return;
   const tasks = allLGTasks
-    .filter(t => t.status === 'Open' && (t.leadIds || []).includes(lead.id))
+    .filter(t => t.status === 'Open' && !LG_QUEUED_RE.test(t.title || '') && (t.leadIds || []).includes(lead.id))
     .sort((a, b) => new Date(a.dueAt || 0) - new Date(b.dueAt || 0));
   if (!tasks.length) { section.style.display = 'none'; return; }
   section.style.display = 'block';

@@ -114,7 +114,7 @@
           </a>
           <div class="sidebar-section-divider">Lead Generation</div>
           <a class="nav-item" data-action="leadgen" href="#">
-            <span class="nav-icon">📨</span> Replies <span id="leadgen-badge" class="reminder-badge" style="display:none;">0</span>
+            <span class="nav-icon">📨</span> Leads <span id="leadgen-badge" class="reminder-badge" style="display:none;">0</span>
           </a>
           <a class="nav-item" data-action="leadgen-pipeline" href="#">
             <span class="nav-icon">🎯</span> Pipeline
@@ -771,10 +771,10 @@
             </div>
             <div class="lg-inbox-col" data-inbox="waiting">
               <div class="lg-inbox-head">
-                <span class="lg-inbox-title">⏳ Waiting on them</span>
+                <span class="lg-inbox-title">📋 Status</span>
                 <span class="lg-inbox-count" id="lg-inbox-count-waiting">0</span>
               </div>
-              <div class="lg-inbox-sub">Our message is the last word · longest wait first</div>
+              <div class="lg-inbox-sub">What we are waiting on from each lead · longest wait first</div>
               <div class="lg-inbox-list" id="lg-inbox-list-waiting"></div>
             </div>
             <div class="lg-inbox-col" data-inbox="hot">
@@ -1610,6 +1610,11 @@
     </div>
 
     <!-- Existing Reminders for this Lead (LeadGen Tasks, status Open) -->
+    <div class="panel-section" id="lg-queued-section" style="display:none;">
+      <div class="panel-section-title">📤 Queued emails</div>
+      <div class="lg-contact-sub" style="margin-bottom:6px;">Follow-up touches the cadence runner will send. They disappear on their own if the lead replies or you speak to them.</div>
+      <div id="lg-queued"></div>
+    </div>
     <div class="panel-section" id="lg-existing-reminders-section" style="display:none;">
       <div class="panel-section-title">Active Reminders</div>
       <div id="lg-existing-reminders"></div>

@@ -14,7 +14,7 @@ export const config = { runtime: 'edge' };
 import { authorize } from './_auth.js';
 import {
     TABLES, creds, json, preflight, listAll, updateRecord,
-    mapLead, logActivity, STATUSES, SENTIMENTS, esc,
+    mapLead, logActivity, STATUSES, SENTIMENTS, esc, refreshWaitingOn,
 } from './_leadgen.js';
 
 export default async function handler(req) {
@@ -67,6 +67,11 @@ export default async function handler(req) {
     put('Summary',   body.summary);
     if (body.stampContact) fields['Last Contact'] = new Date().toISOString().slice(0, 10);
 
+    // { id, refreshWaitingOn: true } (2026-09-20): rewrite the one-line "Waiting on:" status from the activity log.
+    if (body.refreshWaitingOn && !Object.keys(fields).length) {
+        const line = await refreshWaitingOn(body.id);
+        return json({ ok: true, waitingOn: line });
+    }
     if (!Object.keys(fields).length) return json({ error: 'nothing to update' }, 400);
 
     const res = await updateRecord(TABLES.leads, body.id, fields);
