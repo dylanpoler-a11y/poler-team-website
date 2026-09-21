@@ -7153,6 +7153,18 @@ function lgFmtDate(iso) {
   if (isNaN(d)) return '—';
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: d.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined });
 }
+// Next queued cadence touch for a lead (Kevin 2026-09-21): the earliest OPEN "Queued touch n/N: …"
+// task the cadence runner filed for it. Returns '' when nothing is queued.
+function lgNextTouch(lead) {
+  const ts = allLGTasks.filter(t => t.status === 'Open' && (t.leadIds || []).includes(lead.id) && /^Queued touch\b/i.test(t.title || '') && t.dueAt)
+    .sort((a, b) => new Date(a.dueAt) - new Date(b.dueAt));
+  if (!ts.length) return '';
+  const t = ts[0];
+  const m = /^Queued touch (\d+\/\d+)/i.exec(t.title || '');
+  const d = new Date(t.dueAt);
+  const day = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'America/New_York' });
+  return `<span class="lg-next-touch" title="${escHtml(t.title)}">${day}${m ? ` <span class="lg-contact-sub">touch ${escHtml(m[1])}</span>` : ''}</span>`;
+}
 function lgSentimentChip(s) {
   return s
     ? `<span class="sent-chip sent-${lgCss(s)}">${escHtml(s)}</span>`
@@ -7249,6 +7261,56 @@ function renderLGInbox() {
   });
 }
 
+// ── Multi-select filters (Kevin 2026-09-21: "click more than one at a time") ──
+// Wraps a native <select> in a button + checkbox popover. The select stays in the DOM
+// (hidden) as the option source; chosen values live in LG_MULTI[id].values. Every change
+// dispatches 'change' on the select so the existing render listeners keep working.
+var LG_MULTI = {};
+function lgMultiValues(id) {
+  if (LG_MULTI[id]) return LG_MULTI[id].values;
+  const v = document.getElementById(id)?.value || '';
+  return v ? [v] : [];
+}
+function lgMultiInit(id) {
+  const sel = document.getElementById(id);
+  if (!sel || LG_MULTI[id]) return;
+  const wrap = document.createElement('div');
+  wrap.className = 'lg-ms';
+  wrap.innerHTML = '<button type="button" class="filter-select lg-ms-btn"></button><div class="lg-ms-pop"></div>';
+  sel.parentNode.insertBefore(wrap, sel);
+  sel.style.display = 'none';
+  const st = LG_MULTI[id] = { sel, wrap, values: [], allLabel: sel.options[0]?.textContent || 'All' };
+  wrap.querySelector('.lg-ms-btn').addEventListener('click', e => {
+    e.stopPropagation();
+    const open = wrap.classList.contains('open');
+    document.querySelectorAll('.lg-ms.open').forEach(w => w.classList.remove('open'));
+    if (!open) wrap.classList.add('open');
+  });
+  wrap.querySelector('.lg-ms-pop').addEventListener('click', e => e.stopPropagation());
+  lgMultiSync(id);
+}
+function lgMultiSync(id) {
+  const st = LG_MULTI[id];
+  if (!st) return;
+  const opts = [...st.sel.options].filter(o => o.value !== '');
+  const valid = new Set(opts.map(o => o.value));
+  st.values = st.values.filter(v => valid.has(v));
+  const pop = st.wrap.querySelector('.lg-ms-pop');
+  pop.innerHTML = `<label class="lg-ms-row lg-ms-all"><input type="checkbox" ${st.values.length ? '' : 'checked'}> ${escHtml(st.allLabel)}</label>` +
+    opts.map(o => `<label class="lg-ms-row"><input type="checkbox" value="${escHtml(o.value)}" ${st.values.includes(o.value) ? 'checked' : ''}> ${escHtml(o.textContent)}</label>`).join('');
+  pop.querySelectorAll('input').forEach(cb => cb.addEventListener('change', () => {
+    if (!cb.hasAttribute('value')) st.values = [];                   // "All" clears every pick
+    else st.values = [...pop.querySelectorAll('input[value]:checked')].map(i => i.value);
+    lgMultiSync(id);
+    st.sel.dispatchEvent(new Event('change'));
+  }));
+  const btn = st.wrap.querySelector('.lg-ms-btn');
+  const names = st.values.map(v => opts.find(o => o.value === v)?.textContent || v);
+  btn.textContent = (names.length ? (names.length > 2 ? `${names.slice(0, 2).join(', ')} +${names.length - 2}` : names.join(', ')) : st.allLabel) + ' \u25BE';
+  btn.classList.toggle('lg-ms-active', names.length > 0);
+}
+document.addEventListener('click', () => document.querySelectorAll('.lg-ms.open').forEach(w => w.classList.remove('open')));
+
 // Campaign display names + dropdown order (Kevin 2026-09-21): Title Case, no slugs,
 // newest campaign first, oldest last. One option can cover several ledger slugs
 // (Realtors Ads Management = ads_management + realtors_meta_ads; Keystone = keystone + keystone_cold).
@@ -7293,6 +7355,7 @@ function populateLGCampaignFilters() {
     sel.innerHTML = '<option value="">All Campaigns</option>' +
       labels.map(c => `<option value="${escHtml(c)}">${escHtml(c)}</option>`).join('');
     if (labels.includes(cur)) sel.value = cur;
+    lgMultiSync(id);
   });
 }
 
@@ -7320,16 +7383,16 @@ function updateLGBadge() {
 // ── TABLE ──────────────────────────────────────────────────────────────────
 function lgFilterLeads(prefix) {
   const g = id => document.getElementById(id)?.value || '';
-  const channel   = g(`${prefix}channel-filter`);
-  const campaign  = g(`${prefix}campaign-filter`);
-  const sentiment = prefix === 'lg-' ? g('lg-sentiment-filter') : '';
-  const status    = prefix === 'lg-' ? g('lg-status-filter') : '';
+  const channel   = lgMultiValues(`${prefix}channel-filter`);
+  const campaign  = lgMultiValues(`${prefix}campaign-filter`);
+  const sentiment = prefix === 'lg-' ? lgMultiValues('lg-sentiment-filter') : [];
+  const status    = prefix === 'lg-' ? lgMultiValues('lg-status-filter') : [];
   const q         = prefix === 'lg-' ? g('lg-search').trim().toLowerCase() : '';
   return allLGLeads.filter(l => {
-    if (channel   && l.channel   !== channel)   return false;
-    if (campaign  && !lgCampaignMatches(l, campaign)) return false;
-    if (sentiment && l.sentiment !== sentiment) return false;
-    if (status    && (l.status || 'New') !== status) return false;
+    if (channel.length   && !channel.includes(l.channel))   return false;
+    if (campaign.length  && !campaign.some(c => lgCampaignMatches(l, c))) return false;
+    if (sentiment.length && !sentiment.includes(l.sentiment)) return false;
+    if (status.length    && !status.includes(l.status || 'New')) return false;
     if (q) {
       const hay = `${l.name} ${l.company} ${l.email} ${l.campaign} ${lgCampaignLabel(l.campaign)} ${l.summary}`.toLowerCase();
       if (!hay.includes(q)) return false;
@@ -7373,6 +7436,7 @@ function renderLGLeads() {
         <td>${lgSentimentChip(l.sentiment)}</td>
         <td><select class="lg-stage-select" data-lg-id="${escHtml(l.id)}">${stageOpts}</select></td>
         <td style="white-space:nowrap;">${lgFmtDate(l.lastReplyAt || l.replyAt)}${l.replyCount > 1 ? ` <span class="lg-contact-sub">×${l.replyCount}</span>` : ''}</td>
+        <td style="white-space:nowrap;">${lgNextTouch(l) || '—'}</td>
         <td class="lg-summary-cell">${escHtml(summary.length > 220 ? summary.slice(0, 217) + '…' : summary)}</td>
       </tr>`;
   }).join('');
@@ -7715,6 +7779,7 @@ async function loadLGTasks() {
   if (loading) loading.style.display = 'none';
   updateLGReminderBadge();
   if (currentView === 'leadgen-reminders') renderLGReminders();
+  if (currentView === 'leadgen') renderLGLeads();   // Next Touch column reads the tasks
   if (currentLGLead) renderLGLeadReminders(currentLGLead);
 }
 
@@ -8109,6 +8174,8 @@ async function createLGReplyManually() {
 
 // ── WIRE ───────────────────────────────────────────────────────────────────
 function wireLGEvents() {
+  // deferred: wireLGEvents runs mid-script (readyState is already 'interactive' for a deferred script), before LG_MULTI is assigned
+  setTimeout(() => ['lg-channel-filter', 'lg-campaign-filter', 'lg-sentiment-filter', 'lg-status-filter', 'lg-pipeline-channel-filter', 'lg-pipeline-campaign-filter'].forEach(lgMultiInit), 0);
   ['lg-channel-filter', 'lg-campaign-filter', 'lg-sentiment-filter', 'lg-status-filter'].forEach(id =>
     document.getElementById(id)?.addEventListener('change', renderLGLeads));
   document.getElementById('lg-search')?.addEventListener('input', renderLGLeads);
