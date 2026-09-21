@@ -7214,7 +7214,7 @@ function lgBallLabel(l) {
   if (!l || !l.ball || l.ball === 'none') return '';
   const d = l.waitingDays == null ? '' : (l.waitingDays === 0 ? 'today' : `${l.waitingDays}d`);
   if (l.ball === 'needs_reply') return `⬅ needs my reply ${d}`.trim();
-  if (l.ball === 'waiting')     return `⏳ waiting ${d}`.trim();
+  if (l.ball === 'waiting')     return `⏳ waiting on them ${d}`.trim();   // Kevin 2026-09-21: 'waiting' read as 'I owe them'
   return '';
 }
 function lgBallChip(l) {
@@ -7250,7 +7250,7 @@ function renderLGInbox() {
           + (key === 'hot' && (l.replySnippet || l.firstReply) ? `\n“${String(l.replySnippet || l.firstReply).replace(/\s+/g, ' ').trim().slice(0, 140)}”` : '');
       return `
         <div class="lg-inbox-row" data-lg-id="${escHtml(l.id)}" title="${escHtml((l.summary || l.replySnippet || '').slice(0, 300))}">
-          <div class="lg-inbox-name">${escHtml(l.name || l.email || '—')}</div>
+          <div class="lg-inbox-name">${escHtml(l.name || l.company || l.email || '—')}</div>
           <div class="lg-inbox-days${overdue ? ' overdue' : ''}">${escHtml(days)}</div>
           <div class="lg-inbox-meta" style="white-space:pre-line;">${escHtml(meta)}</div>
         </div>`;
@@ -7431,7 +7431,7 @@ function renderLGLeads() {
     return `
       <tr data-lg-id="${escHtml(l.id)}">
         <td>
-          <div style="font-weight:600;color:var(--navy,#1a2744);">${escHtml(l.name || l.email || '—')}</div>
+          <div style="font-weight:600;color:var(--navy,#1a2744);">${escHtml(l.name || l.company || l.email || '—')}</div>
           <div class="lg-contact-sub">${escHtml(sub)}</div>
           ${lgBallChip(l)}
         </td>
@@ -7474,7 +7474,7 @@ function renderLGPipeline() {
       .sort((a, b) => new Date(b.lastReplyAt || b.replyAt || 0) - new Date(a.lastReplyAt || a.replyAt || 0));
     const cards = inStage.map(l => `
       <div class="kanban-card lg-card lg-${lgCss(l.sentiment)}" draggable="true" data-lg-id="${escHtml(l.id)}">
-        <div class="kanban-card-name">${escHtml(l.name || l.email || '—')}</div>
+        <div class="kanban-card-name">${escHtml(l.name || l.company || l.email || '—')}</div>
         <div class="kanban-card-company">${escHtml(l.company || '')}</div>
         <div class="lg-card-summary">${escHtml(l.summary || l.replySnippet || '')}</div>
         <div class="kanban-card-footer">
@@ -7603,8 +7603,8 @@ function openLGPanel(id) {
   currentLGLead = lead;
 
   const avatar = document.getElementById('lg-avatar-text');
-  if (avatar) avatar.textContent = (lead.name || lead.email || '?').charAt(0).toUpperCase();
-  document.getElementById('lg-panel-name').textContent = lead.name || lead.email || '—';
+  if (avatar) avatar.textContent = (lead.name || lead.company || lead.email || '?').charAt(0).toUpperCase();
+  document.getElementById('lg-panel-name').textContent = lead.name || lead.company || lead.email || '—';
   document.getElementById('lg-panel-sub').innerHTML =
     `${lgSentimentChip(lead.sentiment)} <span style="margin-left:6px;">${escHtml(lead.company || '')}</span>`;
 
@@ -7885,7 +7885,7 @@ function renderLGReminders() {
          <button class="reminder-action-btn edit" onclick="toggleLGTaskEdit('${t.id}')">Edit</button>`
       : '';
     const ownerOptions = ['Kevin', 'Dylan', 'Rosa'].map(o => `<option value="${o}" ${o === t.owner ? 'selected' : ''}>${o}</option>`).join('');
-    const leadName = lead ? (lead.name || lead.email || '—') : '—';
+    const leadName = lead ? (lead.name || lead.company || lead.email || '—') : '—';
     const leadSub  = lead ? [lead.company, lead.phone].filter(Boolean).join(' · ') : '';
     const leadId   = lead ? lead.id : '';
     return `
