@@ -2815,3 +2815,8 @@ body {
 .lg-ms-row:hover { background: rgba(26,39,68,0.06); }
 .lg-ms-row input { margin: 0; accent-color: var(--navy); }
 .lg-ms-all { border-bottom: 1px solid var(--border); margin-bottom: 4px; padding-bottom: 8px; color: var(--text-muted); }
+.lg-ms-th { display: inline-block; }
+.lg-ms-th .lg-ms-btn { background: none; border: none; padding: 0; font: inherit; font-weight: inherit; letter-spacing: inherit; text-transform: inherit; color: inherit; cursor: pointer; max-width: 240px; }
+.lg-ms-th .lg-ms-btn.lg-ms-active { color: var(--navy); font-weight: 700; }
+.lg-ms-th .lg-ms-pop { text-transform: none; letter-spacing: 0; font-weight: 400; }
+#leadgen-view th[data-lg-filter] { position: relative; overflow: visible; }

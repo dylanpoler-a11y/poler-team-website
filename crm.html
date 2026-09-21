@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="crm.css?v=20260921b" />
+  <link rel="stylesheet" href="crm.css?v=20260921c" />
   <!-- MapLibre GL JS for alert map drawing (vector tiles — smooth zooming) -->
   <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.1.2/dist/maplibre-gl.css" />
   <!-- Chart.js for the AI Calls tab graph -->
@@ -723,7 +723,7 @@
           <div class="crm-header">
             <h1>Lead Generation <span id="leadgen-count-label" class="reminders-count-label"></span></h1>
             <div class="header-right">
-              <select id="lg-channel-filter" class="filter-select">
+              <select id="lg-channel-filter" class="filter-select" style="display:none;">
                 <option value="">All Channels</option>
                 <option value="Email">Email</option>
                 <option value="Facebook">Facebook</option>
@@ -732,10 +732,10 @@
                 <option value="LoopNet">LoopNet</option>
                 <option value="Manual">Manual</option>
               </select>
-              <select id="lg-campaign-filter" class="filter-select">
+              <select id="lg-campaign-filter" class="filter-select" style="display:none;">
                 <option value="">All Campaigns</option>
               </select>
-              <select id="lg-sentiment-filter" class="filter-select">
+              <select id="lg-sentiment-filter" class="filter-select" style="display:none;">
                 <option value="">All Sentiments</option>
                 <option value="Positive">Positive</option>
                 <option value="Question">Question</option>
@@ -743,7 +743,7 @@
                 <option value="Not Now">Not Now</option>
                 <option value="Negative">Negative</option>
               </select>
-              <select id="lg-status-filter" class="filter-select">
+              <select id="lg-status-filter" class="filter-select" style="display:none;">
                 <option value="">All Stages</option>
                 <option value="Prospect">Prospect (no reply yet)</option>
                 <option value="New">New</option>
@@ -828,10 +828,10 @@
               <thead>
                 <tr>
                   <th>Contact</th>
-                  <th>Channel</th>
-                  <th>Campaign</th>
-                  <th>Sentiment</th>
-                  <th>Stage</th>
+                  <th data-lg-filter="lg-channel-filter">Channel</th>
+                  <th data-lg-filter="lg-campaign-filter">Campaign</th>
+                  <th data-lg-filter="lg-sentiment-filter">Sentiment</th>
+                  <th data-lg-filter="lg-status-filter">Stage</th>
                   <th>Last Reply</th>
                   <th>Next Touch</th>
                   <th>Summary</th>
@@ -2407,6 +2407,6 @@
   </div>
 
   <script src="https://unpkg.com/maplibre-gl@4.1.2/dist/maplibre-gl.js"></script>
-  <script src="crm.js?v=20260921b" defer></script>
+  <script src="crm.js?v=20260921c" defer></script>
 </body>
 </html>

@@ -7277,9 +7277,12 @@ function lgMultiInit(id) {
   const wrap = document.createElement('div');
   wrap.className = 'lg-ms';
   wrap.innerHTML = '<button type="button" class="filter-select lg-ms-btn"></button><div class="lg-ms-pop"></div>';
-  sel.parentNode.insertBefore(wrap, sel);
+  // Kevin 2026-09-21: list-view filters live IN the column header, not the header bar.
+  const th = document.querySelector(`th[data-lg-filter="${id}"]`);
+  if (th) { wrap.classList.add('lg-ms-th'); wrap.dataset.head = th.textContent.trim(); th.textContent = ''; th.appendChild(wrap); }
+  else sel.parentNode.insertBefore(wrap, sel);
   sel.style.display = 'none';
-  const st = LG_MULTI[id] = { sel, wrap, values: [], allLabel: sel.options[0]?.textContent || 'All' };
+  const st = LG_MULTI[id] = { sel, wrap, values: [], allLabel: th ? 'All' : (sel.options[0]?.textContent || 'All'), head: wrap.dataset.head || '' };
   wrap.querySelector('.lg-ms-btn').addEventListener('click', e => {
     e.stopPropagation();
     const open = wrap.classList.contains('open');
@@ -7306,7 +7309,8 @@ function lgMultiSync(id) {
   }));
   const btn = st.wrap.querySelector('.lg-ms-btn');
   const names = st.values.map(v => opts.find(o => o.value === v)?.textContent || v);
-  btn.textContent = (names.length ? (names.length > 2 ? `${names.slice(0, 2).join(', ')} +${names.length - 2}` : names.join(', ')) : st.allLabel) + ' \u25BE';
+  const picked = names.length ? (names.length > 2 ? `${names.slice(0, 2).join(', ')} +${names.length - 2}` : names.join(', ')) : '';
+  btn.textContent = (st.head ? (picked ? `${st.head}: ${picked}` : st.head) : (picked || st.allLabel)) + ' \u25BE';
   btn.classList.toggle('lg-ms-active', names.length > 0);
 }
 document.addEventListener('click', () => document.querySelectorAll('.lg-ms.open').forEach(w => w.classList.remove('open')));
