@@ -80,3 +80,22 @@ Kevin's own sends never stamped the lead (Asnel looked untouched a day after Kev
   campaigns are not supposed to land in Lead Gen; leave or Lost — Kevin's call.
 - Old "Not Now" rows (50 needs-reply older than 14 d) stay New; a "circle back" cadence or
   a Lost sweep is a separate decision.
+
+## Pass 4 (17:45Z) — cadence-stop false positives, fixed
+- `~/bin/spoke_since.py`: `summary` + the sync writers added to `AUTONOMOUS_WRITERS`; `note_is_contact()` now returns False for a note that only describes an email (EMAIL_WORDS hit, no TALK_WORDS). Unit-checked on 7 cases.
+- Re-armed 5 cadences the detector had wrongly stopped: mu8j2jn6sk2k (Sasha) + mu8j2js9vkym (finehomes123) on the Summary note; mu9tztfkktx1 / mu9tztsrauzi / mu9tzu67ov4w (Lauderdale, gmail1) on the Claude note logging their own touch 1. Their 8 lead-gen queued tasks reopened and renumbered 2/5–5/5. Harness screenshot confirms Sasha's panel shows Touch 2/5 … 5/5.
+- Runner next fires Mon 9/22 10:05 ET; check `grep STOP cadence.log` after it runs.
+
+## 2026-09-21 addendum (campaign labels + sentiment rubric)
+- `crm.js` `LG_CAMPAIGN_GROUPS`: Lead Gen campaign dropdown now shows Title Case labels, newest campaign first; one label can fold several ledger slugs (Ads Management = ads_management + realtors_meta_ads; Keystone = keystone + keystone_cold; latam_turnaround shows as Consulting). Table / kanban / detail render the label (slug in the title tooltip). Add a row there when a campaign launches, at the TOP.
+- `api/agent/leadgen-reply.js`: classifier prompt carries Kevin's sentiment rubric (deferral to a colleague = Positive, soft no = Not Now, only a closed door = Negative). 39 existing leads were re-tagged 2026-09-21; audit copy in `outreach-machine/state/sentiment_backfill_2026-09-21.json`.
+- Deployed 2026-09-21 12:33 ET from the working tree (`npx vercel --prod --yes`); HEAD alone does NOT build because `lib/phone-quality.js` + the `libphonenumber-js` dependency (2026-09-12 Meta gate) are still uncommitted.
+- Reminder: `homesinsoflorida.com` (apex) serves a cached crm.js; the live site is `www.`.
+
+### 2026-09-21 (later) — "Lead Generation" → "Outreaches", outreach cadence leads now in the section
+- crm.html: sidebar divider / page h1 / pipeline h1 read **Outreaches** / **Outreach Pipeline** (commit 0dc83c4, deployed, cache-bust v=20260921e). Code, tables and endpoints keep `leadgen`.
+- `api/save-leadgen-lead`: `status:'Prospect'` = someone we emailed who has not answered — no Reply At / snippet / Positive-reply row; `lastContact` = the day we wrote; logs a `Status Change` "Added as outreach prospect — <campaign>".
+- `api/update-leadgen-task`: `leadId` re-links a task (queued touches had been created with an empty Lead link).
+- Imported the 24 open Lauderdale cadence leads (campaign `lauderdale_hotel`): 20 PRICE LOWERED buyers + Deekshitha K as Prospect; Bill Douglas, Carmen Narsete, Wade Langlois, Nikeya Alfred via `/api/agent/leadgen-reply` with their real last reply (RFC Message-ID, date, text → sentiment Positive, status New). Email history backfilled from kevinpolermiami via `thread_sync.py --backfill --lead --box`; 80 orphan "Queued touch" tasks re-linked, 13 created, 72 flipped Skipped→Open (the false stop had skipped them). Next Touch column now fills for all of them.
+- `email-cadences/lib.mjs ensureLeadgenLead()` + `add-cadence.mjs`: a new cadence recipient not in the CRM becomes a Prospect row automatically (spec `campaign` picks the dropdown group, default `direct_gmail`; optional `company`, `crm_lead_id`).
+- NOT imported: ropineda@unicef.org + vicente-alaimo (Hotel Mara B2B prospects) — the ingest router sends Mara/Maracaibo campaigns to the CONSULTING section by Kevin's earlier rule.
