@@ -102,7 +102,13 @@ async function classifyAndSummarize({ replyText, subject, ourLastMessage, priorS
         'Return ONLY JSON: {"sentiment": one of ["Positive","Question","Neutral","Not Now","Negative","Auto"],',
         ' "summary": 2-3 plain sentences, first person plural is fine ("they asked...", "we offered..."), covering the WHOLE conversation so far incl. this reply, no fluff,',
         ' "next_step": one short line — what Kevin should do next}',
-        'Use "Auto" only for out-of-office / bounce / autoresponder text. "Question" = they asked something without committing.',
+        'Use "Auto" only for out-of-office / bounce / autoresponder text.',
+        'Tag the sentiment of THIS reply by Kevin\'s rubric (2026-09-21):',
+        '- "Positive" = any forward motion: agreed to a call, asked for the deck/OM/sample/proposal, "send me more info", gave data, proposed a time, OR "I will check with my team / partner / owner and get back to you" (a deferral to a colleague is forward motion, never Not Now), OR asked the price while still engaged.',
+        '- "Question" = asked what the offer is / who we are / logistics, with no commitment and no other forward step.',
+        '- "Neutral" = bare acknowledgment ("thanks", "received", "noted"), wrong person / forward-to-X with no opinion, or no substance.',
+        '- "Not Now" = explicitly deferring themselves: "not at this moment", "maybe next quarter / next year", "closed for the season", "de momento no" with the door left open.',
+        '- "Negative" = an explicit no with the door closed: not interested, no thanks, stop, remove me, hostile. A soft or polite no that leaves an opening is Not Now, not Negative.',
     ].filter(Boolean).join('\n');
 
     try {
