@@ -7251,13 +7251,13 @@ function renderLGInbox() {
 
 // Campaign display names + dropdown order (Kevin 2026-09-21): Title Case, no slugs,
 // newest campaign first, oldest last. One option can cover several ledger slugs
-// (Ads Management = ads_management + realtors_meta_ads; Keystone = keystone + keystone_cold).
+// (Realtors Ads Management = ads_management + realtors_meta_ads; Keystone = keystone + keystone_cold).
 // A slug missing from this table still shows, Title-Cased, after the known ones.
 const LG_CAMPAIGN_GROUPS = [
   { label: 'Lauderdale LoopNet Viewers', slugs: ['Lauderdale LoopNet viewers'] },   // 2026-09-19
   { label: 'Consulting',                 slugs: ['latam_turnaround'] },             // 2026-09-15
   { label: 'Brokers Meta Ads Outreach',  slugs: ['brokers_leadgen_sfl'] },          // 2026-09-10
-  { label: 'Ads Management',             slugs: ['realtors_meta_ads', 'ads_management'] }, // 2026-08-31 / 2026-06-08
+  { label: 'Realtors Ads Management',    slugs: ['realtors_meta_ads', 'ads_management'] }, // 2026-08-31 / 2026-06-08
   { label: 'Keystone',                   slugs: ['keystone_cold', 'keystone'] },    // 2026-08-21 / 2026-06-29 (stopped 2026-09-08)
   { label: 'Abrams',                     slugs: ['abrams_w2'] },                    // 2026-08-11
   { label: 'Dani Berman Latam',          slugs: ['dani_berman_latam'] },            // 2026-07-27
