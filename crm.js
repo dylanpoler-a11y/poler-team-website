@@ -7249,15 +7249,50 @@ function renderLGInbox() {
   });
 }
 
+// Campaign display names + dropdown order (Kevin 2026-09-21): Title Case, no slugs,
+// newest campaign first, oldest last. One option can cover several ledger slugs
+// (Ads Management = ads_management + realtors_meta_ads; Keystone = keystone + keystone_cold).
+// A slug missing from this table still shows, Title-Cased, after the known ones.
+const LG_CAMPAIGN_GROUPS = [
+  { label: 'Lauderdale LoopNet Viewers', slugs: ['Lauderdale LoopNet viewers'] },   // 2026-09-19
+  { label: 'Consulting',                 slugs: ['latam_turnaround'] },             // 2026-09-15
+  { label: 'Brokers Meta Ads Outreach',  slugs: ['brokers_leadgen_sfl'] },          // 2026-09-10
+  { label: 'Ads Management',             slugs: ['realtors_meta_ads', 'ads_management'] }, // 2026-08-31 / 2026-06-08
+  { label: 'Keystone',                   slugs: ['keystone_cold', 'keystone'] },    // 2026-08-21 / 2026-06-29 (stopped 2026-09-08)
+  { label: 'Abrams',                     slugs: ['abrams_w2'] },                    // 2026-08-11
+  { label: 'Dani Berman Latam',          slugs: ['dani_berman_latam'] },            // 2026-07-27
+  { label: 'Insurance Brokers',          slugs: ['insurance_brokers_fl'] },         // 2026-07-22 (stopped 2026-09-20)
+  { label: 'Lauderdale Hotel',           slugs: ['lauderdale_hotel'] },             // 2026-07-09
+  { label: 'Investor OS1 Sale',          slugs: ['investoros1_sale'] },             // 2026-07-07
+  { label: 'Agent Warmup',               slugs: ['agent_warmup'] },                 // 2026-06-30
+  { label: 'Direct Gmail',               slugs: ['direct_gmail'] },                 // 2026-06-27 (1:1 replies on the personal Gmails, no campaign)
+  { label: 'Listing OS',                 slugs: ['listing_os'] },                   // 2026-06-22
+  { label: 'Flash',                      slugs: ['flash'] },                        // 2026-06-22
+  { label: 'Poor Website',               slugs: ['poor_website'] },                 // 2026-06-08
+  { label: 'Low GBP',                    slugs: ['low_gbp'] },                      // 2026-06-05
+  { label: 'Form D Capital Raisers',     slugs: ['formd_capital_raisers'] },        // 2026-06-01
+];
+const LG_SLUG_TO_LABEL = Object.fromEntries(LG_CAMPAIGN_GROUPS.flatMap(g => g.slugs.map(s => [s, g.label])));
+function lgCampaignLabel(slug) {
+  if (!slug) return '';
+  return LG_SLUG_TO_LABEL[slug] || slug.replace(/[_-]+/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+function lgCampaignMatches(lead, label) {
+  return !label || lgCampaignLabel(lead.campaign) === label;
+}
+
 function populateLGCampaignFilters() {
-  const campaigns = [...new Set(allLGLeads.map(l => l.campaign).filter(Boolean))].sort();
+  const present = new Set(allLGLeads.map(l => l.campaign).filter(Boolean));
+  const known = LG_CAMPAIGN_GROUPS.filter(g => g.slugs.some(s => present.has(s))).map(g => g.label);
+  const extra = [...new Set([...present].filter(s => !LG_SLUG_TO_LABEL[s]).map(lgCampaignLabel))].sort();
+  const labels = [...known, ...extra];
   ['lg-campaign-filter', 'lg-pipeline-campaign-filter'].forEach(id => {
     const sel = document.getElementById(id);
     if (!sel) return;
     const cur = sel.value;
     sel.innerHTML = '<option value="">All Campaigns</option>' +
-      campaigns.map(c => `<option value="${escHtml(c)}">${escHtml(c)}</option>`).join('');
-    if (campaigns.includes(cur)) sel.value = cur;
+      labels.map(c => `<option value="${escHtml(c)}">${escHtml(c)}</option>`).join('');
+    if (labels.includes(cur)) sel.value = cur;
   });
 }
 
@@ -7292,11 +7327,11 @@ function lgFilterLeads(prefix) {
   const q         = prefix === 'lg-' ? g('lg-search').trim().toLowerCase() : '';
   return allLGLeads.filter(l => {
     if (channel   && l.channel   !== channel)   return false;
-    if (campaign  && l.campaign  !== campaign)  return false;
+    if (campaign  && !lgCampaignMatches(l, campaign)) return false;
     if (sentiment && l.sentiment !== sentiment) return false;
     if (status    && (l.status || 'New') !== status) return false;
     if (q) {
-      const hay = `${l.name} ${l.company} ${l.email} ${l.campaign} ${l.summary}`.toLowerCase();
+      const hay = `${l.name} ${l.company} ${l.email} ${l.campaign} ${lgCampaignLabel(l.campaign)} ${l.summary}`.toLowerCase();
       if (!hay.includes(q)) return false;
     }
     return true;
@@ -7334,7 +7369,7 @@ function renderLGLeads() {
           ${lgBallChip(l)}
         </td>
         <td><span class="lg-channel">${lgChannelIcon(l.channel)} ${escHtml(l.channel || '—')}</span></td>
-        <td>${l.campaign ? `<span class="lg-campaign">${escHtml(l.campaign)}</span>` : '—'}</td>
+        <td>${l.campaign ? `<span class="lg-campaign" title="${escHtml(l.campaign)}">${escHtml(lgCampaignLabel(l.campaign))}</span>` : '—'}</td>
         <td>${lgSentimentChip(l.sentiment)}</td>
         <td><select class="lg-stage-select" data-lg-id="${escHtml(l.id)}">${stageOpts}</select></td>
         <td style="white-space:nowrap;">${lgFmtDate(l.lastReplyAt || l.replyAt)}${l.replyCount > 1 ? ` <span class="lg-contact-sub">×${l.replyCount}</span>` : ''}</td>
@@ -7375,7 +7410,7 @@ function renderLGPipeline() {
         <div class="kanban-card-company">${escHtml(l.company || '')}</div>
         <div class="lg-card-summary">${escHtml(l.summary || l.replySnippet || '')}</div>
         <div class="kanban-card-footer">
-          <span class="kanban-card-meta">${lgChannelIcon(l.channel)} ${escHtml(l.campaign || l.channel || '')}</span>
+          <span class="kanban-card-meta">${lgChannelIcon(l.channel)} ${escHtml(lgCampaignLabel(l.campaign) || l.channel || '')}</span>
           <span class="kanban-card-meta">${lgFmtDate(l.lastReplyAt || l.replyAt)}</span>
         </div>
       </div>`).join('');
@@ -7484,7 +7519,7 @@ function renderLGContactDisplay(lead) {
   const from = document.getElementById('lg-contacted-from');
   if (from) from.textContent = lead.contactedFrom || '—';
   const src = document.getElementById('lg-source-line');
-  if (src) src.textContent = `${lead.channel || '—'}${lead.campaign ? ` · ${lead.campaign}` : ''}${lead.sourceLeadId ? ` · ${lead.sourceLeadId}` : ''}`;
+  if (src) src.textContent = `${lead.channel || '—'}${lead.campaign ? ` · ${lgCampaignLabel(lead.campaign)}` : ''}${lead.sourceLeadId ? ` · ${lead.sourceLeadId}` : ''}`;
   const frd = document.getElementById('lg-first-reply-date');
   if (frd) frd.textContent = lead.replyAt ? lgFmtDate(lead.replyAt) : '—';
 }
