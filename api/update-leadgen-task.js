@@ -3,7 +3,7 @@
  *
  * Marks a Lead Generation task done/skipped, or edits its title/due date/notes.
  *
- *   PATCH { id, status?, title?, type?, dueAt?, owner?, notes? }
+ *   PATCH { id, status?, title?, type?, dueAt?, owner?, notes?, leadId? }
  *   → { ok, task }
  */
 
@@ -49,6 +49,7 @@ export default async function handler(req) {
     if (body.owner  !== undefined) fields['Owner']  = body.owner;
     if (body.notes  !== undefined) fields['Notes']  = body.notes;
     if (body.type   !== undefined && TYPES.includes(body.type)) fields['Type'] = body.type;
+    if (body.leadId !== undefined) fields['Lead'] = body.leadId ? [body.leadId] : [];   // re-link (2026-09-21: queued touches created before their lead existed)
     if (body.dueAt  !== undefined) {
         const ok = body.dueAt && !isNaN(Date.parse(body.dueAt));
         fields['Due']    = ok ? new Date(body.dueAt).toISOString() : null;

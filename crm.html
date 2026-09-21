@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="crm.css?v=20260921c" />
+  <link rel="stylesheet" href="crm.css?v=20260921e" />
   <!-- MapLibre GL JS for alert map drawing (vector tiles — smooth zooming) -->
   <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.1.2/dist/maplibre-gl.css" />
   <!-- Chart.js for the AI Calls tab graph -->
@@ -112,7 +112,7 @@
           <a class="nav-item" data-action="partners" href="#">
             <span class="nav-icon">🤝</span> Partners
           </a>
-          <div class="sidebar-section-divider">Lead Generation</div>
+          <div class="sidebar-section-divider">Outreaches</div>
           <a class="nav-item" data-action="leadgen" href="#">
             <span class="nav-icon">📨</span> Leads <span id="leadgen-badge" class="reminder-badge" style="display:none;">0</span>
           </a>
@@ -721,7 +721,7 @@
              Kevin 2026-09-10. Data: Airtable `LeadGen Leads`. -->
         <div id="leadgen-view" style="display:none;">
           <div class="crm-header">
-            <h1>Lead Generation <span id="leadgen-count-label" class="reminders-count-label"></span></h1>
+            <h1>Outreaches <span id="leadgen-count-label" class="reminders-count-label"></span></h1>
             <div class="header-right">
               <select id="lg-channel-filter" class="filter-select" style="display:none;">
                 <option value="">All Channels</option>
@@ -845,7 +845,7 @@
         <!-- ═══════ LEAD GENERATION — PIPELINE (KANBAN) VIEW ═══════ -->
         <div id="leadgen-pipeline-view" style="display:none;">
           <div class="crm-header">
-            <h1>Lead Gen Pipeline <span id="lg-pipeline-count-label" class="reminders-count-label"></span></h1>
+            <h1>Outreach Pipeline <span id="lg-pipeline-count-label" class="reminders-count-label"></span></h1>
             <div class="header-right">
               <select id="lg-pipeline-channel-filter" class="filter-select">
                 <option value="">All Channels</option>
@@ -2407,6 +2407,6 @@
   </div>
 
   <script src="https://unpkg.com/maplibre-gl@4.1.2/dist/maplibre-gl.js"></script>
-  <script src="crm.js?v=20260921d" defer></script>
+  <script src="crm.js?v=20260921e" defer></script>
 </body>
 </html>

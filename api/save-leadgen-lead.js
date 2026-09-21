@@ -12,7 +12,9 @@
  * reply, or two responders seeing the same lead all land on ONE row.
  *
  *   POST { name, email, company?, title?, phone?, channel, campaign?,
- *          replySnippet?, replyAt?, sourceLeadId?, website?, notes?, owner? }
+ *          replySnippet?, replyAt?, sourceLeadId?, website?, notes?, owner?,
+ *          status? ('Prospect' = we emailed them, no answer yet: no Reply At, no
+ *          Positive-reply row; pass lastContact YYYY-MM-DD = the day we wrote) }
  *   → { ok, created: bool, lead }
  *
  * Auth: Bearer AGENT_API_TOKEN (agents) or password (web UI) — see ./_auth.js
@@ -49,6 +51,10 @@ export default async function handler(req) {
     const channel = normChannel(body.channel);
     const status  = STATUSES.includes(body.status)  ? body.status  : 'New';
     const replyAt = body.replyAt || new Date().toISOString();
+    // 2026-09-21 (Kevin: "any outreaches we do need to also be shown" in Outreaches): a
+    // Prospect is someone we EMAILED who has not answered — no Reply At, no reply snippet,
+    // no "Positive reply" activity. Last Contact = the day we wrote (body.lastContact).
+    const prospect = status === 'Prospect';
 
     // ---- idempotent lookup -------------------------------------------------
     const found = await findLead({ sourceLeadId: body.sourceLeadId, email });
@@ -64,13 +70,17 @@ export default async function handler(req) {
     put('Title',          body.title);
     put('Phone',          body.phone);
     put('Campaign',       body.campaign);
-    put('Reply Snippet',  body.replySnippet);
+    if (!prospect) put('Reply Snippet', body.replySnippet);
     put('Website',        body.website);
     put('Notes',          body.notes);
     put('Owner',          body.owner || 'Kevin');
     fields['Channel']      = channel;
-    fields['Reply At']     = replyAt;
-    fields['Last Contact'] = replyAt.slice(0, 10);
+    if (prospect) {
+        put('Last Contact', body.lastContact || new Date().toISOString().slice(0, 10));
+    } else {
+        fields['Reply At']     = replyAt;
+        fields['Last Contact'] = replyAt.slice(0, 10);
+    }
     if (body.sourceLeadId) fields['Source Lead ID'] = body.sourceLeadId;
 
     // ---- update existing ---------------------------------------------------
@@ -82,7 +92,7 @@ export default async function handler(req) {
         const res = await updateRecord(TABLES.leads, found.record.id, fields);
         if (!res.ok) return json({ error: res.error }, res.status || 502);
 
-        await logActivity({
+        if (!prospect) await logActivity({
             title:   `Another positive reply — ${channel}`,
             type:    'Positive Reply',
             leadId:  found.record.id,
@@ -100,7 +110,13 @@ export default async function handler(req) {
     const res = await createRecord(TABLES.leads, fields);
     if (!res.ok) return json({ error: res.error }, res.status || 502);
 
-    await logActivity({
+    await logActivity(prospect ? {
+        title:   `Added as outreach prospect${body.campaign ? ` — ${body.campaign}` : ''}`,
+        type:    'Status Change',
+        leadId:  res.record.id,
+        details: body.notes || '',
+        agent:   body.agent || 'Kevin',
+    } : {
         title:   `Positive reply — ${channel}${body.campaign ? ` / ${body.campaign}` : ''}`,
         type:    'Positive Reply',
         leadId:  res.record.id,
