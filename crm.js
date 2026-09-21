@@ -7663,9 +7663,12 @@ function closeLGPanel() {
 async function loadLGActivity(id) {
   const notesBox = document.getElementById('lg-notes-history');
   const actBox   = document.getElementById('lg-activity-list');
+  const mailBox  = document.getElementById('lg-emails-list');
+  const mailCount = document.getElementById('lg-emails-count');
   if (!notesBox || !actBox) return;
   notesBox.innerHTML = '<p class="panel-empty-text">Loading…</p>';
   actBox.innerHTML   = '<p class="panel-empty-text">Loading activity...</p>';
+  if (mailBox) mailBox.innerHTML = '<p class="panel-empty-text">Loading…</p>';
   try {
     const res = await fetch(`${CRM_API_BASE}/api/get-leadgen-activity?leadId=${encodeURIComponent(id)}&${lgAuthQS()}`);
     const data = res.ok ? await res.json() : { activity: [] };
@@ -7686,7 +7689,7 @@ async function loadLGActivity(id) {
     const icon = t => ({ 'Positive Reply': '🟢', 'Reply': '💬', 'Email Sent': '✉️', 'Call': '📞', 'Meeting': '🤝', 'Status Change': '🔀' }[t] || '📄');
     // Full emails (thread sync): subject + mailbox + collapsible body + attachment chips.
     const isEmail = a => !!(a.subject || a.messageId || (a.attachments || []).length);
-    const emailCard = a => {
+    const emailCard = (a, open = false) => {
       const sent = a.type === 'Email Sent';
       const body = (a.details || '').replace(/\s*\[mid:[^\]]+\]\s*$/, '').trim();
       const preview = body.replace(/\s+/g, ' ').slice(0, 160);
@@ -7697,15 +7700,30 @@ async function loadLGActivity(id) {
         <div class="activity-info">
           <span class="activity-type">${escHtml(a.subject || a.title || (sent ? 'Email sent' : 'Reply'))}</span>
           <span class="lg-email-meta">${sent ? 'Sent from' : 'Received at'} ${escHtml(a.mailbox || '—')} · ${escHtml(lgFmtDateTime(a.at))}${a.agent && sent ? ` · ${escHtml(a.agent)}` : ''}</span>
-          <span class="activity-detail lg-email-preview">${escHtml(preview)}${body.length > 160 ? '…' : ''}</span>
-          <div class="activity-detail lg-email-full" style="display:none;white-space:pre-wrap;">${escHtml(body)}</div>
+          <span class="activity-detail lg-email-preview" ${open ? 'style="display:none;"' : ''}>${escHtml(preview)}${body.length > 160 ? '…' : ''}</span>
+          <div class="activity-detail lg-email-full" style="display:${open ? 'block' : 'none'};white-space:pre-wrap;">${escHtml(body)}</div>
           ${atts ? `<div class="lg-att-row">${atts}</div>` : ''}
-          ${body.length > 160 ? `<button type="button" class="lg-email-toggle" data-open="0">View full email</button>` : ''}
+          ${body.length > 160 ? `<button type="button" class="lg-email-toggle" data-open="${open ? '1' : '0'}">${open ? 'Hide full email' : 'View full email'}</button>` : ''}
         </div>
         <span class="activity-time" title="${escHtml(a.at || '')}">${escHtml(a.at ? relativeTime(a.at) : '')}</span>
       </div>`;
     };
-    actBox.innerHTML = rest.length ? rest.map(a => isEmail(a) ? emailCard(a) : `
+    // Emails section (newest first, the lead's latest email open); the log keeps the rest.
+    const mails = rest.filter(isEmail);
+    const others = rest.filter(a => !isEmail(a));
+    if (mailBox) {
+      const lastIn = mails.find(a => a.type !== 'Email Sent');
+      mailBox.innerHTML = mails.length ? mails.map(a => emailCard(a, a === lastIn)).join('') : '<p class="panel-empty-text">No emails on file</p>';
+      if (mailCount) mailCount.textContent = mails.length ? `${mails.length} · ${mails.filter(a => a.type !== 'Email Sent').length} from them` : '';
+      mailBox.querySelectorAll('.lg-email-toggle').forEach(btn => btn.addEventListener('click', () => {
+        const card = btn.closest('.lg-email'); const open = btn.dataset.open === '1';
+        card.querySelector('.lg-email-full').style.display = open ? 'none' : 'block';
+        card.querySelector('.lg-email-preview').style.display = open ? '' : 'none';
+        btn.dataset.open = open ? '0' : '1'; btn.textContent = open ? 'View full email' : 'Hide full email';
+      }));
+    }
+    const logItems = mailBox ? others : rest;
+    actBox.innerHTML = logItems.length ? logItems.map(a => isEmail(a) ? emailCard(a) : `
       <div class="activity-item">
         <span class="activity-icon">${icon(a.type)}</span>
         <div class="activity-info">

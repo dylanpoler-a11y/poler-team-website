@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="crm.css?v=20260921a" />
+  <link rel="stylesheet" href="crm.css?v=20260921b" />
   <!-- MapLibre GL JS for alert map drawing (vector tiles — smooth zooming) -->
   <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.1.2/dist/maplibre-gl.css" />
   <!-- Chart.js for the AI Calls tab graph -->
@@ -1527,6 +1527,15 @@
       <a id="lg-whatsapp" href="#" class="action-btn whatsapp" target="_blank" rel="noopener">💬 WhatsApp</a>
     </div>
 
+    <!-- Emails (Kevin 2026-09-21): the thread with this lead, newest first, their latest
+         email open by default. Fed by the same activity rows as the log below. -->
+    <div class="panel-section" id="lg-emails-section">
+      <div class="panel-section-title">Emails <span id="lg-emails-count" style="font-weight:400;color:#94a3b8;font-size:12px;"></span></div>
+      <div id="lg-emails-list" class="panel-activity-wrap">
+        <p class="panel-empty-text">Loading…</p>
+      </div>
+    </div>
+
     <!-- Flash live coach (same lazy iframe as the RE panel, bucket=leadgen) -->
     <div class="panel-section" id="lg-coach-section">
       <div class="panel-section-title" style="display:flex;align-items:center;justify-content:space-between;">
@@ -2398,6 +2407,6 @@
   </div>
 
   <script src="https://unpkg.com/maplibre-gl@4.1.2/dist/maplibre-gl.js"></script>
-  <script src="crm.js?v=20260921a" defer></script>
+  <script src="crm.js?v=20260921b" defer></script>
 </body>
 </html>
